@@ -1,0 +1,65 @@
+# Decision Log
+
+Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`docs/superpowers/specs/2026-09-30-fase1-pipeline-design.md`](superpowers/specs/2026-09-30-fase1-pipeline-design.md).
+
+## D-001 — 2026-09-30 — Project dikerjain bertahap dalam 4 fase
+
+- **Status:** accepted. Urutan Fase 2 dan 3 masih boleh dituker.
+- **Konteks:** Goal akhir project ini shorts yang kualitas edit-nya setara source `i2xag_1OJfM`, sesuai `flow.svg`. Kalau dikerjain sekaligus, scope-nya terlalu besar.
+- **Keputusan:**
+  1. Fase 1: pipeline dasar (naskah ulang + TTS + klip stock).
+  2. Fase 2: hook matching (klip 1–10 detik awal sama/mirip source, cari di TikTok/Douyin/RedNote dengan login, visual matching).
+  3. Fase 3: edit style ala `i2xag` (caption per kata, BGM, SFX, transisi, title card, CTA, panah/lingkaran/emoji).
+  4. Fase 4: pilih source otomatis + upload terjadwal 21.00 & 04.00 WIB.
+- **Alasan:** Fase 2 ditaruh sebelum 3 karena itu bagian paling nggak pasti (login, anti-bot, akurasi matching).
+- **Konsekuensi:** tiap fase punya spec → plan → implementasi sendiri.
+- **Authority:** diusulin agent. Akmal minta Fase 1 berupa "klip gabungan + TTS saja", terus approve design Fase 1 yang scope-nya ngikutin pembagian ini (chat 2026-09-30).
+
+## D-002 — 2026-09-30 — Fase 1 ambil klip dari stock API
+
+- **Status:** accepted
+- **Konteks:** Di `flow.svg`, TikTok/Douyin/RedNote jadi sumber utama dan Pexels/Pixabay/Pinterest jadi fallback.
+- **Keputusan:** Fase 1 cuma pakai Pexels + Pixabay lewat API resmi. TikTok/Douyin/RedNote/Pinterest masuk Fase 2 bareng hook matching.
+- **Alasan:** stabil, legal, nggak perlu login. Scraping platform dengan login itu bagian paling berat dan rawan.
+- **Authority:** pilihan Akmal (chat 2026-09-30).
+
+## D-003 — 2026-09-30 — LLM pakai Gemini API
+
+- **Status:** accepted
+- **Keputusan:** rewrite naskah + keyword klip pakai Gemini (SDK `google-genai`, structured output). Model diatur lewat `GEMINI_MODEL`.
+- **Konsekuensi:** vision buat Fase 2 juga bisa pakai Gemini.
+- **Authority:** pilihan Akmal (chat 2026-09-30).
+
+## D-004 — 2026-09-30 — Arsitektur Python orchestrator + Remotion renderer
+
+- **Status:** accepted
+- **Keputusan:** Python (uv) jalanin semua step dan nulis `timeline.json`. Remotion (TypeScript) cuma render dari `timeline.json`.
+- **Alasan:** Fase 2 butuh CLIP/torch/opencv yang enaknya di Python. Remotion dipakai dari awal biar Fase 3 tinggal nambah komponen di timeline yang sama.
+- **Alternatif yang ditolak:** full TypeScript (Fase 2 ribet), dan Python + ffmpeg dulu (render harus ditulis ulang di Fase 3).
+- **Authority:** pilihan Akmal (chat 2026-09-30).
+
+## D-005 — 2026-09-30 — Visual campuran video + foto, foto pakai zoom pelan
+
+- **Status:** accepted
+- **Keputusan:** sekitar 30% shot pakai foto (`PHOTO_RATIO`). Gemini yang nentuin beat mana jadi foto, dan ada fallback dua arah video ↔ foto. Foto dapat zoom-in pelan 1.00 → 1.08 di Remotion.
+- **Authority:** Akmal minta foto ikut dipakai. Zoom pelan dipilih Akmal dari opsi "zoom pelan" vs "diam" (chat 2026-09-30).
+
+## D-006 — 2026-09-30 — Klip landscape pakai layout blur background
+
+- **Status:** accepted
+- **Keputusan:** klip/foto landscape atau square nggak di-crop jadi full 9:16. Klipnya tetap tampil di tengah, dengan background versi blur dari media yang sama. Tinggi foreground minimal sekitar 50% frame (`FG_MIN_HEIGHT_RATIO`), dan kalau perlu kiri-kanannya di-crop.
+- **Konsekuensi:** klip 16:9 kepotong ±37% di kiri-kanan. Kalau terlalu banyak yang hilang, rasio foreground bisa diturunin lewat config.
+- **Authority:** aturan dari Akmal (chat 2026-09-30). Interpretasi angka 50% dan crop kiri-kanan dari agent, dikonfirmasi pas review spec.
+
+## D-007 — 2026-09-30 — Naskah + suara dikunci setelah TTS pertama
+
+- **Status:** accepted
+- **Konteks:** test & review bakal jalan berkali-kali. Tiap panggilan ElevenLabs makan kredit.
+- **Keputusan:**
+  - Begitu `runs/<id>/voice.mp3` ada, `script.json`, `voice.mp3`, dan `tts.json` nggak di-generate ulang.
+  - Suara baru cuma lewat flag `--new-voice`.
+  - `--from source|script|tts` ditolak kalau suara udah ada.
+  - Hash naskah di `tts.json` dicek biar naskah yang diedit manual nggak diam-diam manggil ElevenLabs.
+  - Test otomatis selalu pakai response palsu.
+- **Konsekuensi:** mau ganti naskah berarti bayar TTS lagi lewat `--new-voice`. `voice.mp3` jangan dihapus.
+- **Authority:** permintaan Akmal (chat 2026-09-30). Mekanisme kunci + flag dari agent, dikonfirmasi pas review spec.
