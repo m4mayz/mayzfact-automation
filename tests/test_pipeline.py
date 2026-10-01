@@ -1,0 +1,226 @@
+import math
+from types import SimpleNamespace
+
+import httpx
+import pytest
+
+from mayzfact.config import Settings
+from mayzfact.errors import PipelineError
+from mayzfact.pipeline import STEPS, Deps, check_voice, plan_steps, run_pipeline
+from mayzfact.store import RunPaths, read_json, write_json_atomic
+from mayzfact.text import script_text, text_hash
+from tests.factories import cand, fake_alignment, make_script
+
+VIDEO_ID = "i2xag_1OJfM"
+KEYS = {"gemini_api_key": "g", "elevenlabs_api_key": "e", "elevenlabs_voice_id": "v", "pexels_api_key": "p", "pixabay_api_key": "x"}
+SETTINGS = Settings(**KEYS, max_shot_seconds=10.0)
+TRANSCRIPT = [{"text": "Five ancient creatures are still alive today", "start": 0.0, "duration": 53.3}]
+NONE_DONE = {step: False for step in STEPS}
+ALL_DONE = {step: True for step in STEPS}
+QUIET = {"log": lambda message: None}
+
+
+def done_until(last: str) -> dict:
+    return {step: STEPS.index(step) <= STEPS.index(last) for step in STEPS}
+
+
+# --- plan_steps -------------------------------------------------------------
+
+def test_fresh_run_runs_everything():
+    assert plan_steps(NONE_DONE, False, None, False) == STEPS
+
+
+def test_plain_run_resumes_from_first_missing_step():
+    assert plan_steps(done_until("script"), False, None, False) == ["tts", "clips", "timeline", "render"]
+    assert plan_steps(ALL_DONE, True, None, False) == []
+
+
+def test_from_clips_is_allowed_with_voice():
+    assert plan_steps(ALL_DONE, True, "clips", False) == ["clips", "timeline", "render"]
+
+
+@pytest.mark.parametrize("step", ["source", "script", "tts"])
+def test_from_locked_step_is_rejected_when_voice_exists(step):
+    with pytest.raises(PipelineError, match="dikunci"):
+        plan_steps(ALL_DONE, True, step, False)
+
+
+def test_from_script_is_allowed_before_voice_exists():
+    assert plan_steps(done_until("script"), False, "script", False) == STEPS[1:]
+
+
+def test_from_step_needs_previous_outputs():
+    with pytest.raises(PipelineError, match="belum pernah selesai"):
+        plan_steps(done_until("tts"), True, "timeline", False)
+
+
+def test_new_voice_reruns_script_and_after():
+    assert plan_steps(ALL_DONE, True, None, True) == STEPS[1:]
+    assert plan_steps(NONE_DONE, False, None, True) == STEPS
+    with pytest.raises(PipelineError, match="nggak bisa digabung"):
+        plan_steps(ALL_DONE, True, "clips", True)
+
+
+def test_voice_without_metadata_needs_new_voice():
+    broken = {**ALL_DONE, "tts": False}
+    with pytest.raises(PipelineError, match="--new-voice"):
+        plan_steps(broken, True, None, False)
+
+
+# --- check_voice ------------------------------------------------------------
+
+def write_voice_state(paths, text_beats, duration_s, sha=None):
+    script = {"beats": [{"text": t, "media": "video", "queries": ["q"]} for t in text_beats], "fallback_query": "f"}
+    write_json_atomic(paths.script_json, script)
+    write_json_atomic(paths.tts_json, {"text_sha256": sha or text_hash(script_text(script["beats"])), "duration_s": duration_s})
+
+
+def test_check_voice_accepts_matching_long_audio(tmp_path):
+    paths = RunPaths(tmp_path)
+    write_voice_state(paths, ["Look at this.", "It is old."], 31.0)
+    assert check_voice(paths)["duration_s"] == 31.0
+
+
+def test_check_voice_rejects_edited_script(tmp_path):
+    paths = RunPaths(tmp_path)
+    write_voice_state(paths, ["Look at this.", "It is old."], 31.0, sha="beda")
+    with pytest.raises(PipelineError, match="beda"):
+        check_voice(paths)
+
+
+def test_check_voice_rejects_short_audio(tmp_path):
+    paths = RunPaths(tmp_path)
+    write_voice_state(paths, ["Look at this."], 29.0)
+    with pytest.raises(PipelineError, match="--new-voice"):
+        check_voice(paths)
+
+
+# --- run_pipeline dengan dependency palsu ----------------------------------
+
+class FakeWriter:
+    def write(self, system, user):
+        return make_script(n_beats=8, words_per_beat=10)
+
+
+class FakeTTS:
+    voice_id = "v"
+    model_id = "eleven_v3"
+
+    def __init__(self, audio: bytes, total_s: float):
+        self.audio = audio
+        self.total_s = total_s
+        self.calls = 0
+
+    def synthesize(self, text):
+        self.calls += 1
+        return self.audio, fake_alignment(text, self.total_s)
+
+
+class FakeSearch:
+    def candidates(self, kind, query):
+        if kind == "video":
+            return [cand("pexels", f"v{i}", "video", 1080, 1920, duration_s=30.0, rank=i, url=f"https://cdn.test/v{i}.mp4") for i in range(10)]
+        return [cand("pexels", f"p{i}", "photo", 1600, 1000, rank=i, url=f"https://cdn.test/p{i}.jpg") for i in range(10)]
+
+
+def build_world(tmp_path, audio_path, total_s, make_video, make_photo):
+    video_bytes = make_video(1080, 1920, 5.0).read_bytes()
+    photo_bytes = make_photo(1600, 1000).read_bytes()
+    client = httpx.Client(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=video_bytes if request.url.path.endswith(".mp4") else photo_bytes)
+    ))
+    tts = FakeTTS(audio_path.read_bytes(), total_s)
+    world = SimpleNamespace(tts=tts, writer_calls=0, renders=0, runs=tmp_path / "runs")
+
+    def writer():
+        world.writer_calls += 1
+        return FakeWriter()
+
+    def render(paths):
+        world.renders += 1
+        paths.final_mp4.write_bytes(b"fake-mp4")
+        return paths.final_mp4
+
+    world.deps = Deps(
+        fetch_transcript=lambda video_id: TRANSCRIPT,
+        script_writer=writer,
+        tts=lambda: tts,
+        search=FakeSearch,
+        http=lambda: client,
+        render=render,
+        media_cache=tmp_path / "media",
+    )
+    return world
+
+
+@pytest.fixture
+def world(tmp_path, long_mp3, make_video, make_photo):
+    return build_world(tmp_path, long_mp3, 30.0, make_video, make_photo)
+
+
+def run(world, **kwargs):
+    return run_pipeline(VIDEO_ID, settings=kwargs.pop("settings", SETTINGS), deps=world.deps, runs_dir=world.runs, **QUIET, **kwargs)
+
+
+def test_full_run_then_rerun_from_clips_reuses_voice(world):
+    paths = run(world)
+    assert paths.final_mp4.read_bytes() == b"fake-mp4"
+    assert (world.tts.calls, world.writer_calls, world.renders) == (1, 1, 1)
+    timeline = read_json(paths.timeline_json)
+    assert len(timeline["shots"]) == 8
+    assert timeline["durationInFrames"] == math.ceil(read_json(paths.tts_json)["duration_s"] * 30 - 1e-6)
+    voice_mtime = paths.voice_mp3.stat().st_mtime_ns
+
+    run(world, from_step="clips")
+    assert (world.tts.calls, world.writer_calls, world.renders) == (1, 1, 2)
+    assert paths.voice_mp3.stat().st_mtime_ns == voice_mtime
+
+
+def test_second_plain_run_does_nothing(world):
+    run(world)
+    run(world)
+    assert (world.tts.calls, world.renders) == (1, 1)
+
+
+def test_from_script_is_rejected_after_voice(world):
+    run(world)
+    with pytest.raises(PipelineError, match="dikunci"):
+        run(world, from_step="script")
+    assert world.tts.calls == 1
+
+
+def test_new_voice_regenerates_script_and_voice(world):
+    run(world)
+    run(world, new_voice=True)
+    assert (world.tts.calls, world.writer_calls, world.renders) == (2, 2, 2)
+
+
+def test_edited_script_blocks_clips_without_calling_tts(world):
+    paths = run(world)
+    script = read_json(paths.script_json)
+    script["beats"][0]["text"] = "Diedit manual."
+    write_json_atomic(paths.script_json, script)
+    with pytest.raises(PipelineError, match="beda"):
+        run(world, from_step="clips")
+    assert world.tts.calls == 1
+
+
+def test_short_audio_stops_before_clips(tmp_path, sine_mp3, make_video, make_photo):
+    world = build_world(tmp_path, sine_mp3, 2.5, make_video, make_photo)
+    with pytest.raises(PipelineError, match="--new-voice"):
+        run(world)
+    paths = RunPaths(world.runs / VIDEO_ID)
+    assert paths.voice_mp3.exists()
+    assert not paths.clips_json.exists()
+
+
+def test_missing_keys_fail_before_any_step(world):
+    with pytest.raises(PipelineError, match="GEMINI_API_KEY.*ELEVENLABS_API_KEY.*ELEVENLABS_VOICE_ID.*PEXELS_API_KEY.*PIXABAY_API_KEY"):
+        run(world, settings=Settings())
+    assert not (world.runs / VIDEO_ID / "source.json").exists()
+
+
+def test_from_clips_does_not_need_gemini_or_elevenlabs_keys(world):
+    run(world)
+    run(world, from_step="clips", settings=Settings(pexels_api_key="p", pixabay_api_key="x", max_shot_seconds=10.0))
+    assert world.renders == 2
