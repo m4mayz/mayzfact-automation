@@ -41,6 +41,11 @@
   - Gemini sempat 503 "high demand" 2x (gangguan sementara Google). Run ketiga sukses.
 - Run ulang `--from clips` dengan `ELEVENLABS_API_KEYS` dan `GEMINI_API_KEYS` dikosongin → sukses, mtime `voice.mp3` nggak berubah.
 - Contact sheet `runs/i2xag_1OJfM/contact_sheet.png`: nggak ada frame hitam, semua shot portrait full. Shot blur nggak muncul di run ini karena semua klip yang kepilih portrait.
+- Setelah prompt diperketat (commit 7549001), dijalanin ulang pakai `--new-voice`:
+  - Naskah: 16 beat (≤10 kata), countdown "Number five … Number one" rapi, overlap 0.029.
+  - Video: 49.3 detik, 32 shot (22 video + 10 foto), shot terpanjang 1.93 detik.
+  - ElevenLabs: 696 karakter. Gemini sempat 503 lagi 1x.
+- Contact sheet PNG besar sempat kelihatan "pecah warna". Setelah dicek per tahap (file mentah → klip normalisasi → final.mp4 per frame), file-nya bersih. Yang pecah cuma tampilan dari tool viewer agent, bukan videonya.
 - **Review Akmal (DoD 8): belum.** Fase 1 belum dianggap selesai sampai Akmal nonton `runs/i2xag_1OJfM/final.mp4`.
 
 ## Temuan dari run beneran
@@ -64,5 +69,6 @@
    - cek durasi klip
    - transcript `en-US`/`en-GB`
    - normalisasi NFC
-3. Opsional sebelum Fase 2: perketat prompt biar beat lebih pendek dan pakai query berbeda per shot, plus benerin urutan countdown.
-4. Fase 2 (hook matching): mulai lagi dari brainstorming.
+3. ~~Perketat prompt~~ udah dikerjain (beat ≤10 kata, countdown, query per shot, backoff Gemini 5/10/20s). Relevansi klip buat hewan langka masih meleset (horseshoe crab → ghost crab, tardigrade → preparat), jadi tetap butuh Fase 2.
+4. Gemini `gemini-3.8-flash` sering 503 "high demand". Kalau makin sering, pertimbangkan model cadangan.
+5. Fase 2 (hook matching): mulai lagi dari brainstorming.
