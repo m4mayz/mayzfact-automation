@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
+from typing import Protocol
 
+from mayzfact.errors import PipelineError
 from mayzfact.models import Beat, Script
+from mayzfact.store import RunPaths, write_json_atomic
 from mayzfact.text import clean_text, ngram_overlap, words
 
 WORDS_PER_SECOND = 2.6
@@ -89,3 +92,42 @@ def build_user_prompt(
             lines += ["Previous answer:", previous.model_dump_json()]
         lines.append("Write a corrected answer.")
     return "\n".join(lines)
+
+
+class ScriptWriter(Protocol):
+    def write(self, system: str, user: str) -> Script: ...
+
+
+def generate_script(
+    source: dict, writer: ScriptWriter, *, ratio: float, minimum_s: float, photo_ratio: float
+) -> dict:
+    duration_s = target_duration(source["duration_s"], ratio, minimum_s)
+    source_text = " ".join(s["text"] for s in source["transcript"])
+    system = PROMPT_PATH.read_text(encoding="utf-8")
+    feedback: list[str] | None = None
+    previous: Script | None = None
+    problems: list[str] = []
+    for _ in range(2):
+        prompt = build_user_prompt(source, duration_s, photo_ratio, feedback, previous)
+        script = normalize_script(writer.write(system, prompt))
+        problems, overlap = check_script(script, source_text, duration_s)
+        if not problems:
+            target, _, _ = word_range(duration_s)
+            return {
+                "target_seconds": round(duration_s, 2),
+                "target_words": target,
+                "word_count": len(words(" ".join(b.text for b in script.beats))),
+                "ngram_overlap": round(overlap, 3),
+                "fallback_query": script.fallback_query,
+                "beats": [b.model_dump() for b in script.beats],
+            }
+        feedback, previous = problems, script
+    raise PipelineError("script", "Naskah dari Gemini masih gagal dicek setelah retry: " + " ".join(problems))
+
+
+def run_script(
+    paths: RunPaths, source: dict, writer: ScriptWriter, *, ratio: float, minimum_s: float, photo_ratio: float
+) -> dict:
+    data = generate_script(source, writer, ratio=ratio, minimum_s=minimum_s, photo_ratio=photo_ratio)
+    write_json_atomic(paths.script_json, data)
+    return data
