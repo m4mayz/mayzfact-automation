@@ -10,7 +10,7 @@ Pipeline YouTube Shorts. Naskah ditulis ulang pakai Gemini, suaranya dari Eleven
 1. `uv sync`
 2. `nvm use 22.23.1`, lalu `cd remotion && npm install && npx remotion browser ensure`
 3. Copy `.env.example` jadi `.env`, terus isi semua key-nya.
-4. `ELEVENLABS_API_KEYS` boleh lebih dari 1 key, dipisah koma tanpa spasi. Key dipakai berurutan, dan kalau satu key ditolak (kuota habis/izin kurang), otomatis pindah ke key berikutnya.
+4. `GEMINI_API_KEYS` dan `ELEVENLABS_API_KEYS` boleh lebih dari 1 key, dipisah koma tanpa spasi. Key dipakai berurutan, dan kalau satu key ditolak (kuota habis/izin kurang), otomatis pindah ke key berikutnya.
 5. `uv run mayzfact voices` buat nyari `ELEVENLABS_VOICE_ID` (butuh key dengan izin "Voices: Read").
 
 ## Pakai

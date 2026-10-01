@@ -300,7 +300,7 @@ npx remotion render src/index.ts ShortVideo ../runs/<id>/final.mp4 --props=../ru
 
 | Variabel | Default | Keterangan |
 | --- | --- | --- |
-| `GEMINI_API_KEY` | – | wajib |
+| `GEMINI_API_KEYS` | – | wajib. Beberapa key dipisah koma tanpa spasi; pindah ke key berikutnya kalau kena limit atau ditolak (401/403/429, API_KEY_INVALID) |
 | `GEMINI_MODEL` | `gemini-3.8-flash` | nama persisnya dicek lagi pas implementasi |
 | `ELEVENLABS_API_KEYS` | – | wajib. Beberapa key dipisah koma tanpa spasi; dicoba berurutan, pindah ke key berikutnya kalau ditolak (401/402/403) |
 | `ELEVENLABS_VOICE_ID` | `TX3LPaxmHKxFdv7VOQHJ` | Liam (default voice, pria muda Amerika). Lihat D-009 |
@@ -360,7 +360,7 @@ Angka lain (2.6 kata/detik, batas overlap 15%, zoom 1.08, batas rasio 0.75) jadi
 
 ## 9. Prasyarat (disiapin Akmal)
 
-- `GEMINI_API_KEY` dari Google AI Studio.
+- `GEMINI_API_KEYS` dari Google AI Studio (boleh lebih dari 1, dipisah koma).
 - `ELEVENLABS_API_KEYS` (boleh lebih dari 1, dipisah koma). Voice udah dipilih: Liam (D-009).
 - `PEXELS_API_KEY` dan `PIXABAY_API_KEY` (gratis).
 - Node 22: udah terinstall di nvm, tinggal `nvm use 22.23.1`.

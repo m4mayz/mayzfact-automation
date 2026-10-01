@@ -86,3 +86,13 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   - Udah dites pakai 1 request pendek: `with-timestamps` jalan, dan alignment-nya cocok persis sama teks.
 - **Konsekuensi:** ElevenLabs bakal matiin default voice tanggal 2026-12-31. Pengganti resmi Liam adalah "Lawrence - Bright and Informative". ID-nya belum ketemu karena key nggak punya izin `voices_read`. Sebelum 2026-12-31, ganti `ELEVENLABS_VOICE_ID` ke Lawrence atau voice lain.
 - **Authority:** pilihan agent atas permintaan Akmal (chat 2026-10-01).
+
+## D-010 — 2026-10-01 — Gemini juga pakai banyak API key
+
+- **Status:** accepted
+- **Konteks:** Akmal ngisi 3 key Gemini dipisah koma. Ketiganya udah dicek valid, dan `gemini-3.8-flash` tersedia di semua key.
+- **Keputusan:**
+  - Variabelnya `GEMINI_API_KEYS`. Nama variabel di `.env` di-rename dari `GEMINI_API_KEY`, isinya nggak disentuh.
+  - Key dicoba berurutan. Kalau 401/403/429 atau 400 `API_KEY_INVALID`, pindah ke key berikutnya.
+  - 5xx di-retry di key yang sama. 400 lain langsung stop.
+- **Authority:** pola multi key diminta Akmal buat ElevenLabs (D-008). Penerapan ke Gemini disimpulin agent dari isi `.env`.

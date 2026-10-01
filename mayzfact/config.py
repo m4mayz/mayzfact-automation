@@ -18,7 +18,7 @@ CACHE_DIR = PROJECT_ROOT / "cache"
 
 @dataclass(frozen=True)
 class Settings:
-    gemini_api_key: str = ""
+    gemini_api_keys: tuple[str, ...] = ()
     gemini_model: str = "gemini-3.8-flash"
     elevenlabs_api_keys: tuple[str, ...] = ()
     elevenlabs_voice_id: str = ""
@@ -32,10 +32,15 @@ class Settings:
     fg_min_height_ratio: float = 0.5
 
 
+def _key_list(raw: str) -> tuple[str, ...]:
+    """Beberapa API key dipisah koma, misal `key1,key2`."""
+    return tuple(key.strip() for key in raw.split(",") if key.strip())
+
+
 ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
-    "GEMINI_API_KEY": ("gemini_api_key", str),
+    "GEMINI_API_KEYS": ("gemini_api_keys", _key_list),
     "GEMINI_MODEL": ("gemini_model", str),
-    "ELEVENLABS_API_KEYS": ("elevenlabs_api_keys", lambda raw: tuple(k.strip() for k in raw.split(",") if k.strip())),
+    "ELEVENLABS_API_KEYS": ("elevenlabs_api_keys", _key_list),
     "ELEVENLABS_VOICE_ID": ("elevenlabs_voice_id", str),
     "ELEVENLABS_MODEL": ("elevenlabs_model", str),
     "PEXELS_API_KEY": ("pexels_api_key", str),

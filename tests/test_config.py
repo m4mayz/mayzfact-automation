@@ -13,8 +13,8 @@ def test_defaults_when_env_empty():
 
 
 def test_reads_and_casts_values():
-    settings = settings_from_env({"GEMINI_API_KEY": " abc ", "MAX_SHOT_SECONDS": "2.0", "PHOTO_RATIO": "0.25"})
-    assert settings.gemini_api_key == "abc"
+    settings = settings_from_env({"GEMINI_API_KEYS": " abc,def ", "MAX_SHOT_SECONDS": "2.0", "PHOTO_RATIO": "0.25"})
+    assert settings.gemini_api_keys == ("abc", "def")
     assert settings.max_shot_seconds == 2.0
     assert settings.photo_ratio == 0.25
 
@@ -31,17 +31,17 @@ def test_invalid_number_names_the_variable():
 
 
 def test_missing_env_lists_empty_keys_once():
-    settings = settings_from_env({"GEMINI_API_KEY": "x"})
-    assert missing_env(settings, ["GEMINI_API_KEY", "PEXELS_API_KEY", "PEXELS_API_KEY"]) == ["PEXELS_API_KEY"]
+    settings = settings_from_env({"GEMINI_API_KEYS": "x"})
+    assert missing_env(settings, ["GEMINI_API_KEYS", "PEXELS_API_KEY", "PEXELS_API_KEY"]) == ["PEXELS_API_KEY"]
 
 
 def test_environment_overrides_dotenv(tmp_path, monkeypatch):
     env_file = tmp_path / ".env"
-    env_file.write_text("GEMINI_API_KEY=from-file\nPEXELS_API_KEY=file-key\n", encoding="utf-8")
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    env_file.write_text("GEMINI_API_KEYS=from-file\nPEXELS_API_KEY=file-key\n", encoding="utf-8")
+    monkeypatch.delenv("GEMINI_API_KEYS", raising=False)
     monkeypatch.setenv("PEXELS_API_KEY", "")
     settings = load_settings(env_file)
-    assert settings.gemini_api_key == "from-file"
+    assert settings.gemini_api_keys == ("from-file",)
     assert settings.pexels_api_key == ""
 
 

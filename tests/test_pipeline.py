@@ -12,7 +12,7 @@ from mayzfact.text import script_text, text_hash
 from tests.factories import cand, fake_alignment, make_script
 
 VIDEO_ID = "i2xag_1OJfM"
-KEYS = {"gemini_api_key": "g", "elevenlabs_api_keys": ("e",), "elevenlabs_voice_id": "v", "pexels_api_key": "p", "pixabay_api_key": "x"}
+KEYS = {"gemini_api_keys": ("g",), "elevenlabs_api_keys": ("e",), "elevenlabs_voice_id": "v", "pexels_api_key": "p", "pixabay_api_key": "x"}
 SETTINGS = Settings(**KEYS, max_shot_seconds=10.0)
 TRANSCRIPT = [{"text": "Five ancient creatures are still alive today", "start": 0.0, "duration": 53.3}]
 NONE_DONE = {step: False for step in STEPS}
@@ -215,7 +215,7 @@ def test_short_audio_stops_before_clips(tmp_path, sine_mp3, make_video, make_pho
 
 
 def test_missing_keys_fail_before_any_step(world):
-    with pytest.raises(PipelineError, match="GEMINI_API_KEY.*ELEVENLABS_API_KEYS.*ELEVENLABS_VOICE_ID.*PEXELS_API_KEY.*PIXABAY_API_KEY"):
+    with pytest.raises(PipelineError, match="GEMINI_API_KEYS.*ELEVENLABS_API_KEYS.*ELEVENLABS_VOICE_ID.*PEXELS_API_KEY.*PIXABAY_API_KEY"):
         run(world, settings=Settings())
     assert not (world.runs / VIDEO_ID / "source.json").exists()
 
