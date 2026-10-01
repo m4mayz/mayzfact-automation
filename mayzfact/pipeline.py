@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -38,8 +39,8 @@ STEP_ENV = {
 NEW_VOICE_HINT = "Pakai --new-voice kalau emang mau naskah + suara baru (pakai kredit ElevenLabs)."
 
 
-def step_done(step: str, paths: RunPaths) -> bool:
-    outputs = {
+def step_outputs(step: str, paths: RunPaths) -> list[Path]:
+    return {
         "source": [paths.source_json],
         "script": [paths.script_json],
         "tts": [paths.voice_mp3, paths.tts_json],
@@ -47,7 +48,10 @@ def step_done(step: str, paths: RunPaths) -> bool:
         "timeline": [paths.timeline_json],
         "render": [paths.final_mp4],
     }[step]
-    return all(path.exists() for path in outputs)
+
+
+def step_done(step: str, paths: RunPaths) -> bool:
+    return all(path.exists() for path in step_outputs(step, paths))
 
 
 def plan_steps(done: dict[str, bool], voice_exists: bool, from_step: str | None, new_voice: bool) -> list[str]:
@@ -145,6 +149,15 @@ def run_pipeline(
     missing = missing_env(settings, [name for step in steps for name in STEP_ENV.get(step, [])])
     if missing:
         raise PipelineError("config", "Isi dulu di .env: " + ", ".join(missing))
+    missing_tools = [tool for tool in ("ffmpeg", "ffprobe") if shutil.which(tool) is None]
+    if missing_tools:
+        raise PipelineError("config", f"{', '.join(missing_tools)} nggak ketemu di PATH. Install ffmpeg dulu.")
+    # Output step yang mau diulang dihapus duluan, biar kalau gagal di tengah, run berikutnya nggak
+    # nganggep step itu udah selesai pakai file lama. File yang dikunci (naskah + suara) nggak disentuh.
+    for step in steps:
+        if step in AFTER_VOICE:
+            for path in step_outputs(step, paths):
+                path.unlink(missing_ok=True)
     deps = deps or real_deps(settings)
     voice_checked = False
     for step in steps:

@@ -26,6 +26,7 @@ class ElevenLabsTTS:
             "POST",
             TTS_URL.format(voice_id=self.voice_id),
             step="tts",
+            idempotent=False,
             params={"output_format": OUTPUT_FORMAT},
             headers={"xi-api-key": self._api_key},
             json={"text": text, "model_id": self.model_id},

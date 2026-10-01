@@ -22,6 +22,7 @@ from mayzfact.timing import beat_timings
 
 PROVIDER_ORDER = {"pexels": 0, "pixabay": 1}
 MIN_EXTRA_S = 0.5
+MAX_PICK_ATTEMPTS = 3
 
 
 @dataclass(frozen=True)
@@ -94,18 +95,6 @@ def pick_for_slot(
     )
 
 
-def select_clips(
-    slots: list[ShotSlot], beats: list[dict], fallback_query: str, search: MediaSearch, fg_min_ratio: float
-) -> list[tuple[ShotSlot, Candidate, str]]:
-    used: set[tuple[str, str]] = set()
-    picks: list[tuple[ShotSlot, Candidate, str]] = []
-    for slot in slots:
-        candidate, query = pick_for_slot(slot, beats[slot.beat], fallback_query, search, used, fg_min_ratio)
-        used.add((candidate.provider, candidate.id))
-        picks.append((slot, candidate, query))
-    return picks
-
-
 def materialize(
     slot: ShotSlot,
     candidate: Candidate,
@@ -120,16 +109,21 @@ def materialize(
     suffix = Path(urlparse(rendition.url).path).suffix.lower() or default_ext
     raw_name = f"{candidate.provider}_{candidate.kind}_{candidate.id}_{rendition.width}x{rendition.height}{suffix}"
     raw = download(client, rendition.url, media_cache / raw_name, step="clips")
-    if candidate.kind == "video":
-        dest = paths.clips_dir / f"shot_{slot.index + 1:02d}.mp4"
-        start = 0.5 if (candidate.duration_s or 0) >= slot.duration_s + 1.0 else 0.0
-        scale = downscale_factor(rendition.width, rendition.height, fg_min_ratio)
-        normalize_video(raw, dest, start_s=start, duration_s=slot.duration_s + 0.2, scale=scale)
-        info = probe(dest, "clips")
-        width, height = info["width"], info["height"]
-    else:
-        dest = paths.clips_dir / f"shot_{slot.index + 1:02d}.jpg"
-        width, height = normalize_photo(raw, dest, fg_min_ratio=fg_min_ratio)
+    try:
+        if candidate.kind == "video":
+            dest = paths.clips_dir / f"shot_{slot.index + 1:02d}.mp4"
+            start = 0.5 if (candidate.duration_s or 0) >= slot.duration_s + 1.0 else 0.0
+            scale = downscale_factor(rendition.width, rendition.height, fg_min_ratio)
+            normalize_video(raw, dest, start_s=start, duration_s=slot.duration_s + 0.2, scale=scale)
+            info = probe(dest, "clips")
+            width, height = info["width"], info["height"]
+        else:
+            dest = paths.clips_dir / f"shot_{slot.index + 1:02d}.jpg"
+            width, height = normalize_photo(raw, dest, fg_min_ratio=fg_min_ratio)
+    except (PipelineError, OSError, ValueError) as exc:
+        # File rusak jangan dipakai ulang dari cache di run berikutnya.
+        raw.unlink(missing_ok=True)
+        raise PipelineError("clips", f"File {raw.name} nggak bisa diproses: {exc}") from exc
     return {
         "index": slot.index,
         "beat": slot.beat,
@@ -161,14 +155,25 @@ def run_clips(
 ) -> dict:
     timings = beat_timings(beat_texts(script["beats"]), tts["alignment"], tts["duration_s"])
     slots = split_shots(timings, script["beats"], max_shot_s)
-    picks = select_clips(slots, script["beats"], script["fallback_query"], search, fg_min_ratio)
     paths.clips_dir.mkdir(parents=True, exist_ok=True)
     for old in paths.clips_dir.glob("shot_*"):
         old.unlink()
+    used: set[tuple[str, str]] = set()
     shots = []
-    for slot, candidate, query in picks:
-        log(f"[clips] shot {slot.index + 1}/{len(picks)}: {candidate.provider} {candidate.kind} {candidate.id} ({query})")
-        shots.append(materialize(slot, candidate, query, paths, client, media_cache, fg_min_ratio))
+    for slot in slots:
+        beat = script["beats"][slot.beat]
+        for attempt in range(MAX_PICK_ATTEMPTS):
+            candidate, query = pick_for_slot(slot, beat, script["fallback_query"], search, used, fg_min_ratio)
+            used.add((candidate.provider, candidate.id))
+            log(f"[clips] shot {slot.index + 1}/{len(slots)}: {candidate.provider} {candidate.kind} {candidate.id} ({query})")
+            try:
+                shots.append(materialize(slot, candidate, query, paths, client, media_cache, fg_min_ratio))
+                break
+            except PipelineError as exc:
+                # Link mati / file rusak: ganti ke kandidat berikutnya, jangan stop seluruh step.
+                if attempt == MAX_PICK_ATTEMPTS - 1:
+                    raise
+                log(f"[clips] {candidate.provider} {candidate.id} gagal dipakai, ganti klip: {exc.message[:120]}")
     data = {"shots": shots}
     write_json_atomic(paths.clips_json, data)
     return data

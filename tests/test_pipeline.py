@@ -224,3 +224,35 @@ def test_from_clips_does_not_need_gemini_or_elevenlabs_keys(world):
     run(world)
     run(world, from_step="clips", settings=Settings(pexels_api_key="p", pixabay_api_key="x", max_shot_seconds=10.0))
     assert world.renders == 2
+
+
+def test_failed_render_is_retried_on_next_plain_run(world):
+    paths = run(world)
+    original_render = world.deps.render
+
+    def failing_render(p):
+        raise PipelineError("render", "Remotion gagal")
+
+    world.deps.render = failing_render
+    with pytest.raises(PipelineError):
+        run(world, from_step="clips")
+    assert not paths.final_mp4.exists()
+
+    world.deps.render = original_render
+    run(world)
+    assert paths.final_mp4.read_bytes() == b"fake-mp4"
+    assert world.renders == 2
+    assert world.tts.calls == 1
+
+
+def test_missing_ffmpeg_fails_before_any_step(world, monkeypatch):
+    monkeypatch.setattr("mayzfact.pipeline.shutil.which", lambda name: None)
+    with pytest.raises(PipelineError, match="ffmpeg"):
+        run(world)
+    assert not (world.runs / VIDEO_ID / "source.json").exists()
+
+
+def test_clips_are_unique_across_shots(world):
+    paths = run(world)
+    ids = [(s["provider"], s["provider_id"]) for s in read_json(paths.clips_json)["shots"]]
+    assert len(ids) == len(set(ids)) == 8

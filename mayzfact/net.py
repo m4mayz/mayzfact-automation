@@ -49,16 +49,25 @@ def _http_retryable(exc: Exception) -> bool:
     return isinstance(exc, (RetryableHttpError, httpx.TransportError))
 
 
+def _connect_retryable(exc: Exception) -> bool:
+    """Buat request berbayar: retry cuma kalau request jelas belum diproses server."""
+    return isinstance(exc, (RetryableHttpError, httpx.ConnectError, httpx.ConnectTimeout))
+
+
 def request_json(
     client: httpx.Client,
     method: str,
     url: str,
     *,
     step: str,
+    idempotent: bool = True,
     sleep: Callable[[float], None] = time.sleep,
     **kwargs,
 ) -> dict:
-    """Request yang ngarepin JSON. Error 4xx selain 429 langsung stop tanpa retry."""
+    """Request yang ngarepin JSON. Error 4xx selain 429 langsung stop tanpa retry.
+
+    idempotent=False (request berbayar): read timeout/putus nggak di-retry, karena server mungkin udah nagih.
+    """
 
     def call() -> dict:
         response = client.request(method, url, **kwargs)
@@ -68,7 +77,8 @@ def request_json(
             raise PipelineError(step, f"{method} {url} -> HTTP {response.status_code}: {response.text[:300]}")
         return response.json()
 
-    return retry_call(call, is_retryable=_http_retryable, step=step, what=f"{method} {url}", sleep=sleep)
+    is_retryable = _http_retryable if idempotent else _connect_retryable
+    return retry_call(call, is_retryable=is_retryable, step=step, what=f"{method} {url}", sleep=sleep)
 
 
 def download(

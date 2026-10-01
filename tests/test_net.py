@@ -83,3 +83,30 @@ def test_retry_call_wraps_non_retryable_errors():
 
     with pytest.raises(PipelineError, match=r"\[script\] Gemini gagal: nope"):
         retry_call(boom, is_retryable=lambda e: False, step="script", what="Gemini", sleep=lambda s: None)
+
+
+def test_non_idempotent_request_is_not_retried_on_read_timeout():
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        raise httpx.ReadTimeout("slow", request=request)
+
+    with pytest.raises(PipelineError, match="ReadTimeout|slow"):
+        request_json(client_with(handler), "POST", "https://api.test/tts", step="tts", idempotent=False, sleep=lambda s: None)
+    assert len(calls) == 1
+
+
+def test_non_idempotent_request_still_retries_connect_errors_and_429():
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        if len(calls) == 1:
+            raise httpx.ConnectError("down", request=request)
+        if len(calls) == 2:
+            return httpx.Response(429)
+        return httpx.Response(200, json={"ok": True})
+
+    assert request_json(client_with(handler), "POST", "https://api.test/tts", step="tts", idempotent=False, sleep=lambda s: None) == {"ok": True}
+    assert len(calls) == 3

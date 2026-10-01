@@ -44,3 +44,20 @@ def test_list_voices_normalizes_labels():
     ]
     assert seen[0].url.path == "/v1/voices"
     assert seen[0].headers["xi-api-key"] == "secret"
+
+
+def test_synthesize_does_not_retry_read_timeout():
+    import pytest
+
+    from mayzfact.errors import PipelineError
+
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        raise httpx.ReadTimeout("slow", request=request)
+
+    tts = ElevenLabsTTS("secret", "voice123", "eleven_v3", httpx.Client(transport=httpx.MockTransport(handler)))
+    with pytest.raises(PipelineError):
+        tts.synthesize("Hi")
+    assert len(calls) == 1

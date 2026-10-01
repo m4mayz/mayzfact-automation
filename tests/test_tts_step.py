@@ -42,3 +42,24 @@ def test_run_tts_writes_voice_and_metadata(tmp_path, sine_mp3):
     assert saved["alignment"]["characters"][0] == "L"
     assert "24 karakter" in logs[0]
     assert sorted(p.name for p in tmp_path.iterdir()) == ["tts.json", "voice.mp3"]
+
+
+def test_failed_measure_does_not_bill_elevenlabs_twice(tmp_path, sine_mp3):
+    from mayzfact.errors import PipelineError
+
+    paths = RunPaths(tmp_path)
+    tts = FakeTTS(sine_mp3.read_bytes())
+
+    def broken_measure(path):
+        raise PipelineError("tts", "ffprobe gagal")
+
+    import pytest
+
+    with pytest.raises(PipelineError):
+        run_tts(paths, SCRIPT, tts, log=lambda m: None, measure=broken_measure)
+    assert not paths.voice_mp3.exists()
+
+    run_tts(paths, SCRIPT, tts, log=lambda m: None)
+    assert len(tts.texts) == 1
+    assert paths.voice_mp3.read_bytes() == sine_mp3.read_bytes()
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["tts.json", "voice.mp3"]

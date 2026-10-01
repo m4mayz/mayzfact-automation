@@ -1,7 +1,7 @@
 import pytest
 
 from mayzfact.errors import PipelineError
-from mayzfact.steps.clips import ShotSlot, choose_candidate, pick_for_slot, select_clips, split_shots
+from mayzfact.steps.clips import ShotSlot, choose_candidate, pick_for_slot, split_shots
 from tests.factories import cand
 
 
@@ -74,10 +74,3 @@ def test_pick_raises_when_nothing_found():
     with pytest.raises(PipelineError, match="Beat 1"):
         pick_for_slot(slot(), BEAT, "animals", FakeSearch({}), set(), 0.5)
 
-
-def test_select_clips_never_reuses_a_clip():
-    a, b = cand("pexels", "a", rank=0), cand("pexels", "b", rank=1)
-    search = FakeSearch({("video", "horseshoe crab"): [a, b]})
-    slots = [slot(start=0.0, end=2.0), ShotSlot(index=1, beat=0, start_s=2.0, end_s=4.0, media="video")]
-    picks = select_clips(slots, [BEAT], "animals", search, 0.5)
-    assert [(s.index, c.id) for s, c, _ in picks] == [(0, "a"), (1, "b")]

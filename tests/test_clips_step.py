@@ -48,3 +48,43 @@ def test_run_clips_downloads_normalizes_and_writes_credits(tmp_path, make_video,
     assert abs(probe(paths.clips_dir / "shot_01.mp4", "clips")["duration_s"] - 1.6) < 0.1
     assert sorted(p.name for p in paths.clips_dir.iterdir()) == ["shot_01.mp4", "shot_02.jpg"]
     assert len(list((tmp_path / "media").iterdir())) == 2
+
+
+class TwoCandidateSearch:
+    def candidates(self, kind, query):
+        if kind == "video":
+            return [
+                cand("pexels", "dead", "video", 1080, 1920, duration_s=10.0, rank=0, url="https://cdn.test/dead.mp4"),
+                cand("pexels", "ok", "video", 1080, 1920, duration_s=10.0, rank=1, url="https://cdn.test/ok.mp4"),
+            ]
+        return [cand("pixabay", "p1", "photo", 1600, 1000, url="https://cdn.test/p1.jpg")]
+
+
+def _run_with(tmp_path, files):
+    def handler(request):
+        body = files.get(request.url.path)
+        return httpx.Response(404) if body is None else httpx.Response(200, content=body)
+
+    paths = RunPaths(tmp_path / "run")
+    data = run_clips(
+        paths, SCRIPT, TTS, TwoCandidateSearch(), httpx.Client(transport=httpx.MockTransport(handler)),
+        max_shot_s=2.5, fg_min_ratio=0.5, media_cache=tmp_path / "media", log=lambda message: None,
+    )
+    return data
+
+
+def test_dead_link_is_replaced_by_next_candidate(tmp_path, make_video, make_photo):
+    files = {"/ok.mp4": make_video(1080, 1920, 5.0).read_bytes(), "/p1.jpg": make_photo(1600, 1000).read_bytes()}
+    data = _run_with(tmp_path, files)
+    assert data["shots"][0]["provider_id"] == "ok"
+
+
+def test_broken_file_is_replaced_and_removed_from_cache(tmp_path, make_video, make_photo):
+    files = {
+        "/dead.mp4": b"bukan video",
+        "/ok.mp4": make_video(1080, 1920, 5.0).read_bytes(),
+        "/p1.jpg": make_photo(1600, 1000).read_bytes(),
+    }
+    data = _run_with(tmp_path, files)
+    assert data["shots"][0]["provider_id"] == "ok"
+    assert not any("dead" in p.name for p in (tmp_path / "media").iterdir())
