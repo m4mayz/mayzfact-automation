@@ -4,11 +4,21 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Protocol
+from pathlib import Path
+from typing import Callable, Protocol
+from urllib.parse import urlparse
+
+import httpx
 
 from mayzfact.errors import PipelineError
-from mayzfact.media import tier
+from mayzfact.ffmpeg import normalize_video, probe
+from mayzfact.media import downscale_factor, pick_rendition, tier
+from mayzfact.net import download
+from mayzfact.photo import normalize_photo
 from mayzfact.providers.types import Candidate
+from mayzfact.store import RunPaths, write_json_atomic
+from mayzfact.text import beat_texts
+from mayzfact.timing import beat_timings
 
 PROVIDER_ORDER = {"pexels": 0, "pixabay": 1}
 MIN_EXTRA_S = 0.5
@@ -94,3 +104,71 @@ def select_clips(
         used.add((candidate.provider, candidate.id))
         picks.append((slot, candidate, query))
     return picks
+
+
+def materialize(
+    slot: ShotSlot,
+    candidate: Candidate,
+    query: str,
+    paths: RunPaths,
+    client: httpx.Client,
+    media_cache: Path,
+    fg_min_ratio: float,
+) -> dict:
+    rendition = pick_rendition(candidate, fg_min_ratio)
+    default_ext = ".mp4" if candidate.kind == "video" else ".jpg"
+    suffix = Path(urlparse(rendition.url).path).suffix.lower() or default_ext
+    raw_name = f"{candidate.provider}_{candidate.kind}_{candidate.id}_{rendition.width}x{rendition.height}{suffix}"
+    raw = download(client, rendition.url, media_cache / raw_name, step="clips")
+    if candidate.kind == "video":
+        dest = paths.clips_dir / f"shot_{slot.index + 1:02d}.mp4"
+        start = 0.5 if (candidate.duration_s or 0) >= slot.duration_s + 1.0 else 0.0
+        scale = downscale_factor(rendition.width, rendition.height, fg_min_ratio)
+        normalize_video(raw, dest, start_s=start, duration_s=slot.duration_s + 0.2, scale=scale)
+        info = probe(dest, "clips")
+        width, height = info["width"], info["height"]
+    else:
+        dest = paths.clips_dir / f"shot_{slot.index + 1:02d}.jpg"
+        width, height = normalize_photo(raw, dest, fg_min_ratio=fg_min_ratio)
+    return {
+        "index": slot.index,
+        "beat": slot.beat,
+        "start_s": slot.start_s,
+        "end_s": slot.end_s,
+        "kind": candidate.kind,
+        "file": f"clips/{dest.name}",
+        "width": width,
+        "height": height,
+        "provider": candidate.provider,
+        "provider_id": candidate.id,
+        "page_url": candidate.page_url,
+        "author": candidate.author,
+        "query": query,
+    }
+
+
+def run_clips(
+    paths: RunPaths,
+    script: dict,
+    tts: dict,
+    search: MediaSearch,
+    client: httpx.Client,
+    *,
+    max_shot_s: float,
+    fg_min_ratio: float,
+    media_cache: Path,
+    log: Callable[[str], None] = print,
+) -> dict:
+    timings = beat_timings(beat_texts(script["beats"]), tts["alignment"], tts["duration_s"])
+    slots = split_shots(timings, script["beats"], max_shot_s)
+    picks = select_clips(slots, script["beats"], script["fallback_query"], search, fg_min_ratio)
+    paths.clips_dir.mkdir(parents=True, exist_ok=True)
+    for old in paths.clips_dir.glob("shot_*"):
+        old.unlink()
+    shots = []
+    for slot, candidate, query in picks:
+        log(f"[clips] shot {slot.index + 1}/{len(picks)}: {candidate.provider} {candidate.kind} {candidate.id} ({query})")
+        shots.append(materialize(slot, candidate, query, paths, client, media_cache, fg_min_ratio))
+    data = {"shots": shots}
+    write_json_atomic(paths.clips_json, data)
+    return data

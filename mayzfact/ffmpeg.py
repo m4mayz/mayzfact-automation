@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
 from mayzfact.errors import PipelineError
+from mayzfact.store import tmp_path_for
 
 
 def _run(cmd: list[str], step: str) -> str:
@@ -37,3 +39,18 @@ def audio_duration(path: Path) -> float:
     if not duration:
         raise PipelineError("tts", f"Durasi {path.name} nggak kebaca.")
     return duration
+
+
+def normalize_video(src: Path, dest: Path, *, start_s: float, duration_s: float, scale: float) -> None:
+    """Potong, ubah ke 30fps H.264 yuv420p tanpa audio, resize pakai faktor `scale` (dimensi dibikin genap)."""
+    vf = f"scale=trunc(iw*{scale:.6f}/2)*2:trunc(ih*{scale:.6f}/2)*2:flags=lanczos,fps=30,format=yuv420p"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    tmp = tmp_path_for(dest)
+    _run(
+        [
+            "ffmpeg", "-y", "-v", "error", "-ss", f"{start_s:.3f}", "-i", str(src), "-t", f"{duration_s:.3f}",
+            "-an", "-vf", vf, "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-movflags", "+faststart", str(tmp),
+        ],
+        "clips",
+    )
+    os.replace(tmp, dest)
