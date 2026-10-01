@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import subprocess
+from pathlib import Path
+
 from mayzfact.models import Beat, Script
 
 
@@ -26,3 +29,11 @@ def fake_alignment(text: str, total_s: float) -> dict:
         "character_start_times_seconds": [round(i * step, 4) for i in range(len(text))],
         "character_end_times_seconds": [round((i + 1) * step, 4) for i in range(len(text))],
     }
+
+
+def stream_types(path: Path) -> list[str]:
+    out = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "stream=codec_type", "-of", "csv=p=0", str(path)],
+        capture_output=True, text=True, check=True,
+    )
+    return [line.strip() for line in out.stdout.splitlines() if line.strip()]
