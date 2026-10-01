@@ -16,3 +16,13 @@ def make_script(n_beats: int = 10, photo_every: int = 3, words_per_beat: int = 1
         for i in range(n_beats)
     ]
     return Script(beats=beats, fallback_query="ocean animals")
+
+
+def fake_alignment(text: str, total_s: float) -> dict:
+    """Alignment ala ElevenLabs: tiap karakter dapat jatah waktu yang sama."""
+    step = total_s / max(1, len(text))
+    return {
+        "characters": list(text),
+        "character_start_times_seconds": [round(i * step, 4) for i in range(len(text))],
+        "character_end_times_seconds": [round((i + 1) * step, 4) for i in range(len(text))],
+    }
