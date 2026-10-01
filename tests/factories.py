@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 from mayzfact.models import Beat, Script
+from mayzfact.providers.types import Candidate, Rendition
 
 
 def make_script(n_beats: int = 10, photo_every: int = 3, words_per_beat: int = 11) -> Script:
@@ -37,3 +38,26 @@ def stream_types(path: Path) -> list[str]:
         capture_output=True, text=True, check=True,
     )
     return [line.strip() for line in out.stdout.splitlines() if line.strip()]
+
+
+def cand(
+    provider: str,
+    id: str,
+    kind: str = "video",
+    width: int = 1080,
+    height: int = 1920,
+    duration_s: float | None = 20.0,
+    rank: int = 0,
+    url: str | None = None,
+) -> Candidate:
+    ext = "mp4" if kind == "video" else "jpg"
+    return Candidate(
+        provider=provider,
+        id=id,
+        kind=kind,
+        duration_s=duration_s if kind == "video" else None,
+        page_url=f"https://{provider}.test/{id}",
+        author="tester",
+        renditions=(Rendition(url or f"https://cdn.test/{provider}_{id}.{ext}", width, height),),
+        rank=rank,
+    )
