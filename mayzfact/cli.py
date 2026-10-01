@@ -38,10 +38,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _print_voices(settings: Settings) -> int:
-    missing = missing_env(settings, ["ELEVENLABS_API_KEY"])
+    missing = missing_env(settings, ["ELEVENLABS_API_KEYS"])
     if missing:
         raise PipelineError("voices", "Isi dulu di .env: " + ", ".join(missing))
-    for voice in list_voices(settings.elevenlabs_api_key, make_client()):
+    for voice in list_voices(settings.elevenlabs_api_keys, make_client()):
         labels = ", ".join(f"{key}={value}" for key, value in voice["labels"].items())
         print(f"{voice['voice_id']}  {voice['name']}  {labels}")
     return 0

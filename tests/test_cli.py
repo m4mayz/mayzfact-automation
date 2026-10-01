@@ -39,4 +39,4 @@ def test_cli_prints_pipeline_error(monkeypatch, capsys):
 def test_cli_voices_needs_key(monkeypatch, capsys):
     monkeypatch.setattr(cli, "load_settings", lambda: Settings())
     assert cli.main(["voices"]) == 1
-    assert "ELEVENLABS_API_KEY" in capsys.readouterr().err
+    assert "ELEVENLABS_API_KEYS" in capsys.readouterr().err

@@ -39,6 +39,14 @@ def retry_call(
     raise AssertionError("unreachable")
 
 
+class HttpStatusError(PipelineError):
+    """HTTP 4xx yang nggak di-retry. `status` dipakai caller, misal buat ganti API key."""
+
+    def __init__(self, step: str, message: str, status: int) -> None:
+        super().__init__(step, message)
+        self.status = status
+
+
 class RetryableHttpError(Exception):
     def __init__(self, status: int, body: str) -> None:
         super().__init__(f"HTTP {status}: {body[:300]}")
@@ -74,7 +82,9 @@ def request_json(
         if response.status_code in RETRYABLE_STATUS:
             raise RetryableHttpError(response.status_code, response.text)
         if response.status_code >= 400:
-            raise PipelineError(step, f"{method} {url} -> HTTP {response.status_code}: {response.text[:300]}")
+            raise HttpStatusError(
+                step, f"{method} {url} -> HTTP {response.status_code}: {response.text[:300]}", response.status_code
+            )
         return response.json()
 
     is_retryable = _http_retryable if idempotent else _connect_retryable

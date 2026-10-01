@@ -156,6 +156,7 @@ class Script(BaseModel):
 - Step ini dikunci begitu `voice.mp3` ada (lihat 3.4). ElevenLabs cuma dipanggil kalau `voice.mp3` belum ada, atau kalau pakai `--new-voice`.
 - Seluruh naskah (teks beat digabung pakai spasi) dikirim dalam **1 request** `text_to_speech.convert_with_timestamps`, biar intonasinya nyambung.
 - Voice dari `ELEVENLABS_VOICE_ID`, model dari `ELEVENLABS_MODEL`.
+- Key dari `ELEVENLABS_API_KEYS` dicoba berurutan. Kalau satu key ditolak (401/402/403: kuota habis, key salah, izin kurang), pindah ke key berikutnya. Error lain langsung stop.
 - Simpan `voice.mp3` dan `tts.json`. Isi `tts.json`: alignment per karakter, durasi audio (diukur pakai ffprobe), hash teks naskah, voice id, dan model.
 - **Timing beat** dihitung dari alignment di `tts.json`, dan dipakai step clips. Posisi karakter tiap beat dicocokin ke alignment:
   - Beat pertama mulai di 0.0.
@@ -301,9 +302,9 @@ npx remotion render src/index.ts ShortVideo ../runs/<id>/final.mp4 --props=../ru
 | --- | --- | --- |
 | `GEMINI_API_KEY` | – | wajib |
 | `GEMINI_MODEL` | `gemini-3.8-flash` | nama persisnya dicek lagi pas implementasi |
-| `ELEVENLABS_API_KEY` | – | wajib |
-| `ELEVENLABS_VOICE_ID` | – | wajib, voice English pria nada "teacher for kids" |
-| `ELEVENLABS_MODEL` | `eleven_v3` | dicek lagi pas implementasi |
+| `ELEVENLABS_API_KEYS` | – | wajib. Beberapa key dipisah koma tanpa spasi; dicoba berurutan, pindah ke key berikutnya kalau ditolak (401/402/403) |
+| `ELEVENLABS_VOICE_ID` | `TX3LPaxmHKxFdv7VOQHJ` | Liam (default voice, pria muda Amerika). Lihat D-009 |
+| `ELEVENLABS_MODEL` | `eleven_v3` | udah dites: alignment cocok persis |
 | `PEXELS_API_KEY` | – | wajib |
 | `PIXABAY_API_KEY` | – | wajib |
 | `TARGET_DURATION_RATIO` | `0.6` | target durasi relatif ke source |
@@ -360,7 +361,7 @@ Angka lain (2.6 kata/detik, batas overlap 15%, zoom 1.08, batas rasio 0.75) jadi
 ## 9. Prasyarat (disiapin Akmal)
 
 - `GEMINI_API_KEY` dari Google AI Studio.
-- `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID`. Pas implementasi, voice dari akun bisa di-list dulu biar tinggal dipilih.
+- `ELEVENLABS_API_KEYS` (boleh lebih dari 1, dipisah koma). Voice udah dipilih: Liam (D-009).
 - `PEXELS_API_KEY` dan `PIXABAY_API_KEY` (gratis).
 - Node 22: udah terinstall di nvm, tinggal `nvm use 22.23.1`.
 

@@ -43,3 +43,9 @@ def test_environment_overrides_dotenv(tmp_path, monkeypatch):
     settings = load_settings(env_file)
     assert settings.gemini_api_key == "from-file"
     assert settings.pexels_api_key == ""
+
+
+def test_elevenlabs_keys_are_split_by_comma():
+    settings = settings_from_env({"ELEVENLABS_API_KEYS": "k1,k2,,k3 "})
+    assert settings.elevenlabs_api_keys == ("k1", "k2", "k3")
+    assert missing_env(settings_from_env({}), ["ELEVENLABS_API_KEYS"]) == ["ELEVENLABS_API_KEYS"]

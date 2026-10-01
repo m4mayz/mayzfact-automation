@@ -63,3 +63,26 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   - Test otomatis selalu pakai response palsu.
 - **Konsekuensi:** mau ganti naskah berarti bayar TTS lagi lewat `--new-voice`. `voice.mp3` jangan dihapus.
 - **Authority:** permintaan Akmal (chat 2026-09-30). Mekanisme kunci + flag dari agent, dikonfirmasi pas review spec.
+
+## D-008 — 2026-10-01 — ElevenLabs pakai banyak API key
+
+- **Status:** accepted
+- **Konteks:** Akmal punya 9 key ElevenLabs. Semua key cuma punya izin TTS: `user_read` dan `voices_read` ditolak, jadi sisa kredit nggak bisa dicek duluan.
+- **Keputusan:**
+  - Key ditulis di `ELEVENLABS_API_KEYS`, dipisah koma tanpa spasi.
+  - Key dicoba berurutan. Kalau HTTP 401/402/403 (kuota habis, key salah, izin kurang), pindah ke key berikutnya. Request yang ditolak nggak makan kredit.
+  - Error lain (400, 5xx yang udah di-retry, timeout) langsung stop tanpa ganti key, biar nggak ketagih dobel.
+  - Pesan error cuma nyebut nomor key, bukan isinya.
+- **Konsekuensi:** key yang kuotanya udah habis tetap dicoba duluan tiap run. Requestnya ditolak cepat dan gratis.
+- **Authority:** permintaan Akmal (chat 2026-10-01). Aturan fallback-nya dari agent.
+
+## D-009 — 2026-10-01 — Voice Liam + model eleven_v3
+
+- **Status:** accepted
+- **Konteks:** Akmal minta agent milih sendiri voice pria yang cocok buat nada "teacher for kids". Key-nya nggak bisa baca Voice Library, jadi pilihannya dari default voice.
+- **Keputusan:**
+  - `ELEVENLABS_VOICE_ID=TX3LPaxmHKxFdv7VOQHJ` (Liam: pria muda Amerika, confident, buat social media).
+  - `ELEVENLABS_MODEL=eleven_v3`, karena paling ekspresif.
+  - Udah dites pakai 1 request pendek: `with-timestamps` jalan, dan alignment-nya cocok persis sama teks.
+- **Konsekuensi:** ElevenLabs bakal matiin default voice tanggal 2026-12-31. Pengganti resmi Liam adalah "Lawrence - Bright and Informative". ID-nya belum ketemu karena key nggak punya izin `voices_read`. Sebelum 2026-12-31, ganti `ELEVENLABS_VOICE_ID` ke Lawrence atau voice lain.
+- **Authority:** pilihan agent atas permintaan Akmal (chat 2026-10-01).

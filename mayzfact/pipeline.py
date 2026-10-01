@@ -33,7 +33,7 @@ AFTER_VOICE = ("clips", "timeline", "render")
 MIN_AUDIO_SECONDS = 30.0
 STEP_ENV = {
     "script": ["GEMINI_API_KEY"],
-    "tts": ["ELEVENLABS_API_KEY", "ELEVENLABS_VOICE_ID"],
+    "tts": ["ELEVENLABS_API_KEYS", "ELEVENLABS_VOICE_ID"],
     "clips": ["PEXELS_API_KEY", "PIXABAY_API_KEY"],
 }
 NEW_VOICE_HINT = "Pakai --new-voice kalau emang mau naskah + suara baru (pakai kredit ElevenLabs)."
@@ -121,7 +121,7 @@ def real_deps(settings: Settings) -> Deps:
         fetch_transcript=youtube_transcript,
         script_writer=lambda: GeminiScriptWriter(settings.gemini_api_key, settings.gemini_model),
         tts=lambda: ElevenLabsTTS(
-            settings.elevenlabs_api_key, settings.elevenlabs_voice_id, settings.elevenlabs_model, http()
+            settings.elevenlabs_api_keys, settings.elevenlabs_voice_id, settings.elevenlabs_model, http()
         ),
         search=search,
         http=http,

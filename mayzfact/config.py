@@ -20,7 +20,7 @@ CACHE_DIR = PROJECT_ROOT / "cache"
 class Settings:
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.8-flash"
-    elevenlabs_api_key: str = ""
+    elevenlabs_api_keys: tuple[str, ...] = ()
     elevenlabs_voice_id: str = ""
     elevenlabs_model: str = "eleven_v3"
     pexels_api_key: str = ""
@@ -35,7 +35,7 @@ class Settings:
 ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
     "GEMINI_API_KEY": ("gemini_api_key", str),
     "GEMINI_MODEL": ("gemini_model", str),
-    "ELEVENLABS_API_KEY": ("elevenlabs_api_key", str),
+    "ELEVENLABS_API_KEYS": ("elevenlabs_api_keys", lambda raw: tuple(k.strip() for k in raw.split(",") if k.strip())),
     "ELEVENLABS_VOICE_ID": ("elevenlabs_voice_id", str),
     "ELEVENLABS_MODEL": ("elevenlabs_model", str),
     "PEXELS_API_KEY": ("pexels_api_key", str),
