@@ -12,9 +12,10 @@ Rules:
 - It must sound natural read aloud by an energetic, friendly male voice, like a teacher talking to curious kids.
 - Keep the source's call to action (like, subscribe, comment), but say it in new words.
 - You may make the hook stronger, as long as the core message stays the same.
+- If the source counts items (for example "Number five ... number one"), keep the same numbering and the same order, and announce every item the same way. Never mix the countdown with words like "first", "next", "then" or "finally".
 - No emojis, hashtags, stage directions, sound effects or text in brackets.
 
-Split the narration into beats. One beat is one short sentence or clause that carries one visual idea, usually 1.5 to 3.5 seconds when spoken.
+Split the narration into beats. One beat is one short sentence or clause that carries one visual idea, 1.5 to 3.5 seconds when spoken. Every beat has at most 10 words: split longer sentences into several beats, and give each beat its own search terms for what is visible at that moment.
 
 For every beat return:
 - "text": the narration of the beat.

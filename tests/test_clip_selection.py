@@ -19,11 +19,11 @@ def test_split_shots_respects_max_duration_and_media():
     timings = [{"start_s": 0.0, "end_s": 2.4}, {"start_s": 2.4, "end_s": 6.4}, {"start_s": 6.4, "end_s": 7.0}]
     beats = [{"media": "video"}, {"media": "photo"}, {"media": "video"}]
     slots = split_shots(timings, beats, 2.5)
-    assert [(s.index, s.beat, s.start_s, s.end_s, s.media) for s in slots] == [
-        (0, 0, 0.0, 2.4, "video"),
-        (1, 1, 2.4, 4.4, "photo"),
-        (2, 1, 4.4, 6.4, "photo"),
-        (3, 2, 6.4, 7.0, "video"),
+    assert [(s.index, s.beat, s.part, s.start_s, s.end_s, s.media) for s in slots] == [
+        (0, 0, 0, 0.0, 2.4, "video"),
+        (1, 1, 0, 2.4, 4.4, "photo"),
+        (2, 1, 1, 4.4, 6.4, "photo"),
+        (3, 2, 0, 6.4, 7.0, "video"),
     ]
 
 
@@ -74,3 +74,11 @@ def test_pick_raises_when_nothing_found():
     with pytest.raises(PipelineError, match="Beat 1"):
         pick_for_slot(slot(), BEAT, "animals", FakeSearch({}), set(), 0.5)
 
+
+
+def test_second_shot_of_a_beat_starts_from_the_second_query():
+    first, second = cand("pexels", "1"), cand("pexels", "2")
+    search = FakeSearch({("video", "horseshoe crab"): [first], ("video", "crab beach"): [second]})
+    slot2 = ShotSlot(index=1, beat=0, start_s=2.0, end_s=4.0, media="video", part=1)
+    assert pick_for_slot(slot2, BEAT, "animals", search, set(), 0.5) == (second, "crab beach")
+    assert search.calls[0] == ("video", "crab beach")

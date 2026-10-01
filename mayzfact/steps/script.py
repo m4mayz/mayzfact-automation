@@ -15,6 +15,7 @@ WORDS_PER_SECOND = 2.6
 WORD_TOLERANCE = 0.15
 PHOTO_SHARE_RANGE = (0.15, 0.45)
 MAX_NGRAM_OVERLAP = 0.15
+MAX_BEAT_WORDS = 10  # ±3.5 detik dengan 2.6 kata/detik
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "rewrite.md"
 
 
@@ -57,6 +58,11 @@ def check_script(script: Script, source_text: str, duration_s: float) -> tuple[l
     for number, beat in enumerate(script.beats, start=1):
         if not beat.text:
             problems.append(f"Beat {number} has empty text.")
+        beat_words = len(words(beat.text))
+        if beat_words > MAX_BEAT_WORDS:
+            problems.append(
+                f"Beat {number} has {beat_words} words; split it so every beat has at most {MAX_BEAT_WORDS} words."
+            )
         if not beat.queries:
             problems.append(f"Beat {number} has no search queries.")
     if not script.fallback_query:

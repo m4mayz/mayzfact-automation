@@ -32,6 +32,7 @@ def test_generate_script_passes_on_first_try():
     assert data["beats"][0] == {"text": make_script().beats[0].text, "media": "video", "queries": ["query 0", "animal close up"]}
     assert len(writer.prompts) == 1
     assert "Split the narration into beats" in writer.prompts[0][0]
+    assert "same numbering" in writer.prompts[0][0]
 
 
 def test_generate_script_retries_once_with_feedback():

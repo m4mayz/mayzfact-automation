@@ -108,3 +108,21 @@ def test_writer_reports_when_all_keys_fail():
     with pytest.raises(PipelineError, match="Semua 2 key Gemini") as exc:
         GeminiScriptWriter(["k1", "k2"], "gemini-test", client_factory=factory).write("s", "u")
     assert "k1" not in str(exc.value)
+
+
+def test_server_overload_is_retried_with_long_backoff():
+    class FlakyModels:
+        def __init__(self):
+            self.calls = 0
+
+        def generate_content(self, *, model, contents, config):
+            self.calls += 1
+            if self.calls < 3:
+                raise FakeApiError(503, "UNAVAILABLE high demand")
+            return SimpleNamespace(text=VALID_JSON)
+
+    client = SimpleNamespace(models=FlakyModels())
+    sleeps = []
+    writer = GeminiScriptWriter(["k1"], "gemini-test", client_factory=lambda key: client, sleep=sleeps.append)
+    assert len(writer.write("s", "u").beats) == 2
+    assert sleeps == [5.0, 10.0]

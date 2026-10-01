@@ -92,3 +92,11 @@ def test_user_prompt_has_targets_transcript_and_feedback():
     assert "Your previous answer was rejected:" in retry
     assert "- Too short." in retry
     assert '"fallback_query":"ocean animals"' in retry
+
+
+def test_long_beat_is_reported():
+    script = make_script()
+    long_beat = script.beats[1].model_copy(update={"text": " ".join(f"x{j}" for j in range(12)) + "."})
+    script = script.model_copy(update={"beats": [script.beats[0], long_beat, *script.beats[2:]]})
+    problems, _ = check_script(script, SOURCE_TEXT, DURATION)
+    assert any(p.startswith("Beat 2 has 12 words") for p in problems)

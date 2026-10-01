@@ -32,6 +32,7 @@ class ShotSlot:
     start_s: float
     end_s: float
     media: str
+    part: int = 0  # urutan shot di dalam beat-nya (0 = shot pertama)
 
     @property
     def duration_s(self) -> float:
@@ -51,7 +52,7 @@ def split_shots(timings: list[dict], beats: list[dict], max_shot_s: float) -> li
         for k in range(count):
             shot_start = start + k * step
             shot_end = end if k == count - 1 else start + (k + 1) * step
-            slots.append(ShotSlot(len(slots), beat_index, round(shot_start, 3), round(shot_end, 3), beat["media"]))
+            slots.append(ShotSlot(len(slots), beat_index, round(shot_start, 3), round(shot_end, 3), beat["media"], k))
     return slots
 
 
@@ -79,9 +80,14 @@ def pick_for_slot(
     fg_min_ratio: float,
 ) -> tuple[Candidate, str]:
     other = "photo" if slot.media == "video" else "video"
+    # Shot ke-2, ke-3 dari beat yang sama mulai dari query berikutnya, biar visualnya nggak seragam.
+    queries = list(beat["queries"])
+    if queries:
+        start = slot.part % len(queries)
+        queries = queries[start:] + queries[:start]
     attempts = (
-        [(slot.media, q) for q in beat["queries"]]
-        + [(other, q) for q in beat["queries"]]
+        [(slot.media, q) for q in queries]
+        + [(other, q) for q in queries]
         + [(slot.media, fallback_query), (other, fallback_query)]
     )
     min_duration = slot.duration_s + MIN_EXTRA_S

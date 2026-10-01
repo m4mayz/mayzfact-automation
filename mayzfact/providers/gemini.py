@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any, Callable, Sequence
 
 from google import genai
@@ -15,6 +16,8 @@ from mayzfact.net import retry_call
 SERVER_ERROR_STATUS = {500, 502, 503, 504}
 # Kena limit atau key ditolak: pindah ke key berikutnya, jangan nunggu di key yang sama.
 KEY_SWITCH_STATUS = {401, 403, 429}
+# Overload Gemini (503 "high demand") biasanya butuh puluhan detik buat reda: jeda 5s, 10s, 20s.
+SERVER_BACKOFF_S = 5.0
 
 
 def _gemini_retryable(exc: Exception) -> bool:
@@ -29,12 +32,17 @@ def _key_rejected(exc: BaseException | None) -> bool:
 
 class GeminiScriptWriter:
     def __init__(
-        self, api_keys: Sequence[str], model: str, client_factory: Callable[[str], Any] | None = None
+        self,
+        api_keys: Sequence[str],
+        model: str,
+        client_factory: Callable[[str], Any] | None = None,
+        sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self._keys = list(api_keys)
         self._model = model
         self._factory = client_factory or (lambda key: genai.Client(api_key=key))
         self._clients: dict[str, Any] = {}
+        self._sleep = sleep
 
     def _client(self, key: str) -> Any:
         if key not in self._clients:
@@ -58,7 +66,10 @@ class GeminiScriptWriter:
                 )
 
             try:
-                response = retry_call(call, is_retryable=_gemini_retryable, step="script", what="Gemini")
+                response = retry_call(
+                    call, is_retryable=_gemini_retryable, step="script", what="Gemini",
+                    backoff_s=SERVER_BACKOFF_S, sleep=self._sleep,
+                )
             except PipelineError as exc:
                 if _key_rejected(exc.__cause__):
                     reasons.append(f"key #{number}: HTTP {exc.__cause__.code}")

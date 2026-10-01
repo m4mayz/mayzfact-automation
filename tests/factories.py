@@ -9,7 +9,7 @@ from mayzfact.models import Beat, Script
 from mayzfact.providers.types import Candidate, Rendition
 
 
-def make_script(n_beats: int = 10, photo_every: int = 3, words_per_beat: int = 11) -> Script:
+def make_script(n_beats: int = 11, photo_every: int = 3, words_per_beat: int = 10) -> Script:
     """Naskah dengan kata unik (w0x0, w0x1, ...) biar overlap ke source selalu 0."""
     beats = [
         Beat(

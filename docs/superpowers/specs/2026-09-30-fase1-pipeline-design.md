@@ -129,6 +129,7 @@ Tujuannya biar test & review berkali-kali cukup bayar TTS 1x per video.
   - Enak didengar buat voice over Shorts/TikTok/Reels.
   - Hook boleh dibikin lebih kuat, asal inti pesannya nggak berubah.
   - CTA source (like/subscribe, comment) tetap ada, tapi kalimatnya baru.
+  - Kalau source pakai countdown ("Number five … number one"), penomoran dan urutannya sama persis, dan nggak dicampur "first/next/finally".
 - **Target durasi:** `max(MIN_DURATION_SECONDS, TARGET_DURATION_RATIO × source.duration_s)`. Default-nya `max(32, 0.6 × durasi source)`. Target jumlah kata = target durasi × 2.6 kata/detik (estimasi, konstanta di code). Kalau source pendek, target tetap minimal 32 detik walaupun jadinya lebih panjang dari source.
 - **Output schema:**
 
@@ -148,7 +149,8 @@ class Script(BaseModel):
 - **Cek otomatis setelah model jawab:**
   1. Jumlah kata masuk range ±15% dari target.
   2. Porsi beat foto antara 15%–45%.
-  3. Overlap frasa rendah: dari semua word 4-gram di naskah baru (lowercase, tanpa tanda baca), maksimal 15% yang juga muncul di transcript source.
+  3. Tiap beat maksimal 10 kata (±3.5 detik). Beat yang lebih panjang disuruh dipecah.
+  4. Overlap frasa rendah: dari semua word 4-gram di naskah baru (lowercase, tanpa tanda baca), maksimal 15% yang juga muncul di transcript source.
 - Kalau ada cek yang gagal, retry 1x dengan pesan kenapa gagal. Kalau masih gagal, stop dengan error. Nilai overlap disimpan di `script.json` biar bisa dicek manual.
 
 ### 4.3 tts (ElevenLabs)
@@ -186,7 +188,7 @@ class Script(BaseModel):
 
 Ukuran yang dibutuhin itu dipakai buat tier, pemilihan rendition, dan normalisasi. Buat foto, ukurannya dikali `photoZoom` sebagai cadangan zoom.
 
-**Cari kandidat** (per shot, coba `queries` beat satu per satu dari yang paling spesifik):
+**Cari kandidat** (per shot, coba `queries` beat satu per satu dari yang paling spesifik). Kalau 1 beat kepecah jadi beberapa shot, shot ke-2 mulai dari query ke-2, dan seterusnya, biar visualnya nggak seragam:
 
 | Jenis | Sumber |
 | --- | --- |
@@ -318,7 +320,7 @@ Angka lain (2.6 kata/detik, batas overlap 15%, zoom 1.08, batas rasio 0.75) jadi
 ## 6. Error handling
 
 - Sebelum ada API call, semua variabel wajib dicek. Yang kosong disebut namanya, lalu pipeline stop.
-- HTTP 429/5xx di-retry 3x dengan backoff. Error lain langsung stop dengan pesan yang nyebut step + provider.
+- HTTP 429/5xx di-retry 3x dengan backoff (Gemini 5xx pakai jeda lebih panjang: 5s, 10s, 20s, karena overload "high demand" sering kejadian). Error lain langsung stop dengan pesan yang nyebut step + provider.
 - ffmpeg/Remotion gagal: tampilin bagian akhir stderr-nya, terus stop.
 - `--from source|script|tts` pas `voice.mp3` udah ada, atau hash naskah nggak cocok sama `tts.json`: stop dengan pesan yang jelas, tanpa manggil ElevenLabs (lihat 3.4).
 - Semua kondisi stop di section 4 (transcript kosong, naskah gagal dicek, alignment beda, TTS < 30 detik, beat tanpa klip) pakai pesan yang jelas dan nyebut step mana yang perlu diulang.
