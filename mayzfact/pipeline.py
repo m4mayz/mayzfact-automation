@@ -18,18 +18,20 @@ from mayzfact.providers.gemini import GeminiScriptWriter
 from mayzfact.providers.pexels import Pexels
 from mayzfact.providers.pixabay import Pixabay
 from mayzfact.providers.stock import StockSearch
-from mayzfact.steps.clips import MediaSearch, run_clips
+from mayzfact.scoring import ThumbScorer
+from mayzfact.steps.clips import MediaSearch, Scorer, run_clips
 from mayzfact.steps.render import run_render
 from mayzfact.steps.script import ScriptWriter, run_script
 from mayzfact.steps.source import parse_video_id, run_source, youtube_transcript
 from mayzfact.steps.timeline import run_timeline
 from mayzfact.steps.tts import TTSProvider, run_tts
-from mayzfact.store import RunPaths, read_json
+from mayzfact.store import RunPaths, read_json, write_json_atomic
 from mayzfact.text import script_text, text_hash
+from mayzfact.thumbs import fetch_thumbnail
 
-STEPS = ["source", "script", "tts", "clips", "timeline", "render"]
+STEPS = ["source", "script", "tts", "hook", "clips", "timeline", "render"]
 VOICE_LOCKED = ("source", "script", "tts")
-AFTER_VOICE = ("clips", "timeline", "render")
+AFTER_VOICE = ("hook", "clips", "timeline", "render")
 MIN_AUDIO_SECONDS = 30.0
 STEP_ENV = {
     "script": ["GEMINI_API_KEYS"],
@@ -44,6 +46,7 @@ def step_outputs(step: str, paths: RunPaths) -> list[Path]:
         "source": [paths.source_json],
         "script": [paths.script_json],
         "tts": [paths.voice_mp3, paths.tts_json],
+        "hook": [paths.hook_json],
         "clips": [paths.clips_json],
         "timeline": [paths.timeline_json],
         "render": [paths.final_mp4],
@@ -103,6 +106,8 @@ class Deps:
     http: Callable[[], httpx.Client]
     render: Callable[[RunPaths], Path]
     media_cache: Path = CACHE_DIR / "media"
+    hook: Callable[[RunPaths, Callable[[str], None]], dict] | None = None
+    scorer: Callable[[], Scorer | None] = lambda: None
 
 
 def real_deps(settings: Settings) -> Deps:
@@ -117,6 +122,31 @@ def real_deps(settings: Settings) -> Deps:
         cache = SearchCache(CACHE_DIR / "search")
         return StockSearch(Pexels(settings.pexels_api_key, http(), cache), Pixabay(settings.pixabay_api_key, http(), cache))
 
+    encoders: dict[str, object] = {}
+
+    def encoder():
+        if "siglip" not in encoders:
+            from mayzfact.embed import SiglipEncoder
+
+            encoders["siglip"] = SiglipEncoder()
+        return encoders["siglip"]
+
+    def fetch_thumb(candidate):
+        return fetch_thumbnail(http(), CACHE_DIR / "thumbs", candidate)
+
+    def hook(paths: RunPaths, log: Callable[[str], None]) -> dict:
+        from mayzfact.steps.hook import real_hook_deps, run_hook
+
+        hook_deps = real_hook_deps(settings, http(), search(), encoder(), fetch_thumb, log)
+        try:
+            return run_hook(
+                paths, read_json(paths.source_json), hook_deps,
+                hook_seconds=settings.hook_seconds, exact_threshold=settings.hook_exact_threshold,
+                media_cache=CACHE_DIR / "media",
+            )
+        finally:
+            hook_deps.close()
+
     return Deps(
         fetch_transcript=youtube_transcript,
         script_writer=lambda: GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model),
@@ -126,6 +156,8 @@ def real_deps(settings: Settings) -> Deps:
         search=search,
         http=http,
         render=run_render,
+        hook=hook,
+        scorer=lambda: ThumbScorer(encoder(), fetch_thumb),
     )
 
 
@@ -144,7 +176,7 @@ def run_pipeline(
     done = {step: step_done(step, paths) for step in STEPS}
     steps = plan_steps(done, paths.voice_mp3.exists(), from_step, new_voice)
     if not steps:
-        log(f"Semua step {video_id} udah selesai: {paths.final_mp4}. Pakai --from clips/timeline/render buat bikin ulang.")
+        log(f"Semua step {video_id} udah selesai: {paths.final_mp4}. Pakai --from hook/clips/timeline/render buat bikin ulang.")
         return paths
     missing = missing_env(settings, [name for step in steps for name in STEP_ENV.get(step, [])])
     if missing:
@@ -179,11 +211,17 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
         )
     elif step == "tts":
         run_tts(paths, read_json(paths.script_json), deps.tts(), log=log)
+    elif step == "hook":
+        if deps.hook is None:
+            write_json_atomic(paths.hook_json, {"hook_seconds": settings.hook_seconds, "skipped_platforms": [], "segments": []})
+        else:
+            deps.hook(paths, log)
     elif step == "clips":
         run_clips(
             paths, read_json(paths.script_json), read_json(paths.tts_json), deps.search(), deps.http(),
             max_shot_s=settings.max_shot_seconds, fg_min_ratio=settings.fg_min_height_ratio,
             media_cache=deps.media_cache, log=log,
+            hook=read_json(paths.hook_json), scorer=deps.scorer(), hook_seconds=settings.hook_seconds,
         )
     elif step == "timeline":
         run_timeline(paths, read_json(paths.clips_json), read_json(paths.tts_json), fg_min_ratio=settings.fg_min_height_ratio)

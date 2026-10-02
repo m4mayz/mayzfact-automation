@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
+import mayzfact.pipeline as pipeline_mod
 from mayzfact.config import Settings
 from mayzfact.errors import PipelineError
 from mayzfact.pipeline import STEPS, Deps, check_voice, plan_steps, run_pipeline
@@ -31,7 +32,7 @@ def test_fresh_run_runs_everything():
 
 
 def test_plain_run_resumes_from_first_missing_step():
-    assert plan_steps(done_until("script"), False, None, False) == ["tts", "clips", "timeline", "render"]
+    assert plan_steps(done_until("script"), False, None, False) == ["tts", "hook", "clips", "timeline", "render"]
     assert plan_steps(ALL_DONE, True, None, False) == []
 
 
@@ -256,3 +257,50 @@ def test_clips_are_unique_across_shots(world):
     paths = run(world)
     ids = [(s["provider"], s["provider_id"]) for s in read_json(paths.clips_json)["shots"]]
     assert len(ids) == len(set(ids)) == 8
+
+
+EMPTY_HOOK = {"hook_seconds": 10.0, "skipped_platforms": [], "segments": []}
+
+
+def test_hook_runs_before_clips_and_feeds_it(world, monkeypatch):
+    calls = []
+
+    def fake_hook(paths, log):
+        calls.append(paths.root.name)
+        write_json_atomic(paths.hook_json, EMPTY_HOOK)
+        return EMPTY_HOOK
+
+    world.deps.hook = fake_hook
+    seen = {}
+    real_run_clips = pipeline_mod.run_clips
+
+    def spy(*args, **kwargs):
+        seen.update(kwargs)
+        return real_run_clips(*args, **kwargs)
+
+    monkeypatch.setattr(pipeline_mod, "run_clips", spy)
+    run(world)
+    assert calls == [VIDEO_ID]
+    assert seen["hook"] == EMPTY_HOOK
+    assert seen["hook_seconds"] == 10.0
+    assert seen["scorer"] is None
+
+
+def test_without_hook_runner_writes_empty_hook(world):
+    paths = run(world)
+    assert read_json(paths.hook_json) == EMPTY_HOOK
+
+
+def test_from_hook_after_voice_does_not_call_tts(world):
+    run(world)
+    run(world, from_step="hook")
+    assert world.tts.calls == 1
+    assert world.renders == 2
+
+
+def test_old_run_without_hook_json_resumes_from_hook(world):
+    paths = run(world)
+    paths.hook_json.unlink()
+    run(world)
+    assert paths.hook_json.exists()
+    assert (world.tts.calls, world.renders) == (1, 2)
