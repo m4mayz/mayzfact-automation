@@ -54,3 +54,26 @@ def normalize_video(src: Path, dest: Path, *, start_s: float, duration_s: float,
         "clips",
     )
     os.replace(tmp, dest)
+
+
+def extract_frame(src: Path, t: float, dest: Path, width: int = 448) -> Path:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    _run(
+        ["ffmpeg", "-y", "-v", "error", "-ss", f"{t:.3f}", "-i", str(src), "-frames:v", "1",
+         "-vf", f"scale={width}:-2", "-q:v", "3", str(dest)],
+        "hook",
+    )
+    return dest
+
+
+def sample_frames(src: Path, dest_dir: Path, *, every_s: float, max_s: float, width: int = 448) -> list[tuple[float, Path]]:
+    """Frame tiap every_s detik dari max_s detik pertama. Balikin [(detik, path)]."""
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    for old in dest_dir.glob("f_*.jpg"):
+        old.unlink()
+    _run(
+        ["ffmpeg", "-y", "-v", "error", "-t", f"{max_s:.3f}", "-i", str(src),
+         "-vf", f"fps=1/{every_s},scale={width}:-2", "-q:v", "4", str(dest_dir / "f_%04d.jpg")],
+        "hook",
+    )
+    return [(round(i * every_s, 3), path) for i, path in enumerate(sorted(dest_dir.glob("f_*.jpg")))]
