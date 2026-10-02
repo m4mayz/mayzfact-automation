@@ -141,3 +141,19 @@ def test_stock_search_order_for_videos_and_photos():
         ("pexels-videos", "crab", "portrait"), ("pexels-videos", "crab", None), ("pixabay-videos", "crab", None),
         ("pexels-photos", "crab", "portrait"), ("pexels-photos", "crab", None), ("pixabay-photos", "crab", None),
     ]
+
+
+def test_parsers_fill_thumbnail_url():
+    assert pexels_mod.parse_video({**PEXELS_VIDEO, "image": "https://images.pexels.com/v/101.jpg"}, 0).thumbnail_url == "https://images.pexels.com/v/101.jpg"
+    assert pexels_mod.parse_video(PEXELS_VIDEO, 0).thumbnail_url == ""
+    photo = {**PEXELS_PHOTO, "src": {**PEXELS_PHOTO["src"], "medium": "https://images.pexels.com/202-medium.jpg"}}
+    assert pexels_mod.parse_photo(photo, 0).thumbnail_url == "https://images.pexels.com/202-medium.jpg"
+    assert pexels_mod.parse_photo(PEXELS_PHOTO, 0).thumbnail_url == PEXELS_PHOTO["src"]["original"]
+    videos = {**PIXABAY_VIDEO["videos"], "small": {**PIXABAY_VIDEO["videos"]["small"], "thumbnail": "https://cdn.pixabay.com/303-small.jpg"}}
+    assert pixabay_mod.parse_video({**PIXABAY_VIDEO, "videos": videos}, 0).thumbnail_url == "https://cdn.pixabay.com/303-small.jpg"
+    assert pixabay_mod.parse_photo({**PIXABAY_PHOTO, "webformatURL": "https://pixabay.com/get/404_640.jpg"}, 0).thumbnail_url == "https://pixabay.com/get/404_640.jpg"
+    assert pixabay_mod.parse_photo(PIXABAY_PHOTO, 0).thumbnail_url == PIXABAY_PHOTO["largeImageURL"]
+
+
+def test_cand_factory_has_thumbnail():
+    assert cand("pexels", "9").thumbnail_url == "https://cdn.test/pexels_9_thumb.jpg"

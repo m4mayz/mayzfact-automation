@@ -22,3 +22,4 @@ class Candidate:
     author: str
     renditions: tuple[Rendition, ...]
     rank: int  # posisi di hasil search provider (0 = paling relevan)
+    thumbnail_url: str = ""  # gambar kecil buat scoring SigLIP

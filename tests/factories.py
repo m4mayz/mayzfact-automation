@@ -49,6 +49,7 @@ def cand(
     duration_s: float | None = 20.0,
     rank: int = 0,
     url: str | None = None,
+    thumbnail_url: str | None = None,
 ) -> Candidate:
     ext = "mp4" if kind == "video" else "jpg"
     return Candidate(
@@ -60,4 +61,5 @@ def cand(
         author="tester",
         renditions=(Rendition(url or f"https://cdn.test/{provider}_{id}.{ext}", width, height),),
         rank=rank,
+        thumbnail_url=thumbnail_url if thumbnail_url is not None else f"https://cdn.test/{provider}_{id}_thumb.jpg",
     )

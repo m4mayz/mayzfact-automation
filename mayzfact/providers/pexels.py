@@ -30,6 +30,7 @@ def parse_video(item: dict, rank: int) -> Candidate | None:
         author=(item.get("user") or {}).get("name", ""),
         renditions=renditions,
         rank=rank,
+        thumbnail_url=item.get("image") or "",
     )
 
 
@@ -47,6 +48,7 @@ def parse_photo(item: dict, rank: int) -> Candidate | None:
         author=item.get("photographer", ""),
         renditions=(Rendition(src, width, height),),
         rank=rank,
+        thumbnail_url=(item.get("src") or {}).get("medium") or src,
     )
 
 
