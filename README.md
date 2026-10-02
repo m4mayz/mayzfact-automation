@@ -23,6 +23,18 @@ uv run mayzfact run <id> --new-voice           # naskah + suara baru (pakai kred
 
 Hasilnya ada di `runs/<id>/final.mp4`. Jangan hapus `runs/<id>/voice.mp3`, soalnya kalau kehapus suara harus dibuat ulang dan kredit kepakai lagi.
 
+## Hook (Fase 2)
+
+Login sekali per platform. Sesinya disimpan di `browser-profiles/`, jangan di-share.
+
+```bash
+uv run mayzfact login tiktok      # juga: douyin, rednote, pinterest
+uv run mayzfact login --check
+uv run mayzfact run <id> --from hook   # cari ulang klip hook; suara nggak dibuat ulang
+```
+
+Kalau platform kena captcha atau login expired, platform itu di-skip dan run tetap jalan. Log-nya nyebut platform mana yang perlu login ulang.
+
 ## Test
 
 ```bash

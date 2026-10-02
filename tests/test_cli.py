@@ -40,3 +40,29 @@ def test_cli_voices_needs_key(monkeypatch, capsys):
     monkeypatch.setattr(cli, "load_settings", lambda: Settings())
     assert cli.main(["voices"]) == 1
     assert "ELEVENLABS_API_KEYS" in capsys.readouterr().err
+
+
+def test_login_check_reports_each_platform(monkeypatch, capsys):
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings(hook_platforms=("tiktok", "pinterest")))
+    cookies = {"tiktok": [{"name": "sessionid", "value": "x", "domain": ".tiktok.com"}], "pinterest": []}
+    monkeypatch.setattr(cli.browser, "read_profile_cookies", lambda name: cookies[name])
+    assert cli.main(["login", "--check"]) == 1
+    out = capsys.readouterr().out
+    assert "tiktok: login" in out
+    assert "pinterest: belum login (jalanin: mayzfact login pinterest)" in out
+
+
+def test_login_opens_browser_then_checks(monkeypatch, capsys):
+    opened = []
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli.browser, "open_login_browser", lambda name: opened.append(name))
+    monkeypatch.setattr(cli.browser, "read_profile_cookies", lambda name: [{"name": "sessionid", "value": "x", "domain": ".douyin.com"}])
+    assert cli.main(["login", "douyin"]) == 0
+    assert opened == ["douyin"]
+    assert "douyin: login" in capsys.readouterr().out
+
+
+def test_login_needs_platform_or_check(monkeypatch, capsys):
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    assert cli.main(["login"]) == 1
+    assert "mayzfact login tiktok" in capsys.readouterr().err
