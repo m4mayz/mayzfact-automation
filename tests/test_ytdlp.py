@@ -32,3 +32,24 @@ def test_run_ytdlp_failure_cleans_tmp(tmp_path, monkeypatch):
     with pytest.raises(PipelineError, match="Unsupported URL"):
         run_ytdlp("u", tmp_path / "z.mp4")
     assert list(tmp_path.iterdir()) == []
+
+
+def test_ytdlp_command_limits_sections(tmp_path):
+    cmd = ytdlp_command("u", tmp_path / "x.mp4", max_seconds=31)
+    assert cmd[cmd.index("--download-sections") + 1] == "*0-31"
+    assert "--download-sections" not in ytdlp_command("u", tmp_path / "x.mp4")
+
+
+def test_run_ytdlp_timeout_cleans_partial_files(tmp_path, monkeypatch):
+    import subprocess
+
+    def fake_run(cmd, **kwargs):
+        assert kwargs["timeout"] == 5
+        (tmp_path / "z.tmp.mp4.part").write_bytes(b"x")
+        (tmp_path / "z.tmp.f137.mp4").write_bytes(b"x")
+        raise subprocess.TimeoutExpired(cmd, 5)
+
+    monkeypatch.setattr("mayzfact.ytdlp.subprocess.run", fake_run)
+    with pytest.raises(PipelineError, match="timeout"):
+        run_ytdlp("u", tmp_path / "z.mp4", timeout_s=5)
+    assert list(tmp_path.iterdir()) == []

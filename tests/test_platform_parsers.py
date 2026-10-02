@@ -77,3 +77,20 @@ def test_parse_pinterest_video_and_photo():
 def test_search_url_quotes_query():
     assert search_url("tiktok", "horseshoe crab") == "https://www.tiktok.com/search/video?q=horseshoe%20crab"
     assert search_url("douyin", "鲎 视频") == "https://www.douyin.com/search/%E9%B2%8E%20%E8%A7%86%E9%A2%91?type=video"
+
+
+def test_parsers_skip_items_with_wrong_field_types():
+    tiktok = {"item_list": [
+        {"id": "a", "author": "bukan dict", "video": {"cover": "https://c/a.jpg", "duration": "n/a"}},
+        tiktok_item("b"),
+    ]}
+    cands = parse_tiktok(tiktok)
+    assert [c.id for c in cands] == ["a", "b"]
+    assert cands[0].author == "" and cands[0].duration_s is None
+    rednote = {"data": {"items": [
+        {"id": "n1", "model_type": "note", "xsec_token": None,
+         "note_card": {"type": "video", "user": "x", "cover": {"url_default": "https://c/n1.jpg"}}},
+    ]}}
+    assert parse_rednote(rednote)[0].page_url == "https://www.xiaohongshu.com/explore/n1?xsec_token=&xsec_source=pc_search"
+    assert parse_douyin({"data": [{"aweme_info": {"aweme_id": "1", "video": "rusak"}}]}) == []
+    assert parse_pinterest({"resource_response": {"data": {"results": [{"id": "p", "images": "rusak"}]}}}) == []

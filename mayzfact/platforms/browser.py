@@ -18,27 +18,49 @@ from mayzfact.ytdlp import run_ytdlp
 
 MAX_SEARCHES = 12
 WAIT_S = 20.0
+HOOK_CLIP_MAX_S = 31  # verifikasi hook cuma lihat 30 detik pertama
 
 Capture = Callable[[str, tuple[str, ...]], list[dict]]
 
 
-def _launch(name: str, root: Path, headless: bool) -> tuple[Any, Any]:
+def _start_playwright() -> Any:
     try:
         from playwright.sync_api import sync_playwright
 
-        playwright = sync_playwright().start()
+        return sync_playwright().start()
     except Exception as exc:
         raise PipelineError("browser", f"Playwright gagal jalan: {exc}") from exc
+
+
+class SharedPlaywright:
+    """Satu instance Playwright per run. Sync API nggak bisa start 2 instance di thread yang sama."""
+
+    def __init__(self, start: Callable[[], Any] = _start_playwright) -> None:
+        self._start = start
+        self._playwright: Any = None
+
+    def get(self) -> Any:
+        if self._playwright is None:
+            self._playwright = self._start()
+        return self._playwright
+
+    def stop(self) -> None:
+        if self._playwright is not None:
+            try:
+                self._playwright.stop()
+            finally:
+                self._playwright = None
+
+
+def _launch_context(playwright: Any, name: str, root: Path, headless: bool) -> Any:
     try:
-        context = playwright.chromium.launch_persistent_context(
+        return playwright.chromium.launch_persistent_context(
             str(root / name), channel="chrome", headless=headless, viewport={"width": 1280, "height": 900},
         )
     except Exception as exc:
-        playwright.stop()
         raise PipelineError(
             "browser", f"Chrome gagal dibuka buat {name}: {str(exc)[:200]}. Tutup jendela Chrome profil ini kalau masih kebuka."
         ) from exc
-    return playwright, context
 
 
 class BrowserPlatform:
@@ -52,6 +74,7 @@ class BrowserPlatform:
         capture: Capture | None = None,
         throttle: Throttle | None = None,
         max_searches: int = MAX_SEARCHES,
+        playwright: SharedPlaywright | None = None,
         log: Callable[[str], None] = print,
     ) -> None:
         self.info = platform_info(name)
@@ -66,12 +89,13 @@ class BrowserPlatform:
         self._max = max_searches
         self._count = 0
         self._log = log
-        self._playwright: Any = None
+        self._owns_playwright = playwright is None
+        self._playwright = playwright or SharedPlaywright()
         self._context: Any = None
 
     def _ctx(self) -> Any:
         if self._context is None:
-            self._playwright, self._context = _launch(self.name, self._root, self._headless)
+            self._context = _launch_context(self._playwright.get(), self.name, self._root, self._headless)
         return self._context
 
     def search(self, query: str) -> list[Candidate]:
@@ -95,16 +119,20 @@ class BrowserPlatform:
         parse = PARSERS[self.name]
         candidates: list[Candidate] = []
         for payload in payloads:
-            candidates += parse(payload, len(candidates))
+            if not isinstance(payload, dict):
+                continue
+            try:
+                candidates += parse(payload, len(candidates))
+            except Exception as exc:  # bentuk JSON platform berubah: skip payload ini, jangan matiin step hook
+                self._log(f"[hook] {self.name}: format JSON beda ({type(exc).__name__}), payload di-skip")
         return candidates
 
     def _capture(self, url: str, patterns: tuple[str, ...]) -> list[dict]:
-        from playwright.sync_api import Error as PlaywrightError
-
-        page = self._ctx().new_page()
+        page = None
         responses: list[Any] = []
-        page.on("response", lambda r: responses.append(r) if any(p in r.url for p in patterns) else None)
         try:
+            page = self._ctx().new_page()
+            page.on("response", lambda r: responses.append(r) if any(p in r.url for p in patterns) else None)
             page.goto(url, wait_until="domcontentloaded", timeout=WAIT_S * 1000)
             deadline = time.monotonic() + WAIT_S
             while not responses and time.monotonic() < deadline:
@@ -123,15 +151,27 @@ class BrowserPlatform:
                 reason = "captcha/login" if looks_blocked(self.info, page.url, page.content()) else "hasil search nggak kebaca"
                 raise PlatformBlocked(self.name, reason)
             return payloads
-        except PlaywrightError as exc:
+        except (PlatformBlocked, PipelineError):
+            raise
+        except Exception as exc:  # error Playwright apa pun (jendela ditutup, timeout, dll) = platform di-skip
             raise PlatformBlocked(self.name, f"browser error: {str(exc)[:120]}") from exc
         finally:
-            page.close()
+            if page is not None:
+                try:
+                    page.close()
+                except Exception:
+                    pass
 
     def _cookies_file(self) -> Path:
+        try:
+            cookies = self._ctx().cookies()
+        except PipelineError:
+            raise
+        except Exception as exc:
+            raise PipelineError("hook", f"cookies {self.name} gagal dibaca: {str(exc)[:120]}") from exc
         path = self._root / f"{self.name}.cookies.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(cookies_to_netscape(self._ctx().cookies()), encoding="utf-8")
+        path.write_text(cookies_to_netscape(cookies), encoding="utf-8")
         return path
 
     def download(self, candidate: Candidate, dest: Path) -> Path:
@@ -139,32 +179,42 @@ class BrowserPlatform:
             if not candidate.renditions:
                 raise PipelineError("hook", f"{self.name} {candidate.id} nggak punya URL gambar.")
             return download(self._client, candidate.renditions[0].url, dest, step="hook")
-        return run_ytdlp(candidate.page_url, dest, cookies=self._cookies_file())
+        return run_ytdlp(candidate.page_url, dest, cookies=self._cookies_file(), max_seconds=HOOK_CLIP_MAX_S)
 
     def close(self) -> None:
-        if self._context is not None:
-            self._context.close()
-        if self._playwright is not None:
-            self._playwright.stop()
-        self._context = self._playwright = None
+        try:
+            if self._context is not None:
+                self._context.close()
+        except Exception:
+            pass
+        finally:
+            self._context = None
+            if self._owns_playwright:
+                self._playwright.stop()
 
 
 def read_profile_cookies(name: str, root: Path = BROWSER_PROFILES_DIR) -> list[dict]:
-    playwright, context = _launch(name, root, headless=True)
+    shared = SharedPlaywright()
     try:
-        return context.cookies()
+        context = _launch_context(shared.get(), name, root, headless=True)
+        try:
+            return context.cookies()
+        finally:
+            context.close()
     finally:
-        context.close()
-        playwright.stop()
+        shared.stop()
 
 
 def open_login_browser(name: str, root: Path = BROWSER_PROFILES_DIR, prompt: Callable[[str], str] = input) -> None:
     info = platform_info(name)
-    playwright, context = _launch(name, root, headless=False)
+    shared = SharedPlaywright()
     try:
-        page = context.pages[0] if context.pages else context.new_page()
-        page.goto(info.home_url)
-        prompt(f"Login ke {name} di jendela Chrome, terus tekan Enter di sini...")
+        context = _launch_context(shared.get(), name, root, headless=False)
+        try:
+            page = context.pages[0] if context.pages else context.new_page()
+            page.goto(info.home_url)
+            prompt(f"Login ke {name} di jendela Chrome, terus tekan Enter di sini...")
+        finally:
+            context.close()
     finally:
-        context.close()
-        playwright.stop()
+        shared.stop()

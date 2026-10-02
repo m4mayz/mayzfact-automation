@@ -140,3 +140,26 @@ def test_source_download_error_tells_how_to_retry(tmp_path, cut_video, make_phot
     deps.download_source = broken_download
     with pytest.raises(PipelineError, match="--from hook"):
         run_hook(RunPaths(tmp_path / "run"), SOURCE, deps, hook_seconds=10.0, exact_threshold=0.85, media_cache=tmp_path / "media")
+
+
+def test_real_hook_deps_share_one_playwright_and_stop_it_once(monkeypatch):
+    from mayzfact.config import Settings
+    from mayzfact.platforms import browser
+    from mayzfact.steps.hook import real_hook_deps
+
+    stops = []
+
+    class FakeShared:
+        def get(self):
+            raise AssertionError("browser nggak boleh dibuka di test ini")
+
+        def stop(self):
+            stops.append(1)
+
+    monkeypatch.setattr(browser, "SharedPlaywright", FakeShared)
+    deps = real_hook_deps(Settings(hook_platforms=("tiktok", "douyin")), None, object(), object(), lambda c: None, lambda m: None)
+    browsers = [s for s in deps.searchers if s.name != "stock"]
+    assert [b.name for b in browsers] == ["tiktok", "douyin"]
+    assert browsers[0]._playwright is browsers[1]._playwright
+    deps.close()
+    assert stops == [1]

@@ -206,16 +206,21 @@ def run_hook(
 
 
 def real_hook_deps(settings: Any, client: Any, stock: Any, encoder: Encoder, fetch_thumb: Callable, log: Callable) -> HookDeps:
-    from mayzfact.platforms.browser import BrowserPlatform
+    from mayzfact.platforms import browser
     from mayzfact.providers.gemini import GeminiScriptWriter
     from mayzfact.ytdlp import run_ytdlp, youtube_url
 
-    browsers = [BrowserPlatform(name, client=client, headless=settings.browser_headless, log=log) for name in settings.hook_platforms]
+    shared = browser.SharedPlaywright()
+    browsers = [
+        browser.BrowserPlatform(name, client=client, headless=settings.browser_headless, playwright=shared, log=log)
+        for name in settings.hook_platforms
+    ]
     writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
 
     def close() -> None:
         for platform in browsers:
             platform.close()
+        shared.stop()
 
     return HookDeps(
         download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
