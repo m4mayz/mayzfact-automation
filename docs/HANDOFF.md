@@ -46,7 +46,7 @@
   - Video: 49.3 detik, 32 shot (22 video + 10 foto), shot terpanjang 1.93 detik.
   - ElevenLabs: 696 karakter. Gemini sempat 503 lagi 1x.
 - Contact sheet PNG besar sempat kelihatan "pecah warna". Setelah dicek per tahap (file mentah → klip normalisasi → final.mp4 per frame), file-nya bersih. Yang pecah cuma tampilan dari tool viewer agent, bukan videonya.
-- **Review Akmal (DoD 8): belum.** Fase 1 belum dianggap selesai sampai Akmal nonton `runs/i2xag_1OJfM/final.mp4`.
+- **Review Akmal (DoD 8): oke** (chat 2026-10-03). Fase 1 selesai.
 
 ## Temuan dari run beneran
 
@@ -61,7 +61,7 @@
 
 ## Sisa kerjaan / next
 
-1. Akmal nonton `final.mp4` dan kasih feedback.
+1. ~~Akmal nonton `final.mp4`~~ udah oke (2026-10-03).
 2. Minor yang di-defer dari final review (ada di ledger `.superpowers/sdd/2026-09-30-fase1-pipeline/progress.md`):
    - error non-PipelineError
    - backup `script.json` sebelum `--new-voice`
