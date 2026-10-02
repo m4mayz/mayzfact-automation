@@ -12,6 +12,7 @@ import httpx
 
 from mayzfact.errors import PipelineError
 from mayzfact.ffmpeg import normalize_video, probe
+from mayzfact.matching import hook_slot_map, rerank_key
 from mayzfact.media import downscale_factor, pick_rendition, tier
 from mayzfact.net import download
 from mayzfact.photo import normalize_photo
@@ -43,6 +44,18 @@ class MediaSearch(Protocol):
     def candidates(self, kind: str, query: str) -> list[Candidate]: ...
 
 
+class Scorer(Protocol):
+    def score(self, text: str, candidates: list[Candidate]) -> list[float]: ...
+
+
+def _usable(candidates: list[Candidate], used: set[tuple[str, str]], min_duration_s: float) -> list[Candidate]:
+    return [
+        c
+        for c in candidates
+        if (c.provider, c.id) not in used and c.renditions and (c.kind == "photo" or (c.duration_s or 0) >= min_duration_s)
+    ]
+
+
 def split_shots(timings: list[dict], beats: list[dict], max_shot_s: float) -> list[ShotSlot]:
     slots: list[ShotSlot] = []
     for beat_index, (timing, beat) in enumerate(zip(timings, beats, strict=True)):
@@ -59,13 +72,7 @@ def split_shots(timings: list[dict], beats: list[dict], max_shot_s: float) -> li
 def choose_candidate(
     candidates: list[Candidate], used: set[tuple[str, str]], min_duration_s: float, fg_min_ratio: float
 ) -> Candidate | None:
-    usable = [
-        c
-        for c in candidates
-        if (c.provider, c.id) not in used
-        and c.renditions
-        and (c.kind == "photo" or (c.duration_s or 0) >= min_duration_s)
-    ]
+    usable = _usable(candidates, used, min_duration_s)
     if not usable:
         return None
     return min(usable, key=lambda c: (tier(c, fg_min_ratio), c.rank, PROVIDER_ORDER.get(c.provider, 9)))
@@ -78,6 +85,7 @@ def pick_for_slot(
     search: MediaSearch,
     used: set[tuple[str, str]],
     fg_min_ratio: float,
+    scorer: Scorer | None = None,
 ) -> tuple[Candidate, str]:
     other = "photo" if slot.media == "video" else "video"
     # Shot ke-2, ke-3 dari beat yang sama mulai dari query berikutnya, biar visualnya nggak seragam.
@@ -85,16 +93,27 @@ def pick_for_slot(
     if queries:
         start = slot.part % len(queries)
         queries = queries[start:] + queries[:start]
-    attempts = (
-        [(slot.media, q) for q in queries]
-        + [(other, q) for q in queries]
-        + [(slot.media, fallback_query), (other, fallback_query)]
-    )
+    groups = [(slot.media, queries), (other, queries), (slot.media, [fallback_query]), (other, [fallback_query])]
     min_duration = slot.duration_s + MIN_EXTRA_S
-    for kind, query in attempts:
-        found = choose_candidate(search.candidates(kind, query), used, min_duration, fg_min_ratio)
-        if found is not None:
-            return found, query
+    for kind, group_queries in groups:
+        if scorer is None:
+            for query in group_queries:
+                found = choose_candidate(search.candidates(kind, query), used, min_duration, fg_min_ratio)
+                if found is not None:
+                    return found, query
+            continue
+        pool: dict[tuple[str, str], tuple[Candidate, str]] = {}
+        for query in group_queries:
+            for candidate in _usable(search.candidates(kind, query), used, min_duration):
+                pool.setdefault((candidate.provider, candidate.id), (candidate, query))
+        if pool:
+            items = list(pool.values())
+            scores = scorer.score(beat["text"], [c for c, _ in items])
+            best = min(
+                range(len(items)),
+                key=lambda i: rerank_key(scores[i], tier(items[i][0], fg_min_ratio), PROVIDER_ORDER.get(items[i][0].provider, 9)),
+            )
+            return items[best]
     raise PipelineError(
         "clips",
         f'Beat {slot.beat + 1} ("{beat["text"][:50]}") nggak dapet klip video/foto sama sekali, termasuk pakai fallback_query.',
@@ -147,6 +166,37 @@ def materialize(
     }
 
 
+def _hook_entry(slot: ShotSlot, segment: dict, paths: RunPaths, fg_min_ratio: float, log: Callable[[str], None]) -> dict | None:
+    winner = segment["winner"]
+    raw = paths.root / winner["file"]
+    try:
+        if winner["kind"] == "video":
+            info = probe(raw, "clips")
+            duration = info["duration_s"] or 0.0
+            if duration < slot.duration_s + 0.2:
+                raise PipelineError("clips", f"video cuma {duration:.1f} detik, shot butuh {slot.duration_s:.1f}")
+            latest = duration - slot.duration_s - 0.2
+            start = min(max(0.0, winner["offset_s"] - slot.duration_s / 2), latest)
+            dest = paths.clips_dir / f"shot_{slot.index + 1:02d}.mp4"
+            scale = downscale_factor(info["width"], info["height"], fg_min_ratio)
+            normalize_video(raw, dest, start_s=start, duration_s=slot.duration_s + 0.2, scale=scale)
+            out = probe(dest, "clips")
+            width, height = out["width"], out["height"]
+        else:
+            dest = paths.clips_dir / f"shot_{slot.index + 1:02d}.jpg"
+            width, height = normalize_photo(raw, dest, fg_min_ratio=fg_min_ratio)
+    except (PipelineError, OSError, ValueError, KeyError) as exc:
+        log(f"[clips] hook segmen {segment['index'] + 1} gagal dipakai, pakai klip biasa: {exc}")
+        return None
+    return {
+        "index": slot.index, "beat": slot.beat, "start_s": slot.start_s, "end_s": slot.end_s,
+        "kind": winner["kind"], "file": f"clips/{dest.name}", "width": width, "height": height,
+        "provider": winner["provider"], "provider_id": winner["provider_id"],
+        "page_url": winner["page_url"], "author": winner["author"],
+        "query": f"hook:{segment['index']}", "hook_segment": segment["index"], "match": winner["label"],
+    }
+
+
 def run_clips(
     paths: RunPaths,
     script: dict,
@@ -158,18 +208,29 @@ def run_clips(
     fg_min_ratio: float,
     media_cache: Path,
     log: Callable[[str], None] = print,
+    hook: dict | None = None,
+    scorer: Scorer | None = None,
+    hook_seconds: float = 10.0,
 ) -> dict:
     timings = beat_timings(beat_texts(script["beats"]), tts["alignment"], tts["duration_s"])
     slots = split_shots(timings, script["beats"], max_shot_s)
     paths.clips_dir.mkdir(parents=True, exist_ok=True)
     for old in paths.clips_dir.glob("shot_*"):
         old.unlink()
-    used: set[tuple[str, str]] = set()
+    winners = [segment for segment in (hook or {}).get("segments", []) if segment.get("winner")]
+    hook_map = hook_slot_map(slots, len(winners), hook_seconds)
+    used: set[tuple[str, str]] = {(s["winner"]["provider"], s["winner"]["provider_id"]) for s in winners}
     shots = []
     for slot in slots:
+        if slot.index in hook_map:
+            entry = _hook_entry(slot, winners[hook_map[slot.index]], paths, fg_min_ratio, log)
+            if entry is not None:
+                log(f"[clips] shot {slot.index + 1}/{len(slots)}: hook {entry['provider']} {entry['provider_id']} ({entry['match']})")
+                shots.append(entry)
+                continue
         beat = script["beats"][slot.beat]
         for attempt in range(MAX_PICK_ATTEMPTS):
-            candidate, query = pick_for_slot(slot, beat, script["fallback_query"], search, used, fg_min_ratio)
+            candidate, query = pick_for_slot(slot, beat, script["fallback_query"], search, used, fg_min_ratio, scorer)
             used.add((candidate.provider, candidate.id))
             log(f"[clips] shot {slot.index + 1}/{len(slots)}: {candidate.provider} {candidate.kind} {candidate.id} ({query})")
             try:

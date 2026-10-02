@@ -82,3 +82,24 @@ def test_second_shot_of_a_beat_starts_from_the_second_query():
     slot2 = ShotSlot(index=1, beat=0, start_s=2.0, end_s=4.0, media="video", part=1)
     assert pick_for_slot(slot2, BEAT, "animals", search, set(), 0.5) == (second, "crab beach")
     assert search.calls[0] == ("video", "crab beach")
+
+
+class FixedScorer:
+    def __init__(self, table):
+        self.table = table
+        self.calls = []
+
+    def score(self, text, candidates):
+        self.calls.append((text, [c.id for c in candidates]))
+        return [self.table[c.id] for c in candidates]
+
+
+def test_scorer_picks_best_scored_candidate_across_all_queries():
+    low = cand("pexels", "low", rank=0)
+    blurry = cand("pexels", "blurry", width=640, height=360, rank=1)
+    high = cand("pixabay", "high", rank=3)
+    search = FakeSearch({("video", "horseshoe crab"): [low, blurry], ("video", "crab beach"): [high]})
+    scorer = FixedScorer({"low": 0.1, "blurry": 0.9, "high": 0.3})
+    assert pick_for_slot(slot(), BEAT, "animals", search, set(), 0.5, scorer=scorer) == (high, "crab beach")
+    assert search.calls == [("video", "horseshoe crab"), ("video", "crab beach")]
+    assert scorer.calls == [("Look at this crab.", ["low", "blurry", "high"])]
