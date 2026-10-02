@@ -14,3 +14,13 @@ class Beat(BaseModel):
 class Script(BaseModel):
     beats: list[Beat]
     fallback_query: str
+
+
+class SegmentQueries(BaseModel):
+    index: int
+    en: list[str]
+    zh: list[str]
+
+
+class HookQueries(BaseModel):
+    segments: list[SegmentQueries]

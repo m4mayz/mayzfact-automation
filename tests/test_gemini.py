@@ -4,6 +4,7 @@ import pytest
 from google.genai import errors
 
 from mayzfact.errors import PipelineError
+from mayzfact.models import HookQueries
 from mayzfact.providers.gemini import GeminiScriptWriter, _gemini_retryable
 from tests.factories import make_script
 
@@ -126,3 +127,18 @@ def test_server_overload_is_retried_with_long_backoff():
     writer = GeminiScriptWriter(["k1"], "gemini-test", client_factory=lambda key: client, sleep=sleeps.append)
     assert len(writer.write("s", "u").beats) == 2
     assert sleeps == [5.0, 10.0]
+
+
+def test_generate_validates_against_given_schema():
+    client = FakeClient(['{"segments": [{"index": 0, "en": ["crab"], "zh": []}]}'])
+    writer = GeminiScriptWriter(["key"], "gemini-test", client_factory=lambda key: client)
+    out = writer.generate("sys", ["part"], HookQueries, step="hook")
+    assert out.segments[0].en == ["crab"]
+    assert client.models.calls[0]["config"].response_schema is HookQueries
+    assert client.models.calls[0]["contents"] == ["part"]
+
+
+def test_generate_errors_use_given_step():
+    writer = GeminiScriptWriter(["key"], "gemini-test", client_factory=lambda key: FakeClient(['{"segments": 1}']))
+    with pytest.raises(PipelineError, match=r"\[hook\]"):
+        writer.generate("sys", "u", HookQueries, step="hook")

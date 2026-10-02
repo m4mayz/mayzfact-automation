@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, TypeVar
 
 from google import genai
 from google.genai import errors, types
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from mayzfact.errors import PipelineError
 from mayzfact.models import Script
@@ -18,6 +18,7 @@ SERVER_ERROR_STATUS = {500, 502, 503, 504}
 KEY_SWITCH_STATUS = {401, 403, 429}
 # Overload Gemini (503 "high demand") biasanya butuh puluhan detik buat reda: jeda 5s, 10s, 20s.
 SERVER_BACKOFF_S = 5.0
+M = TypeVar("M", bound=BaseModel)
 
 
 def _gemini_retryable(exc: Exception) -> bool:
@@ -49,7 +50,7 @@ class GeminiScriptWriter:
             self._clients[key] = self._factory(key)
         return self._clients[key]
 
-    def write(self, system: str, user: str) -> Script:
+    def generate(self, system: str, contents: Any, schema: type[M], step: str = "script") -> M:
         reasons: list[str] = []
         for number, key in enumerate(self._keys, start=1):
             client = self._client(key)
@@ -57,17 +58,17 @@ class GeminiScriptWriter:
             def call():
                 return client.models.generate_content(
                     model=self._model,
-                    contents=user,
+                    contents=contents,
                     config=types.GenerateContentConfig(
                         system_instruction=system,
                         response_mime_type="application/json",
-                        response_schema=Script,
+                        response_schema=schema,
                     ),
                 )
 
             try:
                 response = retry_call(
-                    call, is_retryable=_gemini_retryable, step="script", what="Gemini",
+                    call, is_retryable=_gemini_retryable, step=step, what="Gemini",
                     backoff_s=SERVER_BACKOFF_S, sleep=self._sleep,
                 )
             except PipelineError as exc:
@@ -76,7 +77,10 @@ class GeminiScriptWriter:
                     continue
                 raise
             try:
-                return Script.model_validate_json(response.text or "")
+                return schema.model_validate_json(response.text or "")
             except ValidationError as exc:
-                raise PipelineError("script", f"Output Gemini nggak sesuai schema: {exc}") from exc
-        raise PipelineError("script", f"Semua {len(self._keys)} key Gemini ditolak ({'; '.join(reasons)}).")
+                raise PipelineError(step, f"Output Gemini nggak sesuai schema: {exc}") from exc
+        raise PipelineError(step, f"Semua {len(self._keys)} key Gemini ditolak ({'; '.join(reasons)}).")
+
+    def write(self, system: str, user: str) -> Script:
+        return self.generate(system, user, Script)
