@@ -96,3 +96,38 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   - Key dicoba berurutan. Kalau 401/403/429 atau 400 `API_KEY_INVALID`, pindah ke key berikutnya.
   - 5xx di-retry di key yang sama. 400 lain langsung stop.
 - **Authority:** pola multi key diminta Akmal buat ElevenLabs (D-008). Penerapan ke Gemini disimpulin agent dari isi `.env`.
+
+## D-011 — 2026-10-03 — Fase 2 dikerjain dalam 1 spec
+
+- **Status:** accepted
+- **Keputusan:** hook matching, adapter 4 platform login, dan rerank SigLIP masuk 1 spec dan 1 plan ([spec Fase 2](superpowers/specs/2026-10-03-fase2-hook-matching-design.md)).
+- **Alternatif yang ditolak:** 2a (tanpa login) dulu, baru 2b (platform login).
+- **Konsekuensi:** plan-nya besar, dan bagian platform paling nggak pasti. Kalau satu platform macet, platform itu di-skip, jadi sisa pipeline tetap jalan.
+- **Authority:** pilihan Akmal (chat 2026-10-03).
+
+## D-012 — 2026-10-03 — Platform login cuma buat hook, SigLIP rerank buat semua shot
+
+- **Status:** accepted
+- **Keputusan:** TikTok/Douyin/RedNote/Pinterest cuma dicari buat klip `HOOK_SECONDS` awal. Shot lain tetap dari Pexels/Pixabay, tapi diurutkan ulang pakai skor SigLIP teks vs thumbnail.
+- **Alasan:** request scraping per video tetap sedikit, jadi risiko akun ke-flag lebih rendah.
+- **Authority:** Akmal awalnya milih platform buat semua shot, terus direvisi sendiri jadi cuma hook (chat 2026-10-03).
+
+## D-013 — 2026-10-03 — SigLIP ViT-B-16 lewat open_clip, torch CPU
+
+- **Status:** accepted
+- **Keputusan:** embedding pakai `open_clip` model `ViT-B-16-SigLIP` (`webli`) di CPU.
+- **Alternatif yang ditolak:**
+  - CLIP ViT-B-32: lebih kecil tapi kurang akurat.
+  - ViT-L / so400m: kegedean buat CPU.
+  - Gemini vision buat scoring: kuota dan sering 503.
+  - Torch CUDA di RTX 2050: download ±2.5 GB, padahal volume per run kecil.
+- **Authority:** rekomendasi agent, disetujui Akmal (chat 2026-10-03).
+
+## D-014 — 2026-10-03 — Playwright + yt-dlp, platform ke-blok di-skip
+
+- **Status:** accepted
+- **Keputusan:**
+  - Search lewat Chrome Playwright pakai profil login, dengan cara nangkep JSON internal. Download pakai `yt-dlp` + cookies profil.
+  - Kalau kena captcha atau login expired, platform itu di-skip buat sisa run, dan run tetap jalan.
+  - Video source di-download di step `hook`, bukan `source`, karena step `source` dikunci begitu suara ada (D-007).
+- **Authority:** approach A dan aturan skip dipilih Akmal. Lokasi download source dari agent (chat 2026-10-03).
