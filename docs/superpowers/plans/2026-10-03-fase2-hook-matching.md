@@ -2813,6 +2813,7 @@ class ThumbScorer:
 Di `mayzfact/steps/clips.py`:
 
 Langkah 1: Tambahin import `from mayzfact.matching import hook_slot_map, rerank_key`.
+
 Langkah 2: Tambahin di bawah `MediaSearch`:
 
 ```python
@@ -3043,6 +3044,7 @@ AFTER_VOICE = ("hook", "clips", "timeline", "render")
 ```
 
 Langkah 3: Di `step_outputs`, tambahin `"hook": [paths.hook_json],`.
+
 Langkah 4: Di `Deps`, tambahin dua field terakhir:
 
 ```python
