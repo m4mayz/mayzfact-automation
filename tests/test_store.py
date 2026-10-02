@@ -19,3 +19,10 @@ def test_run_paths_layout(tmp_path):
     assert paths.voice_mp3 == tmp_path / "abc" / "voice.mp3"
     assert paths.clips_dir == tmp_path / "abc" / "clips"
     assert paths.final_mp4.name == "final.mp4"
+
+
+def test_run_paths_hook_files(tmp_path):
+    paths = RunPaths(tmp_path)
+    assert paths.source_mp4 == tmp_path / "source.mp4"
+    assert paths.hook_dir == tmp_path / "hook"
+    assert paths.hook_json == tmp_path / "hook.json"

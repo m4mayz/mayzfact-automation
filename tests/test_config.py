@@ -49,3 +49,17 @@ def test_elevenlabs_keys_are_split_by_comma():
     settings = settings_from_env({"ELEVENLABS_API_KEYS": "k1,k2,,k3 "})
     assert settings.elevenlabs_api_keys == ("k1", "k2", "k3")
     assert missing_env(settings_from_env({}), ["ELEVENLABS_API_KEYS"]) == ["ELEVENLABS_API_KEYS"]
+
+
+def test_hook_settings_defaults_and_parsing():
+    settings = settings_from_env({})
+    assert (settings.hook_seconds, settings.hook_exact_threshold, settings.browser_headless) == (10.0, 0.85, False)
+    assert settings.hook_platforms == ("tiktok", "douyin", "rednote", "pinterest")
+    settings = settings_from_env({"HOOK_SECONDS": "8", "HOOK_PLATFORMS": "tiktok,pinterest", "BROWSER_HEADLESS": "TRUE"})
+    assert (settings.hook_seconds, settings.hook_platforms, settings.browser_headless) == (8.0, ("tiktok", "pinterest"), True)
+    assert settings_from_env({"BROWSER_HEADLESS": "off"}).browser_headless is False
+
+
+def test_invalid_flag_names_the_variable():
+    with pytest.raises(PipelineError, match="BROWSER_HEADLESS"):
+        settings_from_env({"BROWSER_HEADLESS": "kadang"})

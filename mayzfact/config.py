@@ -14,6 +14,7 @@ from mayzfact.errors import PipelineError
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RUNS_DIR = PROJECT_ROOT / "runs"
 CACHE_DIR = PROJECT_ROOT / "cache"
+BROWSER_PROFILES_DIR = PROJECT_ROOT / "browser-profiles"
 
 
 @dataclass(frozen=True)
@@ -30,11 +31,28 @@ class Settings:
     max_shot_seconds: float = 2.5
     photo_ratio: float = 0.3
     fg_min_height_ratio: float = 0.5
+    hook_seconds: float = 10.0
+    hook_exact_threshold: float = 0.85
+    hook_platforms: tuple[str, ...] = ("tiktok", "douyin", "rednote", "pinterest")
+    browser_headless: bool = False
 
 
 def _key_list(raw: str) -> tuple[str, ...]:
     """Beberapa API key dipisah koma, misal `key1,key2`."""
     return tuple(key.strip() for key in raw.split(",") if key.strip())
+
+
+_TRUE = {"1", "true", "yes", "on"}
+_FALSE = {"0", "false", "no", "off"}
+
+
+def _flag(raw: str) -> bool:
+    value = raw.lower()
+    if value in _TRUE:
+        return True
+    if value in _FALSE:
+        return False
+    raise ValueError(raw)
 
 
 ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
@@ -50,6 +68,10 @@ ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
     "MAX_SHOT_SECONDS": ("max_shot_seconds", float),
     "PHOTO_RATIO": ("photo_ratio", float),
     "FG_MIN_HEIGHT_RATIO": ("fg_min_height_ratio", float),
+    "HOOK_SECONDS": ("hook_seconds", float),
+    "HOOK_EXACT_THRESHOLD": ("hook_exact_threshold", float),
+    "HOOK_PLATFORMS": ("hook_platforms", _key_list),
+    "BROWSER_HEADLESS": ("browser_headless", _flag),
 }
 
 
@@ -62,7 +84,7 @@ def settings_from_env(env: Mapping[str, str | None]) -> Settings:
         try:
             values[field_name] = cast(raw)
         except ValueError as exc:
-            raise PipelineError("config", f"{env_name} harus angka, isinya sekarang {raw!r}") from exc
+            raise PipelineError("config", f"{env_name} nilainya nggak valid: {raw!r}") from exc
     return Settings(**values)
 
 

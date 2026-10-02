@@ -45,6 +45,18 @@ class RunPaths:
     def final_mp4(self) -> Path:
         return self.root / "final.mp4"
 
+    @property
+    def source_mp4(self) -> Path:
+        return self.root / "source.mp4"
+
+    @property
+    def hook_dir(self) -> Path:
+        return self.root / "hook"
+
+    @property
+    def hook_json(self) -> Path:
+        return self.root / "hook.json"
+
 
 def tmp_path_for(path: Path) -> Path:
     """File sementara di folder yang sama. Ekstensinya tetap karena ffmpeg butuh ekstensi."""

@@ -6,10 +6,15 @@ requires-python = ">=3.12"
 dependencies = [
   "google-genai>=1.33",
   "httpx>=0.28",
+  "numpy>=2.0",
+  "open-clip-torch>=3.0",
   "pillow>=11",
+  "playwright>=1.55",
   "pydantic>=2.9",
   "python-dotenv>=1.0",
+  "torch>=2.9",
   "youtube-transcript-api>=1.2",
+  "yt-dlp>=2026.8.19",
 ]
 
 [project.scripts]
@@ -27,5 +32,8 @@ packages = ["mayzfact"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-m 'not render'"
-markers = ["render: jalanin Remotion beneran (lambat, butuh Node 22)"]
+addopts = "-m 'not render and not clip'"
+markers = [
+  "render: jalanin Remotion beneran (lambat, butuh Node 22)",
+  "clip: load model SigLIP asli (lambat, download ±800 MB sekali)",
+]
