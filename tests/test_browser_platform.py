@@ -151,3 +151,24 @@ def test_broken_payloads_do_not_crash_search():
     payloads = [["not", "a", "dict"], {"item_list": "rusak"}, {"item_list": [tiktok_item("ok")]}]
     platform = make_platform(lambda url, patterns: payloads)
     assert [c.id for c in platform.search("crab")] == ["ok"]
+
+
+def test_login_browser_warms_up_search_page_for_captcha(tmp_path, monkeypatch):
+    from mayzfact.platforms import browser
+
+    visited, prompts = [], []
+
+    class Page:
+        def goto(self, url, **kwargs):
+            visited.append(url)
+
+    class Context(FakeContext):
+        pages = [Page()]
+
+    fake = FakePlaywright(Context())
+    real_shared = browser.SharedPlaywright
+    monkeypatch.setattr(browser, "SharedPlaywright", lambda: real_shared(start=lambda: fake))
+    browser.open_login_browser("douyin", root=tmp_path, prompt=prompts.append)
+    assert visited == ["https://www.douyin.com/", "https://www.douyin.com/search/%E7%8C%AB?type=video"]
+    assert len(prompts) == 2 and "captcha" in prompts[1]
+    assert fake.stopped == 1

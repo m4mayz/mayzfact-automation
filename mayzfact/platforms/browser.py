@@ -19,6 +19,7 @@ from mayzfact.ytdlp import run_ytdlp
 MAX_SEARCHES = 12
 WAIT_S = 20.0
 HOOK_CLIP_MAX_S = 31  # verifikasi hook cuma lihat 30 detik pertama
+WARMUP_QUERY = {"en": "cat", "zh": "猫"}
 
 Capture = Callable[[str, tuple[str, ...]], list[dict]]
 
@@ -214,6 +215,9 @@ def open_login_browser(name: str, root: Path = BROWSER_PROFILES_DIR, prompt: Cal
             page = context.pages[0] if context.pages else context.new_page()
             page.goto(info.home_url)
             prompt(f"Login ke {name} di jendela Chrome, terus tekan Enter di sini...")
+            # Warm-up: search sekali biar captcha (kalau ada) diselesaiin manual sekarang, bukan pas run.
+            page.goto(search_url(name, WARMUP_QUERY[info.language]))
+            prompt(f"Kalau muncul captcha di halaman search {name}, selesaiin dulu, terus tekan Enter...")
         finally:
             context.close()
     finally:
