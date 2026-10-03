@@ -131,3 +131,11 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   - Kalau kena captcha atau login expired, platform itu di-skip buat sisa run, dan run tetap jalan.
   - Video source di-download di step `hook`, bukan `source`, karena step `source` dikunci begitu suara ada (D-007).
 - **Authority:** approach A dan aturan skip dipilih Akmal. Lokasi download source dari agent (chat 2026-10-03).
+
+## D-015 — 2026-10-03 — `HOOK_EXACT_THRESHOLD` tetap 0.85
+
+- **Status:** accepted (sementara)
+- **Konteks:** E2E pertama `i2xag_1OJfM`: skor pemenang 0.66–0.78, dan nggak ada pasangan yang klip persis sama. A (skor terendah pasangan "sama persis") nggak ada, jadi threshold nggak bisa dihitung.
+- **Keputusan:** default tetap 0.85, dan semua pemenang dilabel `similar`.
+- **Konsekuensi:** kalibrasi diulang setelah TikTok/Douyin/RedNote jalan stabil dan ada pasangan klip yang persis sama.
+- **Authority:** aturan kalibrasi dari plan Task 14 Step 6, dijalanin agent (2026-10-03).

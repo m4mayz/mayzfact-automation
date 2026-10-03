@@ -57,7 +57,7 @@
 
 ## Delivery
 
-- Semua udah di-commit di branch `fase1-pipeline`. Belum di-push dan belum di-merge ke `master`. Push/merge tunggu Akmal.
+- Fase 1 udah di-merge ke `master` (2026-10-03). Push/merge tunggu Akmal.
 
 ## Sisa kerjaan / next
 
@@ -71,4 +71,55 @@
    - normalisasi NFC
 3. ~~Perketat prompt~~ udah dikerjain (beat ≤10 kata, countdown, query per shot, backoff Gemini 5/10/20s). Relevansi klip buat hewan langka masih meleset (horseshoe crab → ghost crab, tardigrade → preparat), jadi tetap butuh Fase 2.
 4. Gemini `gemini-3.8-flash` sering 503 "high demand". Kalau makin sering, pertimbangkan model cadangan.
-5. Fase 2 (hook matching): mulai lagi dari brainstorming.
+5. ~~Fase 2 (hook matching)~~ dikerjain, lihat section Fase 2 di bawah.
+
+---
+
+# Handoff — Fase 2 hook matching
+
+- **Updated:** 2026-10-03 10:30 WIB, Claude Code (Opus 5.5)
+- **Goal & scope:** sesuai [spec Fase 2](superpowers/specs/2026-10-03-fase2-hook-matching-design.md) dan [plan](superpowers/plans/2026-10-03-fase2-hook-matching.md). Keputusannya D-011 sampai D-015.
+- **Workspace:** `E:\APROJECT\mayzfact-automation`, branch `fase2-hook`. Belum di-merge ke `master`.
+
+## Selesai
+
+- Step `hook`: download source (yt-dlp), deteksi cut, frame per segmen, query dari Gemini vision, cari kandidat di TikTok/Douyin/RedNote/Pinterest + stock, seleksi SigLIP 2 tahap, dan tulis `hook.json`.
+- Rerank SigLIP (teks beat vs thumbnail) buat shot non-hook, dengan cache embedding.
+- Command `mayzfact login <platform>` (plus warm-up captcha di halaman search) dan `mayzfact login --check`.
+- Final review (subagent Opus): 1 Critical + 4 Important di-fix pakai TDD. Detailnya di ledger `.superpowers/sdd/2026-10-03-fase2-hook-matching/progress.md`.
+
+## Verifikasi
+
+- `uv run pytest`: 205 lolos. `-m clip` (SigLIP asli) dan `-m render` juga lolos.
+- Status login (2026-10-03):
+
+  | Platform | Hasil |
+  | --- | --- |
+  | Pinterest | jalan, 25 kandidat |
+  | TikTok | jalan setelah warm-up captcha (24 kandidat), tapi captcha muncul lagi setelah beberapa search |
+  | Douyin | selalu kena captcha di search |
+  | RedNote | belum login beneran. Halaman search minta login, padahal `--check` bilang login |
+
+- `uv run mayzfact run i2xag_1OJfM --from hook`: sukses, `final.mp4` 49.3 detik, mtime `voice.mp3` sama (ElevenLabs nggak dipanggil).
+- `hook.json`: 6 segmen, semua punya pemenang, label semua `similar` (skor 0.66–0.78).
+  - Sumber pemenang: 5 dari Pinterest, 1 dari Pexels.
+  - Platform yang di-skip: Douyin (captcha), RedNote (captcha/login), TikTok (context browser ketutup di tengah run).
+- `runs/i2xag_1OJfM/hook_compare.jpg` (source vs pemenang):
+  - 3 dari 6 segmen subjeknya sama (pterosaurus, mammoth, cowok di mall H&M).
+  - Segmen 1–3 (burung monster di menara radio) cuma mirip tema.
+  - Nggak ada yang klip persis sama.
+- `runs/i2xag_1OJfM/contact_sheet_fase2.jpg`: shot non-hook lebih relevan dari Fase 1. Horseshoe crab sekarang asli, nautilus dan sturgeon pas, tardigrade jadi mikroorganisme di bawah mikroskop.
+- `HOOK_EXACT_THRESHOLD` tetap 0.85, karena belum ada pasangan klip yang persis sama buat kalibrasi (D-015).
+- **Review Akmal: belum.**
+
+## Masalah terbuka
+
+1. Captcha TikTok/Douyin. Warm-up cuma bertahan sebentar. Nggak ada trik buat ngakalin deteksi bot (D-014).
+2. RedNote: penanda login (`web_session`) salah, karena cookie itu juga ada di sesi yang belum login. Perlu cookie dari sesi login asli buat nentuin penanda yang benar.
+3. Context TikTok ketutup di tengah run ("Target page, context or browser has been closed"). Penyebabnya belum ketemu: bisa crash, bisa juga jendelanya ketutup manual.
+4. Satu foto Pinterest gagal dibuka ("bukan gambar"). Kemungkinan formatnya nggak didukung PIL.
+5. Minor dari final review (lihat ledger): nama cache thumbnail, `close()`, waktu tunggu ±41 detik, thumbnail CDN.
+
+## Delivery
+
+- Commit di branch `fase2-hook`. Belum di-push dan belum di-merge.
