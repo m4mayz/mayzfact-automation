@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Protocol
@@ -26,6 +27,8 @@ MIN_EXTRA_S = 0.5
 MAX_PICK_ATTEMPTS = 3
 # ponytail: batas dari 1 run i2xag (foto nyambung 0.094-0.163, video meleset 0.003-0.093); kalibrasi ulang kalau model ganti
 RELEVANCE_MIN = 0.10
+# "Number five, horseshoe crab." / "Number 3: the platypus!" → subjek yang lagi dibahas
+_COUNTDOWN = re.compile(r"^\s*number\s+\w+\s*[,:]\s*(?:the\s+)?(.+?)\s*[.!?]*\s*$", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -80,6 +83,20 @@ def choose_candidate(
     return min(usable, key=lambda c: (tier(c, fg_min_ratio), c.rank, PROVIDER_ORDER.get(c.provider, 9)))
 
 
+def beat_subjects(beats: list[dict]) -> list[str | None]:
+    """Hewan/objek yang lagi dibahas tiap beat: field `subject`, atau dari beat countdown, terus dibawa ke beat berikutnya."""
+    current: str | None = None
+    out: list[str | None] = []
+    for beat in beats:
+        match = _COUNTDOWN.match(beat.get("text", ""))
+        if beat.get("subject"):
+            current = beat["subject"].strip()
+        elif match:
+            current = match.group(1).strip().lower()
+        out.append(current)
+    return out
+
+
 def _best_scored(
     kind: str,
     queries: list[str],
@@ -88,15 +105,20 @@ def _best_scored(
     min_duration_s: float,
     fg_min_ratio: float,
     scorer: Scorer,
+    subject: str | None = None,
 ) -> tuple[Candidate, str, float] | None:
-    """Kandidat terbaik dari semua query satu grup. Tiap kandidat dinilai pakai query yang nemuin dia."""
+    """Kandidat terbaik dari semua query satu grup.
+
+    Dinilai pakai nama subjek (misalnya "sturgeon") kalau ada: query lengkap kayak "sturgeon river underwater"
+    bikin SigLIP nyocokin pemandangan sungainya, bukan hewannya. Tanpa subjek, pakai query yang nemuin kandidat.
+    """
     seen: set[tuple[str, str]] = set()
     scored: list[tuple[Candidate, str, float]] = []
     for query in queries:
         fresh = [c for c in _usable(search.candidates(kind, query), used, min_duration_s) if (c.provider, c.id) not in seen]
         seen.update((c.provider, c.id) for c in fresh)
         if fresh:
-            scored += [(c, query, score) for c, score in zip(fresh, scorer.score(query, fresh))]
+            scored += [(c, query, score) for c, score in zip(fresh, scorer.score(subject or query, fresh))]
     if not scored:
         return None
     return min(scored, key=lambda item: rerank_key(item[2], tier(item[0], fg_min_ratio), PROVIDER_ORDER.get(item[0].provider, 9)))
@@ -110,6 +132,7 @@ def pick_for_slot(
     used: set[tuple[str, str]],
     fg_min_ratio: float,
     scorer: Scorer | None = None,
+    subject: str | None = None,
 ) -> tuple[Candidate, str]:
     other = "photo" if slot.media == "video" else "video"
     # Shot ke-2, ke-3 dari beat yang sama mulai dari query berikutnya, biar visualnya nggak seragam.
@@ -128,7 +151,7 @@ def pick_for_slot(
     else:
         weak: tuple[Candidate, str, float] | None = None
         for kind, group_queries in groups:
-            best = _best_scored(kind, group_queries, search, used, min_duration, fg_min_ratio, scorer)
+            best = _best_scored(kind, group_queries, search, used, min_duration, fg_min_ratio, scorer, subject)
             if best is None:
                 continue
             if best[2] >= RELEVANCE_MIN:
@@ -242,6 +265,7 @@ def run_clips(
     paths.clips_dir.mkdir(parents=True, exist_ok=True)
     for old in paths.clips_dir.glob("shot_*"):
         old.unlink()
+    subjects = beat_subjects(script["beats"])
     winners = [segment for segment in (hook or {}).get("segments", []) if segment.get("winner")]
     hook_map = hook_slot_map(slots, len(winners), hook_seconds)
     used: set[tuple[str, str]] = {(s["winner"]["provider"], s["winner"]["provider_id"]) for s in winners}
@@ -255,7 +279,9 @@ def run_clips(
                 continue
         beat = script["beats"][slot.beat]
         for attempt in range(MAX_PICK_ATTEMPTS):
-            candidate, query = pick_for_slot(slot, beat, script["fallback_query"], search, used, fg_min_ratio, scorer)
+            candidate, query = pick_for_slot(
+                slot, beat, script["fallback_query"], search, used, fg_min_ratio, scorer, subjects[slot.beat]
+            )
             used.add((candidate.provider, candidate.id))
             log(f"[clips] shot {slot.index + 1}/{len(slots)}: {candidate.provider} {candidate.kind} {candidate.id} ({query})")
             try:

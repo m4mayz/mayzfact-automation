@@ -29,10 +29,11 @@ def test_generate_script_passes_on_first_try():
     assert (data["target_seconds"], data["target_words"], data["word_count"]) == (42.48, 110, 110)
     assert data["ngram_overlap"] == 0.0
     assert data["fallback_query"] == "ocean animals"
-    assert data["beats"][0] == {"text": make_script().beats[0].text, "media": "video", "queries": ["query 0", "animal close up"]}
+    assert data["beats"][0] == {"text": make_script().beats[0].text, "media": "video", "queries": ["query 0", "animal close up"], "subject": ""}
     assert len(writer.prompts) == 1
     assert "Split the narration into beats" in writer.prompts[0][0]
     assert "same numbering" in writer.prompts[0][0]
+    assert "\"subject\"" in writer.prompts[0][0]
 
 
 def test_generate_script_retries_once_with_feedback():

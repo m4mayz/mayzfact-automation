@@ -152,7 +152,7 @@ File baru di `runs/<id>/`:
 
 - `Candidate` dapat field `thumbnail_url`: Pexels video `image`, Pexels foto `src.medium`, Pixabay video `videos.*.thumbnail`, Pixabay foto `webformatURL`.
 - Per grup percobaan Fase 1 (media beat, media lain, `fallback_query`), kandidat dikumpulin dari **semua** query grup itu.
-- Skor = cosine embedding **query yang nemuin kandidat itu** vs embedding thumbnail. Kalimat narasi nggak dipakai, karena sering nggak nyebut nama hewannya. Thumbnail yang gagal dapat skor -1.
+- Skor = cosine embedding **nama subjek beat** (misalnya "sturgeon") vs embedding thumbnail. Subjek diambil dari field `subject` di naskah, atau dari beat countdown ("Number five, horseshoe crab") yang dibawa ke beat berikutnya. Kalau subjek nggak ada, pakai query yang nemuin kandidat itu. Query lengkap kayak "sturgeon river underwater" bikin SigLIP nyocokin pemandangannya, bukan hewannya (D-017). Thumbnail yang gagal dapat skor -1.
 - Batas relevansi 0.10 (dari data run `i2xag`: foto yang nyambung 0.094–0.163, video yang meleset 0.003–0.093). Kalau kandidat terbaik di satu grup skornya di bawah batas, grup berikutnya (biasanya foto hewan yang sama) ikut dinilai, terus yang skornya paling tinggi yang dipakai.
 - Sumber kandidat shot non-hook: Pexels + Pixabay + platform di `CLIP_PLATFORMS` (default Pinterest). 1 search platform per query, hasilnya dipakai buat video dan foto. Maksimal 40 search per run (D-016).
 - Urutan: kandidat tier 3 di belakang. Sisanya skor paling tinggi duluan, terus tier, terus urutan provider.
@@ -160,7 +160,7 @@ File baru di `runs/<id>/`:
 
 ## 7. Integrasi ke clips
 
-- Shot yang `start_s < HOOK_SECONDS` dipasang ke segmen hook yang punya pemenang, sesuai urutan: shot ke-1 dapat pemenang ke-1, dan seterusnya. Kalau pemenangnya habis, sisa shot pakai cara biasa.
+- Shot yang selesai paling lambat di `HOOK_SECONDS + 0.5` dipasang ke segmen hook yang punya pemenang, sesuai urutan: shot ke-1 dapat pemenang ke-1, dan seterusnya. Kalau pemenangnya habis, sisa shot pakai cara biasa.
 - Video hook dinormalisasi mulai dari `offset_s − durasi_shot/2`, dibatasi antara 0 dan `durasi_file − durasi_shot − 0.2`.
 - Entry di `clips.json` dapat field tambahan `hook_segment` dan `match`. `query` diisi `hook:<index>`.
 - Kalau file pemenang gagal diproses, shot itu balik ke cara biasa dan dicatat di log.

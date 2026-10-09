@@ -158,3 +158,17 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   - Default `HOOK_PLATFORMS` jadi `tiktok,pinterest`. Douyin/RedNote tetap ada di code dan bisa diaktifin lagi lewat `.env`.
 - **Konsekuensi:** D-012 direvisi, karena platform login (Pinterest) sekarang juga dipakai buat shot non-hook. Run nambah ±16–32 search Pinterest, kira-kira 3–5 menit.
 - **Authority:** semua usulan dari agent, disetujui Akmal (chat 2026-10-09). Angka 4 detik dipilih Akmal.
+
+## D-017 — 2026-10-09 — Relevansi klip dinilai pakai nama subjek, hook cuma ke shot yang selesai di area hook
+
+- **Status:** accepted
+- **Konteks:** Review Studio Akmal:
+  - Shot "Number five, horseshoe crab" (9.74–12.45s) masih kebagian klip hook pterosaurus, karena aturannya `start_s < 10`.
+  - Shot aksi masih nampilin pemandangan doang (pasir, air, dasar sungai).
+  - Pengukuran: skor SigLIP pakai query lengkap nggak bisa misahin yang meleset (0.145–0.147) dari yang nyambung (0.153). Pakai nama hewan aja, pemisahnya jelas: meleset 0.000–0.088, nyambung ≥0.105.
+- **Keputusan:**
+  - Klip hook cuma dipasang ke shot dengan `end_s ≤ HOOK_SECONDS + 0.5`.
+  - Teks penilaian relevansi = nama subjek beat. Sumbernya field `subject` baru di schema naskah (prompt Gemini diupdate), atau beat countdown "Number X, …" yang dibawa ke beat berikutnya. Kalau nggak ada subjek, fallback ke query.
+  - Batas relevansi tetap 0.10.
+  - Flag `--no-render`: review di Remotion Studio dulu, render final setelah Akmal oke.
+- **Authority:** Akmal minta "naikin batas" (shot aksi meleset diganti foto) dan review via Studio. Mekanisme subjek dari agent, berdasarkan pengukuran di atas (chat 2026-10-09).

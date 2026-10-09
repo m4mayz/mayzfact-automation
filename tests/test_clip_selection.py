@@ -139,3 +139,26 @@ def test_relevant_video_is_kept_even_if_photo_scores_higher():
     search = FakeSearch({("video", "horseshoe crab"): [video], ("photo", "horseshoe crab"): [photo]})
     scorer = QueryScorer({("horseshoe crab", "v"): 0.12, ("horseshoe crab", "p"): 0.2})
     assert pick_for_slot(slot(), BEAT, "animals", search, set(), 0.5, scorer=scorer) == (video, "horseshoe crab")
+
+
+def test_beat_subjects_from_field_or_countdown():
+    from mayzfact.steps.clips import beat_subjects
+
+    beats = [
+        {"text": "Check out five ancient beasts!"},
+        {"text": "Number five, horseshoe crab."},
+        {"text": "It resembles an armored tank!"},
+        {"text": "Number four: Nautilus!"},
+        {"text": "It swims.", "subject": "chambered nautilus"},
+        {"text": "Number 3, the platypus."},
+    ]
+    assert beat_subjects(beats) == [None, "horseshoe crab", "horseshoe crab", "nautilus", "chambered nautilus", "platypus"]
+
+
+def test_subject_is_used_as_scoring_text_and_drives_photo_fallback():
+    video = cand("pexels", "v")
+    photo = cand("pexels", "p", kind="photo")
+    search = FakeSearch({("video", "horseshoe crab"): [video], ("photo", "horseshoe crab"): [photo]})
+    scorer = QueryScorer({("sturgeon", "v"): 0.0, ("sturgeon", "p"): 0.13, ("horseshoe crab", "v"): 0.5})
+    assert pick_for_slot(slot(), BEAT, "animals", search, set(), 0.5, scorer=scorer, subject="sturgeon") == (photo, "horseshoe crab")
+    assert set(scorer.texts) == {"sturgeon"}

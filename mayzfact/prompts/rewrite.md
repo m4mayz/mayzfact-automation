@@ -20,6 +20,7 @@ Split the narration into beats. One beat is one short sentence or clause that ca
 For every beat return:
 - "text": the narration of the beat.
 - "media": "video" when the visual needs motion or action, "photo" when a still image of the subject works (a close-up of a specific animal, a fossil, an object). The first beat is always "video".
+- "subject": the animal or object this beat is about, in 1 to 3 English words (for example "horseshoe crab"). Use the subject currently being discussed even if the sentence does not name it. Use "" for intro or call-to-action beats that are not about one subject.
 - "queries": 2 or 3 English search terms for stock footage sites like Pexels and Pixabay, most specific first. Describe what is visible ("horseshoe crab on sandy beach"), not abstract ideas ("ancient"). No numbers, logos or on-screen text.
 
 Also return "fallback_query": one broad search term for the topic of the whole video (for example "ocean animals").

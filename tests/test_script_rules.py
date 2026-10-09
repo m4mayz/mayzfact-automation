@@ -100,3 +100,9 @@ def test_long_beat_is_reported():
     script = script.model_copy(update={"beats": [script.beats[0], long_beat, *script.beats[2:]]})
     problems, _ = check_script(script, SOURCE_TEXT, DURATION)
     assert any(p.startswith("Beat 2 has 12 words") for p in problems)
+
+
+def test_normalize_script_keeps_subject_trimmed():
+    raw = Script(beats=[Beat(text="Number five, horseshoe crab.", media="video", queries=["crab"], subject="  horseshoe crab ")], fallback_query="ocean")
+    assert normalize_script(raw).beats[0].subject == "horseshoe crab"
+    assert Beat(text="x", media="video", queries=["q"]).subject == ""

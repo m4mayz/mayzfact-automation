@@ -9,6 +9,7 @@ class Beat(BaseModel):
     text: str
     media: Literal["video", "photo"]
     queries: list[str]
+    subject: str = ""  # hewan/objek yang lagi dibahas, dipakai buat nilai relevansi klip
 
 
 class Script(BaseModel):

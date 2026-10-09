@@ -31,7 +31,10 @@ def word_range(duration_s: float) -> tuple[int, int, int]:
 def normalize_script(script: Script) -> Script:
     """Bersihin teks & keyword, lalu paksa beat pertama jadi video."""
     beats = [
-        Beat(text=clean_text(b.text), media=b.media, queries=[q.strip() for q in b.queries if q.strip()])
+        Beat(
+            text=clean_text(b.text), media=b.media, queries=[q.strip() for q in b.queries if q.strip()],
+            subject=" ".join(b.subject.split()),
+        )
         for b in script.beats
     ]
     if beats:
