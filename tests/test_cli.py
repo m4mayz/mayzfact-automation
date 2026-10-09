@@ -15,14 +15,14 @@ def test_cli_rejects_unknown_step():
 def test_cli_passes_flags_to_pipeline(monkeypatch, tmp_path, capsys):
     seen = {}
 
-    def fake_run(video, *, settings, from_step, new_voice):
-        seen.update(video=video, from_step=from_step, new_voice=new_voice)
+    def fake_run(video, *, settings, from_step, new_voice, no_render):
+        seen.update(video=video, from_step=from_step, new_voice=new_voice, no_render=no_render)
         return RunPaths(tmp_path)
 
     monkeypatch.setattr(cli, "load_settings", lambda: Settings())
     monkeypatch.setattr(cli, "run_pipeline", fake_run)
     assert cli.main(["run", "https://youtu.be/i2xag_1OJfM", "--new-voice"]) == 0
-    assert seen == {"video": "https://youtu.be/i2xag_1OJfM", "from_step": None, "new_voice": True}
+    assert seen == {"video": "https://youtu.be/i2xag_1OJfM", "from_step": None, "new_voice": True, "no_render": False}
     assert "Selesai:" in capsys.readouterr().out
 
 
@@ -66,3 +66,17 @@ def test_login_needs_platform_or_check(monkeypatch, capsys):
     monkeypatch.setattr(cli, "load_settings", lambda: Settings())
     assert cli.main(["login"]) == 1
     assert "mayzfact login tiktok" in capsys.readouterr().err
+
+
+def test_cli_no_render_flag(monkeypatch, tmp_path, capsys):
+    seen = {}
+
+    def fake_run(video, **kwargs):
+        seen.update(kwargs)
+        return RunPaths(tmp_path)
+
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "run_pipeline", fake_run)
+    assert cli.main(["run", "i2xag_1OJfM", "--from", "clips", "--no-render"]) == 0
+    assert seen["no_render"] is True
+    assert "remotion studio" in capsys.readouterr().out

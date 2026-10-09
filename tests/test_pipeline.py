@@ -332,3 +332,12 @@ def test_deps_are_closed_when_a_step_fails(world):
     with pytest.raises(PipelineError):
         run(world)
     assert closed == [1]
+
+
+def test_no_render_stops_after_timeline(world):
+    paths = run(world, no_render=True)
+    assert paths.timeline_json.exists()
+    assert not paths.final_mp4.exists()
+    assert world.renders == 0
+    run(world, from_step="clips", no_render=True)
+    assert world.renders == 0

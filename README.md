@@ -19,6 +19,7 @@ Pipeline YouTube Shorts. Naskah ditulis ulang pakai Gemini, suaranya dari Eleven
 uv run mayzfact run <video_id atau URL>        # jalanin semua step yang belum ada
 uv run mayzfact run <id> --from clips          # ulang klip + timeline + render; suara nggak dibuat ulang
 uv run mayzfact run <id> --new-voice           # naskah + suara baru (pakai kredit ElevenLabs)
+uv run mayzfact run <id> --from clips --no-render   # berhenti di timeline.json, review di Remotion Studio dulu
 ```
 
 Hasilnya ada di `runs/<id>/final.mp4`. Jangan hapus `runs/<id>/voice.mp3`, soalnya kalau kehapus suara harus dibuat ulang dan kredit kepakai lagi.

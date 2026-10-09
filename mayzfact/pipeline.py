@@ -197,6 +197,7 @@ def run_pipeline(
     settings: Settings,
     from_step: str | None = None,
     new_voice: bool = False,
+    no_render: bool = False,
     deps: Deps | None = None,
     runs_dir: Path = RUNS_DIR,
     log: Callable[[str], None] = print,
@@ -205,6 +206,11 @@ def run_pipeline(
     paths = RunPaths(runs_dir / video_id)
     done = {step: step_done(step, paths) for step in STEPS}
     steps = plan_steps(done, paths.voice_mp3.exists(), from_step, new_voice)
+    if no_render:
+        # Review lewat Remotion Studio dulu. final.mp4 lama jadi basi kalau step sebelumnya diulang.
+        if any(step in steps for step in ("hook", "clips", "timeline")):
+            paths.final_mp4.unlink(missing_ok=True)
+        steps = [step for step in steps if step != "render"]
     if not steps:
         log(f"Semua step {video_id} udah selesai: {paths.final_mp4}. Pakai --from hook/clips/timeline/render buat bikin ulang.")
         return paths

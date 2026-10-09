@@ -21,6 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("video", help="Video ID atau URL YouTube")
     run.add_argument("--from", dest="from_step", choices=STEPS, help="Ulang dari step ini (script/tts dikunci kalau voice.mp3 udah ada)")
     run.add_argument("--new-voice", action="store_true", help="Bikin naskah + suara baru (pakai kredit ElevenLabs)")
+    run.add_argument("--no-render", action="store_true", help="Berhenti setelah timeline.json, buat review di Remotion Studio")
     sub.add_parser("voices", help="List voice ElevenLabs di akun lu")
     login = sub.add_parser("login", help="Login ke platform buat hook (TikTok/Douyin/RedNote/Pinterest)")
     login.add_argument("platform", nargs="?", choices=sorted(PLATFORMS))
@@ -36,8 +37,16 @@ def main(argv: list[str] | None = None) -> int:
             return _print_voices(settings)
         if args.command == "login":
             return _login(args, settings)
-        paths = run_pipeline(args.video, settings=settings, from_step=args.from_step, new_voice=args.new_voice)
-        print(f"Selesai: {paths.final_mp4}")
+        paths = run_pipeline(
+            args.video, settings=settings, from_step=args.from_step, new_voice=args.new_voice, no_render=args.no_render
+        )
+        if args.no_render:
+            print(
+                f"Timeline siap: {paths.timeline_json}\nReview: cd remotion && npx remotion studio src/index.ts "
+                f"--public-dir=../runs/{paths.root.name} --props=../runs/{paths.root.name}/timeline.json"
+            )
+        else:
+            print(f"Selesai: {paths.final_mp4}")
         return 0
     except PipelineError as exc:
         print(f"Error {exc}", file=sys.stderr)
