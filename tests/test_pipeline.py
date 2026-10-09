@@ -304,3 +304,31 @@ def test_old_run_without_hook_json_resumes_from_hook(world):
     run(world)
     assert paths.hook_json.exists()
     assert (world.tts.calls, world.renders) == (1, 2)
+
+
+def test_clips_use_clip_search_and_deps_are_closed(world):
+    used, closed = [], []
+
+    class TaggingSearch(FakeSearch):
+        def candidates(self, kind, query):
+            used.append(kind)
+            return super().candidates(kind, query)
+
+    world.deps.clip_search = TaggingSearch
+    world.deps.close = lambda: closed.append(1)
+    run(world)
+    assert used
+    assert closed == [1]
+
+
+def test_deps_are_closed_when_a_step_fails(world):
+    closed = []
+
+    def failing_render(paths):
+        raise PipelineError("render", "Remotion gagal")
+
+    world.deps.render = failing_render
+    world.deps.close = lambda: closed.append(1)
+    with pytest.raises(PipelineError):
+        run(world)
+    assert closed == [1]

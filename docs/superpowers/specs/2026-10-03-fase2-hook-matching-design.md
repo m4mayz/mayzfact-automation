@@ -152,7 +152,9 @@ File baru di `runs/<id>/`:
 
 - `Candidate` dapat field `thumbnail_url`: Pexels video `image`, Pexels foto `src.medium`, Pixabay video `videos.*.thumbnail`, Pixabay foto `webformatURL`.
 - Per grup percobaan Fase 1 (media beat, media lain, `fallback_query`), kandidat dikumpulin dari **semua** query grup itu.
-- Skor = cosine embedding teks beat vs embedding thumbnail. Thumbnail yang gagal dapat skor -1.
+- Skor = cosine embedding **query yang nemuin kandidat itu** vs embedding thumbnail. Kalimat narasi nggak dipakai, karena sering nggak nyebut nama hewannya. Thumbnail yang gagal dapat skor -1.
+- Batas relevansi 0.10 (dari data run `i2xag`: foto yang nyambung 0.094–0.163, video yang meleset 0.003–0.093). Kalau kandidat terbaik di satu grup skornya di bawah batas, grup berikutnya (biasanya foto hewan yang sama) ikut dinilai, terus yang skornya paling tinggi yang dipakai.
+- Sumber kandidat shot non-hook: Pexels + Pixabay + platform di `CLIP_PLATFORMS` (default Pinterest). 1 search platform per query, hasilnya dipakai buat video dan foto. Maksimal 40 search per run (D-016).
 - Urutan: kandidat tier 3 di belakang. Sisanya skor paling tinggi duluan, terus tier, terus urutan provider.
 - Aturan Fase 1 tetap jalan: klip nggak boleh dobel, durasi video minimal shot + 0.5 detik, link mati diganti kandidat berikutnya.
 
@@ -169,7 +171,9 @@ File baru di `runs/<id>/`:
 | --- | --- | --- |
 | `HOOK_SECONDS` | `10` | panjang area hook di source dan di video kita |
 | `HOOK_EXACT_THRESHOLD` | `0.85` | batas label `exact`. Dikalibrasi pas E2E |
-| `HOOK_PLATFORMS` | `tiktok,douyin,rednote,pinterest` | platform aktif, dipisah koma |
+| `HOOK_PLATFORMS` | `tiktok,pinterest` | platform aktif buat hook, dipisah koma. Douyin/RedNote bisa diaktifin lagi (D-016) |
+| `CLIP_PLATFORMS` | `pinterest` | platform login tambahan buat shot non-hook. Kosongin = cuma stock |
+| `MAX_SHOT_SECONDS` | `4` | sebelumnya 2.5 (Fase 1). Shot sekarang hampir selalu 1 per beat |
 | `BROWSER_HEADLESS` | `false` | `true` buat jalan tanpa jendela browser |
 
 Dependency baru: `numpy`, `torch` (wheel CPU dari PyPI di Windows), `open-clip-torch`, `playwright`, `yt-dlp`. Model `ViT-B-16-SigLIP` / `webli` di-download otomatis sekali (±800 MB).

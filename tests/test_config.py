@@ -7,7 +7,7 @@ from mayzfact.errors import PipelineError
 def test_defaults_when_env_empty():
     settings = settings_from_env({})
     assert settings == Settings()
-    assert settings.max_shot_seconds == 2.5
+    assert settings.max_shot_seconds == 4.0
     assert settings.fg_min_height_ratio == 0.5
     assert settings.gemini_model == "gemini-3.8-flash"
 
@@ -54,7 +54,9 @@ def test_elevenlabs_keys_are_split_by_comma():
 def test_hook_settings_defaults_and_parsing():
     settings = settings_from_env({})
     assert (settings.hook_seconds, settings.hook_exact_threshold, settings.browser_headless) == (10.0, 0.85, False)
-    assert settings.hook_platforms == ("tiktok", "douyin", "rednote", "pinterest")
+    assert settings.hook_platforms == ("tiktok", "pinterest")
+    assert settings.clip_platforms == ("pinterest",)
+    assert settings.max_shot_seconds == 4.0
     settings = settings_from_env({"HOOK_SECONDS": "8", "HOOK_PLATFORMS": "tiktok,pinterest", "BROWSER_HEADLESS": "TRUE"})
     assert (settings.hook_seconds, settings.hook_platforms, settings.browser_headless) == (8.0, ("tiktok", "pinterest"), True)
     assert settings_from_env({"BROWSER_HEADLESS": "off"}).browser_headless is False

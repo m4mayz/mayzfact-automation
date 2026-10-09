@@ -28,12 +28,13 @@ class Settings:
     pixabay_api_key: str = ""
     target_duration_ratio: float = 0.6
     min_duration_seconds: float = 32.0
-    max_shot_seconds: float = 2.5
+    max_shot_seconds: float = 4.0
     photo_ratio: float = 0.3
     fg_min_height_ratio: float = 0.5
     hook_seconds: float = 10.0
     hook_exact_threshold: float = 0.85
-    hook_platforms: tuple[str, ...] = ("tiktok", "douyin", "rednote", "pinterest")
+    hook_platforms: tuple[str, ...] = ("tiktok", "pinterest")
+    clip_platforms: tuple[str, ...] = ("pinterest",)
     browser_headless: bool = False
 
 
@@ -71,6 +72,7 @@ ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
     "HOOK_SECONDS": ("hook_seconds", float),
     "HOOK_EXACT_THRESHOLD": ("hook_exact_threshold", float),
     "HOOK_PLATFORMS": ("hook_platforms", _key_list),
+    "CLIP_PLATFORMS": ("clip_platforms", _key_list),
     "BROWSER_HEADLESS": ("browser_headless", _flag),
 }
 

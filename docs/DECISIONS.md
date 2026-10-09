@@ -139,3 +139,22 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Keputusan:** default tetap 0.85, dan semua pemenang dilabel `similar`.
 - **Konsekuensi:** kalibrasi diulang setelah TikTok/Douyin/RedNote jalan stabil dan ada pasangan klip yang persis sama.
 - **Authority:** aturan kalibrasi dari plan Task 14 Step 6, dijalanin agent (2026-10-03).
+
+## D-016 — 2026-10-09 — Revisi setelah review video Fase 2
+
+- **Status:** accepted
+- **Konteks:** Review Akmal atas `i2xag_1OJfM` Fase 2:
+  - hook udah cocok ±70%
+  - layout oke
+  - shot non-hook nggak nyambung, kecuali shot yang nyebut nama hewan
+  - ganti shot terlalu sering
+  - Douyin/RedNote susah login
+- **Root cause shot nggak nyambung:** query-nya udah bener, tapi Pexels/Pixabay hampir nggak punya video hewan langka. Foto hewannya ada.
+- **Keputusan:**
+  - `MAX_SHOT_SECONDS` 2.5 → 4.
+  - Rerank pakai query tiap kandidat, bukan kalimat narasi.
+  - Batas relevansi 0.10. Kalau skor terbaik di bawah itu, grup media lain (biasanya foto) ikut dinilai, terus yang skornya paling tinggi dipakai.
+  - Pinterest ikut jadi sumber shot non-hook (`CLIP_PLATFORMS=pinterest`, maksimal 40 search per run).
+  - Default `HOOK_PLATFORMS` jadi `tiktok,pinterest`. Douyin/RedNote tetap ada di code dan bisa diaktifin lagi lewat `.env`.
+- **Konsekuensi:** D-012 direvisi, karena platform login (Pinterest) sekarang juga dipakai buat shot non-hook. Run nambah ±16–32 search Pinterest, kira-kira 3–5 menit.
+- **Authority:** semua usulan dari agent, disetujui Akmal (chat 2026-10-09). Angka 4 detik dipilih Akmal.

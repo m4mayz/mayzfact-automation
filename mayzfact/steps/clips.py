@@ -24,6 +24,8 @@ from mayzfact.timing import beat_timings
 PROVIDER_ORDER = {"pexels": 0, "pixabay": 1}
 MIN_EXTRA_S = 0.5
 MAX_PICK_ATTEMPTS = 3
+# ponytail: batas dari 1 run i2xag (foto nyambung 0.094-0.163, video meleset 0.003-0.093); kalibrasi ulang kalau model ganti
+RELEVANCE_MIN = 0.10
 
 
 @dataclass(frozen=True)
@@ -78,6 +80,28 @@ def choose_candidate(
     return min(usable, key=lambda c: (tier(c, fg_min_ratio), c.rank, PROVIDER_ORDER.get(c.provider, 9)))
 
 
+def _best_scored(
+    kind: str,
+    queries: list[str],
+    search: MediaSearch,
+    used: set[tuple[str, str]],
+    min_duration_s: float,
+    fg_min_ratio: float,
+    scorer: Scorer,
+) -> tuple[Candidate, str, float] | None:
+    """Kandidat terbaik dari semua query satu grup. Tiap kandidat dinilai pakai query yang nemuin dia."""
+    seen: set[tuple[str, str]] = set()
+    scored: list[tuple[Candidate, str, float]] = []
+    for query in queries:
+        fresh = [c for c in _usable(search.candidates(kind, query), used, min_duration_s) if (c.provider, c.id) not in seen]
+        seen.update((c.provider, c.id) for c in fresh)
+        if fresh:
+            scored += [(c, query, score) for c, score in zip(fresh, scorer.score(query, fresh))]
+    if not scored:
+        return None
+    return min(scored, key=lambda item: rerank_key(item[2], tier(item[0], fg_min_ratio), PROVIDER_ORDER.get(item[0].provider, 9)))
+
+
 def pick_for_slot(
     slot: ShotSlot,
     beat: dict,
@@ -95,25 +119,26 @@ def pick_for_slot(
         queries = queries[start:] + queries[:start]
     groups = [(slot.media, queries), (other, queries), (slot.media, [fallback_query]), (other, [fallback_query])]
     min_duration = slot.duration_s + MIN_EXTRA_S
-    for kind, group_queries in groups:
-        if scorer is None:
+    if scorer is None:
+        for kind, group_queries in groups:
             for query in group_queries:
                 found = choose_candidate(search.candidates(kind, query), used, min_duration, fg_min_ratio)
                 if found is not None:
                     return found, query
-            continue
-        pool: dict[tuple[str, str], tuple[Candidate, str]] = {}
-        for query in group_queries:
-            for candidate in _usable(search.candidates(kind, query), used, min_duration):
-                pool.setdefault((candidate.provider, candidate.id), (candidate, query))
-        if pool:
-            items = list(pool.values())
-            scores = scorer.score(beat["text"], [c for c, _ in items])
-            best = min(
-                range(len(items)),
-                key=lambda i: rerank_key(scores[i], tier(items[i][0], fg_min_ratio), PROVIDER_ORDER.get(items[i][0].provider, 9)),
-            )
-            return items[best]
+    else:
+        weak: tuple[Candidate, str, float] | None = None
+        for kind, group_queries in groups:
+            best = _best_scored(kind, group_queries, search, used, min_duration, fg_min_ratio, scorer)
+            if best is None:
+                continue
+            if best[2] >= RELEVANCE_MIN:
+                return best[0], best[1]
+            # Skor rendah (misalnya video hewan langka yang nggak ada di stock): coba grup berikutnya
+            # (biasanya foto hewan yang sama), terus ambil yang skornya paling tinggi.
+            if weak is None or best[2] > weak[2]:
+                weak = best
+        if weak is not None:
+            return weak[0], weak[1]
     raise PipelineError(
         "clips",
         f'Beat {slot.beat + 1} ("{beat["text"][:50]}") nggak dapet klip video/foto sama sekali, termasuk pakai fallback_query.',

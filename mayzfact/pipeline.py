@@ -17,7 +17,7 @@ from mayzfact.providers.elevenlabs import ElevenLabsTTS
 from mayzfact.providers.gemini import GeminiScriptWriter
 from mayzfact.providers.pexels import Pexels
 from mayzfact.providers.pixabay import Pixabay
-from mayzfact.providers.stock import StockSearch
+from mayzfact.providers.stock import CombinedSearch, PlatformMediaSearch, StockSearch
 from mayzfact.scoring import ThumbScorer
 from mayzfact.steps.clips import MediaSearch, Scorer, run_clips
 from mayzfact.steps.render import run_render
@@ -38,6 +38,7 @@ STEP_ENV = {
     "tts": ["ELEVENLABS_API_KEYS", "ELEVENLABS_VOICE_ID"],
     "clips": ["PEXELS_API_KEY", "PIXABAY_API_KEY"],
 }
+CLIP_MAX_SEARCHES = 40  # ±16 beat x 2 query; hasil per query di-cache, jadi video & foto cuma 1 search
 NEW_VOICE_HINT = "Pakai --new-voice kalau emang mau naskah + suara baru (pakai kredit ElevenLabs)."
 
 
@@ -108,6 +109,8 @@ class Deps:
     media_cache: Path = CACHE_DIR / "media"
     hook: Callable[[RunPaths, Callable[[str], None]], dict] | None = None
     scorer: Callable[[], Scorer | None] = lambda: None
+    clip_search: Callable[[], MediaSearch] | None = None  # None = pakai `search`
+    close: Callable[[], None] = lambda: None
 
 
 def real_deps(settings: Settings) -> Deps:
@@ -147,6 +150,31 @@ def real_deps(settings: Settings) -> Deps:
         finally:
             hook_deps.close()
 
+    closers: list[Callable[[], None]] = []
+
+    def clip_search() -> MediaSearch:
+        if not settings.clip_platforms:
+            return search()
+        from mayzfact.platforms import browser
+
+        shared = browser.SharedPlaywright()
+        platforms = [
+            browser.BrowserPlatform(name, client=http(), headless=settings.browser_headless, playwright=shared, max_searches=CLIP_MAX_SEARCHES)
+            for name in settings.clip_platforms
+        ]
+
+        def close_platforms() -> None:
+            for platform in platforms:
+                platform.close()
+            shared.stop()
+
+        closers.append(close_platforms)
+        return CombinedSearch([search(), *(PlatformMediaSearch(p) for p in platforms)])
+
+    def close() -> None:
+        while closers:
+            closers.pop()()
+
     return Deps(
         fetch_transcript=youtube_transcript,
         script_writer=lambda: GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model),
@@ -158,6 +186,8 @@ def real_deps(settings: Settings) -> Deps:
         render=run_render,
         hook=hook,
         scorer=lambda: ThumbScorer(encoder(), fetch_thumb),
+        clip_search=clip_search,
+        close=close,
     )
 
 
@@ -192,12 +222,15 @@ def run_pipeline(
                 path.unlink(missing_ok=True)
     deps = deps or real_deps(settings)
     voice_checked = False
-    for step in steps:
-        if step in AFTER_VOICE and not voice_checked:
-            check_voice(paths)
-            voice_checked = True
-        log(f"[{step}] mulai")
-        _run_step(step, paths, settings, deps, log)
+    try:
+        for step in steps:
+            if step in AFTER_VOICE and not voice_checked:
+                check_voice(paths)
+                voice_checked = True
+            log(f"[{step}] mulai")
+            _run_step(step, paths, settings, deps, log)
+    finally:
+        deps.close()
     return paths
 
 
@@ -218,7 +251,8 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
             deps.hook(paths, log)
     elif step == "clips":
         run_clips(
-            paths, read_json(paths.script_json), read_json(paths.tts_json), deps.search(), deps.http(),
+            paths, read_json(paths.script_json), read_json(paths.tts_json),
+            (deps.clip_search or deps.search)(), deps.http(),
             max_shot_s=settings.max_shot_seconds, fg_min_ratio=settings.fg_min_height_ratio,
             media_cache=deps.media_cache, log=log,
             hook=read_json(paths.hook_json), scorer=deps.scorer(), hook_seconds=settings.hook_seconds,

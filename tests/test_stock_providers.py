@@ -157,3 +157,43 @@ def test_parsers_fill_thumbnail_url():
 
 def test_cand_factory_has_thumbnail():
     assert cand("pexels", "9").thumbnail_url == "https://cdn.test/pexels_9_thumb.jpg"
+
+
+def test_platform_media_search_caches_query_and_filters_kind():
+    from mayzfact.platforms.base import PlatformBlocked
+    from mayzfact.providers.stock import PlatformMediaSearch
+
+    calls = []
+
+    class FakePlatform:
+        name = "pinterest"
+
+        def search(self, query):
+            calls.append(query)
+            if query == "blok":
+                raise PlatformBlocked("pinterest", "captcha/login")
+            return [cand("pinterest", "v"), cand("pinterest", "p", kind="photo")]
+
+    logs = []
+    search = PlatformMediaSearch(FakePlatform(), log=logs.append)
+    assert [c.id for c in search.candidates("video", "crab")] == ["v"]
+    assert [c.id for c in search.candidates("photo", "crab")] == ["p"]
+    assert calls == ["crab"]
+    assert search.candidates("video", "blok") == []
+    assert search.candidates("video", "lain") == []
+    assert calls == ["crab", "blok"]
+    assert len(logs) == 1 and "pinterest" in logs[0]
+
+
+def test_combined_search_merges_sources():
+    from mayzfact.providers.stock import CombinedSearch
+
+    class Source:
+        def __init__(self, items):
+            self.items = items
+
+        def candidates(self, kind, query):
+            return [c for c in self.items if c.kind == kind]
+
+    combined = CombinedSearch([Source([cand("pexels", "1")]), Source([cand("pinterest", "2"), cand("pexels", "1")])])
+    assert [(c.provider, c.id) for c in combined.candidates("video", "q")] == [("pexels", "1"), ("pinterest", "2")]

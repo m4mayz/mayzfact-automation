@@ -102,4 +102,40 @@ def test_scorer_picks_best_scored_candidate_across_all_queries():
     scorer = FixedScorer({"low": 0.1, "blurry": 0.9, "high": 0.3})
     assert pick_for_slot(slot(), BEAT, "animals", search, set(), 0.5, scorer=scorer) == (high, "crab beach")
     assert search.calls == [("video", "horseshoe crab"), ("video", "crab beach")]
-    assert scorer.calls == [("Look at this crab.", ["low", "blurry", "high"])]
+    assert scorer.calls == [("horseshoe crab", ["low", "blurry"]), ("crab beach", ["high"])]
+
+
+class QueryScorer:
+    """Skor ditentuin dari (query, id) biar kelihatan teks mana yang dipakai buat nilai kandidat."""
+
+    def __init__(self, table):
+        self.table = table
+        self.texts = []
+
+    def score(self, text, candidates):
+        self.texts.append(text)
+        return [self.table.get((text, c.id), 0.0) for c in candidates]
+
+
+def test_rerank_scores_each_candidate_with_its_own_query():
+    a, b = cand("pexels", "a"), cand("pexels", "b")
+    search = FakeSearch({("video", "horseshoe crab"): [a], ("video", "crab beach"): [b]})
+    scorer = QueryScorer({("horseshoe crab", "a"): 0.12, ("crab beach", "b"): 0.3})
+    assert pick_for_slot(slot(), BEAT, "animals", search, set(), 0.5, scorer=scorer) == (b, "crab beach")
+    assert sorted(set(scorer.texts)) == ["crab beach", "horseshoe crab"]
+
+
+def test_low_relevance_video_switches_to_better_photo():
+    video = cand("pexels", "v")
+    photo = cand("pexels", "p", kind="photo")
+    search = FakeSearch({("video", "horseshoe crab"): [video], ("photo", "horseshoe crab"): [photo]})
+    scorer = QueryScorer({("horseshoe crab", "v"): 0.03, ("horseshoe crab", "p"): 0.15})
+    assert pick_for_slot(slot(), BEAT, "animals", search, set(), 0.5, scorer=scorer) == (photo, "horseshoe crab")
+
+
+def test_relevant_video_is_kept_even_if_photo_scores_higher():
+    video = cand("pexels", "v")
+    photo = cand("pexels", "p", kind="photo")
+    search = FakeSearch({("video", "horseshoe crab"): [video], ("photo", "horseshoe crab"): [photo]})
+    scorer = QueryScorer({("horseshoe crab", "v"): 0.12, ("horseshoe crab", "p"): 0.2})
+    assert pick_for_slot(slot(), BEAT, "animals", search, set(), 0.5, scorer=scorer) == (video, "horseshoe crab")
