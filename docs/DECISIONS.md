@@ -172,3 +172,15 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   - Batas relevansi tetap 0.10.
   - Flag `--no-render`: review di Remotion Studio dulu, render final setelah Akmal oke.
 - **Authority:** Akmal minta "naikin batas" (shot aksi meleset diganti foto) dan review via Studio. Mekanisme subjek dari agent, berdasarkan pengukuran di atas (chat 2026-10-09).
+
+## D-018 — 2026-10-11 — Risiko ToS platform diterima Akmal
+
+- **Status:** accepted
+- **Konteks:** search otomatis Douyin/RedNote gagal karena captcha (Douyin) dan blok IP "IP at risk" (RedNote, error 300012).
+- **Keputusan:** Akmal secara eksplisit nerima risiko pelanggaran ToS platform (scraping, pakai klip creator lain) dan minta dicariin repo open source yang bisa search otomatis. Kutipan: "persetan dengan TOS, catat ini".
+- **Batas yang tetap dipegang agent:**
+  - Challenge otomatis yang diselesaiin browser biasa tanpa manusia (misalnya WAF proof-of-work Douyin) boleh dipakai.
+  - Captcha yang butuh manusia nggak di-solve otomatis.
+  - Blok IP nggak diakalin pakai proxy/rotasi IP.
+- **Konsekuensi:** akun bisa ke-ban, dan video bisa kena klaim hak cipta atau takedown. Ini tanggung jawab Akmal.
+- **Authority:** keputusan Akmal (chat 2026-10-11).
