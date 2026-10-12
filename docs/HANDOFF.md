@@ -110,7 +110,7 @@
   - Nggak ada yang klip persis sama.
 - `runs/i2xag_1OJfM/contact_sheet_fase2.jpg`: shot non-hook lebih relevan dari Fase 1. Horseshoe crab sekarang asli, nautilus dan sturgeon pas, tardigrade jadi mikroorganisme di bawah mikroskop.
 - `HOOK_EXACT_THRESHOLD` tetap 0.85, karena belum ada pasangan klip yang persis sama buat kalibrasi (D-015).
-- **Review Akmal: belum.**
+- **Review Akmal:** oke via Remotion Studio (2026-10-12), setelah revisi D-016/D-017 (shot 4 detik, Pinterest buat klip, relevansi pakai nama subjek, hook cuma ke shot yang selesai di area hook). Render final 49.3 detik, 16 shot.
 
 ## Masalah terbuka
 
@@ -122,4 +122,5 @@
 
 ## Delivery
 
-- Commit di branch `fase2-hook`. Belum di-push dan belum di-merge.
+- Di-merge ke `master` (2026-10-12). Belum di-push.
+- Next: metode manual buat semua shot (Douyin/RedNote dicari Akmal sendiri, link diinput lewat halaman brief lokal). Bilibili di-skip. Fase 3 ditahan.
