@@ -7,6 +7,25 @@ export type Shot = {
   fgHeight?: number;
 };
 
+export type Caption = {
+  text: string;
+  from: number;
+  durationInFrames: number;
+  color: string;
+};
+
+export type CountdownCard = {
+  number: number;
+  label: string;
+  numberFrom: number;
+  numberDuration: number;
+  cardFrom: number;
+  cardDuration: number;
+  src: string;
+  kind: 'video' | 'photo';
+  clipOffset: number;
+};
+
 // Pakai `type`, bukan `interface`: props Remotion harus cocok sama Record<string, unknown>.
 export type TimelineProps = {
   fps: number;
@@ -16,4 +35,6 @@ export type TimelineProps = {
   audio: string;
   photoZoom: number;
   shots: Shot[];
+  countdown?: CountdownCard[];
+  captions?: Caption[];
 };
