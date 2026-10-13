@@ -19,17 +19,16 @@ CAPTION_HOLD_S = 0.4  # kata terakhir tetap tampil sebentar pas jeda
 CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
-SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.35, "overlay": 0.7}
+SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.35, "overlay": 0.35}
 SFX_LEAD_FRAMES = 3  # whoosh mulai sedikit sebelum gambar ganti (puncak whoosh-clean di ±0.1 detik)
 # Pembuka = bagian "masuk" transisi antar scene di source i2xag: scene muncul hampir putih + blur vertikal,
 # cepat tajam, terangnya pudar ke normal. Barengan SFX hook.
 INTRO_FRAMES = 7
 OVERLAY_COLORS = ("#ff2a2a", "#ffd400")
 CIRCLE_EVERY = 5  # tiap overlay ke-5 jadi lingkaran, sisanya panah (kayak source)
-# Panah/lingkaran muncul sebentar (bareng quick-ting), terus hilang sebelum klipnya habis.
+# Panah/lingkaran muncul (bareng quick-ting) dan selesai fade 0.5 detik sebelum ganti klip.
 OVERLAY_DELAY_FRAMES = 6
-OVERLAY_MAX_FRAMES = 40
-OVERLAY_END_GAP_FRAMES = 6
+OVERLAY_END_GAP_FRAMES = 15
 OVERLAY_MIN_FRAMES = 15
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
@@ -164,7 +163,7 @@ def _overlays(detections: dict | None, entries: list[dict], countdown: list[dict
         covered = any(c["numberFrom"] <= entry["from"] < c["cardFrom"] + c["cardDuration"] for c in countdown)
         if not points or covered:
             continue
-        duration = min(OVERLAY_MAX_FRAMES, entry["durationInFrames"] - OVERLAY_DELAY_FRAMES - OVERLAY_END_GAP_FRAMES)
+        duration = entry["durationInFrames"] - OVERLAY_DELAY_FRAMES - OVERLAY_END_GAP_FRAMES
         if duration < OVERLAY_MIN_FRAMES:
             continue
         number = len(out) + 1

@@ -163,18 +163,18 @@ def test_overlays_from_detections():
                 "clips/shot_03.mp4": {"points": [point(0.5)]}}
     timeline = build_timeline(CLIPS, 6.5, 0.5, overlays=overlays)
     assert timeline["overlays"] == [
-        {"type": "arrow", "color": "#ff2a2a", "from": 6, "durationInFrames": 40,
+        {"type": "arrow", "color": "#ff2a2a", "from": 6, "durationInFrames": 51,
          "keyframes": [{"frame": 9, "x": 100, "y": 200, "w": 300, "h": 400}, {"frame": 39, "x": 150, "y": 200, "w": 300, "h": 400}]},
-        {"type": "arrow", "color": "#ffd400", "from": 138, "durationInFrames": 40,
+        {"type": "arrow", "color": "#ffd400", "from": 138, "durationInFrames": 42,
          "keyframes": [{"frame": 9, "x": 100, "y": 200, "w": 300, "h": 400}]},
     ]
     assert build_timeline(CLIPS, 6.5, 0.5)["overlays"] == []
 
 
 def test_every_fifth_overlay_is_a_circle_and_cards_are_skipped():
-    shots = {"shots": [shot(f"clips/s{i}.mp4", "video", float(i), 1080, 1920) for i in range(6)]}
-    overlays = {f"clips/s{i}.mp4": {"points": [point(0.5)]} for i in range(6)}
-    types = [o["type"] for o in build_timeline(shots, 6.5, 0.5, overlays=overlays)["overlays"]]
+    shots = {"shots": [shot(f"clips/s{i}.mp4", "video", float(i), 1080, 1920) for i in range(0, 12, 2)]}
+    overlays = {f"clips/s{i}.mp4": {"points": [point(0.5)]} for i in range(0, 12, 2)}
+    types = [o["type"] for o in build_timeline(shots, 12.5, 0.5, overlays=overlays)["overlays"]]
     assert types == ["arrow", "arrow", "arrow", "arrow", "circle", "arrow"]
     covered = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN,
                              overlays={"clips/shot_02.mp4": {"points": [point(0.5)]}})
@@ -201,7 +201,7 @@ def test_voice_onset_moves_number_and_captions():
 def test_overlay_sfx_plays_when_overlay_appears():
     overlays = {"clips/shot_01.mp4": {"points": [point(0.5)]}}
     timeline = build_timeline(CLIPS, 6.5, 0.5, overlays=overlays, audio={"bgm": None, "sfx": {"overlay": "audio/sfx/t.mp3"}})
-    assert timeline["sfx"] == [{"src": "audio/sfx/t.mp3", "from": 6, "volume": 0.7}]
+    assert timeline["sfx"] == [{"src": "audio/sfx/t.mp3", "from": 6, "volume": 0.35}]
 
 
 def test_overlay_skipped_when_shot_too_short():
