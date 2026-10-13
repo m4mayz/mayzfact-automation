@@ -99,18 +99,48 @@ def _best(sources: list[Source], target: np.ndarray, duration: float, fresh: boo
     return best
 
 
+class Progress:
+    """fetch_progress.json: dibaca halaman brief tiap 2 detik buat nampilin progres fetch."""
+
+    MAX_LOG = 40
+
+    def __init__(self, path: Path, links_total: int, shots_total: int, log: Callable[[str], None]) -> None:
+        self.path = path
+        self._log = log
+        self.data = {"state": "running", "current": "", "links_done": 0, "links_total": links_total,
+                     "shots_done": 0, "shots_total": shots_total, "log": []}
+        self.save()
+
+    def save(self) -> None:
+        write_json_atomic(self.path, self.data)
+
+    def update(self, **fields: Any) -> None:
+        self.data.update(fields)
+        self.save()
+
+    def log(self, line: str) -> None:
+        self._log(line)
+        self.data["log"] = (self.data["log"] + [line])[-self.MAX_LOG:]
+        self.save()
+
+
 def _run_group(group: dict, shots: list[dict], entries: list[dict], obtain: Callable[[dict, Path], list[Path]],
-               paths: RunPaths, encoder: Encoder, fg_min_ratio: float, log: Callable[[str], None]) -> tuple[list[dict], list[str]]:
+               paths: RunPaths, encoder: Encoder, fg_min_ratio: float, progress: Progress) -> tuple[list[dict], list[str]]:
     sources: list[Source] = []
     errors = []
     for line, entry in enumerate(entries, 1):
+        progress.update(current=f"{group['label']}: download baris {line}/{len(entries)}")
         try:
             sources += _sources(entry, obtain(entry, paths.root), paths, encoder)
+            progress.log(f"[fetch] {group['label']} baris {line}: siap")
         except Exception as exc:  # 1 link gagal = kelompok gagal, tapi baris lain tetap dicek biar semua error kelihatan
             errors.append(f"baris {line} ({entry.get('url') or entry.get('file')}): {_message(exc)[:200]}")
+            progress.log(f"[fetch] {group['label']} baris {line}: GAGAL {_message(exc).splitlines()[0][:120]}")
+        progress.update(links_done=progress.data["links_done"] + 1)
     if errors:
         raise PipelineError("fetch", "; ".join(errors))
     clips, warnings = [], []
+    progress.update(current=f"{group['label']}: milih potongan")
     for shot in shots:
         number = shot["index"] + 1
         duration = shot["end_s"] - shot["start_s"]
@@ -135,7 +165,8 @@ def _run_group(group: dict, shots: list[dict], entries: list[dict], obtain: Call
             "page_url": url or source.entry["file"], "author": "", "query": "manual",
             "match": round(score, 4), "hook_segment": shot["hook_segment"], "source_s": round(start, 2),
         })
-        log(f"[fetch] shot {number} ({group['label']}): {source.kind} skor {score:.3f} dari detik {start:.1f}")
+        progress.data["shots_done"] += 1
+        progress.log(f"[fetch] shot {number} ({group['label']}): {source.kind} skor {score:.3f} dari detik {start:.1f}")
     return clips, warnings
 
 
@@ -157,6 +188,8 @@ def run_fetch(
     status: dict[str, dict] = {}
     problems: list[str] = []
     clips: list[dict] = []
+    links_total = sum(len(links["groups"].get(g["id"], [])) for g in plan["groups"])
+    progress = Progress(paths.fetch_progress_json, links_total, len(plan["shots"]), log)
     for group in plan["groups"]:
         gid = group["id"]
         if gid in missing:
@@ -165,19 +198,21 @@ def run_fetch(
             continue
         try:
             group_clips, warnings = _run_group(group, [shots[i] for i in group["shots"]], links["groups"][gid],
-                                               obtain, paths, encoder, fg_min_ratio, log)
+                                               obtain, paths, encoder, fg_min_ratio, progress)
         except Exception as exc:  # error apa pun cukup bikin kelompok ini gagal, kelompok lain tetap diproses
             status[gid] = {"state": "error", "message": _message(exc)[:600]}
             problems.append(group["label"])
-            log(f"[fetch] {group['label']}: {_message(exc).splitlines()[0][:160]}")
+            progress.log(f"[fetch] {group['label']}: {_message(exc).splitlines()[0][:160]}")
             continue
         clips += group_clips
         status[gid] = {"state": "ok", "message": "; ".join(warnings)}
     write_json_atomic(paths.links_status_json, {"groups": status})
     if problems:
+        progress.update(state="awaiting", current="")
         raise AwaitingInput(
             "fetch", f"{len(problems)} kelompok perlu diisi/diganti: {', '.join(problems)}. Buka: mayzfact brief {paths.root.name}"
         )
     data = {"shots": sorted(clips, key=lambda clip: clip["index"])}
     write_json_atomic(paths.clips_json, data)
+    progress.update(state="done", current="")
     return data

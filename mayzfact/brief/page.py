@@ -19,6 +19,9 @@ main{max-width:980px;margin:0 auto;padding:16px;display:grid;gap:12px}
 .refs{display:flex;gap:6px;margin-top:4px}.refs img{height:120px;border-radius:6px}
 .kw{display:flex;flex-wrap:wrap;gap:6px}.kw button{border:1px solid #d4d4d8;background:#fafafa;border-radius:6px;padding:3px 8px;cursor:pointer}
 textarea{width:100%;min-height:72px;padding:8px;font-size:14px;box-sizing:border-box;font-family:inherit}
+#progress{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px #0002;display:none;gap:6px}
+#progress .bar{height:10px;background:#e4e4e7;border-radius:99px;overflow:hidden}#progress .bar div{height:100%;background:#2563eb;transition:width .4s}
+#progress pre{margin:0;max-height:160px;overflow:auto;font-size:12px;background:#f4f4f5;padding:8px;border-radius:6px;white-space:pre-wrap}
 .state{font-size:13px}.state.ok{color:#15803d}.state.error,.state.missing{color:#b91c1c}.state.warn{color:#b45309}
 """
 
@@ -44,6 +47,27 @@ async function upload(group, input){
   if (!res.ok) { document.getElementById('msg').textContent = data.error; return; }
   location.reload();
 }
+const STATE_LABEL = {running: 'Lagi jalan', done: 'Selesai, siap review di Studio', awaiting: 'Berhenti: ada kelompok yang perlu diisi/diganti'};
+let lastState = null;
+function bar(done, total){ return `<div class="bar"><div style="width:${total ? Math.round(100 * done / total) : 0}%"></div></div>`; }
+async function pollProgress(){
+  try {
+    const p = await (await fetch('/api/progress')).json();
+    const box = document.getElementById('progress');
+    if (p.state) {
+      box.style.display = 'grid';
+      box.innerHTML = `<b>Fetch: ${STATE_LABEL[p.state] || p.state}</b>`
+        + `<div>Link ${p.links_done}/${p.links_total}</div>${bar(p.links_done, p.links_total)}`
+        + `<div>Shot ${p.shots_done}/${p.shots_total}</div>${bar(p.shots_done, p.shots_total)}`
+        + (p.current ? `<div>Sekarang: ${p.current}</div>` : '')
+        + `<pre></pre>`;
+      box.querySelector('pre').textContent = (p.log || []).slice(-10).join('\\n');
+      if (lastState === 'running' && p.state !== 'running') location.reload();
+      lastState = p.state;
+    }
+  } catch (e) {}
+}
+pollProgress(); setInterval(pollProgress, 2000);
 function copyText(t){ navigator.clipboard.writeText(t); document.getElementById('msg').textContent = `Ke-copy: ${t}`; }
 """
 
@@ -97,5 +121,5 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict) -> str:
 <title>Brief {escape(run_id)}</title><style>{_CSS}</style></head>
 <body><header><b>Brief {escape(run_id)}</b><span>{filled}/{len(groups)} kelompok terisi ({len(plan['shots'])} shot)</span>
 <button onclick="save()">Simpan</button><span id="msg"></span></header>
-<main>{cards}</main>
+<main><section id="progress"></section>{cards}</main>
 <script>{_JS}</script></body></html>"""

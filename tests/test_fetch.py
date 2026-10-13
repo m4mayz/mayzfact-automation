@@ -135,3 +135,23 @@ def test_pick_limits_post_to_one_photo(tmp_path):
     save_links(paths.links_json, {"groups": {"horseshoe-crab": [{"url": "https://a.b/p", "pick": 1}]}})
     data = run_fetch(paths, plan, obtain=lambda e, r: photos(tmp_path, "other", "crab"), encoder=FakeEncoder(), **QUIET)
     assert [s["match"] for s in data["shots"]] == [0.0, 0.0]
+
+
+def test_fetch_writes_progress_file(tmp_path, cut_video):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    save_links(paths.links_json, {"groups": {"hook": [{"url": "https://www.douyin.com/video/1"}]}})
+    with pytest.raises(AwaitingInput):
+        run_fetch(paths, plan, obtain=lambda e, r: [cut_video], encoder=FakeEncoder(), **QUIET)
+    progress = read_json(paths.fetch_progress_json)
+    assert progress["state"] == "awaiting"
+    assert (progress["links_done"], progress["links_total"]) == (1, 1)
+    assert (progress["shots_done"], progress["shots_total"]) == (2, 4)
+    assert any("shot 1" in line for line in progress["log"])
+
+    save_links(paths.links_json, {"groups": {"hook": [{"url": "https://www.douyin.com/video/1"}],
+                                             "horseshoe-crab": [{"url": "https://x.com/post"}]}})
+    files = {"https://www.douyin.com/video/1": [cut_video], "https://x.com/post": photos(tmp_path, "other", "crab")}
+    run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
+    progress = read_json(paths.fetch_progress_json)
+    assert progress["state"] == "done" and progress["shots_done"] == 4 and progress["current"] == ""

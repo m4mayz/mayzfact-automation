@@ -100,3 +100,11 @@ def test_foreign_host_header_is_rejected(server):
     assert httpx.post(base + "/api/links", json={"groups": {}}, headers=rebound).status_code == 403
     assert not paths.links_json.exists()
     assert httpx.get(base + "/", headers={"Host": f"localhost:{port}"}).status_code == 200
+
+
+def test_progress_endpoint_and_panel(server):
+    paths, base = server
+    assert httpx.get(base + "/api/progress").json() == {}
+    write_json_atomic(paths.fetch_progress_json, {"state": "running", "links_done": 1, "links_total": 3})
+    assert httpx.get(base + "/api/progress").json()["links_total"] == 3
+    assert 'id="progress"' in httpx.get(base + "/").text

@@ -33,7 +33,7 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
         return [group["id"] for group in plan()["groups"]]
 
     def status() -> dict:
-        return read_json(paths.links_status_json) if paths.links_status_json.exists() else {"shots": {}}
+        return read_json(paths.links_status_json) if paths.links_status_json.exists() else {"groups": {}}
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args) -> None:  # jangan spam terminal
@@ -61,6 +61,9 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
             if url.path == "/":
                 html = render_page(paths.root.name, plan(), load_links(paths.links_json), status())
                 return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
+            if url.path == "/api/progress":
+                progress = paths.fetch_progress_json
+                return self._json(200, read_json(progress) if progress.exists() else {})
             if url.path == "/api/state":
                 return self._json(200, {"plan": plan(), "links": load_links(paths.links_json), "status": status()})
             if url.path.startswith("/files/"):
