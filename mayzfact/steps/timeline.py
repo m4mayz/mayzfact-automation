@@ -20,12 +20,9 @@ CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
 SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.35}
 SFX_LEAD_FRAMES = 3  # whoosh mulai sedikit sebelum gambar ganti
-# Pembuka ngikutin source i2xag: frame 0-1 "cover" (still dari caption berwarna pertama, biar jadi thumbnail),
-# frame 2-6 video mulai zoom-in + blur terus zoom out ke normal. Barengan SFX hook.
-INTRO_COVER_FRAMES = 2
+# Pembuka = bagian "masuk" transisi antar scene di source i2xag: scene muncul hampir putih + blur vertikal,
+# cepat tajam, terangnya pudar ke normal. Barengan SFX hook.
 INTRO_FRAMES = 7
-INTRO_COVER_DEFAULT = 45  # 1.5 detik, kalau nggak ada caption berwarna
-CAPTION_SETTLE_FRAMES = 4  # caption udah tajam (animasi masuk 3 frame)
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
@@ -134,12 +131,6 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict]) -> tu
     return bgm, sfx
 
 
-def _intro(captions: list[dict]) -> dict:
-    colored = next((c for c in captions if c["color"] != CAPTION_WHITE), None)
-    cover = colored["from"] + CAPTION_SETTLE_FRAMES if colored else INTRO_COVER_DEFAULT
-    return {"coverFrames": INTRO_COVER_FRAMES, "durationInFrames": INTRO_FRAMES, "coverFrame": cover}
-
-
 def build_timeline(
     clips: dict,
     audio_duration_s: float,
@@ -178,7 +169,7 @@ def build_timeline(
         "captions": captions,
         "bgm": bgm,
         "sfx": sfx,
-        "intro": _intro(captions) if audio and "hook" in audio.get("sfx", {}) else None,
+        "intro": {"durationInFrames": INTRO_FRAMES} if audio and "hook" in audio.get("sfx", {}) else None,
     }
 
 

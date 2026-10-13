@@ -39,9 +39,7 @@ export type Bgm = {
 };
 
 export type Intro = {
-  coverFrames: number;
   durationInFrames: number;
-  coverFrame: number;
 };
 
 // Pakai `type`, bukan `interface`: props Remotion harus cocok sama Record<string, unknown>.
