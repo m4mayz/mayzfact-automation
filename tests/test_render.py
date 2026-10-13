@@ -30,7 +30,7 @@ def test_render_fixture_timeline(tmp_path, make_video, make_photo, sine_mp3):
     shutil.copy(sine_mp3, paths.voice_mp3)
     clips = {"shots": [
         {"file": "clips/shot_01.mp4", "kind": "video", "start_s": 0.0, "width": 1080, "height": 1920},
-        {"file": "clips/shot_02.mp4", "kind": "video", "start_s": 1.0, "width": 1920, "height": 1080},
+        {"file": "clips/shot_02.mp4", "kind": "video", "start_s": 1.5, "width": 1920, "height": 1080},
         {"file": "clips/shot_03.jpg", "kind": "photo", "start_s": 2.0, "width": 1600, "height": 1000},
     ]}
     text = "Look here. Number one, crab. Old."

@@ -1,5 +1,5 @@
 import React from 'react';
-import {interpolate, Sequence, useCurrentFrame} from 'remotion';
+import {Easing, interpolate, Sequence, useCurrentFrame} from 'remotion';
 import type {Overlay, OverlayKeyframe} from './types';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
@@ -32,7 +32,7 @@ const ARROW_PATH = 'M0 0 L-62 -100 L-24 -100 L-24 -230 L24 -230 L24 -100 L62 -10
 const POP_FRAMES = 4;
 const FADE_FRAMES = 8;
 const ORBIT_FROM = 20; // derajat; 0 = kanan subjek, -90 = atas, -180 = kiri
-const ORBIT_SPEED = 4.5; // derajat per frame: setengah putaran ±1.3 detik, muter terus di shot yang panjang
+const ORBIT_TO = -160; // 1 sapuan setengah putaran lewat atas (kanan → kiri), direntangin sepanjang durasi tampil
 
 // Muncul seketika (bareng quick-ting), fade di akhir.
 const appear = (frame: number, duration: number) => ({
@@ -40,7 +40,7 @@ const appear = (frame: number, duration: number) => ({
   opacity: interpolate(frame, [duration - FADE_FRAMES, duration], [1, 0], clamp),
 });
 
-// Panah muter cepat di sekeliling subjek, ujungnya selalu nunjuk ke tengah subjek.
+// Panah nyapu setengah putaran di sekitar subjek (sekali, sepanjang durasi tampil), ujungnya selalu nunjuk ke subjek.
 const Arrow: React.FC<{overlay: Overlay}> = ({overlay}) => {
   const frame = useCurrentFrame();
   const box = boxAt(overlay.keyframes, frame);
@@ -49,7 +49,10 @@ const Arrow: React.FC<{overlay: Overlay}> = ({overlay}) => {
   const cy = big ? box.y + box.h * 0.35 : box.y + box.h / 2;
   const rx = Math.min(box.w / 2 + 20, 360);
   const ry = Math.min(box.h / 2 + 20, 520);
-  const theta = ((ORBIT_FROM - ORBIT_SPEED * frame) * Math.PI) / 180;
+  const theta = (interpolate(frame, [0, overlay.durationInFrames], [ORBIT_FROM, ORBIT_TO], {
+    ...clamp,
+    easing: Easing.inOut(Easing.quad),
+  }) * Math.PI) / 180;
   const ux = Math.cos(theta);
   const uy = Math.sin(theta);
   // Batasi ujung panah biar badannya (ke arah luar) tetap di dalam layar.
