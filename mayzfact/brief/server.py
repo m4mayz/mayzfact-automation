@@ -46,7 +46,14 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
         def _json(self, code: int, data: dict) -> None:
             self._send(code, json.dumps(data, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
 
+        def _host_ok(self) -> bool:
+            """Host cuma boleh 127.0.0.1/localhost. Ini nutup DNS rebinding (domain luar yang di-resolve ke 127.0.0.1)."""
+            port = self.server.server_address[1]
+            return self.headers.get("Host") in {f"127.0.0.1:{port}", f"localhost:{port}"}
+
         def do_GET(self) -> None:
+            if not self._host_ok():
+                return self._json(403, {"error": "host nggak dikenal"})
             url = urlparse(self.path)
             if url.path == "/":
                 html = render_page(paths.root.name, plan(), load_links(paths.links_json), status())
@@ -60,12 +67,28 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
                     return self._send(200, target.read_bytes(), kind)
             self._json(404, {"error": "nggak ada"})
 
+        def _body(self, length: int, out=None) -> None:
+            """Baca body per 1 MB. Body yang ditolak tetap dibaca (dibuang), kalau nggak Windows ngirim RST ke client."""
+            while length > 0:
+                chunk = self.rfile.read(min(length, 1024 * 1024))
+                if not chunk:
+                    break
+                length -= len(chunk)
+                if out is not None:
+                    out.write(chunk)
+
+        def _reject(self, code: int, message: str, length: int) -> None:
+            self._body(length)
+            self._json(code, {"error": message})
+
         def do_POST(self) -> None:
+            length = int(self.headers.get("Content-Length") or 0)
+            if not self._host_ok():
+                return self._reject(403, "host nggak dikenal", length)
             origin = self.headers.get("Origin")
             if origin and origin != f"http://{self.headers.get('Host')}":  # tolak POST dari web lain (CSRF)
-                return self._json(403, {"error": "request dari luar halaman brief ditolak"})
+                return self._reject(403, "request dari luar halaman brief ditolak", length)
             url = urlparse(self.path)
-            length = int(self.headers.get("Content-Length") or 0)
             if url.path == "/api/links":
                 try:
                     data = normalize_links(json.loads(self.rfile.read(length) or b"{}"), len(plan()["shots"]))
@@ -80,22 +103,23 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
                     number = 0
                 suffix = PurePosixPath(unquote(self.headers.get("X-Filename", ""))).suffix.lower()
                 if not 1 <= number <= len(plan()["shots"]):
-                    return self._json(400, {"error": f"shot {number} nggak ada di plan"})
+                    return self._reject(400, f"shot {number} nggak ada di plan", length)
                 if suffix not in VIDEO_EXTS | IMAGE_EXTS:
-                    return self._json(400, {"error": f"ekstensi {suffix or '?'} nggak didukung"})
+                    return self._reject(400, f"ekstensi {suffix or '?'} nggak didukung", length)
                 if length > max_upload:
-                    return self._json(413, {"error": f"file kegedean (maks {max_upload // (1024 * 1024)} MB)"})
+                    return self._reject(413, f"file kegedean (maks {max_upload // (1024 * 1024)} MB)", length)
                 paths.manual_dir.mkdir(parents=True, exist_ok=True)
                 for old in paths.manual_dir.glob(f"shot_{number:02d}.*"):
                     old.unlink()
                 dest = paths.manual_dir / f"shot_{number:02d}{suffix}"
-                dest.write_bytes(self.rfile.read(length))
+                with dest.open("wb") as fh:
+                    self._body(length, fh)
                 rel = f"manual/{dest.name}"
                 links = load_links(paths.links_json)
                 links.setdefault("shots", {})[str(number)] = {"file": rel}
                 save_links(paths.links_json, links)
                 return self._json(200, {"file": rel})
-            self._json(404, {"error": "nggak ada"})
+            self._reject(404, "nggak ada", length)
 
     last: OSError | None = None
     for candidate in [0] if port == 0 else range(port, port + PORT_TRIES):

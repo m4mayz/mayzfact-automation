@@ -73,3 +73,13 @@ def test_cross_site_posts_are_rejected(server):
     assert not paths.links_json.exists()
     same = {"Origin": base}
     assert httpx.post(base + "/api/links", json={"shots": {}}, headers=same).status_code == 200
+
+
+def test_foreign_host_header_is_rejected(server):
+    paths, base = server
+    port = base.rsplit(":", 1)[1]
+    rebound = {"Host": f"evil.example:{port}", "Origin": f"http://evil.example:{port}"}
+    assert httpx.get(base + "/api/state", headers=rebound).status_code == 403
+    assert httpx.post(base + "/api/links", json={"shots": {}}, headers=rebound).status_code == 403
+    assert not paths.links_json.exists()
+    assert httpx.get(base + "/", headers={"Host": f"localhost:{port}"}).status_code == 200
