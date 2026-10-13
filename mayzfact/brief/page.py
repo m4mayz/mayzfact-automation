@@ -69,9 +69,11 @@ def _card(group: dict, shots: list[dict], entries: list[dict], state: dict) -> s
         css = "warn"
     label = {"ok": "OK", "warn": "OK", "error": "GAGAL", "missing": "KOSONG"}.get(css, "TERSIMPAN")
     message = escape(state.get("message", "") if css else "")
+    refs = "".join(f'<img src="/files/{escape(f)}" loading="lazy">' for f in group.get("ref_frames", []))
     return f"""
 <section class="card" data-group="{escape(group['id'], quote=True)}">
   <div><span class="tag {'hook' if is_hook else ''}">{escape(group['label'])}</span> · {len(shots)} shot</div>
+  {f'<div>Frame dari source:</div><div class="refs">{refs}</div>' if refs else ''}
   <ul class="shots">{''.join(_shot_item(s) for s in shots)}</ul>
   <div class="kw">{keywords or '<i>tanpa keyword</i>'}</div>
   <textarea placeholder="1 baris = 1 link Douyin/RedNote/TikTok/Pinterest/URL langsung. Boleh lebih dari 1. Tambah ' #3' buat foto ke-3.">{escape(lines_of(entries))}</textarea>

@@ -6,12 +6,32 @@ import re
 from pathlib import Path
 from typing import Callable
 
+from mayzfact.ffmpeg import extract_frame, probe
 from mayzfact.matching import hook_slot_map
 from mayzfact.steps.clips import beat_subjects, split_shots
 from mayzfact.steps.hook import prepare_source_segments
 from mayzfact.store import RunPaths, write_json_atomic
 from mayzfact.text import beat_texts
 from mayzfact.timing import beat_timings
+
+SOURCE_FRAMES = (0.25, 0.5, 0.75)
+
+
+def _mention(transcript: list[dict], subject: str) -> float | None:
+    """Detik pertama subjek disebut di transcript (posisi di dalam snippet dikira-kira dari posisi huruf)."""
+    for needle in dict.fromkeys([subject.lower(), subject.lower().split()[-1]]):
+        for snippet in transcript:
+            text = snippet["text"].lower()
+            at = text.find(needle)
+            if at >= 0:
+                return snippet["start"] + snippet["duration"] * at / max(len(text), 1)
+    return None
+
+
+def subject_ranges(transcript: list[dict], subjects: list[str], total_s: float) -> dict[str, tuple[float, float]]:
+    """Rentang waktu tiap subjek di source: dari pertama disebut sampai subjek berikutnya disebut."""
+    found = sorted((t, s) for s in subjects if s and (t := _mention(transcript, s)) is not None)
+    return {s: (t, found[i + 1][0] if i + 1 < len(found) else total_s) for i, (t, s) in enumerate(found)}
 
 
 def group_of(shot: dict) -> tuple[str, str]:
@@ -32,7 +52,33 @@ def _groups(shots: list[dict]) -> list[dict]:
         group["shots"].append(shot["index"])
         for lang in ("en", "zh"):
             group["keywords"][lang] += [k for k in shot["keywords"][lang] if k not in group["keywords"][lang]]
+    for group in groups.values():
+        group["ref_frames"] = []
     return list(groups.values())
+
+
+def _source_frames(paths: RunPaths, source: dict, groups: list[dict], shots: list[dict],
+                   download_source: Callable[[str, Path], Path]) -> None:
+    """Frame source buat kelompok isi, dari rentang waktu subjeknya disebut di transcript. Buat referensi nyari klip."""
+    subjects = {g["id"]: shots[g["shots"][0]]["subject"] for g in groups if g["id"] != "hook"}
+    if not any(subjects.values()):
+        return
+    src = paths.source_mp4
+    paths.plan_dir.mkdir(parents=True, exist_ok=True)
+    if not src.exists():
+        download_source(source["video_id"], src)
+    total = probe(src, "plan")["duration_s"] or source.get("duration_s") or 0.0
+    ranges = subject_ranges(source["transcript"], [s for s in subjects.values() if s], total)
+    for group in groups:
+        span = ranges.get(subjects.get(group["id"]) or "")
+        if not span:
+            continue
+        start, end = span
+        group["ref_frames"] = [
+            extract_frame(src, min(start + (end - start) * pos, total - 0.05), paths.plan_dir / f"{group['id']}_{k}.jpg")
+            .relative_to(paths.root).as_posix()
+            for k, pos in enumerate(SOURCE_FRAMES)
+        ]
 
 
 def run_plan(
@@ -75,10 +121,12 @@ def run_plan(
             "text": beat["text"], "subject": subjects[slot.beat], "hook_segment": segment,
             "ref_frames": ref_frames, "keywords": keywords,
         })
+    groups = _groups(shots)
+    _source_frames(paths, source, groups, shots, download_source)
     data = {
         "hook_seconds": hook_seconds,
         "segments": [{"index": s["index"], "start_s": s["start_s"], "end_s": s["end_s"], "frames": [rel(f) for f in s["frames"]]} for s in segs],
-        "groups": _groups(shots),
+        "groups": groups,
         "shots": shots,
     }
     write_json_atomic(paths.shots_plan_json, data)

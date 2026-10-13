@@ -9,7 +9,8 @@ from mayzfact.store import RunPaths, read_json, write_json_atomic
 PLAN = {
     "groups": [
         {"id": "hook", "label": "HOOK", "shots": [0], "keywords": {"en": ["crab beach"], "zh": ["鲎"]}},
-        {"id": "fossil", "label": "fossil", "shots": [1, 2], "keywords": {"en": ["fossil"], "zh": []}},
+        {"id": "fossil", "label": "fossil", "shots": [1, 2], "keywords": {"en": ["fossil"], "zh": []},
+         "ref_frames": ["plan/fossil_0.jpg"]},
     ],
     "shots": [
         {"index": 0, "beat": 0, "start_s": 0.0, "end_s": 2.0, "media": "video", "text": "Look <b>at</b> this.", "subject": None,
@@ -43,6 +44,7 @@ def test_page_lists_groups_and_escapes_text(server):
     assert "Look &lt;b&gt;at&lt;/b&gt; this." in html and "Old rock." in html
     assert "鲎" in html and "HOOK" in html and "/files/plan/seg_01_0.jpg" in html
     assert "0/2 kelompok" in html
+    assert "/files/plan/fossil_0.jpg" in html
     write_json_atomic(paths.links_json, {"groups": {"fossil": [{"url": "https://a.b/c", "pick": 2}, {"file": "manual/fossil_1.mp4"}]}})
     html = httpx.get(base + "/").text
     assert "https://a.b/c #2\nfile:manual/fossil_1.mp4</textarea>" in html and "1/2 kelompok" in html

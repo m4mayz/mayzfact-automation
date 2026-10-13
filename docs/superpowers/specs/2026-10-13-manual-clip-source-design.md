@@ -164,3 +164,9 @@ Bagian ini menggantikan aturan "1 link per shot" di bagian 3–5.
 - Target pembandingnya tetap sama: shot hook pakai frame referensinya sendiri, shot isi pakai teks subjek.
 - Status ditulis per kelompok: `missing` / `error` / `ok` + peringatan.
 - `AwaitingInput` nyebut label kelompok.
+
+**Frame source buat kelompok isi (revisi Akmal 2026-10-13):**
+
+- Tiap kelompok non-hook juga dapat 3 frame dari video source: `plan/<id>_0..2.jpg`, diambil di posisi 25/50/75% dari rentang waktu subjeknya.
+- Rentang dihitung dari transcript: mulai pas subjek pertama kali disebut (nama lengkap, atau kalau nggak ketemu, kata terakhirnya), sampai subjek berikutnya disebut. Kalau subjeknya nggak ketemu di transcript, kelompok itu tanpa frame.
+- Field: `groups[].ref_frames`. Frame ini cuma referensi di brief. Target pencocokan `fetch` buat shot isi tetap teks subjek.
