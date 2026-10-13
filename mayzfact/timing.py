@@ -34,3 +34,22 @@ def beat_timings(texts: list[str], alignment: dict, audio_duration_s: float) -> 
             raise PipelineError("clips", f"Timing beat {index + 1} nggak valid ({start:.2f}s - {end:.2f}s).")
         timings.append({"start_s": round(start, 3), "end_s": round(end, 3)})
     return timings
+
+
+def word_timings(alignment: dict) -> list[dict]:
+    """Kata (deretan karakter non-spasi) + detik mulai/selesai dari alignment per karakter."""
+    chars = alignment["characters"]
+    starts = alignment["character_start_times_seconds"]
+    ends = alignment["character_end_times_seconds"]
+    words: list[dict] = []
+    begin = None
+    for index, char in enumerate([*chars, " "]):
+        if not char.isspace() and begin is None:
+            begin = index
+        elif char.isspace() and begin is not None:
+            words.append({
+                "text": "".join(chars[begin:index]), "start_s": float(starts[begin]), "end_s": float(ends[index - 1]),
+                "char_start": begin, "char_end": index - 1,
+            })
+            begin = None
+    return words
