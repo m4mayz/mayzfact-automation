@@ -26,3 +26,15 @@ def test_run_paths_hook_files(tmp_path):
     assert paths.source_mp4 == tmp_path / "source.mp4"
     assert paths.hook_dir == tmp_path / "hook"
     assert paths.hook_json == tmp_path / "hook.json"
+
+
+def test_run_paths_manual_files(tmp_path):
+    from mayzfact.errors import AwaitingInput, PipelineError
+
+    paths = RunPaths(tmp_path)
+    assert paths.shots_plan_json == tmp_path / "shots_plan.json"
+    assert paths.plan_dir == tmp_path / "plan"
+    assert paths.links_json == tmp_path / "links.json"
+    assert paths.links_status_json == tmp_path / "links_status.json"
+    assert paths.manual_dir == tmp_path / "manual"
+    assert issubclass(AwaitingInput, PipelineError)

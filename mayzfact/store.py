@@ -57,6 +57,26 @@ class RunPaths:
     def hook_json(self) -> Path:
         return self.root / "hook.json"
 
+    @property
+    def shots_plan_json(self) -> Path:
+        return self.root / "shots_plan.json"
+
+    @property
+    def plan_dir(self) -> Path:
+        return self.root / "plan"
+
+    @property
+    def links_json(self) -> Path:
+        return self.root / "links.json"
+
+    @property
+    def links_status_json(self) -> Path:
+        return self.root / "links_status.json"
+
+    @property
+    def manual_dir(self) -> Path:
+        return self.root / "manual"
+
 
 def tmp_path_for(path: Path) -> Path:
     """File sementara di folder yang sama. Ekstensinya tetap karena ffmpeg butuh ekstensi."""
