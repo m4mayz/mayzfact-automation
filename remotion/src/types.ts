@@ -38,6 +38,22 @@ export type Bgm = {
   fadeOutFrames: number;
 };
 
+export type OverlayKeyframe = {
+  frame: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
+
+export type Overlay = {
+  type: 'arrow' | 'circle';
+  color: string;
+  from: number;
+  durationInFrames: number;
+  keyframes: OverlayKeyframe[];
+};
+
 export type Intro = {
   durationInFrames: number;
 };
@@ -56,4 +72,5 @@ export type TimelineProps = {
   bgm?: Bgm | null;
   sfx?: Sfx[];
   intro?: Intro | null;
+  overlays?: Overlay[];
 };

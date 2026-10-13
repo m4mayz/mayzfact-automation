@@ -16,6 +16,7 @@ const defaultProps: TimelineProps = {
   bgm: null,
   sfx: [],
   intro: null,
+  overlays: [],
 };
 
 const calculateMetadata: CalculateMetadataFunction<TimelineProps> = async ({props}) => ({

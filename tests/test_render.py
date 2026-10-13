@@ -40,8 +40,10 @@ def test_render_fixture_timeline(tmp_path, make_video, make_photo, sine_mp3):
     shutil.copy(sine_mp3, paths.root / "audio" / "bgm.mp3")
     audio = {"bgm": "audio/bgm.mp3", "sfx": {"hook": "audio/sfx/boom.mp3", "number": "audio/sfx/boom.mp3"}}
     timeline = build_timeline(clips, audio_duration_s=3.0, fg_min_ratio=0.5, script=script,
-                              alignment=fake_alignment(text, 2.97), audio=audio)
-    assert timeline["countdown"] and timeline["captions"] and timeline["bgm"] and timeline["sfx"]
+                              alignment=fake_alignment(text, 2.97), audio=audio,
+                              overlays={"clips/shot_01.mp4": {"points": [{"t": 0.2, "x": 300, "y": 600, "w": 400, "h": 500}]},
+                                        "clips/shot_03.jpg": {"points": [{"t": 0.0, "x": 200, "y": 100, "w": 600, "h": 500}]}})
+    assert timeline["countdown"] and timeline["captions"] and timeline["bgm"] and timeline["sfx"] and timeline["overlays"]
     write_json_atomic(paths.timeline_json, timeline)
 
     run_render(paths)
