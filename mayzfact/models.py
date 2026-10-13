@@ -25,3 +25,12 @@ class SegmentQueries(BaseModel):
 
 class HookQueries(BaseModel):
     segments: list[SegmentQueries]
+
+
+class Translation(BaseModel):
+    en: str
+    zh: str
+
+
+class Translations(BaseModel):
+    items: list[Translation]

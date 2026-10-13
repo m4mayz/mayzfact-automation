@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -57,17 +58,52 @@ class RunPaths:
     def hook_json(self) -> Path:
         return self.root / "hook.json"
 
+    @property
+    def shots_plan_json(self) -> Path:
+        return self.root / "shots_plan.json"
+
+    @property
+    def plan_dir(self) -> Path:
+        return self.root / "plan"
+
+    @property
+    def links_json(self) -> Path:
+        return self.root / "links.json"
+
+    @property
+    def links_status_json(self) -> Path:
+        return self.root / "links_status.json"
+
+    @property
+    def manual_dir(self) -> Path:
+        return self.root / "manual"
+
+    @property
+    def fetch_progress_json(self) -> Path:
+        return self.root / "fetch_progress.json"
+
 
 def tmp_path_for(path: Path) -> Path:
     """File sementara di folder yang sama. Ekstensinya tetap karena ffmpeg butuh ekstensi."""
     return path.with_name(f"{path.stem}.tmp{path.suffix}")
 
 
+REPLACE_TRIES = 20
+REPLACE_WAIT_S = 0.05
+
+
 def write_bytes_atomic(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = tmp_path_for(path)
     tmp.write_bytes(data)
-    os.replace(tmp, path)
+    for attempt in range(REPLACE_TRIES):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:  # Windows: target lagi dibuka proses lain (misalnya brief server lagi baca)
+            if attempt == REPLACE_TRIES - 1:
+                raise
+            time.sleep(REPLACE_WAIT_S)
 
 
 def write_json_atomic(path: Path, data: Any) -> None:

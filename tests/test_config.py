@@ -65,3 +65,12 @@ def test_hook_settings_defaults_and_parsing():
 def test_invalid_flag_names_the_variable():
     with pytest.raises(PipelineError, match="BROWSER_HEADLESS"):
         settings_from_env({"BROWSER_HEADLESS": "kadang"})
+
+
+def test_clip_source_and_brief_port():
+    settings = settings_from_env({})
+    assert (settings.clip_source, settings.brief_port) == ("manual", 3100)
+    settings = settings_from_env({"CLIP_SOURCE": "AUTO", "BRIEF_PORT": "3200"})
+    assert (settings.clip_source, settings.brief_port) == ("auto", 3200)
+    with pytest.raises(PipelineError, match="CLIP_SOURCE"):
+        settings_from_env({"CLIP_SOURCE": "kadang"})

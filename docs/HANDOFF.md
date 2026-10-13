@@ -124,3 +124,62 @@
 
 - Di-merge ke `master` (2026-10-12). Belum di-push.
 - Next: metode manual buat semua shot (Douyin/RedNote dicari Akmal sendiri, link diinput lewat halaman brief lokal). Bilibili di-skip. Fase 3 ditahan.
+
+---
+
+# Handoff — Metode manual (klip dicari Akmal)
+
+- **Updated:** 2026-10-13 14:30 WIB, Claude Code (Opus 5.5)
+- **Goal & scope:**
+  - Sesuai [spec metode manual](superpowers/specs/2026-10-13-manual-clip-source-design.md), termasuk bagian 10 dan revisinya, plus [plan](superpowers/plans/2026-10-13-manual-clip-source.md).
+  - Keputusan: D-019 sampai D-021.
+- **Workspace:** `E:\APROJECT\mayzfact-automation`, branch `manual-source`. Belum di-merge.
+
+## Selesai
+
+- **Mode `CLIP_SOURCE=manual`** (default): `source → script → tts → plan → fetch → timeline → (Studio) → render`. Mode `auto` (Fase 2) tetap ada.
+- **`plan`:**
+  - shot dikelompokin per konteks: semua hook jadi 1 kelompok, sisanya per subjek
+  - frame referensi per shot hook
+  - 3 frame source per kelompok isi, diambil dari rentang waktu subjek disebut di transcript
+  - keyword en/zh (zh diterjemahin Gemini)
+- **Brief `mayzfact brief <id>`** (127.0.0.1:3100):
+  - 1 card per kelompok, textarea 1 baris = 1 link, upload file
+  - panel progress fetch live
+  - keamanan: Host allowlist (DNS rebinding), Origin check (CSRF), path confinement, limit upload, rendering pakai `textContent`
+- **`fetch`:** yang diterima file upload, URL langsung, yt-dlp, dan resolver:
+  - Douyin (ttwid + SSR + WAF PoW + iteminfo)
+  - RedNote (`__INITIAL_STATE__`)
+  - TikTok (tiktokio.com, pendekatan scrapr)
+  - og
+- **Pemilihan klip di `fetch`:**
+  - pakai SigLIP
+  - hook 1 video diputer nyambung
+  - klip yang udah tampil nggak dipakai lagi (D-021)
+  - kelompok yang belum lengkap → `AwaitingInput` (exit 3)
+- **Review:**
+  - final review Opus buat versi per shot: 5 Important udah di-fix
+  - review kedua buat revisi per kelompok: lihat ledger `.superpowers/sdd/2026-10-13-manual-clip-source/progress.md`
+
+## Verifikasi E2E (i2xag_1OJfM)
+
+- `--from plan --no-render`: exit 3, 16 shot jadi 6 kelompok (HOOK 1–3, horseshoe crab 4–6, nautilus 7–8, platypus 9–11, sturgeon 12–13, tardigrade 14–16). Frame source 5 kelompok isi cocok semua sama subjeknya. `voice.mp3` nggak berubah.
+- **Akmal ngisi 18 link TikTok.**
+  - yt-dlp langsung ke TikTok gagal: butuh impersonation TLS, yang sengaja nggak dipakai. Lewat tiktokio, ke-18 link berhasil.
+  - 1 link sempat gagal SSL handshake. Pas fetch diulang, berhasil.
+- **Hasil akhir:**
+  - 14 entry `clips.json`: 1 hook nyambung (skor 0.909, mulai dari detik 5.0) + 13 shot isi, semuanya dari video yang beda.
+  - Skor teks shot isi 0.08–0.17. Shot 16 dapat peringatan skor rendah.
+- **Review Akmal di Studio (2026-10-13):** dari review ini muncul tiga revisi: hook nggak dipotong-potong, no-reuse, number card. Render final belum diminta.
+
+## Masalah terbuka
+
+1. Resolver Douyin/RedNote belum pernah dites ke link beneran, karena semua link run ini TikTok. DoD spec poin 3 belum lengkap.
+2. **Number card** "Number X" (D-021) belum diimplementasi. Rencananya komponen Remotion: angka chrome di background gelap berpartikel, terus gambar subjek dalam frame menyala.
+3. TikTok bergantung ke tiktokio.com. Kalau situs itu mati, pilihannya upload manual atau port downloader scrapr yang lain (snaptik, ssstik, savetik).
+4. Minor yang ditunda ada di ledger, misalnya URL nempel huruf CJK dan `/files` baca seluruh file ke RAM.
+
+## Delivery
+
+- Branch `manual-source`, belum di-merge, belum di-push. Backup hasil Fase 2 ada di `runs/_backup_fase2_i2xag/`.
+- Next: merge (nunggu oke Akmal), terus number card (pembuka Fase 3).

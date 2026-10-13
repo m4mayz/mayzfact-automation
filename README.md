@@ -24,6 +24,18 @@ uv run mayzfact run <id> --from clips --no-render   # berhenti di timeline.json,
 
 Hasilnya ada di `runs/<id>/final.mp4`. Jangan hapus `runs/<id>/voice.mp3`, soalnya kalau kehapus suara harus dibuat ulang dan kredit kepakai lagi.
 
+## Mode manual (default)
+
+Klip dicari sendiri, terus pipeline yang download + milih bagian terbaik.
+
+```bash
+uv run mayzfact run <id> --no-render        # sampai plan, terus berhenti (exit 3): nunggu link
+uv run mayzfact brief <id>                  # buka http://127.0.0.1:3100, isi link/upload per kelompok, Simpan
+uv run mayzfact run <id> --from fetch --no-render   # download + potong; kelompok gagal muncul lagi di brief
+```
+
+Link diisi per kelompok konteks (semua shot hook = 1 kelompok, sisanya per subjek). 1 baris = 1 link, boleh banyak; pipeline yang ngebagi potongan ke tiap shot tanpa tumpang tindih. Link boleh teks share Douyin/RedNote apa adanya. Tambahin ` #3` buat cuma pakai foto ke-3 dari post foto ganda. Mode lama: `CLIP_SOURCE=auto`.
+
 ## Hook (Fase 2)
 
 Login sekali per platform. Sesinya disimpan di `browser-profiles/`, jangan di-share.

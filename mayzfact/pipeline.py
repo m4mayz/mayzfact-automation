@@ -30,8 +30,10 @@ from mayzfact.text import script_text, text_hash
 from mayzfact.thumbs import fetch_thumbnail
 
 STEPS = ["source", "script", "tts", "hook", "clips", "timeline", "render"]
+MANUAL_STEPS = ["source", "script", "tts", "plan", "fetch", "timeline", "render"]
+ALL_STEPS = list(dict.fromkeys(STEPS + MANUAL_STEPS))
 VOICE_LOCKED = ("source", "script", "tts")
-AFTER_VOICE = ("hook", "clips", "timeline", "render")
+AFTER_VOICE = ("hook", "clips", "plan", "fetch", "timeline", "render")
 MIN_AUDIO_SECONDS = 30.0
 STEP_ENV = {
     "script": ["GEMINI_API_KEYS"],
@@ -49,6 +51,8 @@ def step_outputs(step: str, paths: RunPaths) -> list[Path]:
         "tts": [paths.voice_mp3, paths.tts_json],
         "hook": [paths.hook_json],
         "clips": [paths.clips_json],
+        "plan": [paths.shots_plan_json],
+        "fetch": [paths.clips_json],
         "timeline": [paths.timeline_json],
         "render": [paths.final_mp4],
     }[step]
@@ -58,28 +62,32 @@ def step_done(step: str, paths: RunPaths) -> bool:
     return all(path.exists() for path in step_outputs(step, paths))
 
 
-def plan_steps(done: dict[str, bool], voice_exists: bool, from_step: str | None, new_voice: bool) -> list[str]:
+def plan_steps(
+    done: dict[str, bool], voice_exists: bool, from_step: str | None, new_voice: bool, steps: list[str] = STEPS
+) -> list[str]:
     if new_voice and from_step:
         raise PipelineError("cli", "--new-voice nggak bisa digabung sama --from.")
     if new_voice:
-        return STEPS[1:] if done["source"] else list(STEPS)
+        return steps[1:] if done["source"] else list(steps)
     if voice_exists:
         broken = [step for step in VOICE_LOCKED if not done[step]]
         if broken:
             raise PipelineError("cli", f"voice.mp3 ada tapi hasil step {', '.join(broken)} hilang. {NEW_VOICE_HINT}")
     if from_step:
+        if from_step not in steps:
+            raise PipelineError("cli", f"Step {from_step} nggak dipakai di mode CLIP_SOURCE ini. Pilihan: {', '.join(steps)}.")
         if voice_exists and from_step in VOICE_LOCKED:
             raise PipelineError(
-                "cli", f"voice.mp3 udah ada, jadi naskah + suara dikunci. Pakai --from clips. {NEW_VOICE_HINT}"
+                "cli", f"voice.mp3 udah ada, jadi naskah + suara dikunci. Pakai --from {steps[3]}. {NEW_VOICE_HINT}"
             )
-        index = STEPS.index(from_step)
-        missing = [step for step in STEPS[:index] if not done[step]]
+        index = steps.index(from_step)
+        missing = [step for step in steps[:index] if not done[step]]
         if missing:
             raise PipelineError("cli", f"Step {', '.join(missing)} belum pernah selesai. Jalanin tanpa --from dulu.")
-        return STEPS[index:]
-    for index, step in enumerate(STEPS):
+        return steps[index:]
+    for index, step in enumerate(steps):
         if not done[step]:
-            return STEPS[index:]
+            return steps[index:]
     return []
 
 
@@ -111,6 +119,8 @@ class Deps:
     scorer: Callable[[], Scorer | None] = lambda: None
     clip_search: Callable[[], MediaSearch] | None = None  # None = pakai `search`
     close: Callable[[], None] = lambda: None
+    plan: Callable[[RunPaths, Callable[[str], None]], dict] | None = None
+    fetch: Callable[[RunPaths, Callable[[str], None]], dict] | None = None
 
 
 def real_deps(settings: Settings) -> Deps:
@@ -171,6 +181,34 @@ def real_deps(settings: Settings) -> Deps:
         closers.append(close_platforms)
         return CombinedSearch([search(), *(PlatformMediaSearch(p) for p in platforms)])
 
+    def plan(paths: RunPaths, log: Callable[[str], None]) -> dict:
+        from mayzfact.hook_queries import describe_segments, translate_queries
+        from mayzfact.steps.plan import run_plan
+        from mayzfact.ytdlp import run_ytdlp, youtube_url
+
+        writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
+        return run_plan(
+            paths, read_json(paths.script_json), read_json(paths.tts_json), read_json(paths.source_json),
+            max_shot_s=settings.max_shot_seconds, hook_seconds=settings.hook_seconds,
+            download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
+            describe=lambda infos, frames: describe_segments(writer, infos, frames, log),
+            translate=lambda queries: translate_queries(writer, queries, log),
+            log=log,
+        )
+
+    def fetch(paths: RunPaths, log: Callable[[str], None]) -> dict:
+        from mayzfact.manual.obtain import Obtainer
+        from mayzfact.manual.rednote import DESKTOP_UA
+        from mayzfact.steps.fetch import run_fetch
+
+        client = httpx.Client(headers={"User-Agent": DESKTOP_UA}, timeout=httpx.Timeout(120.0, connect=15.0), follow_redirects=True)
+        closers.append(client.close)
+        obtainer = Obtainer(CACHE_DIR / "manual", client, log=log)
+        return run_fetch(
+            paths, read_json(paths.shots_plan_json), obtain=obtainer.obtain, encoder=encoder(),
+            fg_min_ratio=settings.fg_min_height_ratio, log=log,
+        )
+
     def close() -> None:
         while closers:
             closers.pop()()
@@ -187,6 +225,8 @@ def real_deps(settings: Settings) -> Deps:
         hook=hook,
         scorer=lambda: ThumbScorer(encoder(), fetch_thumb),
         clip_search=clip_search,
+        plan=plan,
+        fetch=fetch,
         close=close,
     )
 
@@ -204,11 +244,12 @@ def run_pipeline(
 ) -> RunPaths:
     video_id = parse_video_id(video)
     paths = RunPaths(runs_dir / video_id)
-    done = {step: step_done(step, paths) for step in STEPS}
-    steps = plan_steps(done, paths.voice_mp3.exists(), from_step, new_voice)
+    mode_steps = MANUAL_STEPS if settings.clip_source == "manual" else STEPS
+    done = {step: step_done(step, paths) for step in mode_steps}
+    steps = plan_steps(done, paths.voice_mp3.exists(), from_step, new_voice, mode_steps)
     if no_render:
         # Review lewat Remotion Studio dulu. final.mp4 lama jadi basi kalau step sebelumnya diulang.
-        if any(step in steps for step in ("hook", "clips", "timeline")):
+        if any(step in steps for step in ("hook", "clips", "plan", "fetch", "timeline")):
             paths.final_mp4.unlink(missing_ok=True)
         steps = [step for step in steps if step != "render"]
     if not steps:
@@ -263,6 +304,11 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
             media_cache=deps.media_cache, log=log,
             hook=read_json(paths.hook_json), scorer=deps.scorer(), hook_seconds=settings.hook_seconds,
         )
+    elif step in ("plan", "fetch"):
+        runner = deps.plan if step == "plan" else deps.fetch
+        if runner is None:
+            raise PipelineError(step, f"Step {step} butuh mode manual yang lengkap (deps.{step} kosong).")
+        runner(paths, log)
     elif step == "timeline":
         run_timeline(paths, read_json(paths.clips_json), read_json(paths.tts_json), fg_min_ratio=settings.fg_min_height_ratio)
     elif step == "render":

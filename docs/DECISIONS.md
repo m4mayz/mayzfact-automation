@@ -200,3 +200,28 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   - Mode `auto` (Fase 2) tetap ada sebagai opsi.
   - Bilibili nggak ditambah.
 - **Authority:** keputusan Akmal (chat 2026-10-12/13). Pendekatan A (manual default, auto disimpan) dipilih Akmal.
+
+## D-020 — 2026-10-13 — Link manual diisi per konteks, bukan per shot
+
+- **Status:** accepted (revisi D-019)
+- **Konteks:** Di brief pertama, run i2xag minta 16 link. Padahal shot 1–3 itu 1 klip hook yang sama, dan shot 4–6 sama-sama horseshoe crab.
+- **Keputusan:**
+  - Shot dikelompokin per konteks: semua shot hook jadi 1 kelompok `hook`, sisanya per subjek beat. Kalau subjeknya kosong, per beat.
+  - Link/file diisi per kelompok. Boleh lebih dari 1 per kelompok.
+  - `fetch` yang ngebagi: tiap shot dapat potongan video yang nggak tumpang tindih, atau foto yang beda. Kalau stok kurang, kelompok error "tambah link". Revisi D-021: awalnya boleh dipakai ulang plus peringatan.
+- **Authority:** keputusan Akmal (chat 2026-10-13: "link yang ditambahin itu sesuai konteksnya, bukan sesuai shot").
+
+## D-021 — 2026-10-13 — Klip nggak boleh tampil 2 kali, dan momen "Number X" pakai number card Remotion
+
+- **Status:** accepted. No-reuse udah diimplementasi, number card baru dicatat dan belum dibikin.
+- **Konteks:** Review Studio run i2xag (Akmal, 2026-10-13).
+- **Keputusan:**
+  - **No-reuse:** potongan klip yang udah tampil nggak dipakai lagi di shot setelahnya, termasuk lintas kelompok kalau link-nya sama. Urutan pilihan `fetch`:
+    1. video/foto yang belum kepakai
+    2. bagian lain (nggak overlap) dari video yang udah kepakai, plus peringatan
+    3. kalau dua-duanya nggak ada, kelompok error "tambah link"
+  - **Number card:** pas narasi nyebut "Number X" (countdown), yang tampil itu number card buatan Remotion, bukan klip dari link.
+    - Gaya di source i2xag: angka besar warna chrome/silver di background gelap berpartikel, abis itu gambar subjek dalam frame menyala plus label nama subjek.
+    - Momen ini dideteksi dari teks beat ("Number five, …") + timing alignment TTS.
+    - Bagian narasi "Number X" nggak masuk brief.
+- **Authority:** Akmal (chat 2026-10-13: "klip yang udah digunakan jangan digunakan lagi setelahnya", "pas audio nyebutin 'number ...' itu harusnya muncul klip number … tolong catat agar buat kustom dengan remotion").

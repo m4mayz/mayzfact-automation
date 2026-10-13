@@ -163,3 +163,13 @@ def test_real_hook_deps_share_one_playwright_and_stop_it_once(monkeypatch):
     assert browsers[0]._playwright is browsers[1]._playwright
     deps.close()
     assert stops == [1]
+
+
+def test_prepare_source_segments_writes_frames_to_out_dir(tmp_path, cut_video, make_photo):
+    from mayzfact.steps.hook import prepare_source_segments
+
+    paths = RunPaths(tmp_path / "run")
+    segs = prepare_source_segments(paths, SOURCE, lambda vid, dest: shutil.copyfile(cut_video, dest) or dest, 10.0, paths.root / "plan")
+    assert len(segs) == 2
+    assert all(len(s["frames"]) == 3 and s["frames"][0].parent.name == "plan" for s in segs)
+    assert segs[0]["transcript"] == "five ancient creatures"

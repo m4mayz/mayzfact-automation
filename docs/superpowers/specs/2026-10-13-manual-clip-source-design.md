@@ -120,3 +120,67 @@ Unit test (tanpa network beneran, browser, atau model):
 - Download RedNote kemungkinan ketahan blok IP, jadi upload file yang bakal kepakai.
 - Resolver hasil port bisa rusak kalau Douyin/RedNote ngubah halamannya.
 - Kalau `MAX_SHOT_SECONDS` atau naskah berubah setelah link diisi, nomor shot bisa geser. Cek ulang brief.
+
+## 10. Revisi 2026-10-13: link per konteks (D-020)
+
+Bagian ini menggantikan aturan "1 link per shot" di bagian 3–5.
+
+**Kelompok (`plan`):**
+
+- Semua shot hook masuk kelompok `hook`.
+- Shot lain dikelompokin per subjek beat. Id kelompok = slug subjek (`horseshoe-crab`). Kalau subjeknya kosong, pakai `beat-N`.
+- `shots_plan.json` dapat field `group` di tiap shot, plus daftar:
+
+```json
+"groups": [{"id": "hook", "label": "HOOK", "shots": [0, 1, 2], "keywords": {"en": [], "zh": []}}]
+```
+
+- Keyword kelompok = gabungan keyword shot-shotnya, tanpa duplikat.
+
+**`links.json`:**
+
+```json
+{"groups": {"hook": [{"url": "https://…"}], "horseshoe-crab": [{"url": "https://…", "pick": 2}, {"file": "manual/horseshoe-crab_1.mp4"}]}}
+```
+
+**Brief:**
+
+- 1 card per kelompok, isinya:
+  - daftar shot + narasi
+  - frame referensi per shot hook
+  - keyword
+  - 1 textarea, 1 baris = 1 link. Boleh pakai ` #n`. File upload muncul sebagai baris `file:manual/<id>_<k>.<ext>`, dan kalau baris itu dihapus, file-nya nggak dipakai.
+- Upload: `POST /api/upload?group=<id>`.
+- Progres yang ditampilin: "x/N kelompok terisi".
+
+**`fetch`:**
+
+- Semua link di satu kelompok di-download (cache tetap per URL). Kalau ada 1 link yang gagal, kelompok itu error, dan pesannya nyebut baris yang gagal.
+- Shot diproses berurutan. Tiap shot milih opsi dengan skor tertinggi yang belum kepakai:
+  - video: potongan yang nggak overlap sama potongan yang udah dipakai dari video yang sama
+  - foto: foto yang belum dipakai
+- Kalau semua opsi udah kepakai, kelompok jadi `error` dengan pesan "tambah link". Potongan yang udah tampil nggak dipakai ulang (lihat No-reuse, D-021).
+- `#n` = cuma foto ke-n dari post itu.
+- Target pembandingnya tetap sama: shot hook pakai frame referensinya sendiri, shot isi pakai teks subjek.
+- Status ditulis per kelompok: `missing` / `error` / `ok` + peringatan.
+- `AwaitingInput` nyebut label kelompok.
+
+**Frame source buat kelompok isi (revisi Akmal 2026-10-13):**
+
+- Tiap kelompok non-hook juga dapat 3 frame dari video source: `plan/<id>_0..2.jpg`, diambil di posisi 25/50/75% dari rentang waktu subjeknya.
+- Rentang dihitung dari transcript: mulai pas subjek pertama kali disebut (nama lengkap, atau kalau nggak ketemu, kata terakhirnya), sampai subjek berikutnya disebut. Kalau subjeknya nggak ketemu di transcript, kelompok itu tanpa frame.
+- Field: `groups[].ref_frames`. Frame ini cuma referensi di brief. Target pencocokan `fetch` buat shot isi tetap teks subjek.
+
+**Hook 1 video = nyambung (revisi Akmal 2026-10-13):**
+
+- Kalau kelompok `hook` cuma punya 1 link video, video itu diputer nyambung sepanjang semua shot hook. Hasilnya 1 entry di `clips.json`, `start_s` = awal shot hook pertama dan `end_s` = akhir shot hook terakhir.
+- Titik mulai dipilih dari detik sample yang ngasih rata-rata kemiripan paling tinggi. Kemiripan dihitung antara frame di tengah tiap shot dan frame referensi shot itu.
+- Kalau video-nya lebih pendek dari durasi hook + 0.2 detik, atau link-nya lebih dari 1, hook balik dipotong per shot.
+
+**No-reuse (D-021):** Potongan yang udah tampil nggak pernah dipakai lagi. Ini berlaku juga lintas kelompok, dengan catatan "udah tampil" disimpan per file. Urutan pilihannya:
+
+1. Video/foto yang belum kepakai.
+2. Bagian lain yang nggak overlap dari video yang udah kepakai, dengan peringatan.
+3. Kalau dua-duanya nggak ada, kelompok jadi `error` dengan pesan "tambah link".
+
+**Number card (D-021, belum diimplementasi):** Momen countdown "Number X" bakal pakai komponen Remotion sendiri, jadi bagian itu nggak diisi klip dari link.

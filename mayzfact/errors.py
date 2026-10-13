@@ -6,3 +6,7 @@ class PipelineError(Exception):
         super().__init__(f"[{step}] {message}")
         self.step = step
         self.message = message
+
+
+class AwaitingInput(PipelineError):
+    """Pipeline berhenti nunggu input manusia (misalnya link klip), bukan error."""

@@ -36,6 +36,8 @@ class Settings:
     hook_platforms: tuple[str, ...] = ("tiktok", "pinterest")
     clip_platforms: tuple[str, ...] = ("pinterest",)
     browser_headless: bool = False
+    clip_source: str = "manual"  # "manual" | "auto"
+    brief_port: int = 3100
 
 
 def _key_list(raw: str) -> tuple[str, ...]:
@@ -56,6 +58,13 @@ def _flag(raw: str) -> bool:
     raise ValueError(raw)
 
 
+def _clip_source(raw: str) -> str:
+    value = raw.lower()
+    if value not in {"manual", "auto"}:
+        raise ValueError(raw)
+    return value
+
+
 ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
     "GEMINI_API_KEYS": ("gemini_api_keys", _key_list),
     "GEMINI_MODEL": ("gemini_model", str),
@@ -74,6 +83,8 @@ ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
     "HOOK_PLATFORMS": ("hook_platforms", _key_list),
     "CLIP_PLATFORMS": ("clip_platforms", _key_list),
     "BROWSER_HEADLESS": ("browser_headless", _flag),
+    "CLIP_SOURCE": ("clip_source", _clip_source),
+    "BRIEF_PORT": ("brief_port", int),
 }
 
 

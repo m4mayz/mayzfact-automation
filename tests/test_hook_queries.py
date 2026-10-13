@@ -69,3 +69,14 @@ def test_describe_falls_back_to_transcript_on_error(tmp_path):
 
 def test_describe_without_writer_uses_fallback(tmp_path):
     assert describe_segments(None, infos(), frames(tmp_path))[0]["zh"] == []
+
+
+def test_translate_queries_maps_en_to_zh_and_falls_back():
+    from mayzfact.hook_queries import translate_queries
+    from mayzfact.models import Translation, Translations
+
+    writer = FakeWriter(Translations(items=[Translation(en="horseshoe crab", zh=" 鲎 "), Translation(en="unknown", zh="x")]))
+    assert translate_queries(writer, ["horseshoe crab", "fossil"], log=lambda m: None) == {"horseshoe crab": "鲎"}
+    assert writer.calls[0][3] == "plan"
+    assert translate_queries(FakeWriter(error=PipelineError("plan", "503")), ["a"], log=lambda m: None) == {}
+    assert translate_queries(None, ["a"]) == {}
