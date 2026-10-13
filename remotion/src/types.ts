@@ -38,6 +38,10 @@ export type Bgm = {
   fadeOutFrames: number;
 };
 
+export type Intro = {
+  durationInFrames: number;
+};
+
 // Pakai `type`, bukan `interface`: props Remotion harus cocok sama Record<string, unknown>.
 export type TimelineProps = {
   fps: number;
@@ -51,4 +55,5 @@ export type TimelineProps = {
   captions?: Caption[];
   bgm?: Bgm | null;
   sfx?: Sfx[];
+  intro?: Intro | null;
 };

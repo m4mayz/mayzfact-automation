@@ -144,3 +144,10 @@ def test_cut_sfx_on_plain_shots_and_missing_audio():
     assert [s["from"] for s in timeline["sfx"]] == [69, 129]
     plain = build_timeline(CLIPS, 6.5, 0.5)
     assert plain["bgm"] is None and plain["sfx"] == []
+
+
+def test_intro_transition_goes_with_hook_sfx():
+    with_hook = build_timeline(CLIPS, 6.5, 0.5, audio={"bgm": None, "sfx": {"hook": "audio/sfx/h.mp3"}})
+    assert with_hook["intro"] == {"durationInFrames": 10}
+    assert build_timeline(CLIPS, 6.5, 0.5, audio={"bgm": None, "sfx": {}})["intro"] is None
+    assert build_timeline(CLIPS, 6.5, 0.5)["intro"] is None

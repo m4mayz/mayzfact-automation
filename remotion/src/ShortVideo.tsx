@@ -2,13 +2,14 @@ import React from 'react';
 import {AbsoluteFill, Sequence, staticFile, useVideoConfig} from 'remotion';
 import {Audio} from '@remotion/media';
 import {Captions} from './Captions';
+import {IntroFlash, IntroZoom} from './Intro';
 import {NumberCard} from './NumberCard';
 import {ShotView} from './ShotView';
 import {SoundLayer} from './SoundLayer';
 import {SubjectCard} from './SubjectCard';
 import type {TimelineProps} from './types';
 
-export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = []}) => {
+export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null}) => {
   const {fps} = useVideoConfig();
   // Shot yang seluruh durasinya ketutup card countdown nggak dirender, biar videonya nggak tembus di belakang card.
   // Klip shot itu tetap tampil di dalam subject card.
@@ -16,6 +17,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
     countdown.some((card) => card.numberFrom <= from && from + duration <= card.cardFrom + card.cardDuration);
   return (
     <AbsoluteFill style={{backgroundColor: 'black'}}>
+      <IntroZoom intro={intro}>
       {shots.filter((shot) => !coveredByCard(shot.from, shot.durationInFrames)).map((shot) => (
         // premountFor: shot dimuat 1 detik sebelum tayang, biar preview Studio nggak kedip hitam.
         <Sequence key={shot.src} from={shot.from} durationInFrames={shot.durationInFrames} premountFor={fps}>
@@ -33,7 +35,9 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
           </Sequence>
         </React.Fragment>
       ))}
+      </IntroZoom>
       <Captions captions={captions} />
+      <IntroFlash intro={intro} />
       {audio ? <Audio src={staticFile(audio)} /> : null}
       <SoundLayer bgm={bgm} sfx={sfx} />
     </AbsoluteFill>

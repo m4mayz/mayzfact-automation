@@ -20,6 +20,7 @@ CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
 SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.35}
 SFX_LEAD_FRAMES = 3  # whoosh mulai sedikit sebelum gambar ganti
+INTRO_FRAMES = 10  # pembuka: zoom tembus + white flash, barengan SFX hook
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
@@ -166,6 +167,7 @@ def build_timeline(
         "captions": captions,
         "bgm": bgm,
         "sfx": sfx,
+        "intro": {"durationInFrames": INTRO_FRAMES} if audio and "hook" in audio.get("sfx", {}) else None,
     }
 
 
