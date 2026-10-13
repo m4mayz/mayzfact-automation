@@ -195,3 +195,38 @@
 
 - Di-merge ke `master` (2026-10-13, `3093e90`). Belum di-push. Backup hasil Fase 2 ada di `runs/_backup_fase2_i2xag/`.
 - Next: number card (pembuka Fase 3), atau tes resolver Douyin/RedNote pakai link beneran.
+
+---
+
+# Handoff — Fase 3A (number card, subject card, caption per kata)
+
+- **Updated:** 2026-10-13 16:00 WIB, Claude Code (Opus 5.5)
+- **Goal & scope:** [spec 3A](superpowers/specs/2026-10-13-fase3a-countdown-captions-design.md), [plan](superpowers/plans/2026-10-13-fase3a-countdown-captions.md). Fase 3 dipecah jadi 3: 3A (countdown + caption), 3B (audio), 3C (overlay + CTA).
+- **Workspace:** `master` (merge `4f32ba1`). Belum di-push.
+
+## Selesai
+
+- **Countdown:**
+  - `mayzfact/countdown.py`: parse "Number five, horseshoe crab.", termasuk em dash dan angka 1–99. Beat countdown nggak dipotong jadi beberapa shot.
+  - Timeline nulis `countdown` (number card + subject card) dan `captions` (1 kata per tampilan, warna putih/cyan/hijau/kuning).
+- **Remotion:**
+  - `NumberCard`: angka chrome Anton di background partikel.
+  - `SubjectCard`: klip kelompok dalam frame menyala + label.
+  - `Captions`: posisi 75%, shadow tebal, animasi masuk blur horizontal 3 frame (ngikutin source frame per frame).
+  - Shot yang ketutup card nggak dirender, biar nggak tembus.
+- **Final review Opus:** 2 Important udah di-fix (em dash, klip card lebih pendek di run lama).
+- **Review Akmal di Studio (2026-10-13):** oke, setelah 3 revisi: caption shadow + animasi, caption turun, video tembus di belakang card. Redesain card ala source (plasma biru) ditolak, desain awal dipertahankan.
+
+## Masalah terbuka
+
+1. **Font Anton** di-load dari Google Fonts, jadi pas render butuh internet.
+2. **Minor yang ditunda:**
+   - kata pendek di nama subjek ikut berwarna
+   - card bisa kedip 1 frame kalau alignment aneh
+   - caption overlap 1 frame kalau 2 kata mulai di frame yang sama
+   - partikel nggak muter balik di card yang panjang
+   - angka 2 digit bisa kelebaran pas animasi masuk
+
+## Delivery
+
+- Next: 3B audio. SFX dari myinstants.com (pilihan Akmal).
