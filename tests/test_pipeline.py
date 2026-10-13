@@ -389,3 +389,9 @@ def test_manual_fetch_success_continues_to_timeline(world):
     world.deps.plan, world.deps.fetch = fake_plan, fake_fetch
     paths = run(world, settings=MANUAL, no_render=True)
     assert paths.timeline_json.exists() and world.renders == 0
+
+
+def test_timeline_gets_captions_from_script_and_alignment(world):
+    paths = run(world, no_render=True)
+    timeline = read_json(paths.timeline_json)
+    assert timeline["captions"] and timeline["captions"][0]["text"]
