@@ -200,3 +200,13 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   - Mode `auto` (Fase 2) tetap ada sebagai opsi.
   - Bilibili nggak ditambah.
 - **Authority:** keputusan Akmal (chat 2026-10-12/13). Pendekatan A (manual default, auto disimpan) dipilih Akmal.
+
+## D-020 — 2026-10-13 — Link manual diisi per konteks, bukan per shot
+
+- **Status:** accepted (revisi D-019)
+- **Konteks:** Di brief pertama, run i2xag minta 16 link. Padahal shot 1–3 itu 1 klip hook yang sama, dan shot 4–6 sama-sama horseshoe crab.
+- **Keputusan:**
+  - Shot dikelompokin per konteks: semua shot hook jadi 1 kelompok `hook`, sisanya per subjek beat. Kalau subjeknya kosong, per beat.
+  - Link/file diisi per kelompok. Boleh lebih dari 1 per kelompok.
+  - `fetch` yang ngebagi: tiap shot dapat potongan video yang nggak tumpang tindih, atau foto yang beda. Kalau stok kurang, boleh dipakai ulang plus peringatan.
+- **Authority:** keputusan Akmal (chat 2026-10-13: "link yang ditambahin itu sesuai konteksnya, bukan sesuai shot").

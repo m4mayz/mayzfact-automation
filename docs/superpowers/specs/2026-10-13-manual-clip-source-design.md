@@ -120,3 +120,47 @@ Unit test (tanpa network beneran, browser, atau model):
 - Download RedNote kemungkinan ketahan blok IP, jadi upload file yang bakal kepakai.
 - Resolver hasil port bisa rusak kalau Douyin/RedNote ngubah halamannya.
 - Kalau `MAX_SHOT_SECONDS` atau naskah berubah setelah link diisi, nomor shot bisa geser. Cek ulang brief.
+
+## 10. Revisi 2026-10-13: link per konteks (D-020)
+
+Bagian ini menggantikan aturan "1 link per shot" di bagian 3–5.
+
+**Kelompok (`plan`):**
+
+- Semua shot hook masuk kelompok `hook`.
+- Shot lain dikelompokin per subjek beat. Id kelompok = slug subjek (`horseshoe-crab`). Kalau subjeknya kosong, pakai `beat-N`.
+- `shots_plan.json` dapat field `group` di tiap shot, plus daftar:
+
+```json
+"groups": [{"id": "hook", "label": "HOOK", "shots": [0, 1, 2], "keywords": {"en": [], "zh": []}}]
+```
+
+- Keyword kelompok = gabungan keyword shot-shotnya, tanpa duplikat.
+
+**`links.json`:**
+
+```json
+{"groups": {"hook": [{"url": "https://…"}], "horseshoe-crab": [{"url": "https://…", "pick": 2}, {"file": "manual/horseshoe-crab_1.mp4"}]}}
+```
+
+**Brief:**
+
+- 1 card per kelompok, isinya:
+  - daftar shot + narasi
+  - frame referensi per shot hook
+  - keyword
+  - 1 textarea, 1 baris = 1 link. Boleh pakai ` #n`. File upload muncul sebagai baris `file:manual/<id>_<k>.<ext>`, dan kalau baris itu dihapus, file-nya nggak dipakai.
+- Upload: `POST /api/upload?group=<id>`.
+- Progres yang ditampilin: "x/N kelompok terisi".
+
+**`fetch`:**
+
+- Semua link di satu kelompok di-download (cache tetap per URL). Kalau ada 1 link yang gagal, kelompok itu error, dan pesannya nyebut baris yang gagal.
+- Shot diproses berurutan. Tiap shot milih opsi dengan skor tertinggi yang belum kepakai:
+  - video: potongan yang nggak overlap sama potongan yang udah dipakai dari video yang sama
+  - foto: foto yang belum dipakai
+- Kalau semua opsi udah kepakai, opsi terbaik dipakai ulang dan muncul peringatan "tambah link lagi".
+- `#n` = cuma foto ke-n dari post itu.
+- Target pembandingnya tetap sama: shot hook pakai frame referensinya sendiri, shot isi pakai teks subjek.
+- Status ditulis per kelompok: `missing` / `error` / `ok` + peringatan.
+- `AwaitingInput` nyebut label kelompok.
