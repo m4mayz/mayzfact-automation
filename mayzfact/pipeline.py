@@ -121,6 +121,7 @@ class Deps:
     close: Callable[[], None] = lambda: None
     plan: Callable[[RunPaths, Callable[[str], None]], dict] | None = None
     fetch: Callable[[RunPaths, Callable[[str], None]], dict] | None = None
+    audio: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # None = video tanpa BGM/SFX
 
 
 def real_deps(settings: Settings) -> Deps:
@@ -209,6 +210,13 @@ def real_deps(settings: Settings) -> Deps:
             fg_min_ratio=settings.fg_min_height_ratio, log=log,
         )
 
+    def audio(paths: RunPaths, log: Callable[[str], None]) -> dict:
+        from mayzfact.audio import BGM_DIR, SFX_DIR, prepare_audio
+
+        writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
+        return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=http(),
+                             writer=writer, log=log)
+
     def close() -> None:
         while closers:
             closers.pop()()
@@ -227,6 +235,7 @@ def real_deps(settings: Settings) -> Deps:
         clip_search=clip_search,
         plan=plan,
         fetch=fetch,
+        audio=audio,
         close=close,
     )
 
@@ -310,7 +319,8 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
             raise PipelineError(step, f"Step {step} butuh mode manual yang lengkap (deps.{step} kosong).")
         runner(paths, log)
     elif step == "timeline":
+        audio = deps.audio(paths, log) if deps.audio else None
         run_timeline(paths, read_json(paths.clips_json), read_json(paths.tts_json), fg_min_ratio=settings.fg_min_height_ratio,
-                     script=read_json(paths.script_json), log=log)
+                     script=read_json(paths.script_json), audio=audio, log=log)
     elif step == "render":
         deps.render(paths)

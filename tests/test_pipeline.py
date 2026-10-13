@@ -395,3 +395,17 @@ def test_timeline_gets_captions_from_script_and_alignment(world):
     paths = run(world, no_render=True)
     timeline = read_json(paths.timeline_json)
     assert timeline["captions"] and timeline["captions"][0]["text"]
+
+
+def test_timeline_step_uses_audio_deps(world):
+    seen = []
+
+    def fake_audio(paths, log):
+        seen.append(paths.root.name)
+        return {"bgm": "audio/bgm/mystery.mp3", "sfx": {"hook": "audio/sfx/h.mp3"}}
+
+    world.deps.audio = fake_audio
+    paths = run(world, no_render=True)
+    timeline = read_json(paths.timeline_json)
+    assert seen == [VIDEO_ID]
+    assert timeline["bgm"]["src"] == "audio/bgm/mystery.mp3" and timeline["sfx"][0]["from"] == 0
