@@ -5,6 +5,11 @@ import type {Overlay, OverlayKeyframe} from './types';
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 const ARROW_LENGTH = 230;
 const SIDE_TOP_LIMIT = 260; // subjek mepet atas layar: panah datang dari kanan
+const BIG_W = 950;
+const BIG_H = 1100;
+const EDGE = 40;
+const FRAME_W = 1080;
+const FRAME_H = 1920;
 
 // Posisi subjek di frame ini: interpolasi linear antar titik deteksi (tiap 1 detik).
 const boxAt = (keyframes: OverlayKeyframe[], frame: number): OverlayKeyframe => {
@@ -29,11 +34,19 @@ const Arrow: React.FC<{overlay: Overlay}> = ({overlay}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const box = boxAt(overlay.keyframes, frame);
-  const side = box.y < SIDE_TOP_LIMIT;
-  const tipX = side ? box.x + box.w * 0.92 : box.x + box.w / 2;
-  const tipY = side ? box.y + box.h / 2 : box.y + box.h * 0.08;
+  // Subjek gede (hampir sepenuh layar): tunjuk bagian atas badannya, bukan tepi kotak yang bisa di luar layar.
+  const big = box.w > BIG_W || box.h > BIG_H;
+  const side = !big && box.y < SIDE_TOP_LIMIT;
+  const rawX = side ? box.x + box.w * 0.92 : box.x + box.w / 2;
+  const rawY = side ? box.y + box.h / 2 : box.y + box.h * (big ? 0.3 : 0.08);
   // Dari serong kanan atas pelan-pelan jadi tegak (source: arah panah berubah sepanjang shot).
   const angle = side ? 90 : interpolate(frame, [0, overlay.durationInFrames], [35, 0], clamp);
+  // Batasi ujung panah biar seluruh badannya tetap di dalam layar.
+  const rad = (angle * Math.PI) / 180;
+  const tailDx = ARROW_LENGTH * Math.sin(rad);
+  const tailDy = ARROW_LENGTH * Math.cos(rad);
+  const tipX = Math.min(Math.max(rawX, EDGE), FRAME_W - EDGE - tailDx);
+  const tipY = Math.min(Math.max(rawY, EDGE + tailDy), FRAME_H - EDGE);
   const pop = spring({frame, fps, config: {damping: 11, stiffness: 180}, durationInFrames: 6});
   return (
     <svg
