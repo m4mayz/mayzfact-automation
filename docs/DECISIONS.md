@@ -184,3 +184,19 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   - Blok IP nggak diakalin pakai proxy/rotasi IP.
 - **Konsekuensi:** akun bisa ke-ban, dan video bisa kena klaim hak cipta atau takedown. Ini tanggung jawab Akmal.
 - **Authority:** keputusan Akmal (chat 2026-10-11).
+
+## D-019 — 2026-10-13 — Klip dicari manual oleh Akmal, Bilibili di-skip
+
+- **Status:** accepted
+- **Konteks:** Hasil spike 2026-10-11/12:
+  - login web Douyin ditolak (QR udah dikonfirmasi, tetap "Please log in using the Douyin App")
+  - RedNote diblok IP (300012)
+  - MediaCrawler kena tembok yang sama
+  - search lewat videosearch.io dianggap nggak akurat
+- **Keputusan:**
+  - Mode `CLIP_SOURCE=manual` jadi default: semua shot dicari Akmal sendiri, link/file diinput lewat halaman brief lokal, harness yang download + pilih bagian pakai SigLIP. Spec: [manual clip source](superpowers/specs/2026-10-13-manual-clip-source-design.md).
+  - Semua shot wajib diisi sebelum `fetch` jalan.
+  - Post foto ganda dipilih otomatis pakai SigLIP, atau dipaksa pakai `#n`.
+  - Mode `auto` (Fase 2) tetap ada sebagai opsi.
+  - Bilibili nggak ditambah.
+- **Authority:** keputusan Akmal (chat 2026-10-12/13). Pendekatan A (manual default, auto disimpan) dipilih Akmal.
