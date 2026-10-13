@@ -214,31 +214,41 @@ def materialize(
     }
 
 
-def _hook_entry(slot: ShotSlot, segment: dict, paths: RunPaths, fg_min_ratio: float, log: Callable[[str], None]) -> dict | None:
-    winner = segment["winner"]
-    raw = paths.root / winner["file"]
+def normalize_local(
+    index: int, start_s: float, end_s: float, raw: Path, kind: str, offset_s: float, paths: RunPaths, fg_min_ratio: float
+) -> dict:
+    """File lokal → clips/shot_XX. Video dipotong di sekitar offset_s, dibatasi biar nggak lewat ujung file."""
+    duration_s = end_s - start_s
     try:
-        if winner["kind"] == "video":
+        if kind == "video":
             info = probe(raw, "clips")
-            duration = info["duration_s"] or 0.0
-            if duration < slot.duration_s + 0.2:
-                raise PipelineError("clips", f"video cuma {duration:.1f} detik, shot butuh {slot.duration_s:.1f}")
-            latest = duration - slot.duration_s - 0.2
-            start = min(max(0.0, winner["offset_s"] - slot.duration_s / 2), latest)
-            dest = paths.clips_dir / f"shot_{slot.index + 1:02d}.mp4"
-            scale = downscale_factor(info["width"], info["height"], fg_min_ratio)
-            normalize_video(raw, dest, start_s=start, duration_s=slot.duration_s + 0.2, scale=scale)
+            total = info["duration_s"] or 0.0
+            if total < duration_s + 0.2:
+                raise PipelineError("clips", f"video cuma {total:.1f} detik, shot butuh {duration_s:.1f}")
+            start = min(max(0.0, offset_s - duration_s / 2), total - duration_s - 0.2)
+            dest = paths.clips_dir / f"shot_{index + 1:02d}.mp4"
+            normalize_video(raw, dest, start_s=start, duration_s=duration_s + 0.2,
+                            scale=downscale_factor(info["width"], info["height"], fg_min_ratio))
             out = probe(dest, "clips")
             width, height = out["width"], out["height"]
         else:
-            dest = paths.clips_dir / f"shot_{slot.index + 1:02d}.jpg"
+            dest = paths.clips_dir / f"shot_{index + 1:02d}.jpg"
             width, height = normalize_photo(raw, dest, fg_min_ratio=fg_min_ratio)
-    except (PipelineError, OSError, ValueError, KeyError) as exc:
-        log(f"[clips] hook segmen {segment['index'] + 1} gagal dipakai, pakai klip biasa: {exc}")
+    except (OSError, ValueError, KeyError) as exc:
+        raise PipelineError("clips", f"{raw.name} gagal diproses: {exc}") from exc
+    return {"kind": kind, "file": f"clips/{dest.name}", "width": width, "height": height}
+
+
+def _hook_entry(slot: ShotSlot, segment: dict, paths: RunPaths, fg_min_ratio: float, log: Callable[[str], None]) -> dict | None:
+    winner = segment["winner"]
+    try:
+        out = normalize_local(slot.index, slot.start_s, slot.end_s, paths.root / winner["file"], winner["kind"],
+                              winner["offset_s"], paths, fg_min_ratio)
+    except PipelineError as exc:
+        log(f"[clips] hook segmen {segment['index'] + 1} gagal dipakai, pakai klip biasa: {exc.message}")
         return None
     return {
-        "index": slot.index, "beat": slot.beat, "start_s": slot.start_s, "end_s": slot.end_s,
-        "kind": winner["kind"], "file": f"clips/{dest.name}", "width": width, "height": height,
+        "index": slot.index, "beat": slot.beat, "start_s": slot.start_s, "end_s": slot.end_s, **out,
         "provider": winner["provider"], "provider_id": winner["provider_id"],
         "page_url": winner["page_url"], "author": winner["author"],
         "query": f"hook:{segment['index']}", "hook_segment": segment["index"], "match": winner["label"],

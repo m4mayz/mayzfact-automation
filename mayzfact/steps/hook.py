@@ -165,28 +165,41 @@ def _match_segment(info, seg_vec, queries, deps, skipped, used, paths, media_cac
     return record
 
 
-def run_hook(
-    paths: RunPaths, source: dict, deps: HookDeps, *, hook_seconds: float, exact_threshold: float, media_cache: Path
-) -> dict:
+def prepare_source_segments(
+    paths: RunPaths, source: dict, download_source: Callable[[str, Path], Path], hook_seconds: float,
+    out_dir: Path, retry_step: str = "hook",
+) -> list[dict]:
+    """Download source (kalau belum ada), deteksi segmen di hook_seconds awal, ambil 3 frame per segmen ke out_dir."""
     src = paths.source_mp4
-    paths.hook_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
     try:
         if not src.exists():
-            deps.download_source(source["video_id"], src)
+            download_source(source["video_id"], src)
         end_s = min(hook_seconds, probe(src, "hook")["duration_s"] or 0.0)
         segs = segments(merge_cuts(detect_cuts(src, end_s)), end_s)
     except PipelineError as exc:
         raise PipelineError(
-            "hook", f"{exc.message}\nUlang step ini pakai: mayzfact run {source['video_id']} --from hook"
+            retry_step, f"{exc.message}\nUlang step ini pakai: mayzfact run {source['video_id']} --from {retry_step}"
         ) from exc
-    infos: list[dict] = []
-    seg_frames: list[list[Path]] = []
+    out = []
     for i, (start, end) in enumerate(segs):
-        seg_frames.append([
-            extract_frame(src, start + (end - start) * pos, paths.hook_dir / f"seg_{i + 1:02d}_{k}.jpg")
+        frames = [
+            extract_frame(src, start + (end - start) * pos, out_dir / f"seg_{i + 1:02d}_{k}.jpg")
             for k, pos in enumerate(FRAME_POSITIONS)
-        ])
-        infos.append({"index": i, "start_s": start, "end_s": end, "transcript": transcript_near(source["transcript"], start, end)})
+        ]
+        out.append({"index": i, "start_s": start, "end_s": end, "frames": frames,
+                    "transcript": transcript_near(source["transcript"], start, end)})
+    return out
+
+
+def run_hook(
+    paths: RunPaths, source: dict, deps: HookDeps, *, hook_seconds: float, exact_threshold: float, media_cache: Path
+) -> dict:
+    segs_info = prepare_source_segments(paths, source, deps.download_source, hook_seconds, paths.hook_dir)
+    end_s = segs_info[-1]["end_s"] if segs_info else 0.0
+    infos = [{k: s[k] for k in ("index", "start_s", "end_s", "transcript")} for s in segs_info]
+    seg_frames = [s["frames"] for s in segs_info]
+    segs = [(s["start_s"], s["end_s"]) for s in segs_info]
     deps.log(f"[hook] {len(segs)} segmen di {end_s:.1f} detik awal source")
     queries = deps.describe(infos, [frames[1] for frames in seg_frames]) if segs else {}
     skipped: dict[str, str] = {}
