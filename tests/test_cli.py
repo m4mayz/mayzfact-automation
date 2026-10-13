@@ -80,3 +80,22 @@ def test_cli_no_render_flag(monkeypatch, tmp_path, capsys):
     assert cli.main(["run", "i2xag_1OJfM", "--from", "clips", "--no-render"]) == 0
     assert seen["no_render"] is True
     assert "remotion studio" in capsys.readouterr().out
+
+
+def test_awaiting_input_exits_with_code_3(monkeypatch, capsys):
+    from mayzfact.errors import AwaitingInput
+
+    def wait(*args, **kwargs):
+        raise AwaitingInput("fetch", "3 shot perlu diisi. Buka: mayzfact brief abc")
+
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "run_pipeline", wait)
+    assert cli.main(["run", "i2xag_1OJfM", "--from", "fetch"]) == 3
+    assert "mayzfact brief abc" in capsys.readouterr().out
+
+
+def test_brief_needs_plan_first(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
+    assert cli.main(["brief", "i2xag_1OJfM"]) == 1
+    assert "--no-render" in capsys.readouterr().err

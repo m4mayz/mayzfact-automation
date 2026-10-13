@@ -5,10 +5,10 @@ from __future__ import annotations
 import argparse
 import sys
 
-from mayzfact.config import Settings, load_settings, missing_env
-from mayzfact.errors import PipelineError
+from mayzfact.config import RUNS_DIR, Settings, load_settings, missing_env
+from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.net import make_client
-from mayzfact.pipeline import STEPS, run_pipeline
+from mayzfact.pipeline import ALL_STEPS, run_pipeline
 from mayzfact.platforms import browser
 from mayzfact.platforms.base import PLATFORMS, is_logged_in, platform_info
 from mayzfact.providers.elevenlabs import list_voices
@@ -19,13 +19,16 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="Bikin video dari 1 YouTube Shorts source")
     run.add_argument("video", help="Video ID atau URL YouTube")
-    run.add_argument("--from", dest="from_step", choices=STEPS, help="Ulang dari step ini (script/tts dikunci kalau voice.mp3 udah ada)")
+    run.add_argument("--from", dest="from_step", choices=ALL_STEPS, help="Ulang dari step ini (script/tts dikunci kalau voice.mp3 udah ada)")
     run.add_argument("--new-voice", action="store_true", help="Bikin naskah + suara baru (pakai kredit ElevenLabs)")
     run.add_argument("--no-render", action="store_true", help="Berhenti setelah timeline.json, buat review di Remotion Studio")
     sub.add_parser("voices", help="List voice ElevenLabs di akun lu")
     login = sub.add_parser("login", help="Login ke platform buat hook (TikTok/Douyin/RedNote/Pinterest)")
     login.add_argument("platform", nargs="?", choices=sorted(PLATFORMS))
     login.add_argument("--check", action="store_true", help="Cek status login semua platform di HOOK_PLATFORMS")
+    brief = sub.add_parser("brief", help="Buka halaman brief buat ngisi link klip (mode manual)")
+    brief.add_argument("video", help="Video ID atau URL YouTube")
+    brief.add_argument("--port", type=int, default=None, help="Port lokal (default BRIEF_PORT)")
     return parser
 
 
@@ -37,6 +40,8 @@ def main(argv: list[str] | None = None) -> int:
             return _print_voices(settings)
         if args.command == "login":
             return _login(args, settings)
+        if args.command == "brief":
+            return _brief(args, settings)
         paths = run_pipeline(
             args.video, settings=settings, from_step=args.from_step, new_voice=args.new_voice, no_render=args.no_render
         )
@@ -48,6 +53,9 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(f"Selesai: {paths.final_mp4}")
         return 0
+    except AwaitingInput as exc:
+        print(f"Nunggu input: {exc.message}")
+        return 3
     except PipelineError as exc:
         print(f"Error {exc}", file=sys.stderr)
         return 1
@@ -77,6 +85,25 @@ def _login(args: argparse.Namespace, settings: Settings) -> int:
     ok = is_logged_in(platform_info(args.platform), browser.read_profile_cookies(args.platform))
     print(f"{args.platform}: login" if ok else f"{args.platform}: belum login, coba lagi")
     return 0 if ok else 1
+
+
+def _brief(args: argparse.Namespace, settings: Settings) -> int:
+    from mayzfact.brief.server import make_server
+    from mayzfact.steps.source import parse_video_id
+    from mayzfact.store import RunPaths
+
+    paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
+    if not paths.shots_plan_json.exists():
+        raise PipelineError("brief", f"Plan belum ada. Jalanin dulu: mayzfact run {paths.root.name} --no-render")
+    server = make_server(paths, args.port or settings.brief_port)
+    print(f"Brief {paths.root.name}: http://127.0.0.1:{server.server_address[1]}  (Ctrl+C buat stop)")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ from tests.factories import cand, fake_alignment, make_script
 
 VIDEO_ID = "i2xag_1OJfM"
 KEYS = {"gemini_api_keys": ("g",), "elevenlabs_api_keys": ("e",), "elevenlabs_voice_id": "v", "pexels_api_key": "p", "pixabay_api_key": "x"}
-SETTINGS = Settings(**KEYS, max_shot_seconds=10.0)
+SETTINGS = Settings(**KEYS, max_shot_seconds=10.0, clip_source="auto")
 TRANSCRIPT = [{"text": "Five ancient creatures are still alive today", "start": 0.0, "duration": 53.3}]
 NONE_DONE = {step: False for step in STEPS}
 ALL_DONE = {step: True for step in STEPS}
@@ -217,13 +217,13 @@ def test_short_audio_stops_before_clips(tmp_path, sine_mp3, make_video, make_pho
 
 def test_missing_keys_fail_before_any_step(world):
     with pytest.raises(PipelineError, match="GEMINI_API_KEYS.*ELEVENLABS_API_KEYS.*ELEVENLABS_VOICE_ID.*PEXELS_API_KEY.*PIXABAY_API_KEY"):
-        run(world, settings=Settings())
+        run(world, settings=Settings(clip_source="auto"))
     assert not (world.runs / VIDEO_ID / "source.json").exists()
 
 
 def test_from_clips_does_not_need_gemini_or_elevenlabs_keys(world):
     run(world)
-    run(world, from_step="clips", settings=Settings(pexels_api_key="p", pixabay_api_key="x", max_shot_seconds=10.0))
+    run(world, from_step="clips", settings=Settings(pexels_api_key="p", pixabay_api_key="x", max_shot_seconds=10.0, clip_source="auto"))
     assert world.renders == 2
 
 
@@ -341,3 +341,51 @@ def test_no_render_stops_after_timeline(world):
     assert world.renders == 0
     run(world, from_step="clips", no_render=True)
     assert world.renders == 0
+
+
+MANUAL = Settings(**KEYS, max_shot_seconds=10.0, clip_source="manual")
+
+
+def test_manual_mode_runs_plan_then_waits_for_links(world):
+    from mayzfact.errors import AwaitingInput
+
+    calls = []
+
+    def fake_plan(paths, log):
+        calls.append("plan")
+        write_json_atomic(paths.shots_plan_json, {"shots": []})
+        return {"shots": []}
+
+    def fake_fetch(paths, log):
+        calls.append("fetch")
+        raise AwaitingInput("fetch", "2 shot perlu diisi")
+
+    world.deps.plan, world.deps.fetch = fake_plan, fake_fetch
+    with pytest.raises(AwaitingInput):
+        run(world, settings=MANUAL, no_render=True)
+    assert calls == ["plan", "fetch"]
+    assert world.tts.calls == 1
+
+
+def test_manual_mode_rejects_auto_steps_and_auto_rejects_manual(world):
+    run(world)
+    with pytest.raises(PipelineError, match="hook"):
+        run(world, settings=MANUAL, from_step="hook")
+    with pytest.raises(PipelineError, match="fetch"):
+        run(world, from_step="fetch")
+
+
+def test_manual_fetch_success_continues_to_timeline(world):
+    def fake_plan(paths, log):
+        write_json_atomic(paths.shots_plan_json, {"shots": []})
+        return {}
+
+    def fake_fetch(paths, log):
+        clips = {"shots": [{"index": 0, "beat": 0, "start_s": 0.0, "end_s": 30.0, "kind": "photo",
+                            "file": "clips/shot_01.jpg", "width": 1080, "height": 1920}]}
+        write_json_atomic(paths.clips_json, clips)
+        return clips
+
+    world.deps.plan, world.deps.fetch = fake_plan, fake_fetch
+    paths = run(world, settings=MANUAL, no_render=True)
+    assert paths.timeline_json.exists() and world.renders == 0
