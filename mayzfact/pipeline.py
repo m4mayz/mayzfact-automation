@@ -198,7 +198,7 @@ def real_deps(settings: Settings) -> Deps:
 
     def fetch(paths: RunPaths, log: Callable[[str], None]) -> dict:
         from mayzfact.manual.obtain import Obtainer
-        from mayzfact.manual.rednote import DESKTOP_UA
+        from mayzfact.manual.og import DESKTOP_UA
         from mayzfact.steps.fetch import run_fetch
 
         client = httpx.Client(headers={"User-Agent": DESKTOP_UA}, timeout=httpx.Timeout(120.0, connect=15.0), follow_redirects=True)

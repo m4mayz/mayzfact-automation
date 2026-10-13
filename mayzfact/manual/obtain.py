@@ -16,7 +16,6 @@ from mayzfact.ffmpeg import probe
 from mayzfact.manual.douyin import resolve_douyin
 from mayzfact.manual.links import IMAGE_EXTS, VIDEO_EXTS, link_kind
 from mayzfact.manual.og import og_media
-from mayzfact.manual.rednote import resolve_rednote
 from mayzfact.manual.tiktok import resolve_tiktok
 from mayzfact.manual.types import Media
 from mayzfact.net import download
@@ -57,7 +56,7 @@ class Obtainer:
         self._cache = cache_dir
         self._client = client
         self._ytdlp = ytdlp
-        self._resolvers = resolvers or {"douyin": resolve_douyin, "rednote": resolve_rednote, "tiktok": resolve_tiktok, "og": og_media}
+        self._resolvers = resolvers or {"douyin": resolve_douyin, "tiktok": resolve_tiktok, "og": og_media}
         self._log = log
 
     def obtain(self, entry: dict, run_root: Path) -> list[Path]:

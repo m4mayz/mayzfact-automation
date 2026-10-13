@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 import re
+from urllib.parse import urlparse
 
 import httpx
 
-from mayzfact.manual.rednote import DESKTOP_UA, is_login_page
 from mayzfact.manual.types import Media
+
+DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+
+
+def is_login_page(url: str) -> bool:
+    """Halaman login / blok (…/login?redirect=…): isinya bukan post, og:image-nya cuma logo situs."""
+    return "login" in urlparse(url).path.lower()
+
 
 _META = re.compile(r'<meta[^>]+(?:property|name)="og:(video(?::url)?|image)"[^>]+content="([^"]+)"', re.IGNORECASE)
 

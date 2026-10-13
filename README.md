@@ -34,7 +34,7 @@ uv run mayzfact brief <id>                  # buka http://127.0.0.1:3100, isi li
 uv run mayzfact run <id> --from fetch --no-render   # download + potong; kelompok gagal muncul lagi di brief
 ```
 
-Link diisi per kelompok konteks (semua shot hook = 1 kelompok, sisanya per subjek). 1 baris = 1 link, boleh banyak; pipeline yang ngebagi potongan ke tiap shot tanpa tumpang tindih. Link boleh teks share Douyin/RedNote apa adanya. Tambahin ` #3` buat cuma pakai foto ke-3 dari post foto ganda. Mode lama: `CLIP_SOURCE=auto`.
+Link diisi per kelompok konteks (semua shot hook = 1 kelompok, sisanya per subjek). 1 baris = 1 link, boleh banyak; pipeline yang ngebagi potongan ke tiap shot tanpa tumpang tindih. Link boleh teks share Douyin apa adanya. Link RedNote ditolak (butuh login), save file-nya dari app terus upload. Tambahin ` #3` buat cuma pakai foto ke-3 dari post foto ganda. Mode lama: `CLIP_SOURCE=auto`.
 
 ## Hook (Fase 2)
 

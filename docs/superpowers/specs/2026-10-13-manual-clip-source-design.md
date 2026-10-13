@@ -184,3 +184,5 @@ Bagian ini menggantikan aturan "1 link per shot" di bagian 3–5.
 3. Kalau dua-duanya nggak ada, kelompok jadi `error` dengan pesan "tambah link".
 
 **Number card (D-021, belum diimplementasi):** Momen countdown "Number X" bakal pakai komponen Remotion sendiri, jadi bagian itu nggak diisi klip dari link.
+
+**RedNote dihapus (D-022):** Link RedNote ditolak di brief, resolver `__INITIAL_STATE__` juga dihapus. Klip dari RedNote cuma bisa masuk lewat upload file.

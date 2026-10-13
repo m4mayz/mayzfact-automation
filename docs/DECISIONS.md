@@ -225,3 +225,14 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
     - Momen ini dideteksi dari teks beat ("Number five, …") + timing alignment TTS.
     - Bagian narasi "Number X" nggak masuk brief.
 - **Authority:** Akmal (chat 2026-10-13: "klip yang udah digunakan jangan digunakan lagi setelahnya", "pas audio nyebutin 'number ...' itu harusnya muncul klip number … tolong catat agar buat kustom dengan remotion").
+
+## D-022 — 2026-10-13 — RedNote dihapus dari sumber link klip
+
+- **Status:** accepted (revisi D-019)
+- **Konteks:** Tes link beneran `xhslink.com/o/44jNwnYztNq` diarahkan ke `/login`, karena note RedNote minta login. Download tanpa login nggak jalan, dan dari Fase 2 cookie login RedNote juga belum beres.
+- **Keputusan:**
+  - Link RedNote (`xiaohongshu.com`, `xhslink.com`, `rednote.com`) ditolak di brief dengan pesan "save file-nya dari app, terus upload".
+  - Resolver RedNote dihapus.
+  - Upload file tetap jalan, jadi video dari app RedNote masih bisa dipakai lewat upload.
+  - Mode `auto` nggak diubah. RedNote juga nggak masuk default `HOOK_PLATFORMS`.
+- **Authority:** Akmal (chat 2026-10-13: "rednote hapus aja dari source clip").

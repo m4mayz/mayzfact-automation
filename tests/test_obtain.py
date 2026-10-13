@@ -70,11 +70,11 @@ def test_ytdlp_first_then_resolver_then_og(tmp_path, make_video):
 def test_photo_post_downloads_all_photos(tmp_path):
     jpg = tmp_path / "src.jpg"
     Image.new("RGB", (8, 8)).save(jpg)
-    resolvers = {"rednote": lambda url: [Media("photo", "https://img.example/1.jpg"), Media("photo", "https://img.example/2.webp")],
+    resolvers = {"douyin": lambda url: [Media("photo", "https://img.example/1.jpg"), Media("photo", "https://img.example/2.webp")],
                  "og": lambda url: []}
     obtainer = Obtainer(tmp_path / "cache", client_serving({"/1.jpg": jpg.read_bytes(), "/2.webp": jpg.read_bytes()}),
                         ytdlp=lambda *a, **k: (_ for _ in ()).throw(PipelineError("fetch", "no video")), resolvers=resolvers)
-    files = obtainer.obtain({"url": "https://www.xiaohongshu.com/explore/66a1b2c3d4e5f6a7b8c9d0e1"}, tmp_path)
+    files = obtainer.obtain({"url": "https://www.douyin.com/note/7111222233334444555"}, tmp_path)
     assert [f.suffix for f in files] == [".jpg", ".webp"]
 
 
@@ -93,7 +93,7 @@ def jpg_bytes(tmp_path):
 
 
 def test_cached_photos_keep_numeric_order(tmp_path):
-    url = "https://www.xiaohongshu.com/explore/66a1b2c3d4e5f6a7b8c9d0e1"
+    url = "https://www.douyin.com/note/7111222233334444555"
     cache = tmp_path / "cache"
     cache.mkdir()
     for i in range(12):
@@ -120,9 +120,9 @@ def test_junk_download_is_dropped_and_next_method_used(tmp_path, make_video):
 
 
 def test_failed_photo_post_leaves_no_partial_cache(tmp_path):
-    url = "https://www.xiaohongshu.com/explore/66a1b2c3d4e5f6a7b8c9d0e1"
+    url = "https://www.douyin.com/note/7111222233334444555"
     served = {"/1.jpg": jpg_bytes(tmp_path)}
-    resolvers = {"rednote": lambda u: [Media("photo", "https://img.example/1.jpg"), Media("photo", "https://img.example/2.jpg")],
+    resolvers = {"douyin": lambda u: [Media("photo", "https://img.example/1.jpg"), Media("photo", "https://img.example/2.jpg")],
                  "og": lambda u: []}
     no_ytdlp = lambda *a, **k: (_ for _ in ()).throw(PipelineError("fetch", "no video"))  # noqa: E731
     obtainer = Obtainer(tmp_path / "cache", client_serving(served), ytdlp=no_ytdlp, resolvers=resolvers)

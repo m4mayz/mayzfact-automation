@@ -105,7 +105,7 @@ def _card(group: dict, shots: list[dict], entries: list[dict], state: dict) -> s
   {f'<div>Frame dari source:</div><div class="refs">{refs}</div>' if refs else ''}
   <ul class="shots">{''.join(_shot_item(s) for s in shots)}</ul>
   <div class="kw">{keywords or '<i>tanpa keyword</i>'}</div>
-  <textarea placeholder="1 baris = 1 link Douyin/RedNote/TikTok/Pinterest/URL langsung. Boleh lebih dari 1. Tambah ' #3' buat foto ke-3.">{escape(lines_of(entries))}</textarea>
+  <textarea placeholder="1 baris = 1 link Douyin/TikTok/Pinterest/URL langsung (RedNote: upload file). Boleh lebih dari 1. Tambah ' #3' buat foto ke-3.">{escape(lines_of(entries))}</textarea>
   <div>Upload file: <input type="file" accept="video/*,image/*" onchange="upload({escape(json.dumps(group['id']), quote=True)}, this)"></div>
   <div class="state {css}">{label} {message}</div>
 </section>"""

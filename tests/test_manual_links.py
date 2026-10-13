@@ -73,3 +73,10 @@ def test_load_save_and_missing(tmp_path):
     assert missing_groups(plan, load_links(path)) == ["hook", "fossil"]
     save_links(path, {"shots": {"1": {"url": "https://a.b/c"}}})
     assert load_links(path) == {"groups": {}}
+
+
+def test_rednote_links_are_rejected_with_upload_hint():
+    for url in ("http://xhslink.com/o/44jNwnYztNq", "复制 https://www.xiaohongshu.com/explore/66a1b2c3d4e5f6a7b8c9d0e1 打开"):
+        with pytest.raises(ValueError, match="upload"):
+            normalize_links({"groups": {"hook": url}}, ["hook"])
+    assert normalize_links({"groups": {"hook": "file:manual/hook_1.mp4"}}, ["hook"])["groups"]["hook"] == [{"file": "manual/hook_1.mp4"}]

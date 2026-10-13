@@ -11,7 +11,7 @@ from html import unescape
 import httpx
 
 from mayzfact.errors import PipelineError
-from mayzfact.manual.rednote import DESKTOP_UA
+from mayzfact.manual.og import DESKTOP_UA
 from mayzfact.manual.types import Media
 
 API = "https://tiktokio.com/api/v1/tk/html"

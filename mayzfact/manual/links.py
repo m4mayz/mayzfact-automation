@@ -15,7 +15,7 @@ _PICK = re.compile(r"\s+#(\d+)\s*$")
 
 
 def parse_entry(text: str) -> tuple[str, int | None]:
-    """'<teks share> https://… #3' → ('https://…', 3). Teks share Douyin/RedNote dibuang."""
+    """'<teks share> https://… #3' → ('https://…', 3). Teks share (Douyin dll) dibuang."""
     text = text.strip()
     pick = None
     match = _PICK.search(text)
@@ -60,6 +60,8 @@ def _entry(line: str, where: str) -> dict:
     url, pick = parse_entry(line)
     if not url.lower().startswith(("http://", "https://")):
         raise ValueError(f"{where}: link harus diawali http(s)://")
+    if link_kind(url) == "rednote":  # D-022: note RedNote minta login, link-nya nggak bisa di-download
+        raise ValueError(f"{where}: link RedNote nggak dipakai (butuh login). Save file-nya dari app, terus upload")
     if pick is not None and pick < 1:
         raise ValueError(f"{where}: #n mulai dari #1")
     return {"url": url, "pick": pick} if pick else {"url": url}
