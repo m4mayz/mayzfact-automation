@@ -1,6 +1,13 @@
 import pytest
 
-from mayzfact.manual.links import link_kind, load_links, missing_shots, normalize_links, parse_entry, save_links
+from mayzfact.manual.links import (
+    link_kind,
+    load_links,
+    missing_shots,
+    normalize_links,
+    parse_entry,
+    save_links,
+)
 
 
 def test_parse_entry_extracts_url_from_share_text_and_pick():

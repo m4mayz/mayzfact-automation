@@ -3,7 +3,13 @@ from urllib.parse import quote
 
 import httpx
 
-from mayzfact.manual.douyin import find_item, item_id, item_media, resolve_douyin, router_data
+from mayzfact.manual.douyin import (
+    find_item,
+    item_id,
+    item_media,
+    resolve_douyin,
+    router_data,
+)
 from mayzfact.manual.types import Media
 from tests.test_waf import challenge_html
 

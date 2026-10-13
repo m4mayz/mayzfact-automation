@@ -5,7 +5,12 @@ import pytest
 
 from mayzfact.errors import PipelineError
 from mayzfact.manual.og import og_media
-from mayzfact.manual.rednote import find_note, note_media, rednote_state, resolve_rednote
+from mayzfact.manual.rednote import (
+    find_note,
+    note_media,
+    rednote_state,
+    resolve_rednote,
+)
 from mayzfact.manual.types import Media
 
 VIDEO_NOTE = {"title": "鲎", "video": {"media": {"stream": {"h264": [{"masterUrl": "//sns-video.xhscdn.com/a.mp4"}]}}}}
