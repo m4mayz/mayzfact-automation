@@ -29,7 +29,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
         // Card opaque di atas shot beat countdown: number card dulu, terus subject card.
         <React.Fragment key={`card-${card.number}-${card.numberFrom}`}>
           <Sequence from={card.numberFrom} durationInFrames={card.numberDuration}>
-            <NumberCard number={card.number} durationInFrames={card.numberDuration} />
+            <NumberCard number={card.number} numberAt={card.numberAt ?? 0} durationInFrames={card.numberDuration} />
           </Sequence>
           <Sequence from={card.cardFrom} durationInFrames={card.cardDuration} premountFor={fps}>
             <SubjectCard card={card} />

@@ -236,3 +236,23 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   - Upload file tetap jalan, jadi video dari app RedNote masih bisa dipakai lewat upload.
   - Mode `auto` nggak diubah. RedNote juga nggak masuk default `HOOK_PLATFORMS`.
 - **Authority:** Akmal (chat 2026-10-13: "rednote hapus aja dari source clip").
+
+## D-023 — 2026-10-13 — Timing ikut suara asli; panah/lingkaran sebentar + muter; nanti dipicu script
+
+- **Status:** accepted. Poin 1–3 udah diimplementasi, poin 4 dicatat buat nanti.
+- **Konteks:** Akmal review 3C-1 + 3B di Studio.
+  - Panah tampil sepanjang shot dan geraknya kelambatan.
+  - Angka countdown kerasa "nunggu SFX".
+- **Keputusan:**
+  1. **Awal kata digeser ke suara beneran.** Alignment ElevenLabs ngitung jeda sebelum kata sebagai bagian dari kata itu, makanya bisa kecepetan 0,1–0,9 detik. Sekarang awal kata ditentuin dari energi `voice.mp3` (`mayzfact/voice_onset.py`). Ini kepakai di caption dan card countdown.
+  2. **Number card:**
+     - Background tampil dari awal beat.
+     - Angkanya melesat masuk pas "Number" kedengeran, barengan puncak SFX `whoosh-clean.mp3`.
+     - Subject card mulai pas nama subjek kedengeran.
+  3. **Panah/lingkaran:**
+     - Muncul 6 frame setelah shot mulai, barengan `quick-ting.mp3`.
+     - Tampil maksimal 40 frame dan selalu selesai sebelum klip habis, terus fade.
+     - Panah muter setengah putaran di sekeliling subjek.
+     - Lingkaran digambar dalam 6 frame.
+  4. **Panah dipicu script (nanti):** nggak semua klip dapat panah. Panah muncul kalau narasinya ngajak lihat, misalnya "look at this". Ini butuh perubahan di logic script dan cuma buat kasus tertentu, jadi dikerjain nanti.
+- **Authority:** Akmal (chat 2026-10-13).

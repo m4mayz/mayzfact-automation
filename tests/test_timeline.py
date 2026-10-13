@@ -64,8 +64,8 @@ CD_CLIPS = {"shots": [shot("clips/shot_01.mp4", "video", 0.0, 1080, 1920), shot(
 def test_countdown_card_covers_countdown_beat():
     timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN)
     assert timeline["countdown"] == [{
-        "number": 5, "label": "HORSESHOE CRAB", "numberFrom": 69, "numberDuration": 33,
-        "cardFrom": 102, "cardDuration": 54, "src": "clips/shot_02.mp4", "kind": "video", "clipOffset": 33,
+        "number": 5, "label": "HORSESHOE CRAB", "numberFrom": 69, "numberAt": 0, "numberDuration": 39,
+        "cardFrom": 108, "cardDuration": 48, "src": "clips/shot_02.mp4", "kind": "video", "clipOffset": 39,
     }]
     assert len(timeline["shots"]) == 3
 
@@ -132,8 +132,8 @@ def test_sfx_and_bgm_placement():
     # shot ke-2 ketutup card → nggak dapat "cut"; card dapat "number" + "subject"; shot ke-3 dapat "cut" 3 frame sebelum ganti.
     assert timeline["sfx"] == [
         {"src": "audio/sfx/h.mp3", "from": 0, "volume": 0.8},
-        {"src": "audio/sfx/n.mp3", "from": 69, "volume": 0.9},
-        {"src": "audio/sfx/s.mp3", "from": 99, "volume": 0.7},
+        {"src": "audio/sfx/n.mp3", "from": 66, "volume": 0.9},
+        {"src": "audio/sfx/s.mp3", "from": 105, "volume": 0.7},
         {"src": "audio/sfx/c.mp3", "from": 153, "volume": 0.35},
     ]
 
@@ -163,10 +163,10 @@ def test_overlays_from_detections():
                 "clips/shot_03.mp4": {"points": [point(0.5)]}}
     timeline = build_timeline(CLIPS, 6.5, 0.5, overlays=overlays)
     assert timeline["overlays"] == [
-        {"type": "arrow", "color": "#ff2a2a", "from": 0, "durationInFrames": 72,
-         "keyframes": [{"frame": 15, "x": 100, "y": 200, "w": 300, "h": 400}, {"frame": 45, "x": 150, "y": 200, "w": 300, "h": 400}]},
-        {"type": "arrow", "color": "#ffd400", "from": 132, "durationInFrames": 63,
-         "keyframes": [{"frame": 15, "x": 100, "y": 200, "w": 300, "h": 400}]},
+        {"type": "arrow", "color": "#ff2a2a", "from": 6, "durationInFrames": 40,
+         "keyframes": [{"frame": 9, "x": 100, "y": 200, "w": 300, "h": 400}, {"frame": 39, "x": 150, "y": 200, "w": 300, "h": 400}]},
+        {"type": "arrow", "color": "#ffd400", "from": 138, "durationInFrames": 40,
+         "keyframes": [{"frame": 9, "x": 100, "y": 200, "w": 300, "h": 400}]},
     ]
     assert build_timeline(CLIPS, 6.5, 0.5)["overlays"] == []
 
@@ -179,3 +179,32 @@ def test_every_fifth_overlay_is_a_circle_and_cards_are_skipped():
     covered = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN,
                              overlays={"clips/shot_02.mp4": {"points": [point(0.5)]}})
     assert covered["overlays"] == []
+
+
+
+def test_voice_onset_moves_number_and_captions():
+    import numpy as np
+
+    from mayzfact.voice_onset import STEP_S
+
+    env = np.zeros(int(6.5 / STEP_S))
+    for start, end in [(0.0, 2.2), (2.8, 3.0), (3.1, 3.4), (3.7, 5.1), (5.4, 6.2)]:  # "Number" baru kedengeran di 2.8s
+        env[int(start / STEP_S):int(end / STEP_S)] = 1000.0
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, voice_envelope=env,
+                              audio={"bgm": None, "sfx": {"number": "audio/sfx/w.mp3"}})
+    card = timeline["countdown"][0]
+    assert (card["numberFrom"], card["numberAt"], card["cardFrom"]) == (69, 15, 111)
+    assert timeline["sfx"] == [{"src": "audio/sfx/w.mp3", "from": 81, "volume": 0.9}]
+    assert [c["from"] for c in timeline["captions"] if c["text"] == "IT"] == [162]
+
+
+def test_overlay_sfx_plays_when_overlay_appears():
+    overlays = {"clips/shot_01.mp4": {"points": [point(0.5)]}}
+    timeline = build_timeline(CLIPS, 6.5, 0.5, overlays=overlays, audio={"bgm": None, "sfx": {"overlay": "audio/sfx/t.mp3"}})
+    assert timeline["sfx"] == [{"src": "audio/sfx/t.mp3", "from": 6, "volume": 0.7}]
+
+
+def test_overlay_skipped_when_shot_too_short():
+    short = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920), shot("clips/b.mp4", "video", 0.8, 1080, 1920)]}
+    overlays = {"clips/a.mp4": {"points": [point(0.2)]}}
+    assert build_timeline(short, 3.0, 0.5, overlays=overlays)["overlays"] == []

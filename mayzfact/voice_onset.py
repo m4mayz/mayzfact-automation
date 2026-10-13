@@ -35,7 +35,7 @@ def snap_word_starts(words: list[dict], envelope: np.ndarray) -> list[dict]:
     voiced = envelope > threshold
     out = []
     for word in words:
-        first, last = int(word["start_s"] / STEP_S), min(int(word["end_s"] / STEP_S), len(voiced))
+        first, last = int(word["start_s"] / STEP_S), min(int(word["end_s"] / STEP_S) + 1, len(voiced))
         hits = np.flatnonzero(voiced[first:last])
         start = round((first + hits[0]) * STEP_S, 3) if len(hits) else word["start_s"]
         out.append(dict(word, start_s=max(word["start_s"], start)))

@@ -18,6 +18,7 @@ export type CountdownCard = {
   number: number;
   label: string;
   numberFrom: number;
+  numberAt: number;
   numberDuration: number;
   cardFrom: number;
   cardDuration: number;
