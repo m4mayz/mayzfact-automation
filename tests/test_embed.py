@@ -44,3 +44,32 @@ def test_siglip_prefers_similar_image_and_matching_text(tmp_path):
     texts = encoder.texts(["a red circle", "blue vertical stripes"])
     assert a @ texts[0] > a @ texts[1]
     assert b @ texts[1] > b @ texts[0]
+
+
+def test_siglip_loads_from_project_models_dir(monkeypatch, tmp_path):
+    import sys
+    import types
+
+    from mayzfact.config import MODELS_DIR
+
+    seen = {}
+    fake = types.ModuleType("open_clip")
+
+    class FakeModel:
+        def eval(self):
+            return self
+
+    def create(name, pretrained=None, cache_dir=None):
+        seen["model"] = cache_dir
+        return FakeModel(), None, lambda img: img
+
+    def tokenizer(name, cache_dir=None):
+        seen["tokenizer"] = cache_dir
+        return lambda texts: texts
+
+    fake.create_model_and_transforms = create
+    fake.get_tokenizer = tokenizer
+    monkeypatch.setitem(sys.modules, "open_clip", fake)
+    assert MODELS_DIR.name == "models"
+    SiglipEncoder(cache_dir=tmp_path)._load()
+    assert seen == {"model": str(tmp_path), "tokenizer": str(tmp_path)}
