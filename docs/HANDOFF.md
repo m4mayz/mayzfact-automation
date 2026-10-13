@@ -174,7 +174,10 @@
 
 ## Masalah terbuka
 
-1. Resolver Douyin/RedNote belum pernah dites ke link beneran, karena semua link run ini TikTok. DoD spec poin 3 belum lengkap.
+1. **Tes link beneran (2026-10-13):**
+   - **Douyin** `v.douyin.com/LryWqP-HufY`: yt-dlp gagal, resolver Douyin berhasil. Hasilnya video 720×1280, 6 detik, tanpa watermark.
+   - **RedNote** `xhslink.com/o/44jNwnYztNq`: diarahkan ke `/login`, jadi note itu butuh login. Sekarang muncul pesan "upload file". Sebelumnya fallback og malah ngambil logo 小红书 sebagai foto; udah di-fix.
+   - **Kesimpulan:** RedNote praktisnya lewat upload, kecuali nanti ada cookie dari sesi login asli (lihat masalah Fase 2 no. 2).
 2. **Number card** "Number X" (D-021) belum diimplementasi. Rencananya komponen Remotion: angka chrome di background gelap berpartikel, terus gambar subjek dalam frame menyala.
 3. TikTok bergantung ke tiktokio.com. Kalau situs itu mati, pilihannya upload manual atau port downloader scrapr yang lain (snaptik, ssstik, savetik).
 4. Minor yang ditunda dari 2 review:

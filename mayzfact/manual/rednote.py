@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -14,6 +15,12 @@ from mayzfact.manual.types import Media
 DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 _STATE = re.compile(r"window\.__INITIAL_STATE__\s*=\s*(\{.*?\})\s*;?\s*</script>", re.S)
 _NOTE_ID = re.compile(r"/([a-f0-9]{24})", re.IGNORECASE)
+
+
+def is_login_page(url: str) -> bool:
+    """Halaman login / blok (website-login/error, /login?redirectPath=…): isinya bukan note."""
+    path = urlparse(url).path.lower()
+    return "login" in path
 
 
 def rednote_state(html: str) -> dict | None:
@@ -66,8 +73,8 @@ def resolve_rednote(url: str, *, transport: httpx.BaseTransport | None = None) -
     headers = {"User-Agent": DESKTOP_UA, "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"}
     with httpx.Client(headers=headers, timeout=15.0, transport=transport, follow_redirects=True) as client:
         response = client.get(url)
-        if "website-login" in str(response.url):
-            raise PipelineError("fetch", "RedNote nolak akses (IP diblok / minta login). Save file-nya dari app, terus upload di brief.")
+        if is_login_page(str(response.url)):
+            raise PipelineError("fetch", "RedNote minta login / nolak akses buat note ini. Save file-nya dari app, terus upload di brief.")
         note = find_note(rednote_state(response.text))
         match = _NOTE_ID.search(str(response.url)) or _NOTE_ID.search(url)
         if not note and match:

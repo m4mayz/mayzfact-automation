@@ -6,7 +6,7 @@ import re
 
 import httpx
 
-from mayzfact.manual.rednote import DESKTOP_UA
+from mayzfact.manual.rednote import DESKTOP_UA, is_login_page
 from mayzfact.manual.types import Media
 
 _META = re.compile(r'<meta[^>]+(?:property|name)="og:(video(?::url)?|image)"[^>]+content="([^"]+)"', re.IGNORECASE)
@@ -14,7 +14,10 @@ _META = re.compile(r'<meta[^>]+(?:property|name)="og:(video(?::url)?|image)"[^>]
 
 def og_media(url: str, *, transport: httpx.BaseTransport | None = None) -> list[Media]:
     with httpx.Client(headers={"User-Agent": DESKTOP_UA}, timeout=15.0, transport=transport, follow_redirects=True) as client:
-        html = client.get(url).text
+        response = client.get(url)
+    if is_login_page(str(response.url)):  # og:image halaman login = logo situs, bukan isi post
+        return []
+    html = response.text
     out: list[Media] = []
     for kind, content in _META.findall(html):
         media_url = f"https:{content}" if content.startswith("//") else content

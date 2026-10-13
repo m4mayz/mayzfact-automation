@@ -53,3 +53,22 @@ def test_og_media():
         Media("video", "https://v.example/a.mp4"), Media("photo", "https://img.example/a.jpg")]
     empty = httpx.MockTransport(lambda r: httpx.Response(200, text="<html></html>"))
     assert og_media("https://example.com/p", transport=empty) == []
+
+
+def test_resolve_rednote_reports_login_wall():
+    def handler(request):
+        if request.url.path == "/login":
+            return httpx.Response(200, text=state_html(PHOTO_NOTE).replace("noteDetailMap", "x"))
+        return httpx.Response(302, headers={"location": "https://www.xiaohongshu.com/login?redirectPath=x"})
+
+    with pytest.raises(PipelineError, match="login"):
+        resolve_rednote("http://xhslink.com/o/44jNwnYztNq", transport=httpx.MockTransport(handler))
+
+
+def test_og_ignores_login_pages():
+    def handler(request):
+        if request.url.path == "/login":
+            return httpx.Response(200, text='<meta property="og:image" content="https://site/logo.png">')
+        return httpx.Response(302, headers={"location": "https://site/login?next=/p"})
+
+    assert og_media("https://site/p", transport=httpx.MockTransport(handler)) == []
