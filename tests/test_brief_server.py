@@ -16,7 +16,7 @@ PLAN = {
         {"index": 0, "beat": 0, "start_s": 0.0, "end_s": 2.0, "media": "video", "text": "Look <b>at</b> this.", "subject": None,
          "hook_segment": 0, "ref_frames": ["plan/seg_01_0.jpg"], "keywords": {"en": ["crab beach"], "zh": ["鲎"]}, "group": "hook"},
         {"index": 1, "beat": 1, "start_s": 2.0, "end_s": 4.0, "media": "photo", "text": "Fossil.", "subject": "fossil",
-         "hook_segment": None, "ref_frames": [], "keywords": {"en": ["fossil"], "zh": []}, "group": "fossil"},
+         "hook_segment": None, "ref_frames": [], "keywords": {"en": ["fossil"], "zh": []}, "group": "fossil", "countdown": 2},
         {"index": 2, "beat": 2, "start_s": 4.0, "end_s": 6.0, "media": "video", "text": "Old rock.", "subject": "fossil",
          "hook_segment": None, "ref_frames": [], "keywords": {"en": ["fossil"], "zh": []}, "group": "fossil"},
     ],
@@ -45,6 +45,7 @@ def test_page_lists_groups_and_escapes_text(server):
     assert "鲎" in html and "HOOK" in html and "/files/plan/seg_01_0.jpg" in html
     assert "0/2 kelompok" in html
     assert "/files/plan/fossil_0.jpg" in html
+    assert "CARD #2" in html
     write_json_atomic(paths.links_json, {"groups": {"fossil": [{"url": "https://a.b/c", "pick": 2}, {"file": "manual/fossil_1.mp4"}]}})
     html = httpx.get(base + "/").text
     assert "https://a.b/c #2\nfile:manual/fossil_1.mp4</textarea>" in html and "1/2 kelompok" in html

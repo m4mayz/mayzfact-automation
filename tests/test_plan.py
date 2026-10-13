@@ -108,3 +108,8 @@ def test_group_of_reserves_hook_and_ignores_blank_subject():
     base = {"hook_segment": None, "beat": 2}
     assert group_of({**base, "subject": "Hook"}) == ("subject-hook", "Hook")
     assert group_of({**base, "subject": "   "}) == ("beat-3", "beat 3")
+
+
+def test_plan_marks_countdown_shots(tmp_path, cut_video):
+    _, data = plan_with(tmp_path, cut_video, hook_seconds=0.0)
+    assert [s["countdown"] for s in data["shots"]] == [None, 5]
