@@ -133,7 +133,7 @@
 - **Goal & scope:**
   - Sesuai [spec metode manual](superpowers/specs/2026-10-13-manual-clip-source-design.md), termasuk bagian 10 dan revisinya, plus [plan](superpowers/plans/2026-10-13-manual-clip-source.md).
   - Keputusan: D-019 sampai D-021.
-- **Workspace:** `E:\APROJECT\mayzfact-automation`, branch `manual-source`. Belum di-merge.
+- **Workspace:** `E:\APROJECT\mayzfact-automation`, `master`.
 
 ## Selesai
 
@@ -159,7 +159,7 @@
   - kelompok yang belum lengkap → `AwaitingInput` (exit 3)
 - **Review:**
   - final review Opus buat versi per shot: 5 Important udah di-fix
-  - review kedua buat revisi per kelompok: lihat ledger `.superpowers/sdd/2026-10-13-manual-clip-source/progress.md`
+  - review kedua buat revisi per kelompok: 4 Important udah di-fix (file lock di Windows, progress nyangkut, rentang transcript, spec vs D-021)
 
 ## Verifikasi E2E (i2xag_1OJfM)
 
@@ -177,9 +177,18 @@
 1. Resolver Douyin/RedNote belum pernah dites ke link beneran, karena semua link run ini TikTok. DoD spec poin 3 belum lengkap.
 2. **Number card** "Number X" (D-021) belum diimplementasi. Rencananya komponen Remotion: angka chrome di background gelap berpartikel, terus gambar subjek dalam frame menyala.
 3. TikTok bergantung ke tiktokio.com. Kalau situs itu mati, pilihannya upload manual atau port downloader scrapr yang lain (snaptik, ssstik, savetik).
-4. Minor yang ditunda ada di ledger, misalnya URL nempel huruf CJK dan `/files` baca seluruh file ke RAM.
+4. Minor yang ditunda dari 2 review:
+   - **Link & brief:**
+     - URL yang nempel langsung ke huruf CJK tanpa spasi ikut kebawa.
+     - `/files` baca seluruh file ke RAM.
+     - `links.json` format lama per shot diabaikan tanpa log.
+   - **Fetch:**
+     - Frame cuma di-sample dari 60 detik pertama video.
+     - Mode nyambung (`_continuous`) belum ngasih peringatan skor rendah.
+   - **TikTok:** parser tiktokio masih rapuh (urutan atribut, class tambahan, div bersarang).
+   - **Plan lama:** plan yang dibikin sebelum ada kelompok bikin `KeyError`. Harusnya muncul pesan "jalanin ulang --from plan".
 
 ## Delivery
 
-- Branch `manual-source`, belum di-merge, belum di-push. Backup hasil Fase 2 ada di `runs/_backup_fase2_i2xag/`.
-- Next: merge (nunggu oke Akmal), terus number card (pembuka Fase 3).
+- Di-merge ke `master` (2026-10-13, `3093e90`). Belum di-push. Backup hasil Fase 2 ada di `runs/_backup_fase2_i2xag/`.
+- Next: number card (pembuka Fase 3), atau tes resolver Douyin/RedNote pakai link beneran.
