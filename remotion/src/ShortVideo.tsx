@@ -2,7 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Sequence, staticFile, useVideoConfig} from 'remotion';
 import {Audio} from '@remotion/media';
 import {Captions} from './Captions';
-import {IntroFlash, IntroZoom} from './Intro';
+import {IntroCover, IntroZoom} from './Intro';
 import {NumberCard} from './NumberCard';
 import {ShotView} from './ShotView';
 import {SoundLayer} from './SoundLayer';
@@ -17,6 +17,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
     countdown.some((card) => card.numberFrom <= from && from + duration <= card.cardFrom + card.cardDuration);
   return (
     <AbsoluteFill style={{backgroundColor: 'black'}}>
+      <IntroCover intro={intro}>
       <IntroZoom intro={intro}>
       {shots.filter((shot) => !coveredByCard(shot.from, shot.durationInFrames)).map((shot) => (
         // premountFor: shot dimuat 1 detik sebelum tayang, biar preview Studio nggak kedip hitam.
@@ -37,7 +38,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
       ))}
       </IntroZoom>
       <Captions captions={captions} />
-      <IntroFlash intro={intro} />
+      </IntroCover>
       {audio ? <Audio src={staticFile(audio)} /> : null}
       <SoundLayer bgm={bgm} sfx={sfx} />
     </AbsoluteFill>

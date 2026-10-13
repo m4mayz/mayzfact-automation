@@ -147,7 +147,10 @@ def test_cut_sfx_on_plain_shots_and_missing_audio():
 
 
 def test_intro_transition_goes_with_hook_sfx():
-    with_hook = build_timeline(CLIPS, 6.5, 0.5, audio={"bgm": None, "sfx": {"hook": "audio/sfx/h.mp3"}})
-    assert with_hook["intro"] == {"durationInFrames": 10}
+    # Kayak source: frame 0-1 cover (still dari caption berwarna pertama), frame 2-6 zoom-out blur.
+    with_hook = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, audio={"bgm": None, "sfx": {"hook": "audio/sfx/h.mp3"}})
+    assert with_hook["intro"] == {"coverFrames": 2, "durationInFrames": 7, "coverFrame": 43}
+    no_captions = build_timeline(CLIPS, 6.5, 0.5, audio={"bgm": None, "sfx": {"hook": "audio/sfx/h.mp3"}})
+    assert no_captions["intro"]["coverFrame"] == 45
     assert build_timeline(CLIPS, 6.5, 0.5, audio={"bgm": None, "sfx": {}})["intro"] is None
     assert build_timeline(CLIPS, 6.5, 0.5)["intro"] is None
