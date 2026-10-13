@@ -23,7 +23,7 @@ const Word: React.FC<{caption: Caption; id: string}> = ({caption, id}) => {
       <div
         style={{
           position: 'absolute',
-          top: '68%',
+          top: '75%',
           transform: `translateY(-50%) scale(${scale})`,
           opacity,
           filter: blurX > 0.05 ? `url(#${id})` : undefined,

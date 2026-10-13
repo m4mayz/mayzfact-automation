@@ -9,9 +9,13 @@ import type {TimelineProps} from './types';
 
 export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = []}) => {
   const {fps} = useVideoConfig();
+  // Shot yang seluruh durasinya ketutup card countdown nggak dirender, biar videonya nggak tembus di belakang card.
+  // Klip shot itu tetap tampil di dalam subject card.
+  const coveredByCard = (from: number, duration: number) =>
+    countdown.some((card) => card.numberFrom <= from && from + duration <= card.cardFrom + card.cardDuration);
   return (
     <AbsoluteFill style={{backgroundColor: 'black'}}>
-      {shots.map((shot) => (
+      {shots.filter((shot) => !coveredByCard(shot.from, shot.durationInFrames)).map((shot) => (
         // premountFor: shot dimuat 1 detik sebelum tayang, biar preview Studio nggak kedip hitam.
         <Sequence key={shot.src} from={shot.from} durationInFrames={shot.durationInFrames} premountFor={fps}>
           <ShotView shot={shot} photoZoom={photoZoom} />

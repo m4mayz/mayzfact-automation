@@ -8,7 +8,12 @@ export const Particles: React.FC<{seed: string}> = ({seed}) => {
   const frame = useCurrentFrame();
   const {width, height} = useVideoConfig();
   return (
-    <AbsoluteFill style={{background: 'radial-gradient(circle at 50% 45%, #13233f 0%, #070b16 55%, #020308 100%)'}}>
+    <AbsoluteFill
+      style={{
+        backgroundColor: '#020308',
+        backgroundImage: 'radial-gradient(circle at 50% 45%, #13233f 0%, #070b16 55%, #020308 100%)',
+      }}
+    >
       {Array.from({length: COUNT}, (_, i) => {
         const x = random(`${seed}-x-${i}`) * width;
         const speed = 0.6 + random(`${seed}-s-${i}`) * 1.8;
