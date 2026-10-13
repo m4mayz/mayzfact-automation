@@ -44,3 +44,15 @@ def test_plan_marks_hook_shots_with_reference_frames(tmp_path, cut_video):
 def test_plan_without_hook_area(tmp_path, cut_video):
     _, data = plan_with(tmp_path, cut_video, hook_seconds=0.0)
     assert all(shot["hook_segment"] is None for shot in data["shots"])
+
+
+def test_plan_groups_shots_by_context(tmp_path, cut_video):
+    _, data = plan_with(tmp_path, cut_video, hook_seconds=1.5)
+    assert [s["group"] for s in data["shots"]] == ["hook", "horseshoe-crab"]
+    assert data["groups"] == [
+        {"id": "hook", "label": "HOOK", "shots": [0], "keywords": {"en": ["horseshoe crab beach"], "zh": ["鲎 海滩"]}},
+        {"id": "horseshoe-crab", "label": "horseshoe crab", "shots": [1], "keywords": {"en": ["fossil", "crab"], "zh": ["化石", "螃蟹"]}},
+    ]
+    _, data = plan_with(tmp_path / "b", cut_video, hook_seconds=0.0)
+    assert [s["group"] for s in data["shots"]] == ["beat-1", "horseshoe-crab"]
+    assert data["groups"][0]["label"] == "beat 1"

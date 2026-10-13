@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Callable
 
@@ -11,6 +12,27 @@ from mayzfact.steps.hook import prepare_source_segments
 from mayzfact.store import RunPaths, write_json_atomic
 from mayzfact.text import beat_texts
 from mayzfact.timing import beat_timings
+
+
+def group_of(shot: dict) -> tuple[str, str]:
+    """(id, label) kelompok konteks shot: semua hook jadi 1, sisanya per subjek, atau per beat kalau subjeknya kosong."""
+    if shot["hook_segment"] is not None:
+        return "hook", "HOOK"
+    if shot["subject"]:
+        return re.sub(r"[^a-z0-9]+", "-", shot["subject"].lower()).strip("-") or f"beat-{shot['beat'] + 1}", shot["subject"]
+    return f"beat-{shot['beat'] + 1}", f"beat {shot['beat'] + 1}"
+
+
+def _groups(shots: list[dict]) -> list[dict]:
+    groups: dict[str, dict] = {}
+    for shot in shots:
+        gid, label = group_of(shot)
+        shot["group"] = gid
+        group = groups.setdefault(gid, {"id": gid, "label": label, "shots": [], "keywords": {"en": [], "zh": []}})
+        group["shots"].append(shot["index"])
+        for lang in ("en", "zh"):
+            group["keywords"][lang] += [k for k in shot["keywords"][lang] if k not in group["keywords"][lang]]
+    return list(groups.values())
 
 
 def run_plan(
@@ -56,8 +78,9 @@ def run_plan(
     data = {
         "hook_seconds": hook_seconds,
         "segments": [{"index": s["index"], "start_s": s["start_s"], "end_s": s["end_s"], "frames": [rel(f) for f in s["frames"]]} for s in segs],
+        "groups": _groups(shots),
         "shots": shots,
     }
     write_json_atomic(paths.shots_plan_json, data)
-    log(f"[plan] {len(shots)} shot ({len(mapping)} hook). Isi link: mayzfact brief {paths.root.name}")
+    log(f"[plan] {len(shots)} shot ({len(mapping)} hook), {len(data['groups'])} kelompok. Isi link: mayzfact brief {paths.root.name}")
     return data
