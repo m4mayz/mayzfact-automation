@@ -51,15 +51,22 @@ def sample_times(kind: str, duration_s: float) -> list[float]:
     return times or [round(duration_s / 2, 3)]
 
 
+KEYWORD_WORDS = 2  # keyword panjang ("giant bird radio tower cgi") bikin OWLv2 nangkep benda lain; "giant bird" pas
+
+
 def shot_query(clip: dict, beats: list[dict], subjects: list[str | None], plan: dict | None) -> str | None:
     if subjects[clip["beat"]]:
         return subjects[clip["beat"]]
+    keyword = None
     if plan:
         for shot in plan.get("shots", []):
             if shot["index"] == clip["index"] and shot.get("keywords", {}).get("en"):
-                return shot["keywords"]["en"][0]
-    queries = beats[clip["beat"]].get("queries") or []
-    return queries[0] if queries else None
+                keyword = shot["keywords"]["en"][0]
+                break
+    if keyword is None:
+        queries = beats[clip["beat"]].get("queries") or []
+        keyword = queries[0] if queries else None
+    return " ".join(keyword.split()[:KEYWORD_WORDS]) if keyword else None
 
 
 def prepare_overlays(

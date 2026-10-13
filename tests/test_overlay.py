@@ -58,8 +58,9 @@ def test_sample_times():
 def test_shot_query_prefers_subject_then_plan_then_queries():
     subjects = [None, "horseshoe crab", "horseshoe crab"]
     plan = {"shots": [{"index": 0, "keywords": {"en": ["giant bird on tower"], "zh": []}}]}
-    assert shot_query(clip(0, 0, "a"), BEATS, subjects, plan) == "giant bird on tower"
-    assert shot_query(clip(0, 0, "a"), BEATS, subjects, None) == "giant bird tower"
+    # Keyword panjang bikin OWLv2 nangkep benda lain (contoh: menara, bukan burung) → cukup 2 kata pertama.
+    assert shot_query(clip(0, 0, "a"), BEATS, subjects, plan) == "giant bird"
+    assert shot_query(clip(0, 0, "a"), BEATS, subjects, None) == "giant bird"
     assert shot_query(clip(2, 2, "c"), BEATS, subjects, plan) == "horseshoe crab"
 
 
@@ -80,7 +81,7 @@ def test_prepare_overlays_detects_caches_and_skips_cards(tmp_path, make_video):
     assert out["clips/shot_01.mp4"]["points"][0] == {"t": 0.5, "x": 270, "y": 480, "w": 540, "h": 960}
     assert [p["t"] for p in out["clips/shot_01.mp4"]["points"]] == [0.5, 1.5]
     assert out["clips/shot_03.mp4"]["points"] is not None  # 1 dari 2 titik valid = 50%, masih lolos
-    assert read_json(paths.root / "overlays.json")["clips/shot_01.mp4"]["key"].endswith("giant bird tower")
+    assert read_json(paths.root / "overlays.json")["clips/shot_01.mp4"]["key"].endswith("giant bird")
     calls = len(detector.calls)
     prepare_overlays(paths, clips, SCRIPT, None, detector, fg_min_ratio=0.5, log=logs.append)
     assert len(detector.calls) == calls  # cache kepakai
@@ -93,7 +94,7 @@ def test_prepare_overlays_drops_undetected_shot(tmp_path, make_video):
 
     shutil.copy(make_video(1080, 1920, 2.2), paths.root / "clips" / "shot_01.mp4")
     clips = {"shots": [clip(0, 0, "clips/shot_01.mp4")]}
-    out = prepare_overlays(paths, clips, SCRIPT, None, FakeDetector({"giant bird tower": [0.01]}),
+    out = prepare_overlays(paths, clips, SCRIPT, None, FakeDetector({"giant bird": [0.01]}),
                            fg_min_ratio=0.5, log=lambda m: None)
     assert out["clips/shot_01.mp4"]["points"] is None
 
