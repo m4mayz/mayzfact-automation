@@ -18,6 +18,13 @@ CAPTION_HOLD_S = 0.4  # kata terakhir tetap tampil sebentar pas jeda
 CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
+SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.35}
+SFX_LEAD_FRAMES = 3  # whoosh mulai sedikit sebelum gambar ganti
+# Pembuka = bagian "masuk" transisi antar scene di source i2xag: scene muncul hampir putih + blur vertikal,
+# cepat tajam, terangnya pudar ke normal. Barengan SFX hook.
+INTRO_FRAMES = 7
+BGM_VOLUME = 0.12
+BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
 _EDGE_PUNCT = re.compile(r"^[^\w']+|[^\w']+$")
 
@@ -101,6 +108,29 @@ def _captions(alignment: dict, audio_duration_s: float, spans: list[tuple[float,
     return captions
 
 
+def _sound(audio: dict | None, entries: list[dict], countdown: list[dict]) -> tuple[dict | None, list[dict]]:
+    if not audio:
+        return None, []
+    bgm = {"src": audio["bgm"], "volume": BGM_VOLUME, "fadeOutFrames": BGM_FADE_FRAMES} if audio.get("bgm") else None
+    files = audio.get("sfx", {})
+    sfx: list[dict] = []
+
+    def add(event: str, frame: int) -> None:
+        if event in files:
+            sfx.append({"src": files[event], "from": max(0, frame), "volume": SFX_VOLUME[event]})
+
+    add("hook", 0)
+    for card in countdown:
+        add("number", card["numberFrom"])
+        add("subject", card["cardFrom"] - SFX_LEAD_FRAMES)
+    for entry in entries[1:]:
+        covered = any(c["numberFrom"] <= entry["from"] < c["cardFrom"] + c["cardDuration"] for c in countdown)
+        if not covered:  # pergantian ke card udah punya bunyi sendiri
+            add("cut", entry["from"] - SFX_LEAD_FRAMES)
+    sfx.sort(key=lambda s: s["from"])
+    return bgm, sfx
+
+
 def build_timeline(
     clips: dict,
     audio_duration_s: float,
@@ -108,6 +138,7 @@ def build_timeline(
     *,
     script: dict | None = None,
     alignment: dict | None = None,
+    audio: dict | None = None,
     log: Callable[[str], None] = print,
 ) -> dict:
     shots = clips["shots"]
@@ -125,6 +156,7 @@ def build_timeline(
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
             log(f"[timeline] caption & countdown dilewat: {reason}")
             countdown, captions = [], []
+    bgm, sfx = _sound(audio, entries, countdown)
     return {
         "fps": FPS,
         "width": FRAME_W,
@@ -135,11 +167,15 @@ def build_timeline(
         "shots": entries,
         "countdown": countdown,
         "captions": captions,
+        "bgm": bgm,
+        "sfx": sfx,
+        "intro": {"durationInFrames": INTRO_FRAMES} if audio and "hook" in audio.get("sfx", {}) else None,
     }
 
 
 def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float, script: dict | None = None,
-                 log: Callable[[str], None] = print) -> dict:
-    data = build_timeline(clips, tts["duration_s"], fg_min_ratio, script=script, alignment=tts.get("alignment"), log=log)
+                 audio: dict | None = None, log: Callable[[str], None] = print) -> dict:
+    data = build_timeline(clips, tts["duration_s"], fg_min_ratio, script=script, alignment=tts.get("alignment"),
+                          audio=audio, log=log)
     write_json_atomic(paths.timeline_json, data)
     return data

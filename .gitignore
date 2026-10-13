@@ -9,3 +9,6 @@ cache/
 sources/
 remotion/node_modules/
 browser-profiles/
+assets/bgm/*
+assets/sfx/*
+!assets/sfx/sfx.json

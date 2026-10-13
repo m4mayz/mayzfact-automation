@@ -34,3 +34,7 @@ class Translation(BaseModel):
 
 class Translations(BaseModel):
     items: list[Translation]
+
+
+class BgmChoice(BaseModel):
+    file: str

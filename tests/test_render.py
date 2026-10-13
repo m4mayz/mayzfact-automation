@@ -35,8 +35,13 @@ def test_render_fixture_timeline(tmp_path, make_video, make_photo, sine_mp3):
     ]}
     text = "Look here. Number one, crab. Old."
     script = {"beats": [{"text": "Look here."}, {"text": "Number one, crab."}, {"text": "Old."}]}
-    timeline = build_timeline(clips, audio_duration_s=3.0, fg_min_ratio=0.5, script=script, alignment=fake_alignment(text, 2.97))
-    assert timeline["countdown"] and timeline["captions"]
+    (paths.root / "audio" / "sfx").mkdir(parents=True)
+    shutil.copy(sine_mp3, paths.root / "audio" / "sfx" / "boom.mp3")
+    shutil.copy(sine_mp3, paths.root / "audio" / "bgm.mp3")
+    audio = {"bgm": "audio/bgm.mp3", "sfx": {"hook": "audio/sfx/boom.mp3", "number": "audio/sfx/boom.mp3"}}
+    timeline = build_timeline(clips, audio_duration_s=3.0, fg_min_ratio=0.5, script=script,
+                              alignment=fake_alignment(text, 2.97), audio=audio)
+    assert timeline["countdown"] and timeline["captions"] and timeline["bgm"] and timeline["sfx"]
     write_json_atomic(paths.timeline_json, timeline)
 
     run_render(paths)

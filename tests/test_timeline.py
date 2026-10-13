@@ -120,3 +120,35 @@ def test_short_end_times_fall_back_without_crash():
     bad = {**ALIGN, "character_end_times_seconds": ALIGN["character_end_times_seconds"][:5]}
     timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=bad, log=lambda m: None)
     assert timeline["captions"] == [] and timeline["countdown"] == []
+
+
+AUDIO = {"bgm": "audio/bgm/mystery.mp3", "sfx": {"hook": "audio/sfx/h.mp3", "number": "audio/sfx/n.mp3",
+                                                 "subject": "audio/sfx/s.mp3", "cut": "audio/sfx/c.mp3"}}
+
+
+def test_sfx_and_bgm_placement():
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, audio=AUDIO)
+    assert timeline["bgm"] == {"src": "audio/bgm/mystery.mp3", "volume": 0.12, "fadeOutFrames": 30}
+    # shot ke-2 ketutup card → nggak dapat "cut"; card dapat "number" + "subject"; shot ke-3 dapat "cut" 3 frame sebelum ganti.
+    assert timeline["sfx"] == [
+        {"src": "audio/sfx/h.mp3", "from": 0, "volume": 0.8},
+        {"src": "audio/sfx/n.mp3", "from": 69, "volume": 0.9},
+        {"src": "audio/sfx/s.mp3", "from": 99, "volume": 0.7},
+        {"src": "audio/sfx/c.mp3", "from": 153, "volume": 0.35},
+    ]
+
+
+def test_cut_sfx_on_plain_shots_and_missing_audio():
+    timeline = build_timeline(CLIPS, 6.5, 0.5, audio={"bgm": None, "sfx": {"cut": "audio/sfx/c.mp3"}})
+    assert timeline["bgm"] is None
+    assert [s["from"] for s in timeline["sfx"]] == [69, 129]
+    plain = build_timeline(CLIPS, 6.5, 0.5)
+    assert plain["bgm"] is None and plain["sfx"] == []
+
+
+def test_intro_transition_goes_with_hook_sfx():
+    # Kayak transisi antar scene di source: scene masuk putih + blur vertikal, cepat tajam, terangnya pudar ±7 frame.
+    with_hook = build_timeline(CLIPS, 6.5, 0.5, audio={"bgm": None, "sfx": {"hook": "audio/sfx/h.mp3"}})
+    assert with_hook["intro"] == {"durationInFrames": 7}
+    assert build_timeline(CLIPS, 6.5, 0.5, audio={"bgm": None, "sfx": {}})["intro"] is None
+    assert build_timeline(CLIPS, 6.5, 0.5)["intro"] is None
