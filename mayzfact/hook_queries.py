@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
@@ -65,3 +66,22 @@ def describe_segments(
         if segment.index in out:
             out[segment.index] = {"en": _clean(segment.en) or fallback[segment.index]["en"], "zh": _clean(segment.zh)}
     return out
+
+
+TRANSLATE_PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "translate_queries.md"
+
+
+def translate_queries(writer: HookQueryWriter | None, queries: list[str], log: Callable[[str], None] = print) -> dict[str, str]:
+    if writer is None or not queries:
+        return {}
+    from mayzfact.models import Translations
+
+    try:
+        result = writer.generate(
+            TRANSLATE_PROMPT_PATH.read_text(encoding="utf-8"), json.dumps(queries, ensure_ascii=False), Translations, step="plan"
+        )
+    except PipelineError as exc:
+        log(f"[plan] Gemini gagal nerjemahin keyword, kolom 中文 dikosongin: {exc.message[:120]}")
+        return {}
+    wanted = set(queries)
+    return {item.en: item.zh.strip() for item in result.items if item.en in wanted and item.zh.strip()}
