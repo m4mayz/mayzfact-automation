@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Protocol
@@ -11,6 +10,7 @@ from urllib.parse import urlparse
 
 import httpx
 
+from mayzfact.countdown import parse_countdown
 from mayzfact.errors import PipelineError
 from mayzfact.ffmpeg import normalize_video, probe
 from mayzfact.matching import hook_slot_map, rerank_key
@@ -28,9 +28,6 @@ MAX_PICK_ATTEMPTS = 3
 # ponytail: batas dari 1 run i2xag (foto nyambung 0.094-0.163, video meleset 0.003-0.093); kalibrasi ulang kalau model ganti
 RELEVANCE_MIN = 0.10
 # "Number five, horseshoe crab." / "Number 3: the platypus!" → subjek yang lagi dibahas
-_COUNTDOWN = re.compile(r"^\s*number\s+\w+\s*[,:]\s*(?:the\s+)?(.+?)\s*[.!?]*\s*$", re.IGNORECASE)
-
-
 @dataclass(frozen=True)
 class ShotSlot:
     index: int
@@ -65,7 +62,7 @@ def split_shots(timings: list[dict], beats: list[dict], max_shot_s: float) -> li
     slots: list[ShotSlot] = []
     for beat_index, (timing, beat) in enumerate(zip(timings, beats, strict=True)):
         start, end = timing["start_s"], timing["end_s"]
-        count = max(1, math.ceil((end - start) / max_shot_s - 1e-9))
+        count = 1 if parse_countdown(beat.get("text", "")) else max(1, math.ceil((end - start) / max_shot_s - 1e-9))
         step = (end - start) / count
         for k in range(count):
             shot_start = start + k * step
@@ -88,11 +85,11 @@ def beat_subjects(beats: list[dict]) -> list[str | None]:
     current: str | None = None
     out: list[str | None] = []
     for beat in beats:
-        match = _COUNTDOWN.match(beat.get("text", ""))
+        countdown = parse_countdown(beat.get("text", ""))
         if beat.get("subject"):
             current = beat["subject"].strip()
-        elif match:
-            current = match.group(1).strip().lower()
+        elif countdown:
+            current = countdown.subject.lower()
         out.append(current)
     return out
 

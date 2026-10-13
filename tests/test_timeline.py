@@ -3,6 +3,7 @@ import pytest
 from mayzfact.errors import PipelineError
 from mayzfact.steps.timeline import build_timeline, run_timeline, to_frame
 from mayzfact.store import RunPaths, read_json
+from tests.factories import fake_alignment
 
 
 def shot(file, kind, start_s, width, height):
@@ -52,3 +53,70 @@ def test_run_timeline_writes_json(tmp_path):
     paths = RunPaths(tmp_path)
     data = run_timeline(paths, CLIPS, {"duration_s": 6.5}, fg_min_ratio=0.5)
     assert read_json(paths.timeline_json) == data
+
+
+SCRIPT = {"beats": [{"text": "Look at this creature."}, {"text": "Number five, horseshoe crab."}, {"text": "It is old."}]}
+ALIGN = fake_alignment("Look at this creature. Number five, horseshoe crab. It is old.", 6.2)
+CD_CLIPS = {"shots": [shot("clips/shot_01.mp4", "video", 0.0, 1080, 1920), shot("clips/shot_02.mp4", "video", 2.3, 1080, 1920),
+                      shot("clips/shot_03.jpg", "photo", 5.2, 1080, 1920)]}
+
+
+def test_countdown_card_covers_countdown_beat():
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN)
+    assert timeline["countdown"] == [{
+        "number": 5, "label": "HORSESHOE CRAB", "numberFrom": 69, "numberDuration": 33,
+        "cardFrom": 102, "cardDuration": 54, "src": "clips/shot_02.mp4", "kind": "video", "clipOffset": 33,
+    }]
+    assert len(timeline["shots"]) == 3
+
+
+def test_captions_one_word_each_outside_countdown():
+    captions = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN)["captions"]
+    assert [(c["text"], c["from"], c["durationInFrames"]) for c in captions] == [
+        ("LOOK", 0, 15), ("AT", 15, 9), ("THIS", 24, 15), ("CREATURE", 39, 30),
+        ("IT", 156, 9), ("IS", 165, 9), ("OLD", 174, 21),
+    ]
+    colors = {c["text"]: c["color"] for c in captions}
+    assert colors["LOOK"] == colors["IT"] == "#ffffff" and colors["CREATURE"] == "#22d3ee"
+
+
+def test_caption_colors_cycle_and_subject_words_are_colored():
+    script = {"beats": [{"text": "Number two, eel."}, {"text": "The eel is enormous and ancient."}]}
+    align = fake_alignment("Number two, eel. The eel is enormous and ancient.", 4.9)
+    captions = build_timeline({"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920)]}, 5.0, 0.5, script=script, alignment=align)["captions"]
+    assert [(c["text"], c["color"]) for c in captions] == [
+        ("THE", "#ffffff"), ("EEL", "#22d3ee"), ("IS", "#ffffff"), ("ENORMOUS", "#4ade80"), ("AND", "#ffffff"), ("ANCIENT", "#facc15")]
+
+
+def test_unknown_number_has_no_card_and_keeps_captions():
+    script = {"beats": [{"text": "Number eleven, x."}]}
+    timeline = build_timeline({"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920)]}, 2.0, 0.5,
+                              script=script, alignment=fake_alignment("Number eleven, x.", 1.7))
+    assert timeline["countdown"] == []
+    assert [c["text"] for c in timeline["captions"]] == ["NUMBER", "ELEVEN", "X"]
+
+
+def test_without_script_or_with_bad_alignment_timeline_still_builds():
+    plain = build_timeline(CLIPS, 6.5, 0.5)
+    assert plain["captions"] == [] and plain["countdown"] == []
+    logs = []
+    bad = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=fake_alignment("beda total", 1.0), log=logs.append)
+    assert bad["captions"] == [] and bad["countdown"] == [] and logs
+
+
+def test_warns_when_card_runs_past_its_clip():
+    split = {"shots": [shot("clips/shot_01.mp4", "video", 0.0, 1080, 1920), shot("clips/shot_02.mp4", "video", 2.3, 1080, 1920),
+                       shot("clips/shot_02b.mp4", "video", 4.0, 1080, 1920), shot("clips/shot_03.jpg", "photo", 5.2, 1080, 1920)]}
+    logs = []
+    timeline = build_timeline(split, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, log=logs.append)
+    assert timeline["countdown"][0]["src"] == "clips/shot_02.mp4"
+    assert any("--from" in line for line in logs)
+    logs.clear()
+    build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, log=logs.append)
+    assert logs == []
+
+
+def test_short_end_times_fall_back_without_crash():
+    bad = {**ALIGN, "character_end_times_seconds": ALIGN["character_end_times_seconds"][:5]}
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=bad, log=lambda m: None)
+    assert timeline["captions"] == [] and timeline["countdown"] == []

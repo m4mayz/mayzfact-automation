@@ -37,3 +37,13 @@ def test_audio_shorter_than_last_beat_is_an_error():
     texts = ["Look at this.", "It is old."]
     with pytest.raises(PipelineError, match="Timing beat 2"):
         beat_timings(texts, fake_alignment(" ".join(texts), 2.4), 1.0)
+
+
+def test_word_timings_group_characters_per_word():
+    from mayzfact.timing import word_timings
+
+    words = word_timings(fake_alignment("Hi there,  it's ok.", 1.9))
+    assert [(w["text"], w["char_start"], w["char_end"]) for w in words] == [
+        ("Hi", 0, 1), ("there,", 3, 8), ("it's", 11, 14), ("ok.", 16, 18)]
+    assert (words[1]["start_s"], words[1]["end_s"]) == (0.3, 0.9)
+    assert word_timings({"characters": [], "character_start_times_seconds": [], "character_end_times_seconds": []}) == []

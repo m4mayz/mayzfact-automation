@@ -11,6 +11,8 @@ const defaultProps: TimelineProps = {
   audio: '',
   photoZoom: 1.08,
   shots: [],
+  countdown: [],
+  captions: [],
 };
 
 const calculateMetadata: CalculateMetadataFunction<TimelineProps> = async ({props}) => ({

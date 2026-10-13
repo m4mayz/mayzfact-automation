@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import Callable
 
+from mayzfact.countdown import Countdown, parse_countdown
 from mayzfact.ffmpeg import extract_frame, probe
 from mayzfact.matching import hook_slot_map
 from mayzfact.steps.clips import beat_subjects, split_shots
@@ -15,6 +16,7 @@ from mayzfact.text import beat_texts
 from mayzfact.timing import beat_timings
 
 SOURCE_FRAMES = (0.25, 0.5, 0.75)
+_NO_COUNTDOWN = Countdown(None, "", -1)
 
 
 LIST_WINDOW_S = 5.0  # sebutan subjek lain sedekat ini = daftar (misalnya intro), bukan awal bagian subjek
@@ -145,6 +147,7 @@ def run_plan(
             "index": slot.index, "beat": slot.beat, "start_s": slot.start_s, "end_s": slot.end_s, "media": slot.media,
             "text": beat["text"], "subject": subjects[slot.beat], "hook_segment": segment,
             "ref_frames": ref_frames, "keywords": keywords,
+            "countdown": (parse_countdown(beat["text"]) or _NO_COUNTDOWN).number,
         })
     groups = _groups(shots)
     _source_frames(paths, source, groups, shots, download_source)

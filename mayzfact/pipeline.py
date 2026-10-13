@@ -310,6 +310,7 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
             raise PipelineError(step, f"Step {step} butuh mode manual yang lengkap (deps.{step} kosong).")
         runner(paths, log)
     elif step == "timeline":
-        run_timeline(paths, read_json(paths.clips_json), read_json(paths.tts_json), fg_min_ratio=settings.fg_min_height_ratio)
+        run_timeline(paths, read_json(paths.clips_json), read_json(paths.tts_json), fg_min_ratio=settings.fg_min_height_ratio,
+                     script=read_json(paths.script_json), log=log)
     elif step == "render":
         deps.render(paths)

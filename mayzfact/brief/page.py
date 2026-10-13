@@ -81,7 +81,8 @@ def _shot_item(shot: dict) -> str:
     refs = "".join(f'<img src="/files/{escape(f)}" loading="lazy">' for f in shot["ref_frames"])
     return (
         f"<li><b>Shot {shot['index'] + 1}</b> · {shot['start_s']:.1f}–{shot['end_s']:.1f}s · {escape(shot['media'])} · "
-        f"{escape(shot['text'])}{f'<div class=refs>{refs}</div>' if refs else ''}</li>"
+        + (f"<span class=tag>CARD #{int(shot['countdown'])}</span> " if shot.get("countdown") else "")
+        + f"{escape(shot['text'])}{f'<div class=refs>{refs}</div>' if refs else ''}</li>"
     )
 
 

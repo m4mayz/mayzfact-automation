@@ -7,6 +7,7 @@ import pytest
 from mayzfact.steps.render import render_command, run_render
 from mayzfact.steps.timeline import build_timeline
 from mayzfact.store import RunPaths, write_json_atomic
+from tests.factories import fake_alignment
 
 
 def test_render_command_uses_absolute_props_and_public_dir(tmp_path):
@@ -32,7 +33,11 @@ def test_render_fixture_timeline(tmp_path, make_video, make_photo, sine_mp3):
         {"file": "clips/shot_02.mp4", "kind": "video", "start_s": 1.0, "width": 1920, "height": 1080},
         {"file": "clips/shot_03.jpg", "kind": "photo", "start_s": 2.0, "width": 1600, "height": 1000},
     ]}
-    write_json_atomic(paths.timeline_json, build_timeline(clips, audio_duration_s=3.0, fg_min_ratio=0.5))
+    text = "Look here. Number one, crab. Old."
+    script = {"beats": [{"text": "Look here."}, {"text": "Number one, crab."}, {"text": "Old."}]}
+    timeline = build_timeline(clips, audio_duration_s=3.0, fg_min_ratio=0.5, script=script, alignment=fake_alignment(text, 2.97))
+    assert timeline["countdown"] and timeline["captions"]
+    write_json_atomic(paths.timeline_json, timeline)
 
     run_render(paths)
 
