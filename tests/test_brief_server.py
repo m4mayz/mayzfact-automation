@@ -6,12 +6,20 @@ import pytest
 from mayzfact.brief.server import make_server
 from mayzfact.store import RunPaths, read_json, write_json_atomic
 
-PLAN = {"shots": [
-    {"index": 0, "beat": 0, "start_s": 0.0, "end_s": 2.0, "media": "video", "text": "Look <b>at</b> this.", "subject": None,
-     "hook_segment": 0, "ref_frames": ["plan/seg_01_0.jpg"], "keywords": {"en": ["crab beach"], "zh": ["鲎"]}},
-    {"index": 1, "beat": 1, "start_s": 2.0, "end_s": 4.0, "media": "photo", "text": "Fossil.", "subject": "fossil",
-     "hook_segment": None, "ref_frames": [], "keywords": {"en": ["fossil"], "zh": []}},
-]}
+PLAN = {
+    "groups": [
+        {"id": "hook", "label": "HOOK", "shots": [0], "keywords": {"en": ["crab beach"], "zh": ["鲎"]}},
+        {"id": "fossil", "label": "fossil", "shots": [1, 2], "keywords": {"en": ["fossil"], "zh": []}},
+    ],
+    "shots": [
+        {"index": 0, "beat": 0, "start_s": 0.0, "end_s": 2.0, "media": "video", "text": "Look <b>at</b> this.", "subject": None,
+         "hook_segment": 0, "ref_frames": ["plan/seg_01_0.jpg"], "keywords": {"en": ["crab beach"], "zh": ["鲎"]}, "group": "hook"},
+        {"index": 1, "beat": 1, "start_s": 2.0, "end_s": 4.0, "media": "photo", "text": "Fossil.", "subject": "fossil",
+         "hook_segment": None, "ref_frames": [], "keywords": {"en": ["fossil"], "zh": []}, "group": "fossil"},
+        {"index": 2, "beat": 2, "start_s": 4.0, "end_s": 6.0, "media": "video", "text": "Old rock.", "subject": "fossil",
+         "hook_segment": None, "ref_frames": [], "keywords": {"en": ["fossil"], "zh": []}, "group": "fossil"},
+    ],
+}
 
 
 @pytest.fixture
@@ -29,32 +37,39 @@ def server(tmp_path):
     srv.server_close()
 
 
-def test_page_lists_shots_and_escapes_text(server):
-    _, base = server
+def test_page_lists_groups_and_escapes_text(server):
+    paths, base = server
     html = httpx.get(base + "/").text
-    assert "Look &lt;b&gt;at&lt;/b&gt; this." in html
+    assert "Look &lt;b&gt;at&lt;/b&gt; this." in html and "Old rock." in html
     assert "鲎" in html and "HOOK" in html and "/files/plan/seg_01_0.jpg" in html
-    assert "0/2" in html
+    assert "0/2 kelompok" in html
+    write_json_atomic(paths.links_json, {"groups": {"fossil": [{"url": "https://a.b/c", "pick": 2}, {"file": "manual/fossil_1.mp4"}]}})
+    html = httpx.get(base + "/").text
+    assert "https://a.b/c #2\nfile:manual/fossil_1.mp4</textarea>" in html and "1/2 kelompok" in html
 
 
 def test_save_links_validates(server):
     paths, base = server
-    ok = httpx.post(base + "/api/links", json={"shots": {"1": {"url": "复制 https://v.douyin.com/x/ 打开"}}})
-    assert ok.status_code == 200 and ok.json()["missing"] == [2]
-    assert read_json(paths.links_json) == {"shots": {"1": {"url": "https://v.douyin.com/x/"}}}
-    bad = httpx.post(base + "/api/links", json={"shots": {"7": {"url": "https://a.b/c"}}})
-    assert bad.status_code == 400 and "shot 7" in bad.json()["error"]
+    ok = httpx.post(base + "/api/links", json={"groups": {"hook": "复制 https://v.douyin.com/x/ 打开\nhttps://a.b/c #3"}})
+    assert ok.status_code == 200 and ok.json()["missing"] == ["fossil"]
+    assert read_json(paths.links_json) == {"groups": {"hook": [{"url": "https://v.douyin.com/x/"}, {"url": "https://a.b/c", "pick": 3}]}}
+    bad = httpx.post(base + "/api/links", json={"groups": {"nautilus": "https://a.b/c"}})
+    assert bad.status_code == 400 and "nautilus" in bad.json()["error"]
 
 
-def test_upload_saves_file_and_links_it(server):
+def test_upload_appends_file_to_group(server):
     paths, base = server
-    ok = httpx.post(base + "/api/upload?shot=2", content=b"video-bytes", headers={"X-Filename": "klip.MP4"})
-    assert ok.status_code == 200 and ok.json()["file"] == "manual/shot_02.mp4"
-    assert (paths.root / "manual" / "shot_02.mp4").read_bytes() == b"video-bytes"
-    assert read_json(paths.links_json)["shots"]["2"] == {"file": "manual/shot_02.mp4"}
-    assert httpx.post(base + "/api/upload?shot=2", content=b"x", headers={"X-Filename": "a.exe"}).status_code == 400
-    assert httpx.post(base + "/api/upload?shot=9", content=b"x", headers={"X-Filename": "a.jpg"}).status_code == 400
-    assert httpx.post(base + "/api/upload?shot=1", content=b"x" * 2000, headers={"X-Filename": "a.jpg"}).status_code == 413
+    httpx.post(base + "/api/links", json={"groups": {"fossil": "https://a.b/c"}})
+    ok = httpx.post(base + "/api/upload?group=fossil", content=b"video-bytes", headers={"X-Filename": "klip.MP4"})
+    assert ok.status_code == 200 and ok.json()["file"] == "manual/fossil_1.mp4"
+    again = httpx.post(base + "/api/upload?group=fossil", content=b"jpg", headers={"X-Filename": "a.jpg"})
+    assert again.json()["file"] == "manual/fossil_2.jpg"
+    assert (paths.root / "manual" / "fossil_1.mp4").read_bytes() == b"video-bytes"
+    assert read_json(paths.links_json)["groups"]["fossil"] == [
+        {"url": "https://a.b/c"}, {"file": "manual/fossil_1.mp4"}, {"file": "manual/fossil_2.jpg"}]
+    assert httpx.post(base + "/api/upload?group=fossil", content=b"x", headers={"X-Filename": "a.exe"}).status_code == 400
+    assert httpx.post(base + "/api/upload?group=..%2F..", content=b"x", headers={"X-Filename": "a.jpg"}).status_code == 400
+    assert httpx.post(base + "/api/upload?group=hook", content=b"x" * 2000, headers={"X-Filename": "a.jpg"}).status_code == 413
 
 
 def test_files_are_confined_to_run_dir(server):
@@ -68,11 +83,11 @@ def test_files_are_confined_to_run_dir(server):
 def test_cross_site_posts_are_rejected(server):
     paths, base = server
     evil = {"Origin": "https://evil.example"}
-    assert httpx.post(base + "/api/links", json={"shots": {}}, headers=evil).status_code == 403
-    assert httpx.post(base + "/api/upload?shot=1", content=b"x", headers={**evil, "X-Filename": "a.jpg"}).status_code == 403
+    assert httpx.post(base + "/api/links", json={"groups": {}}, headers=evil).status_code == 403
+    assert httpx.post(base + "/api/upload?group=hook", content=b"x", headers={**evil, "X-Filename": "a.jpg"}).status_code == 403
     assert not paths.links_json.exists()
     same = {"Origin": base}
-    assert httpx.post(base + "/api/links", json={"shots": {}}, headers=same).status_code == 200
+    assert httpx.post(base + "/api/links", json={"groups": {}}, headers=same).status_code == 200
 
 
 def test_foreign_host_header_is_rejected(server):
@@ -80,6 +95,6 @@ def test_foreign_host_header_is_rejected(server):
     port = base.rsplit(":", 1)[1]
     rebound = {"Host": f"evil.example:{port}", "Origin": f"http://evil.example:{port}"}
     assert httpx.get(base + "/api/state", headers=rebound).status_code == 403
-    assert httpx.post(base + "/api/links", json={"shots": {}}, headers=rebound).status_code == 403
+    assert httpx.post(base + "/api/links", json={"groups": {}}, headers=rebound).status_code == 403
     assert not paths.links_json.exists()
     assert httpx.get(base + "/", headers={"Host": f"localhost:{port}"}).status_code == 200

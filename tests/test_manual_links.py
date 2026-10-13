@@ -1,9 +1,10 @@
 import pytest
 
 from mayzfact.manual.links import (
+    lines_of,
     link_kind,
     load_links,
-    missing_shots,
+    missing_groups,
     normalize_links,
     parse_entry,
     save_links,
@@ -35,29 +36,40 @@ def test_link_kind(url, kind):
     assert link_kind(url) == kind
 
 
-def test_normalize_links_validates_and_keeps_pick():
-    raw = {"shots": {
-        "1": {"url": "https://v.douyin.com/x/ #2"},
-        "2": {"file": "manual/shot_02.mp4"},
-        "3": {"url": "  "},
-        "4": {"url": "https://example.com/a.jpg", "pick": 1},
+def test_normalize_links_parses_lines_per_group():
+    raw = {"groups": {
+        "hook": "复制打开抖音 https://v.douyin.com/x/ 看看\n\n  https://a.b/p.jpg #2  \nfile:manual/hook_1.mp4",
+        "nautilus": "   ",
+        "platypus": [{"url": "https://a.b/q"}],
     }}
-    assert normalize_links(raw, 4) == {"shots": {
-        "1": {"url": "https://v.douyin.com/x/", "pick": 2},
-        "2": {"file": "manual/shot_02.mp4"},
-        "4": {"url": "https://example.com/a.jpg", "pick": 1},
+    assert normalize_links(raw, ["hook", "nautilus", "platypus"]) == {"groups": {
+        "hook": [{"url": "https://v.douyin.com/x/"}, {"url": "https://a.b/p.jpg", "pick": 2}, {"file": "manual/hook_1.mp4"}],
+        "platypus": [{"url": "https://a.b/q"}],
     }}
-    with pytest.raises(ValueError, match="shot 9"):
-        normalize_links({"shots": {"9": {"url": "https://a.b/c"}}}, 4)
+
+
+def test_normalize_links_rejects_bad_input():
+    with pytest.raises(ValueError, match="kelompok sturgeon"):
+        normalize_links({"groups": {"sturgeon": "https://a.b/c"}}, ["hook"])
     with pytest.raises(ValueError, match="http"):
-        normalize_links({"shots": {"1": {"url": "ftp://a/b"}}}, 4)
+        normalize_links({"groups": {"hook": "ftp://a/b"}}, ["hook"])
     with pytest.raises(ValueError, match="manual/"):
-        normalize_links({"shots": {"1": {"file": "../../.env"}}}, 4)
+        normalize_links({"groups": {"hook": "file:../../.env"}}, ["hook"])
+    with pytest.raises(ValueError, match="#"):
+        normalize_links({"groups": {"hook": "https://a.b/c #0"}}, ["hook"])
+
+
+def test_lines_round_trip():
+    entries = [{"url": "https://a.b/p.jpg", "pick": 2}, {"file": "manual/hook_1.mp4"}]
+    assert lines_of(entries) == "https://a.b/p.jpg #2\nfile:manual/hook_1.mp4"
+    assert normalize_links({"groups": {"hook": lines_of(entries)}}, ["hook"])["groups"]["hook"] == entries
 
 
 def test_load_save_and_missing(tmp_path):
     path = tmp_path / "links.json"
-    assert load_links(path) == {"shots": {}}
-    save_links(path, {"shots": {"2": {"url": "https://a.b/c"}}})
-    plan = {"shots": [{"index": 0}, {"index": 1}, {"index": 2}]}
-    assert missing_shots(plan, load_links(path)) == [1, 3]
+    assert load_links(path) == {"groups": {}}
+    save_links(path, {"groups": {"crab": [{"url": "https://a.b/c"}]}})
+    plan = {"groups": [{"id": "hook"}, {"id": "crab"}, {"id": "fossil"}]}
+    assert missing_groups(plan, load_links(path)) == ["hook", "fossil"]
+    save_links(path, {"shots": {"1": {"url": "https://a.b/c"}}})
+    assert load_links(path) == {"groups": {}}

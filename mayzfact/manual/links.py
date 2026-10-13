@@ -43,43 +43,48 @@ def link_kind(url: str) -> str:
 
 
 def load_links(path: Path) -> dict:
-    return read_json(path) if path.exists() else {"shots": {}}
+    data = read_json(path) if path.exists() else {}
+    return data if "groups" in data else {"groups": {}}  # format lama per shot diabaikan
 
 
 def save_links(path: Path, data: dict) -> None:
     write_json_atomic(path, data)
 
 
-def normalize_links(raw: dict, shot_count: int) -> dict:
-    shots: dict[str, dict] = {}
-    for key, entry in (raw.get("shots") or {}).items():
-        number = int(key)
-        if not 1 <= number <= shot_count:
-            raise ValueError(f"shot {number} nggak ada di plan (1-{shot_count})")
-        if not isinstance(entry, dict):
-            continue
-        out: dict = {}
-        url_text = str(entry.get("url") or "").strip()
-        file = str(entry.get("file") or "").strip()
-        if url_text:
-            url, pick = parse_entry(url_text)
-            if not url.lower().startswith(("http://", "https://")):
-                raise ValueError(f"shot {number}: link harus diawali http(s)://")
-            out["url"] = url
-            pick = entry.get("pick") or pick
-        elif file:
-            if not file.startswith("manual/") or ".." in file:
-                raise ValueError(f"shot {number}: file harus di folder manual/")
-            out["file"] = file
-            pick = entry.get("pick")
-        else:
-            continue
-        if pick:
-            out["pick"] = int(pick)
-        shots[str(number)] = out
-    return {"shots": shots}
+def _entry(line: str, where: str) -> dict:
+    if line.startswith("file:"):
+        file = line[len("file:"):].strip()
+        if not file.startswith("manual/") or ".." in file:
+            raise ValueError(f"{where}: file harus di folder manual/")
+        return {"file": file}
+    url, pick = parse_entry(line)
+    if not url.lower().startswith(("http://", "https://")):
+        raise ValueError(f"{where}: link harus diawali http(s)://")
+    if pick is not None and pick < 1:
+        raise ValueError(f"{where}: #n mulai dari #1")
+    return {"url": url, "pick": pick} if pick else {"url": url}
 
 
-def missing_shots(plan: dict, links: dict) -> list[int]:
-    filled = links.get("shots", {})
-    return [shot["index"] + 1 for shot in plan["shots"] if not filled.get(str(shot["index"] + 1))]
+def lines_of(entries: list[dict]) -> str:
+    """Kebalikan dari normalize: entry → teks textarea (1 baris = 1 link/file)."""
+    return "\n".join(
+        f"file:{e['file']}" if e.get("file") else e["url"] + (f" #{e['pick']}" if e.get("pick") else "") for e in entries
+    )
+
+
+def normalize_links(raw: dict, group_ids: list[str]) -> dict:
+    """{"groups": {id: teks textarea | list entry}} → {"groups": {id: [entry, …]}}. Kelompok kosong dibuang."""
+    groups: dict[str, list[dict]] = {}
+    for gid, value in (raw.get("groups") or {}).items():
+        if gid not in group_ids:
+            raise ValueError(f"kelompok {gid} nggak ada di plan")
+        lines = value.splitlines() if isinstance(value, str) else [lines_of([v]) for v in value if isinstance(v, dict)]
+        entries = [_entry(line.strip(), f"kelompok {gid} baris {n}") for n, line in enumerate(lines, 1) if line.strip()]
+        if entries:
+            groups[gid] = entries
+    return {"groups": groups}
+
+
+def missing_groups(plan: dict, links: dict) -> list[str]:
+    filled = links.get("groups", {})
+    return [group["id"] for group in plan["groups"] if not filled.get(group["id"])]
