@@ -81,10 +81,11 @@ def run_fetch(
         try:
             raw, kind, score, offset = _choose(shot, entry, obtain(entry, paths.root), paths, encoder)
             out = normalize_local(shot["index"], shot["start_s"], shot["end_s"], raw, kind, offset, paths, fg_min_ratio)
-        except PipelineError as exc:
-            status[str(number)] = {"state": "error", "message": exc.message[:300]}
+        except Exception as exc:  # error apa pun cukup bikin shot ini gagal, shot lain tetap diproses
+            message = exc.message if isinstance(exc, PipelineError) else f"{type(exc).__name__}: {exc}"
+            status[str(number)] = {"state": "error", "message": message[:300]}
             problems.append(number)
-            log(f"[fetch] shot {number}: {exc.message.splitlines()[0][:120]}")
+            log(f"[fetch] shot {number}: {message.splitlines()[0][:120]}")
             continue
         _, low = _target(shot, paths, encoder)
         url = entry.get("url")

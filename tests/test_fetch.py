@@ -97,3 +97,20 @@ def test_same_link_in_two_shots_gets_two_clips(tmp_path):
     shared = photos(tmp_path, "good", "crab")
     data = run_fetch(paths, plan, obtain=lambda e, r: shared, encoder=FakeEncoder(), fg_min_ratio=0.5, log=lambda m: None)
     assert [s["file"] for s in data["shots"]] == ["clips/shot_01.jpg", "clips/shot_02.jpg"]
+
+
+def test_unexpected_obtain_crash_marks_shot_error(tmp_path):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    save_links(paths.links_json, {"shots": {"1": {"url": "https://a.b/p"}, "2": {"url": "https://a.b/q"}}})
+
+    def obtain(entry, root):
+        if entry["url"].endswith("p"):
+            raise RuntimeError("boom")
+        return photos(tmp_path, "crab")
+
+    with pytest.raises(AwaitingInput, match="1"):
+        run_fetch(paths, plan, obtain=obtain, encoder=FakeEncoder(), fg_min_ratio=0.5, log=lambda m: None)
+    status = read_json(paths.links_status_json)["shots"]
+    assert status["1"]["state"] == "error" and "boom" in status["1"]["message"]
+    assert status["2"]["state"] == "ok"

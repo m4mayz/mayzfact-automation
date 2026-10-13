@@ -36,8 +36,12 @@ async function upload(n, input){
   const file = input.files[0]; if (!file) return;
   const res = await fetch(`/api/upload?shot=${n}`, {method:'POST', headers:{'X-Filename': encodeURIComponent(file.name)}, body:file});
   const data = await res.json();
-  document.getElementById('msg').textContent = res.ok ? `Shot ${n}: ${data.file} ke-upload` : data.error;
-  if (res.ok) setTimeout(() => location.reload(), 600);
+  if (!res.ok) { document.getElementById('msg').textContent = data.error; return; }
+  // Simpan semua card sekalian, biar link yang belum di-Simpan di card lain nggak hilang pas reload.
+  const card = document.querySelector(`[data-shot="${n}"]`);
+  card.querySelector('.file').value = data.file;
+  card.querySelector('.url').value = '';
+  await save();
 }
 function copyText(t){ navigator.clipboard.writeText(t); document.getElementById('msg').textContent = `Ke-copy: ${t}`; }
 """

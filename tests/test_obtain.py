@@ -38,7 +38,7 @@ def test_direct_link_downloads_once(tmp_path):
 
     def handler(request):
         hits.append(request.url.path)
-        return httpx.Response(200, content=b"jpg-bytes")
+        return httpx.Response(200, content=jpg_bytes(tmp_path))
 
     obtainer = Obtainer(tmp_path / "cache", httpx.Client(transport=httpx.MockTransport(handler)))
     entry = {"url": "https://cdn.example.com/a.jpg"}
@@ -84,3 +84,60 @@ def test_all_methods_failing_suggests_upload(tmp_path):
                         resolvers={"og": lambda url: []})
     with pytest.raises(PipelineError, match="upload"):
         obtainer.obtain({"url": "https://example.com/page"}, tmp_path)
+
+
+def jpg_bytes(tmp_path):
+    path = tmp_path / "real.jpg"
+    Image.new("RGB", (8, 8)).save(path)
+    return path.read_bytes()
+
+
+def test_cached_photos_keep_numeric_order(tmp_path):
+    url = "https://www.xiaohongshu.com/explore/66a1b2c3d4e5f6a7b8c9d0e1"
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    for i in range(12):
+        (cache / f"{cache_key(url)}_{i}.jpg").write_bytes(jpg_bytes(tmp_path))
+    (cache / f"{cache_key(url)}_0.tmp.f137.mp4").write_bytes(b"sisa yt-dlp")
+    files = Obtainer(cache, client_serving({})).obtain({"url": url}, tmp_path)
+    assert [f.name.split("_")[1] for f in files] == [f"{i}.jpg" for i in range(12)]
+
+
+def test_junk_download_is_dropped_and_next_method_used(tmp_path, make_video):
+    video = make_video(320, 240, 1.0)
+
+    def junk_ytdlp(url, dest, **kwargs):
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(b"cuma audio / html")
+        return dest
+
+    files = {"/bad.mp4": b"<html>hotlink</html>", "/good.mp4": video.read_bytes()}
+    resolvers = {"douyin": lambda url: [Media("video", "https://cdn.example.com/bad.mp4"), Media("video", "https://cdn.example.com/good.mp4")],
+                 "og": lambda url: []}
+    obtainer = Obtainer(tmp_path / "cache", client_serving(files), ytdlp=junk_ytdlp, resolvers=resolvers)
+    out = obtainer.obtain({"url": "https://www.douyin.com/video/7694448955383418155"}, tmp_path)
+    assert media_kind(out[0]) == "video" and out[0].read_bytes() == video.read_bytes()
+
+
+def test_failed_photo_post_leaves_no_partial_cache(tmp_path):
+    url = "https://www.xiaohongshu.com/explore/66a1b2c3d4e5f6a7b8c9d0e1"
+    served = {"/1.jpg": jpg_bytes(tmp_path)}
+    resolvers = {"rednote": lambda u: [Media("photo", "https://img.example/1.jpg"), Media("photo", "https://img.example/2.jpg")],
+                 "og": lambda u: []}
+    no_ytdlp = lambda *a, **k: (_ for _ in ()).throw(PipelineError("fetch", "no video"))  # noqa: E731
+    obtainer = Obtainer(tmp_path / "cache", client_serving(served), ytdlp=no_ytdlp, resolvers=resolvers)
+    with pytest.raises(PipelineError):
+        obtainer.obtain({"url": url}, tmp_path)
+    served["/2.jpg"] = served["/1.jpg"]
+    assert len(obtainer.obtain({"url": url}, tmp_path)) == 2
+
+
+def test_unexpected_resolver_crash_becomes_pipeline_error(tmp_path):
+    def broken(url):
+        raise AttributeError("'str' object has no attribute 'get'")
+
+    obtainer = Obtainer(tmp_path / "cache", client_serving({}),
+                        ytdlp=lambda *a, **k: (_ for _ in ()).throw(PipelineError("fetch", "ytdlp x")),
+                        resolvers={"douyin": broken, "og": lambda url: []})
+    with pytest.raises(PipelineError, match="upload"):
+        obtainer.obtain({"url": "https://www.douyin.com/video/7694448955383418155"}, tmp_path)
