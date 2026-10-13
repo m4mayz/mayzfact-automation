@@ -4,10 +4,11 @@ import {Audio} from '@remotion/media';
 import {Captions} from './Captions';
 import {NumberCard} from './NumberCard';
 import {ShotView} from './ShotView';
+import {SoundLayer} from './SoundLayer';
 import {SubjectCard} from './SubjectCard';
 import type {TimelineProps} from './types';
 
-export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = []}) => {
+export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = []}) => {
   const {fps} = useVideoConfig();
   // Shot yang seluruh durasinya ketutup card countdown nggak dirender, biar videonya nggak tembus di belakang card.
   // Klip shot itu tetap tampil di dalam subject card.
@@ -34,6 +35,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
       ))}
       <Captions captions={captions} />
       {audio ? <Audio src={staticFile(audio)} /> : null}
+      <SoundLayer bgm={bgm} sfx={sfx} />
     </AbsoluteFill>
   );
 };

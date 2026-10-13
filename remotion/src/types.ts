@@ -26,6 +26,18 @@ export type CountdownCard = {
   clipOffset: number;
 };
 
+export type Sfx = {
+  src: string;
+  from: number;
+  volume: number;
+};
+
+export type Bgm = {
+  src: string;
+  volume: number;
+  fadeOutFrames: number;
+};
+
 // Pakai `type`, bukan `interface`: props Remotion harus cocok sama Record<string, unknown>.
 export type TimelineProps = {
   fps: number;
@@ -37,4 +49,6 @@ export type TimelineProps = {
   shots: Shot[];
   countdown?: CountdownCard[];
   captions?: Caption[];
+  bgm?: Bgm | null;
+  sfx?: Sfx[];
 };
