@@ -230,3 +230,43 @@
 ## Delivery
 
 - Next: 3B audio. SFX dari myinstants.com (pilihan Akmal).
+
+---
+
+# Handoff — Fase 3B (BGM + SFX + pembuka)
+
+- **Updated:** 2026-10-13 23:05 WIB, Claude Code (Opus 5.5)
+- **Goal & scope:** [spec 3B](superpowers/specs/2026-10-13-fase3b-audio-design.md), [plan](superpowers/plans/2026-10-13-fase3b-audio.md).
+- **Workspace:** `master` (merge `528da5c`). Belum di-push.
+
+## Selesai
+
+- **BGM:**
+  - File-nya di `assets/bgm/<mood>.mp3`. Daftar mood: mystery, suspense, dark, epic, space, tech, nature, playful, funny, inspiring, sad, energetic.
+  - Gemini milih mood sesuai naskah. Kalau cuma ada 1 file, langsung dipakai.
+  - Pilihannya disimpen di `runs/<id>/audio.json`. Kalau mau ganti, edit file itu terus jalanin `--from timeline`.
+  - Volume 0.12, fade out 1 detik di akhir.
+- **SFX:**
+  - `assets/sfx/sfx.json` (pilihan Akmal dari myinstants): hook `awkward-moment.mp3`, number `quick-ting.mp3`, subject `pop_7e9Is8L.mp3`.
+  - Nggak ada SFX di pergantian shot.
+  - File audio di-gitignore. Yang di-commit cuma `sfx.json`.
+- **Pembuka:** efek "masuk" dari transisi antar scene di source. Gambar mulai putih dengan blur vertikal, cepat tajam, terus terangnya pudar. Durasi 7 frame, barengan SFX hook.
+- **Final review Opus:** 2 Important udah di-fix.
+  - myinstants yang lambat bikin pipeline nunggu lama. Sekarang ada timeout 10 detik, dan kalau gagal langsung berhenti.
+  - Error di audio bikin timeline crash. Sekarang timeline tetap jadi tanpa audio.
+- **Review Akmal di Studio (2026-10-13):** oke, setelah beberapa revisi:
+  - SFX diganti pakai pilihan Akmal.
+  - Pembuka diulang 3 kali sampai sama kayak source: white flash → cover + zoom → whip flash.
+  - Kedip hitam di frame 7 di-fix. Penyebabnya struktur elemen intro berubah di tengah video.
+
+## Masalah terbuka
+
+1. **Minor yang ditunda:**
+   - belum ada cara buat maksa "tanpa BGM" per run
+   - file lama di `runs/<id>/audio/` nggak dibersihin
+   - nama BGM case-sensitive
+2. **myinstants:** download SFX tergantung situs pihak ketiga.
+
+## Delivery
+
+- Next: 3C overlay (panah, lingkaran, emoji) + CTA subscribe.
