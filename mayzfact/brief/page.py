@@ -49,19 +49,24 @@ async function upload(group, input){
 }
 const STATE_LABEL = {running: 'Lagi jalan', done: 'Selesai, siap review di Studio', awaiting: 'Berhenti: ada kelompok yang perlu diisi/diganti'};
 let lastState = null;
-function bar(done, total){ return `<div class="bar"><div style="width:${total ? Math.round(100 * done / total) : 0}%"></div></div>`; }
+function line(box, tag, text){ const el = document.createElement(tag); el.textContent = text; box.appendChild(el); return el; }
+function bar(box, done, total){
+  const outer = line(box, 'div', ''); outer.className = 'bar';
+  line(outer, 'div', '').style.width = `${total ? Math.round(100 * (Number(done) || 0) / total) : 0}%`;
+}
 async function pollProgress(){
   try {
     const p = await (await fetch('/api/progress')).json();
     const box = document.getElementById('progress');
     if (p.state) {
+      // Semua isi lewat textContent: label kelompok asalnya dari Gemini, jangan pernah jadi HTML.
       box.style.display = 'grid';
-      box.innerHTML = `<b>Fetch: ${STATE_LABEL[p.state] || p.state}</b>`
-        + `<div>Link ${p.links_done}/${p.links_total}</div>${bar(p.links_done, p.links_total)}`
-        + `<div>Shot ${p.shots_done}/${p.shots_total}</div>${bar(p.shots_done, p.shots_total)}`
-        + (p.current ? `<div>Sekarang: ${p.current}</div>` : '')
-        + `<pre></pre>`;
-      box.querySelector('pre').textContent = (p.log || []).slice(-10).join('\\n');
+      box.replaceChildren();
+      line(box, 'b', `Fetch: ${STATE_LABEL[p.state] || p.state}`);
+      line(box, 'div', `Link ${p.links_done}/${p.links_total}`); bar(box, p.links_done, p.links_total);
+      line(box, 'div', `Shot ${p.shots_done}/${p.shots_total}`); bar(box, p.shots_done, p.shots_total);
+      if (p.current) line(box, 'div', `Sekarang: ${p.current}`);
+      line(box, 'pre', (p.log || []).slice(-10).join('\\n'));
       if (lastState === 'running' && p.state !== 'running') location.reload();
       lastState = p.state;
     }
