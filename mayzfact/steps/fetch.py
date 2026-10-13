@@ -74,14 +74,18 @@ def _sources(entry: dict, files: list[Path], paths: RunPaths, encoder: Encoder) 
     raise PipelineError("fetch", "file-nya bukan video/gambar yang bisa dibaca")
 
 
-def _best(sources: list[Source], target: np.ndarray, duration: float, fresh: bool) -> tuple[Source, float, float] | None:
-    """(source, skor, detik mulai) terbaik. fresh=True: cuma window/foto yang belum kepakai."""
+def _best(sources: list[Source], target: np.ndarray, duration: float, used_sources: bool) -> tuple[Source, float, float] | None:
+    """(source, skor, detik mulai) terbaik dari yang belum pernah tampil.
+
+    Potongan yang udah tampil nggak pernah dipakai lagi: foto yang udah kepakai dilewat, window video nggak boleh overlap.
+    used_sources=False: cuma video/foto yang belum kepakai sama sekali. True: boleh bagian lain dari video yang udah kepakai.
+    """
     best: tuple[Source, float, float] | None = None
     for source in sources:
+        if source.used and (not used_sources or source.kind == "photo"):
+            continue
         sims = source.vectors @ target
         if source.kind == "photo":
-            if fresh and source.used:
-                continue
             options = [(float(sims[0]), 0.0)]
         else:
             if source.total_s < duration + TAIL_S:
@@ -90,7 +94,7 @@ def _best(sources: list[Source], target: np.ndarray, duration: float, fresh: boo
             for t, sim in zip(source.times, sims):
                 start = _window_start(t, duration, source.total_s)
                 end = start + duration + TAIL_S
-                if fresh and any(start < u_end and u_start < end for u_start, u_end in source.used):
+                if any(start < u_end and u_start < end for u_start, u_end in source.used):
                     continue
                 options.append((float(sim), start))
         for score, start in options:
@@ -148,6 +152,7 @@ def _continuous(group: dict, shots: list[dict], source: Source, paths: RunPaths,
     if best is None:
         return None
     score, start = best
+    source.used.append((start, start + span + TAIL_S))
     head = shots[0]
     out = normalize_local(head["index"], first, last, source.path, "video", start + span / 2, paths, fg_min_ratio)
     url = source.entry.get("url")
@@ -163,7 +168,8 @@ def _continuous(group: dict, shots: list[dict], source: Source, paths: RunPaths,
 
 
 def _run_group(group: dict, shots: list[dict], entries: list[dict], obtain: Callable[[dict, Path], list[Path]],
-               paths: RunPaths, encoder: Encoder, fg_min_ratio: float, progress: Progress) -> tuple[list[dict], list[str]]:
+               paths: RunPaths, encoder: Encoder, fg_min_ratio: float, progress: Progress,
+               shown: dict[Path, list[tuple[float, float]]]) -> tuple[list[dict], list[str]]:
     sources: list[Source] = []
     errors = []
     for line, entry in enumerate(entries, 1):
@@ -177,6 +183,8 @@ def _run_group(group: dict, shots: list[dict], entries: list[dict], obtain: Call
         progress.update(links_done=progress.data["links_done"] + 1)
     if errors:
         raise PipelineError("fetch", "; ".join(errors))
+    for source in sources:  # catatan "udah tampil" dibagi per file, jadi link yang sama di kelompok lain ikut kehitung
+        source.used = shown.setdefault(source.path, [])
     clips, warnings = [], []
     progress.update(current=f"{group['label']}: milih potongan")
     if group["id"] == "hook" and len(sources) == 1 and sources[0].kind == "video":
@@ -187,12 +195,12 @@ def _run_group(group: dict, shots: list[dict], entries: list[dict], obtain: Call
         number = shot["index"] + 1
         duration = shot["end_s"] - shot["start_s"]
         target, low = _target(shot, paths, encoder)
-        chosen = _best(sources, target, duration, fresh=True)
+        chosen = _best(sources, target, duration, used_sources=False)
         if chosen is None:
-            chosen = _best(sources, target, duration, fresh=False)
+            chosen = _best(sources, target, duration, used_sources=True)
             if chosen is None:
-                raise PipelineError("fetch", f"shot {number} butuh {duration + TAIL_S:.1f} detik, semua video di kelompok ini kependekan")
-            warnings.append(f"shot {number} pakai ulang potongan yang sama, tambah link lagi biar variasi")
+                raise PipelineError("fetch", f"shot {number}: klip di kelompok ini udah kepakai semua (atau kependekan), tambah link lagi")
+            warnings.append(f"shot {number} pakai bagian lain dari video yang udah kepakai")
         source, score, start = chosen
         source.used.append((start, start + duration + TAIL_S))
         if score < low:
@@ -232,6 +240,7 @@ def run_fetch(
     clips: list[dict] = []
     links_total = sum(len(links["groups"].get(g["id"], [])) for g in plan["groups"])
     progress = Progress(paths.fetch_progress_json, links_total, len(plan["shots"]), log)
+    shown: dict[Path, list[tuple[float, float]]] = {}
     for group in plan["groups"]:
         gid = group["id"]
         if gid in missing:
@@ -240,7 +249,7 @@ def run_fetch(
             continue
         try:
             group_clips, warnings = _run_group(group, [shots[i] for i in group["shots"]], links["groups"][gid],
-                                               obtain, paths, encoder, fg_min_ratio, progress)
+                                               obtain, paths, encoder, fg_min_ratio, progress, shown)
         except Exception as exc:  # error apa pun cukup bikin kelompok ini gagal, kelompok lain tetap diproses
             status[gid] = {"state": "error", "message": _message(exc)[:600]}
             problems.append(group["label"])

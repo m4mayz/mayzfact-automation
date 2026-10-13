@@ -111,16 +111,17 @@ def test_content_video_shots_do_not_overlap(tmp_path, cut_video):
     assert "tambah link" not in read_json(paths.links_status_json)["groups"]["horseshoe-crab"]["message"]
 
 
-def test_several_links_are_shared_and_reuse_warns(tmp_path):
+def test_used_clip_is_never_shown_again(tmp_path):
     paths = RunPaths(tmp_path / "run")
     plan = make_plan(paths)
     plan["groups"] = plan["groups"][1:]
     plan["shots"] = plan["shots"][2:]
     save_links(paths.links_json, {"groups": {"horseshoe-crab": [{"url": "https://a.b/one"}]}})
     one = photos(tmp_path, "crab")
-    data = run_fetch(paths, plan, obtain=lambda e, r: one, encoder=FakeEncoder(), **QUIET)
-    assert [s["match"] for s in data["shots"]] == [1.0, 1.0]
-    assert "tambah link" in read_json(paths.links_status_json)["groups"]["horseshoe-crab"]["message"]
+    with pytest.raises(AwaitingInput, match="horseshoe crab"):
+        run_fetch(paths, plan, obtain=lambda e, r: one, encoder=FakeEncoder(), **QUIET)
+    status = read_json(paths.links_status_json)["groups"]["horseshoe-crab"]
+    assert status["state"] == "error" and "tambah link" in status["message"]
 
     save_links(paths.links_json, {"groups": {"horseshoe-crab": [{"url": "https://a.b/one"}, {"url": "https://a.b/two"}]}})
     files = {"https://a.b/one": photos(tmp_path, "crab"), "https://a.b/two": photos(tmp_path, "good")}
@@ -152,9 +153,25 @@ def test_pick_limits_post_to_one_photo(tmp_path):
     plan = make_plan(paths)
     plan["groups"] = plan["groups"][1:]
     plan["shots"] = plan["shots"][2:]
+    plan["groups"][0]["shots"] = [2]
+    plan["shots"] = plan["shots"][:1]
     save_links(paths.links_json, {"groups": {"horseshoe-crab": [{"url": "https://a.b/p", "pick": 1}]}})
     data = run_fetch(paths, plan, obtain=lambda e, r: photos(tmp_path, "other", "crab"), encoder=FakeEncoder(), **QUIET)
-    assert [s["match"] for s in data["shots"]] == [0.0, 0.0]
+    assert [s["match"] for s in data["shots"]] == [0.0]
+
+
+def test_each_shot_prefers_a_video_not_used_yet(tmp_path, cut_video):
+    import shutil
+
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = plan["groups"][1:]
+    plan["shots"] = [{**plan["shots"][2], "start_s": 0.6, "end_s": 0.9}, {**plan["shots"][3], "start_s": 0.9, "end_s": 1.2}]
+    other = shutil.copyfile(cut_video, tmp_path / "other.mp4")
+    files = {"https://a.b/one": [cut_video], "https://a.b/two": [other]}
+    save_links(paths.links_json, {"groups": {"horseshoe-crab": [{"url": "https://a.b/one"}, {"url": "https://a.b/two"}]}})
+    data = run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
+    assert [s["page_url"] for s in data["shots"]] == ["https://a.b/one", "https://a.b/two"]
 
 
 def test_fetch_writes_progress_file(tmp_path, cut_video):
@@ -175,3 +192,16 @@ def test_fetch_writes_progress_file(tmp_path, cut_video):
     run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
     progress = read_json(paths.fetch_progress_json)
     assert progress["state"] == "done" and progress["shots_done"] == 4 and progress["current"] == ""
+
+
+def test_clip_used_in_earlier_group_is_not_shown_again(tmp_path):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = [{"id": "a", "label": "A", "shots": [2]}, {"id": "b", "label": "B", "shots": [3]}]
+    plan["shots"] = plan["shots"][2:]
+    same = photos(tmp_path, "crab")
+    save_links(paths.links_json, {"groups": {"a": [{"url": "https://a.b/p"}], "b": [{"url": "https://a.b/p"}]}})
+    with pytest.raises(AwaitingInput, match="B"):
+        run_fetch(paths, plan, obtain=lambda e, r: same, encoder=FakeEncoder(), **QUIET)
+    status = read_json(paths.links_status_json)["groups"]
+    assert status["a"]["state"] == "ok" and status["b"]["state"] == "error"

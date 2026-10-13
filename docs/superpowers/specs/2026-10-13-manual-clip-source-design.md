@@ -176,3 +176,11 @@ Bagian ini menggantikan aturan "1 link per shot" di bagian 3–5.
 - Kalau kelompok `hook` cuma punya 1 link video, video itu diputer nyambung sepanjang semua shot hook. Hasilnya 1 entry di `clips.json`, `start_s` = awal shot hook pertama dan `end_s` = akhir shot hook terakhir.
 - Titik mulai dipilih dari detik sample yang ngasih rata-rata kemiripan paling tinggi. Kemiripan dihitung antara frame di tengah tiap shot dan frame referensi shot itu.
 - Kalau video-nya lebih pendek dari durasi hook + 0.2 detik, atau link-nya lebih dari 1, hook balik dipotong per shot.
+
+**No-reuse (D-021):** Potongan yang udah tampil nggak pernah dipakai lagi. Ini berlaku juga lintas kelompok, dengan catatan "udah tampil" disimpan per file. Urutan pilihannya:
+
+1. Video/foto yang belum kepakai.
+2. Bagian lain yang nggak overlap dari video yang udah kepakai, dengan peringatan.
+3. Kalau dua-duanya nggak ada, kelompok jadi `error` dengan pesan "tambah link".
+
+**Number card (D-021, belum diimplementasi):** Momen countdown "Number X" bakal pakai komponen Remotion sendiri, jadi bagian itu nggak diisi klip dari link.
