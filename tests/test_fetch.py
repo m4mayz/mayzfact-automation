@@ -6,6 +6,7 @@ from PIL import Image
 
 from mayzfact.embed import unit
 from mayzfact.errors import AwaitingInput
+from mayzfact.ffmpeg import probe
 from mayzfact.manual.links import save_links
 from mayzfact.steps.fetch import run_fetch
 from mayzfact.store import RunPaths, read_json
@@ -72,23 +73,42 @@ def test_missing_group_stops_with_awaiting_input(tmp_path):
     assert not paths.clips_json.exists()
 
 
-def test_one_video_feeds_several_shots_without_overlap(tmp_path, cut_video):
+def test_single_hook_video_plays_continuously(tmp_path, cut_video):
     paths = RunPaths(tmp_path / "run")
     plan = make_plan(paths)
     save_links(paths.links_json, {"groups": {"hook": [{"url": "https://www.douyin.com/video/1"}],
                                              "horseshoe-crab": [{"url": "https://x.com/post"}]}})
     files = {"https://www.douyin.com/video/1": [cut_video], "https://x.com/post": photos(tmp_path, "other", "crab")}
     data = run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
-    first, second, third, fourth = data["shots"]
-    assert (first["kind"], first["provider"], first["match"], first["source_s"]) == ("video", "douyin", 1.0, 0.85)
-    assert second["kind"] == "video" and second["hook_segment"] == 1
-    assert second["source_s"] + 0.5 <= first["source_s"] or second["source_s"] >= first["source_s"] + 0.5
+    hook, third, fourth = data["shots"]
+    # 1 klip nyambung buat shot 1-2. Mulai di detik 0.5: frame detik 1.0 (= ref) jatuh di tengah shot 2.
+    assert (hook["start_s"], hook["end_s"], hook["file"], hook["source_s"]) == (0.0, 0.6, "clips/shot_01.mp4", 0.5)
+    assert (hook["kind"], hook["provider"], hook["match"], hook["hook_segment"]) == ("video", "douyin", 0.5, 0)
+    assert abs(probe(paths.root / hook["file"], "t")["duration_s"] - 0.8) < 0.1
     assert (third["page_url"], third["match"]) == ("https://x.com/post", 1.0)
     assert fourth["match"] == 0.0 and fourth["query"] == "manual"
-    assert [s["file"] for s in data["shots"]] == ["clips/shot_01.mp4", "clips/shot_02.mp4", "clips/shot_03.jpg", "clips/shot_04.jpg"]
     status = read_json(paths.links_status_json)["groups"]
     assert status["hook"]["state"] == "ok" and status["horseshoe-crab"]["state"] == "ok"
     assert read_json(paths.clips_json) == data
+
+    save_links(paths.links_json, {"groups": {"hook": [{"url": "https://www.douyin.com/video/1"}, {"url": "https://a.b/2"}],
+                                             "horseshoe-crab": [{"url": "https://x.com/post"}]}})
+    files["https://a.b/2"] = [cut_video]
+    data = run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
+    assert [s["file"] for s in data["shots"]][:2] == ["clips/shot_01.mp4", "clips/shot_02.mp4"]
+
+
+def test_content_video_shots_do_not_overlap(tmp_path, cut_video):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = plan["groups"][1:]
+    plan["shots"] = [{**plan["shots"][2], "start_s": 0.6, "end_s": 0.9}, {**plan["shots"][3], "start_s": 0.9, "end_s": 1.2}]
+    save_links(paths.links_json, {"groups": {"horseshoe-crab": [{"url": "https://www.douyin.com/video/1"}]}})
+    data = run_fetch(paths, plan, obtain=lambda e, r: [cut_video], encoder=FakeEncoder(), **QUIET)
+    first, second = data["shots"]
+    assert first["kind"] == second["kind"] == "video"
+    assert second["source_s"] + 0.5 <= first["source_s"] or second["source_s"] >= first["source_s"] + 0.5
+    assert "tambah link" not in read_json(paths.links_status_json)["groups"]["horseshoe-crab"]["message"]
 
 
 def test_several_links_are_shared_and_reuse_warns(tmp_path):

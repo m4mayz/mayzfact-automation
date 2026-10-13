@@ -124,6 +124,44 @@ class Progress:
         self.save()
 
 
+def _continuous(group: dict, shots: list[dict], source: Source, paths: RunPaths, encoder: Encoder,
+                fg_min_ratio: float, progress: Progress) -> dict | None:
+    """Hook dengan 1 video: diputer nyambung sepanjang semua shot hook, nggak dipotong-potong.
+
+    Titik mulai = detik sample yang bikin rata-rata kemiripan tiap shot (frame di tengah shot vs ref-nya) paling tinggi.
+    None kalau video-nya kependekan, nanti balik ke cara potong per shot.
+    """
+    first, last = shots[0]["start_s"], shots[-1]["end_s"]
+    span = last - first
+    if source.total_s < span + TAIL_S:
+        return None
+    times = np.array(source.times)
+    sims = [source.vectors @ _target(shot, paths, encoder)[0] for shot in shots]
+    mids = [(shot["start_s"] + shot["end_s"]) / 2 - first for shot in shots]
+    best: tuple[float, float] | None = None
+    for start in source.times:
+        if start + span + TAIL_S > source.total_s + 1e-6:
+            break
+        score = float(np.mean([sim[int(np.argmin(np.abs(times - (start + mid))))] for sim, mid in zip(sims, mids)]))
+        if best is None or score > best[0]:
+            best = (score, start)
+    if best is None:
+        return None
+    score, start = best
+    head = shots[0]
+    out = normalize_local(head["index"], first, last, source.path, "video", start + span / 2, paths, fg_min_ratio)
+    url = source.entry.get("url")
+    progress.data["shots_done"] += len(shots)
+    progress.log(f"[fetch] shot {head['index'] + 1}-{shots[-1]['index'] + 1} ({group['label']}): 1 video nyambung, skor {score:.3f} dari detik {start:.1f}")
+    return {
+        "index": head["index"], "beat": head["beat"], "start_s": first, "end_s": last, **out,
+        "provider": link_kind(url) if url else "upload",
+        "provider_id": cache_key(url) if url else Path(source.entry["file"]).name,
+        "page_url": url or source.entry["file"], "author": "", "query": "manual",
+        "match": round(score, 4), "hook_segment": head["hook_segment"], "source_s": round(start, 2),
+    }
+
+
 def _run_group(group: dict, shots: list[dict], entries: list[dict], obtain: Callable[[dict, Path], list[Path]],
                paths: RunPaths, encoder: Encoder, fg_min_ratio: float, progress: Progress) -> tuple[list[dict], list[str]]:
     sources: list[Source] = []
@@ -141,6 +179,10 @@ def _run_group(group: dict, shots: list[dict], entries: list[dict], obtain: Call
         raise PipelineError("fetch", "; ".join(errors))
     clips, warnings = [], []
     progress.update(current=f"{group['label']}: milih potongan")
+    if group["id"] == "hook" and len(sources) == 1 and sources[0].kind == "video":
+        clip = _continuous(group, shots, sources[0], paths, encoder, fg_min_ratio, progress)
+        if clip is not None:
+            return [clip], warnings
     for shot in shots:
         number = shot["index"] + 1
         duration = shot["end_s"] - shot["start_s"]

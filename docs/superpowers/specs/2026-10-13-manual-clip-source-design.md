@@ -170,3 +170,9 @@ Bagian ini menggantikan aturan "1 link per shot" di bagian 3–5.
 - Tiap kelompok non-hook juga dapat 3 frame dari video source: `plan/<id>_0..2.jpg`, diambil di posisi 25/50/75% dari rentang waktu subjeknya.
 - Rentang dihitung dari transcript: mulai pas subjek pertama kali disebut (nama lengkap, atau kalau nggak ketemu, kata terakhirnya), sampai subjek berikutnya disebut. Kalau subjeknya nggak ketemu di transcript, kelompok itu tanpa frame.
 - Field: `groups[].ref_frames`. Frame ini cuma referensi di brief. Target pencocokan `fetch` buat shot isi tetap teks subjek.
+
+**Hook 1 video = nyambung (revisi Akmal 2026-10-13):**
+
+- Kalau kelompok `hook` cuma punya 1 link video, video itu diputer nyambung sepanjang semua shot hook. Hasilnya 1 entry di `clips.json`, `start_s` = awal shot hook pertama dan `end_s` = akhir shot hook terakhir.
+- Titik mulai dipilih dari detik sample yang ngasih rata-rata kemiripan paling tinggi. Kemiripan dihitung antara frame di tengah tiap shot dan frame referensi shot itu.
+- Kalau video-nya lebih pendek dari durasi hook + 0.2 detik, atau link-nya lebih dari 1, hook balik dipotong per shot.
