@@ -152,3 +152,30 @@ def test_intro_transition_goes_with_hook_sfx():
     assert with_hook["intro"] == {"durationInFrames": 7}
     assert build_timeline(CLIPS, 6.5, 0.5, audio={"bgm": None, "sfx": {}})["intro"] is None
     assert build_timeline(CLIPS, 6.5, 0.5)["intro"] is None
+
+def point(t, x=100):
+    return {"t": t, "x": x, "y": 200, "w": 300, "h": 400}
+
+
+def test_overlays_from_detections():
+    overlays = {"clips/shot_01.mp4": {"points": [point(0.5), point(1.5, x=150)]},
+                "clips/shot_02.jpg": {"points": None},
+                "clips/shot_03.mp4": {"points": [point(0.5)]}}
+    timeline = build_timeline(CLIPS, 6.5, 0.5, overlays=overlays)
+    assert timeline["overlays"] == [
+        {"type": "arrow", "color": "#ff2a2a", "from": 0, "durationInFrames": 72,
+         "keyframes": [{"frame": 15, "x": 100, "y": 200, "w": 300, "h": 400}, {"frame": 45, "x": 150, "y": 200, "w": 300, "h": 400}]},
+        {"type": "arrow", "color": "#ffd400", "from": 132, "durationInFrames": 63,
+         "keyframes": [{"frame": 15, "x": 100, "y": 200, "w": 300, "h": 400}]},
+    ]
+    assert build_timeline(CLIPS, 6.5, 0.5)["overlays"] == []
+
+
+def test_every_fifth_overlay_is_a_circle_and_cards_are_skipped():
+    shots = {"shots": [shot(f"clips/s{i}.mp4", "video", float(i), 1080, 1920) for i in range(6)]}
+    overlays = {f"clips/s{i}.mp4": {"points": [point(0.5)]} for i in range(6)}
+    types = [o["type"] for o in build_timeline(shots, 6.5, 0.5, overlays=overlays)["overlays"]]
+    assert types == ["arrow", "arrow", "arrow", "arrow", "circle", "arrow"]
+    covered = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN,
+                             overlays={"clips/shot_02.mp4": {"points": [point(0.5)]}})
+    assert covered["overlays"] == []

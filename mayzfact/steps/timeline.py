@@ -23,6 +23,8 @@ SFX_LEAD_FRAMES = 3  # whoosh mulai sedikit sebelum gambar ganti
 # Pembuka = bagian "masuk" transisi antar scene di source i2xag: scene muncul hampir putih + blur vertikal,
 # cepat tajam, terangnya pudar ke normal. Barengan SFX hook.
 INTRO_FRAMES = 7
+OVERLAY_COLORS = ("#ff2a2a", "#ffd400")
+CIRCLE_EVERY = 5  # tiap overlay ke-5 jadi lingkaran, sisanya panah (kayak source)
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
@@ -131,6 +133,25 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict]) -> tu
     return bgm, sfx
 
 
+def _overlays(detections: dict | None, entries: list[dict], countdown: list[dict]) -> list[dict]:
+    if not detections:
+        return []
+    out = []
+    for entry in entries:
+        points = (detections.get(entry["src"]) or {}).get("points")
+        covered = any(c["numberFrom"] <= entry["from"] < c["cardFrom"] + c["cardDuration"] for c in countdown)
+        if not points or covered:
+            continue
+        number = len(out) + 1
+        out.append({
+            "type": "circle" if number % CIRCLE_EVERY == 0 else "arrow",
+            "color": OVERLAY_COLORS[len(out) % len(OVERLAY_COLORS)],
+            "from": entry["from"], "durationInFrames": entry["durationInFrames"],
+            "keyframes": [{"frame": to_frame(p["t"]), "x": p["x"], "y": p["y"], "w": p["w"], "h": p["h"]} for p in points],
+        })
+    return out
+
+
 def build_timeline(
     clips: dict,
     audio_duration_s: float,
@@ -139,6 +160,7 @@ def build_timeline(
     script: dict | None = None,
     alignment: dict | None = None,
     audio: dict | None = None,
+    overlays: dict | None = None,
     log: Callable[[str], None] = print,
 ) -> dict:
     shots = clips["shots"]
@@ -167,6 +189,7 @@ def build_timeline(
         "shots": entries,
         "countdown": countdown,
         "captions": captions,
+        "overlays": _overlays(overlays, entries, countdown),
         "bgm": bgm,
         "sfx": sfx,
         "intro": {"durationInFrames": INTRO_FRAMES} if audio and "hook" in audio.get("sfx", {}) else None,
@@ -174,8 +197,8 @@ def build_timeline(
 
 
 def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float, script: dict | None = None,
-                 audio: dict | None = None, log: Callable[[str], None] = print) -> dict:
+                 audio: dict | None = None, overlays: dict | None = None, log: Callable[[str], None] = print) -> dict:
     data = build_timeline(clips, tts["duration_s"], fg_min_ratio, script=script, alignment=tts.get("alignment"),
-                          audio=audio, log=log)
+                          audio=audio, overlays=overlays, log=log)
     write_json_atomic(paths.timeline_json, data)
     return data

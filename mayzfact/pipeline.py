@@ -122,6 +122,7 @@ class Deps:
     plan: Callable[[RunPaths, Callable[[str], None]], dict] | None = None
     fetch: Callable[[RunPaths, Callable[[str], None]], dict] | None = None
     audio: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # None = video tanpa BGM/SFX
+    overlay: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # None = tanpa panah/lingkaran
 
 
 def real_deps(settings: Settings) -> Deps:
@@ -220,6 +221,17 @@ def real_deps(settings: Settings) -> Deps:
         return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=client,
                              writer=writer, log=log)
 
+    detectors: dict[str, object] = {}
+
+    def overlay(paths: RunPaths, log: Callable[[str], None]) -> dict:
+        from mayzfact.detect import Owlv2Detector
+        from mayzfact.overlay import prepare_overlays
+
+        detector = detectors.setdefault("owl", Owlv2Detector())
+        plan = read_json(paths.shots_plan_json) if paths.shots_plan_json.exists() else None
+        return prepare_overlays(paths, read_json(paths.clips_json), read_json(paths.script_json), plan, detector,
+                                fg_min_ratio=settings.fg_min_height_ratio, log=log)
+
     def close() -> None:
         while closers:
             closers.pop()()
@@ -239,6 +251,7 @@ def real_deps(settings: Settings) -> Deps:
         plan=plan,
         fetch=fetch,
         audio=audio,
+        overlay=overlay,
         close=close,
     )
 
@@ -328,7 +341,13 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
                 audio = deps.audio(paths, log)
             except Exception as exc:  # BGM/SFX cuma hiasan: timeline tetap jadi tanpa audio
                 log(f"[timeline] BGM/SFX dilewat: {type(exc).__name__}: {exc}")
+        overlays = None
+        if deps.overlay:
+            try:
+                overlays = deps.overlay(paths, log)
+            except Exception as exc:  # panah/lingkaran cuma hiasan
+                log(f"[timeline] panah/lingkaran dilewat: {type(exc).__name__}: {exc}")
         run_timeline(paths, read_json(paths.clips_json), read_json(paths.tts_json), fg_min_ratio=settings.fg_min_height_ratio,
-                     script=read_json(paths.script_json), audio=audio, log=log)
+                     script=read_json(paths.script_json), audio=audio, overlays=overlays, log=log)
     elif step == "render":
         deps.render(paths)

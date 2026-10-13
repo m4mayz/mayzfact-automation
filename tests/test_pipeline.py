@@ -418,3 +418,22 @@ def test_audio_failure_never_breaks_timeline(world):
     world.deps.audio = broken
     paths = run(world, no_render=True)
     assert read_json(paths.timeline_json)["bgm"] is None
+
+
+def test_timeline_step_uses_overlay_deps_and_survives_errors(world):
+    def fake_overlay(paths, log):
+        return {"clips/shot_01.mp4": {"points": [{"t": 0.5, "x": 1, "y": 2, "w": 3, "h": 4}]}}
+
+    world.deps.overlay = fake_overlay
+    paths = run(world, no_render=True)
+    first_src = read_json(paths.timeline_json)["shots"][0]["src"]
+    world.deps.overlay = lambda p, log: {first_src: {"points": [{"t": 0.5, "x": 1, "y": 2, "w": 3, "h": 4}]}}
+    paths = run(world, from_step="timeline", no_render=True)
+    assert read_json(paths.timeline_json)["overlays"][0]["type"] == "arrow"
+
+    def broken(paths, log):
+        raise RuntimeError("model rusak")
+
+    world.deps.overlay = broken
+    paths = run(world, from_step="timeline", no_render=True)
+    assert read_json(paths.timeline_json)["overlays"] == []
