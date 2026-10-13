@@ -18,6 +18,7 @@ CAPTION_HOLD_S = 0.4  # kata terakhir tetap tampil sebentar pas jeda
 CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
+TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
 _EDGE_PUNCT = re.compile(r"^[^\w']+|[^\w']+$")
 
 
@@ -47,7 +48,7 @@ def _shot_entries(shots: list[dict], total: int, fg_min_ratio: float) -> list[di
 
 
 def _countdown(beats: list[dict], alignment: dict, audio_duration_s: float, entries: list[dict],
-               total: int) -> tuple[list[dict], list[tuple[float, float]], set[str]]:
+               total: int, log: Callable[[str], None]) -> tuple[list[dict], list[tuple[float, float]], set[str]]:
     """Card per beat countdown + rentang detik beat countdown (buat ngumpetin caption) + kata-kata nama subjek."""
     texts = beat_texts(beats)
     timings = beat_timings(texts, alignment, audio_duration_s)
@@ -65,6 +66,10 @@ def _countdown(beats: list[dict], alignment: dict, audio_duration_s: float, entr
         card_from = to_frame(float(ends[offset + countdown.number_end]))
         card_end = min(to_frame(timing["end_s"]), total)
         shot = next(e for e in reversed(entries) if e["from"] <= card_from)
+        clip_frames = shot["durationInFrames"] + TAIL_FRAMES
+        if card_from - shot["from"] + (card_end - card_from) > clip_frames:  # run lama: beat countdown kepotong 2 shot
+            log(f"[timeline] klip card #{countdown.number} lebih pendek dari card-nya; "
+                "beat countdown ini masih kepotong. Ulang pakai --from plan (manual) atau --from clips (auto).")
         cards.append({
             "number": countdown.number, "label": countdown.subject.upper(),
             "numberFrom": number_from, "numberDuration": max(1, card_from - number_from),
@@ -114,10 +119,11 @@ def build_timeline(
     captions: list[dict] = []
     if script and alignment:
         try:
-            countdown, spans, subject_words = _countdown(script["beats"], alignment, audio_duration_s, entries, total)
+            countdown, spans, subject_words = _countdown(script["beats"], alignment, audio_duration_s, entries, total, log)
             captions = _captions(alignment, audio_duration_s, spans, subject_words, total)
-        except PipelineError as exc:  # caption/card cuma hiasan: timeline tetap jadi tanpa itu
-            log(f"[timeline] caption & countdown dilewat: {exc.message.splitlines()[0]}")
+        except (PipelineError, IndexError, KeyError) as exc:  # caption/card cuma hiasan: timeline tetap jadi tanpa itu
+            reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
+            log(f"[timeline] caption & countdown dilewat: {reason}")
             countdown, captions = [], []
     return {
         "fps": FPS,

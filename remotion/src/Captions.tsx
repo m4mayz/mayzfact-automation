@@ -32,8 +32,8 @@ const Word: React.FC<{caption: Caption}> = ({caption}) => {
 // Caption 1 kata per tampilan, timing-nya dari timeline.json.
 export const Captions: React.FC<{captions: Caption[]}> = ({captions}) => (
   <>
-    {captions.map((caption) => (
-      <Sequence key={`${caption.from}-${caption.text}`} from={caption.from} durationInFrames={caption.durationInFrames} layout="none">
+    {captions.map((caption, index) => (
+      <Sequence key={index} from={caption.from} durationInFrames={caption.durationInFrames} layout="none">
         <Word caption={caption} />
       </Sequence>
     ))}

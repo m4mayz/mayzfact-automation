@@ -102,3 +102,21 @@ def test_without_script_or_with_bad_alignment_timeline_still_builds():
     logs = []
     bad = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=fake_alignment("beda total", 1.0), log=logs.append)
     assert bad["captions"] == [] and bad["countdown"] == [] and logs
+
+
+def test_warns_when_card_runs_past_its_clip():
+    split = {"shots": [shot("clips/shot_01.mp4", "video", 0.0, 1080, 1920), shot("clips/shot_02.mp4", "video", 2.3, 1080, 1920),
+                       shot("clips/shot_02b.mp4", "video", 4.0, 1080, 1920), shot("clips/shot_03.jpg", "photo", 5.2, 1080, 1920)]}
+    logs = []
+    timeline = build_timeline(split, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, log=logs.append)
+    assert timeline["countdown"][0]["src"] == "clips/shot_02.mp4"
+    assert any("--from" in line for line in logs)
+    logs.clear()
+    build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, log=logs.append)
+    assert logs == []
+
+
+def test_short_end_times_fall_back_without_crash():
+    bad = {**ALIGN, "character_end_times_seconds": ALIGN["character_end_times_seconds"][:5]}
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=bad, log=lambda m: None)
+    assert timeline["captions"] == [] and timeline["countdown"] == []

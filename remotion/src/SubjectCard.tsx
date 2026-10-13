@@ -36,7 +36,7 @@ export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
           }}
         >
           {card.kind === 'video' ? (
-            <OffthreadVideo src={src} muted startFrom={card.clipOffset} style={media} />
+            <OffthreadVideo src={src} muted trimBefore={card.clipOffset} style={media} />
           ) : (
             <Img src={src} style={media} />
           )}
@@ -47,6 +47,9 @@ export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
             fontSize: 110,
             color: 'white',
             letterSpacing: 2,
+            textAlign: 'center',
+            maxWidth: 1000,
+            lineHeight: 1.05,
             transform: `scale(${scale})`,
             WebkitTextStroke: '6px black',
             paintOrder: 'stroke fill',
