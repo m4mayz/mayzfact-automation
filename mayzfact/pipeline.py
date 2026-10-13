@@ -214,7 +214,10 @@ def real_deps(settings: Settings) -> Deps:
         from mayzfact.audio import BGM_DIR, SFX_DIR, prepare_audio
 
         writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
-        return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=http(),
+        # Client sendiri yang cepat nyerah: myinstants lambat jangan sampai nahan step timeline.
+        client = httpx.Client(timeout=httpx.Timeout(10.0, connect=5.0), headers={"User-Agent": "mayzfact-automation/0.1"})
+        closers.append(client.close)
+        return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=client,
                              writer=writer, log=log)
 
     def close() -> None:
@@ -319,7 +322,12 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
             raise PipelineError(step, f"Step {step} butuh mode manual yang lengkap (deps.{step} kosong).")
         runner(paths, log)
     elif step == "timeline":
-        audio = deps.audio(paths, log) if deps.audio else None
+        audio = None
+        if deps.audio:
+            try:
+                audio = deps.audio(paths, log)
+            except Exception as exc:  # BGM/SFX cuma hiasan: timeline tetap jadi tanpa audio
+                log(f"[timeline] BGM/SFX dilewat: {type(exc).__name__}: {exc}")
         run_timeline(paths, read_json(paths.clips_json), read_json(paths.tts_json), fg_min_ratio=settings.fg_min_height_ratio,
                      script=read_json(paths.script_json), audio=audio, log=log)
     elif step == "render":

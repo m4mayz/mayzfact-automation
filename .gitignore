@@ -10,4 +10,5 @@ sources/
 remotion/node_modules/
 browser-profiles/
 assets/bgm/*
-assets/sfx/*.mp3
+assets/sfx/*
+!assets/sfx/sfx.json

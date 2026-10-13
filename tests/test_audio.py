@@ -96,3 +96,42 @@ def test_prepare_audio_copies_and_reuses_choice(tmp_path):
     write_json_atomic(paths.root / "audio.json", {"bgm": "deleted.mp3"})
     repick = prepare_audio(paths, SCRIPT, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, writer=writer, log=lambda m: None)
     assert repick["bgm"] == "audio/bgm/mystery.mp3"
+
+
+def test_ensure_sfx_stops_after_network_failure(tmp_path):
+    hits = []
+
+    def handler(request):
+        hits.append(request.url.path)
+        raise httpx.ConnectError("offline")
+
+    logs = []
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    got = ensure_sfx(tmp_path, client, {"hook": "a.mp3", "number": "b.mp3", "cut": "c.mp3"}, logs.append, sleep=lambda s: None)
+    assert got == {}
+    assert set(hits) == {"/media/sounds/a.mp3"}
+    assert any("dilewat" in line for line in logs)
+
+
+def test_ensure_sfx_skips_bad_names(tmp_path):
+    client, hits = serving({"ok.mp3": b"x"})
+    logs = []
+    got = ensure_sfx(tmp_path / "sfx", client, {"cut": None, "hook": "", "number": "../x.mp3", "subject": "ok.mp3"}, logs.append)
+    assert list(got) == ["subject"] and hits == ["/media/sounds/ok.mp3"]
+    assert len(logs) == 3
+
+
+def test_broken_json_files_do_not_crash(tmp_path):
+    bgm_dir, sfx_dir = tmp_path / "bgm", tmp_path / "sfx"
+    bgm_dir.mkdir()
+    sfx_dir.mkdir()
+    (bgm_dir / "mystery.mp3").write_bytes(b"m")
+    (sfx_dir / "sfx.json").write_text("{rusak", encoding="utf-8")
+    paths = RunPaths(tmp_path / "run")
+    paths.root.mkdir()
+    (paths.root / "audio.json").write_text('{"bgm": "mystery.mp3",}', encoding="utf-8")
+    client, _ = serving({name: b"s" for name in SFX_DEFAULTS.values()})
+    logs = []
+    audio = prepare_audio(paths, SCRIPT, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, writer=None, log=logs.append)
+    assert audio["bgm"] == "audio/bgm/mystery.mp3" and set(audio["sfx"]) == set(SFX_DEFAULTS)
+    assert any("audio.json" in line for line in logs) and any("sfx.json" in line for line in logs)
