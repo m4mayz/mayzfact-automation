@@ -116,7 +116,10 @@ class Progress:
         self.save()
 
     def save(self) -> None:
-        write_json_atomic(self.path, self.data)
+        try:
+            write_json_atomic(self.path, self.data)
+        except OSError:  # cuma buat tampilan, jangan sampai bikin fetch gagal
+            pass
 
     def update(self, **fields: Any) -> None:
         self.data.update(fields)
@@ -241,29 +244,33 @@ def run_fetch(
     links_total = sum(len(links["groups"].get(g["id"], [])) for g in plan["groups"])
     progress = Progress(paths.fetch_progress_json, links_total, len(plan["shots"]), log)
     shown: dict[Path, list[tuple[float, float]]] = {}
-    for group in plan["groups"]:
-        gid = group["id"]
-        if gid in missing:
-            status[gid] = {"state": "missing", "message": "belum diisi"}
-            problems.append(group["label"])
-            continue
-        try:
-            group_clips, warnings = _run_group(group, [shots[i] for i in group["shots"]], links["groups"][gid],
-                                               obtain, paths, encoder, fg_min_ratio, progress, shown)
-        except Exception as exc:  # error apa pun cukup bikin kelompok ini gagal, kelompok lain tetap diproses
-            status[gid] = {"state": "error", "message": _message(exc)[:600]}
-            problems.append(group["label"])
-            progress.log(f"[fetch] {group['label']}: {_message(exc).splitlines()[0][:160]}")
-            continue
-        clips += group_clips
-        status[gid] = {"state": "ok", "message": "; ".join(warnings)}
-    write_json_atomic(paths.links_status_json, {"groups": status})
-    if problems:
-        progress.update(state="awaiting", current="")
-        raise AwaitingInput(
-            "fetch", f"{len(problems)} kelompok perlu diisi/diganti: {', '.join(problems)}. Buka: mayzfact brief {paths.root.name}"
-        )
-    data = {"shots": sorted(clips, key=lambda clip: clip["index"])}
-    write_json_atomic(paths.clips_json, data)
-    progress.update(state="done", current="")
+    try:
+        for group in plan["groups"]:
+            gid = group["id"]
+            if gid in missing:
+                status[gid] = {"state": "missing", "message": "belum diisi"}
+                problems.append(group["label"])
+                continue
+            try:
+                group_clips, warnings = _run_group(group, [shots[i] for i in group["shots"]], links["groups"][gid],
+                                                   obtain, paths, encoder, fg_min_ratio, progress, shown)
+            except Exception as exc:  # error apa pun cukup bikin kelompok ini gagal, kelompok lain tetap diproses
+                status[gid] = {"state": "error", "message": _message(exc)[:600]}
+                problems.append(group["label"])
+                progress.log(f"[fetch] {group['label']}: {_message(exc).splitlines()[0][:160]}")
+                continue
+            clips += group_clips
+            status[gid] = {"state": "ok", "message": "; ".join(warnings)}
+        write_json_atomic(paths.links_status_json, {"groups": status})
+        if problems:
+            progress.update(state="awaiting", current="")
+            raise AwaitingInput(
+                "fetch", f"{len(problems)} kelompok perlu diisi/diganti: {', '.join(problems)}. Buka: mayzfact brief {paths.root.name}"
+            )
+        data = {"shots": sorted(clips, key=lambda clip: clip["index"])}
+        write_json_atomic(paths.clips_json, data)
+        progress.update(state="done", current="")
+    finally:
+        if progress.data["state"] == "running":  # crash / Ctrl+C: jangan biarin brief nampilin "Lagi jalan" selamanya
+            progress.update(state="failed", current="")
     return data

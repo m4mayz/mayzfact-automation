@@ -47,7 +47,7 @@ async function upload(group, input){
   if (!res.ok) { document.getElementById('msg').textContent = data.error; return; }
   location.reload();
 }
-const STATE_LABEL = {running: 'Lagi jalan', done: 'Selesai, siap review di Studio', awaiting: 'Berhenti: ada kelompok yang perlu diisi/diganti'};
+const STATE_LABEL = {running: 'Lagi jalan', done: 'Selesai, siap review di Studio', awaiting: 'Berhenti: ada kelompok yang perlu diisi/diganti', failed: 'Berhenti karena error, cek terminal'};
 let lastState = null;
 function line(box, tag, text){ const el = document.createElement(tag); el.textContent = text; box.appendChild(el); return el; }
 function bar(box, done, total){

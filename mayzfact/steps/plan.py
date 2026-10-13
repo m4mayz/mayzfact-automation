@@ -17,20 +17,43 @@ from mayzfact.timing import beat_timings
 SOURCE_FRAMES = (0.25, 0.5, 0.75)
 
 
-def _mention(transcript: list[dict], subject: str) -> float | None:
-    """Detik pertama subjek disebut di transcript (posisi di dalam snippet dikira-kira dari posisi huruf)."""
-    for needle in dict.fromkeys([subject.lower(), subject.lower().split()[-1]]):
-        for snippet in transcript:
-            text = snippet["text"].lower()
-            at = text.find(needle)
-            if at >= 0:
-                return snippet["start"] + snippet["duration"] * at / max(len(text), 1)
-    return None
+LIST_WINDOW_S = 5.0  # sebutan subjek lain sedekat ini = daftar (misalnya intro), bukan awal bagian subjek
+
+
+def _mentions(transcript: list[dict], subject: str) -> list[float]:
+    """Semua detik subjek disebut (kata utuh). Nama lengkap dulu; kalau nggak ada, kata terakhirnya."""
+    words = subject.lower().split()
+    for needle in dict.fromkeys([" ".join(words), words[-1]] if words else []):
+        pattern = re.compile(rf"\b{re.escape(needle)}\b")
+        times = [
+            snippet["start"] + snippet["duration"] * m.start() / max(len(snippet["text"]), 1)
+            for snippet in transcript for m in pattern.finditer(snippet["text"].lower())
+        ]
+        if times:
+            return sorted(times)
+    return []
 
 
 def subject_ranges(transcript: list[dict], subjects: list[str], total_s: float) -> dict[str, tuple[float, float]]:
-    """Rentang waktu tiap subjek di source: dari pertama disebut sampai subjek berikutnya disebut."""
-    found = sorted((t, s) for s in subjects if s and (t := _mention(transcript, s)) is not None)
+    """Rentang waktu tiap subjek di source: dari awal bagiannya sampai subjek berikutnya mulai.
+
+    Subjek dicari sesuai urutan beat. Sebutan yang deket sama sebutan subjek lain dianggap daftar (intro) dan dilewat.
+    """
+    subjects = [s.strip() for s in subjects if s and s.strip()]
+    found_all = {s: _mentions(transcript, s) for s in subjects}
+
+    def listed(t: float, subject: str) -> bool:
+        return any(abs(o - t) < LIST_WINDOW_S for other in subjects if other != subject for o in found_all[other])
+
+    found: list[tuple[float, str]] = []
+    after = 0.0
+    for subject in subjects:
+        later = [t for t in found_all[subject] if t >= after]
+        picks = [t for t in later if not listed(t, subject)] or later
+        if picks:
+            found.append((picks[0], subject))
+            after = picks[0]
+    found.sort()
     return {s: (t, found[i + 1][0] if i + 1 < len(found) else total_s) for i, (t, s) in enumerate(found)}
 
 
@@ -38,8 +61,10 @@ def group_of(shot: dict) -> tuple[str, str]:
     """(id, label) kelompok konteks shot: semua hook jadi 1, sisanya per subjek, atau per beat kalau subjeknya kosong."""
     if shot["hook_segment"] is not None:
         return "hook", "HOOK"
-    if shot["subject"]:
-        return re.sub(r"[^a-z0-9]+", "-", shot["subject"].lower()).strip("-") or f"beat-{shot['beat'] + 1}", shot["subject"]
+    subject = (shot["subject"] or "").strip()
+    slug = re.sub(r"[^a-z0-9]+", "-", subject.lower()).strip("-")
+    if slug:
+        return ("subject-hook" if slug == "hook" else slug), subject  # "hook" khusus buat kelompok hook
     return f"beat-{shot['beat'] + 1}", f"beat {shot['beat'] + 1}"
 
 

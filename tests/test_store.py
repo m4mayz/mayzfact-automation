@@ -1,3 +1,5 @@
+import os
+
 from mayzfact.store import RunPaths, read_json, tmp_path_for, write_json_atomic
 
 
@@ -38,3 +40,21 @@ def test_run_paths_manual_files(tmp_path):
     assert paths.links_status_json == tmp_path / "links_status.json"
     assert paths.manual_dir == tmp_path / "manual"
     assert issubclass(AwaitingInput, PipelineError)
+
+
+def test_atomic_write_retries_when_windows_locks_target(tmp_path, monkeypatch):
+    import mayzfact.store as store
+
+    real = os.replace
+    calls = []
+
+    def flaky(src, dst):
+        calls.append(dst)
+        if len(calls) < 3:
+            raise PermissionError(13, "file dibuka proses lain")
+        real(src, dst)
+
+    monkeypatch.setattr(store.os, "replace", flaky)
+    monkeypatch.setattr(store, "REPLACE_WAIT_S", 0.0)
+    write_json_atomic(tmp_path / "a.json", {"x": 1})
+    assert read_json(tmp_path / "a.json") == {"x": 1} and len(calls) == 3

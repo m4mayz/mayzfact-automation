@@ -208,7 +208,7 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Keputusan:**
   - Shot dikelompokin per konteks: semua shot hook jadi 1 kelompok `hook`, sisanya per subjek beat. Kalau subjeknya kosong, per beat.
   - Link/file diisi per kelompok. Boleh lebih dari 1 per kelompok.
-  - `fetch` yang ngebagi: tiap shot dapat potongan video yang nggak tumpang tindih, atau foto yang beda. Kalau stok kurang, boleh dipakai ulang plus peringatan.
+  - `fetch` yang ngebagi: tiap shot dapat potongan video yang nggak tumpang tindih, atau foto yang beda. Kalau stok kurang, kelompok error "tambah link". Revisi D-021: awalnya boleh dipakai ulang plus peringatan.
 - **Authority:** keputusan Akmal (chat 2026-10-13: "link yang ditambahin itu sesuai konteksnya, bukan sesuai shot").
 
 ## D-021 — 2026-10-13 — Klip nggak boleh tampil 2 kali, dan momen "Number X" pakai number card Remotion

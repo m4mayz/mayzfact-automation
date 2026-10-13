@@ -159,7 +159,7 @@ Bagian ini menggantikan aturan "1 link per shot" di bagian 3–5.
 - Shot diproses berurutan. Tiap shot milih opsi dengan skor tertinggi yang belum kepakai:
   - video: potongan yang nggak overlap sama potongan yang udah dipakai dari video yang sama
   - foto: foto yang belum dipakai
-- Kalau semua opsi udah kepakai, opsi terbaik dipakai ulang dan muncul peringatan "tambah link lagi".
+- Kalau semua opsi udah kepakai, kelompok jadi `error` dengan pesan "tambah link". Potongan yang udah tampil nggak dipakai ulang (lihat No-reuse, D-021).
 - `#n` = cuma foto ke-n dari post itu.
 - Target pembandingnya tetap sama: shot hook pakai frame referensinya sendiri, shot isi pakai teks subjek.
 - Status ditulis per kelompok: `missing` / `error` / `ok` + peringatan.

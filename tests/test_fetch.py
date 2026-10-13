@@ -205,3 +205,40 @@ def test_clip_used_in_earlier_group_is_not_shown_again(tmp_path):
         run_fetch(paths, plan, obtain=lambda e, r: same, encoder=FakeEncoder(), **QUIET)
     status = read_json(paths.links_status_json)["groups"]
     assert status["a"]["state"] == "ok" and status["b"]["state"] == "error"
+
+
+def test_progress_write_failure_never_breaks_fetch(tmp_path, cut_video, monkeypatch):
+    import mayzfact.steps.fetch as fetch_mod
+
+    real = fetch_mod.write_json_atomic
+
+    def locked(path, data):
+        if path.name == "fetch_progress.json":
+            raise PermissionError(13, "dibaca brief server")
+        real(path, data)
+
+    monkeypatch.setattr(fetch_mod, "write_json_atomic", locked)
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    save_links(paths.links_json, {"groups": {"hook": [{"url": "https://www.douyin.com/video/1"}],
+                                             "horseshoe-crab": [{"url": "https://x.com/post"}]}})
+    files = {"https://www.douyin.com/video/1": [cut_video], "https://x.com/post": photos(tmp_path, "other", "crab")}
+    data = run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
+    assert len(data["shots"]) == 3
+    assert all(s["state"] == "ok" for s in read_json(paths.links_status_json)["groups"].values())
+
+
+def test_progress_marked_failed_when_fetch_crashes(tmp_path, monkeypatch):
+    import mayzfact.steps.fetch as fetch_mod
+
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    save_links(paths.links_json, {"groups": {"hook": [{"url": "https://a.b/v"}]}})
+
+    def boom(*args, **kwargs):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(fetch_mod, "_run_group", boom)
+    with pytest.raises(KeyboardInterrupt):
+        run_fetch(paths, plan, obtain=lambda e, r: [], encoder=FakeEncoder(), **QUIET)
+    assert read_json(paths.fetch_progress_json)["state"] == "failed"

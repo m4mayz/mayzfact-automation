@@ -86,3 +86,25 @@ def test_plan_gives_source_frames_to_content_groups(tmp_path, cut_video):
     assert crab["ref_frames"] == ["plan/horseshoe-crab_0.jpg", "plan/horseshoe-crab_1.jpg", "plan/horseshoe-crab_2.jpg"]
     assert all((paths.root / f).exists() for f in crab["ref_frames"])
     assert data["groups"][0]["ref_frames"] == []
+
+
+def test_subject_ranges_skip_intro_lists_and_partial_words():
+    transcript = [
+        {"text": "I feel these ancient creatures, the horseshoe crab and the coelacanth, are wild", "start": 0.0, "duration": 6.0},
+        {"text": "Number five, eel. Slippery.", "start": 20.0, "duration": 4.0},
+        {"text": "Number four, horseshoe crab.", "start": 40.0, "duration": 4.0},
+        {"text": "Number three, coelacanth.", "start": 60.0, "duration": 4.0},
+    ]
+    ranges = subject_ranges(transcript, ["eel", "horseshoe crab", "coelacanth"], 120.0)
+    assert 20.0 <= ranges["eel"][0] < 24.0
+    assert 40.0 <= ranges["horseshoe crab"][0] < 44.0
+    assert 60.0 <= ranges["coelacanth"][0] < 64.0 and ranges["coelacanth"][1] == 120.0
+    assert subject_ranges(transcript, ["  "], 120.0) == {}
+
+
+def test_group_of_reserves_hook_and_ignores_blank_subject():
+    from mayzfact.steps.plan import group_of
+
+    base = {"hook_segment": None, "beat": 2}
+    assert group_of({**base, "subject": "Hook"}) == ("subject-hook", "Hook")
+    assert group_of({**base, "subject": "   "}) == ("beat-3", "beat 3")
