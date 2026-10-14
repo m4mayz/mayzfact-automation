@@ -87,7 +87,12 @@ def _groups(shots: list[dict]) -> list[dict]:
 def _source_frames(paths: RunPaths, source: dict, groups: list[dict], shots: list[dict],
                    download_source: Callable[[str, Path], Path]) -> None:
     """Frame source buat kelompok isi, dari rentang waktu subjeknya disebut di transcript. Buat referensi nyari klip."""
-    subjects = {g["id"]: shots[g["shots"][0]]["subject"] for g in groups if g["id"] != "hook"}
+
+    def anchor(group: dict) -> int:
+        # Urut card countdown: beat pembuka bisa nyebut subjek nomor 1 duluan, padahal di source dibahas paling akhir.
+        return next((i for i in group["shots"] if shots[i].get("countdown")), group["shots"][0])
+
+    subjects = {g["id"]: shots[g["shots"][0]]["subject"] for g in sorted(groups, key=anchor) if g["id"] != "hook"}
     if not any(subjects.values()):
         return
     src = paths.source_mp4

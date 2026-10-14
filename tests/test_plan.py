@@ -88,6 +88,26 @@ def test_plan_gives_source_frames_to_content_groups(tmp_path, cut_video):
     assert data["groups"][0]["ref_frames"] == []
 
 
+def test_teaser_about_number_one_does_not_hide_other_source_frames(tmp_path, cut_video):
+    # Beat pembuka nyebut subjek nomor 1 duluan, jadi kelompok kestrel paling awal. Di source, kestrel baru dibahas
+    # paling akhir, jadi frame source harus dicari urut card countdown, bukan urut shot pertama tiap kelompok.
+    text = "Number one is wild. Number two, shrike. Number one, kestrel."
+    script = {"beats": [{"text": "Number one is wild.", "media": "video", "queries": ["kestrel"], "subject": "kestrel"},
+                        {"text": "Number two, shrike.", "media": "video", "queries": ["shrike"], "subject": "shrike"},
+                        {"text": "Number one, kestrel.", "media": "video", "queries": ["kestrel"], "subject": "kestrel"}],
+              "fallback_query": "birds"}
+    source = {**SOURCE, "transcript": [{"text": "Number two, shrike.", "start": 0.2, "duration": 0.6},
+                                       {"text": "Number one, kestrel.", "start": 1.2, "duration": 0.6}]}
+    data = run_plan(
+        RunPaths(tmp_path / "run"), script, {"duration_s": 3.0, "alignment": fake_alignment(text, 2.9)}, source,
+        max_shot_s=2.5, hook_seconds=0.0, download_source=lambda vid, dest: shutil.copyfile(cut_video, dest) or dest,
+        describe=lambda infos, frames: {}, translate=lambda queries: {}, log=lambda m: None,
+    )
+    frames = {group["id"]: group["ref_frames"] for group in data["groups"]}
+    assert list(frames) == ["kestrel", "shrike"]
+    assert frames["shrike"] and frames["kestrel"]
+
+
 def test_subject_ranges_skip_intro_lists_and_partial_words():
     transcript = [
         {"text": "I feel these ancient creatures, the horseshoe crab and the coelacanth, are wild", "start": 0.0, "duration": 6.0},
