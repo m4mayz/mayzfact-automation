@@ -4,7 +4,7 @@ from mayzfact.emoji import EMOJI, ensure_emoji
 from mayzfact.errors import PipelineError
 from mayzfact.marks import beat_marks, normalize_marks, prepare_marks
 from mayzfact.models import BeatMark, BeatMarks
-from mayzfact.store import RunPaths, read_json
+from mayzfact.store import RunPaths, read_json, write_json_atomic
 
 OLD = {"beats": [{"text": "Check out five ancient beasts!"}, {"text": "Number five, horseshoe crab."},
                  {"text": "Tap like for amazing luck!"}]}
@@ -74,6 +74,30 @@ def test_old_script_without_working_gemini_has_no_marks(tmp_path):
     assert beat_marks(paths, OLD, None, log=logs.append) == [NONE] * 3
     assert beat_marks(paths, OLD, FakeWriter(error=PipelineError("timeline", "503")), log=logs.append) == [NONE] * 3
     assert len(logs) == 2 and not (paths.root / "annotations.json").exists()  # gagal nggak di-cache, run berikutnya coba lagi
+
+
+def test_cached_marks_are_cleaned_like_fresh_ones(tmp_path):
+    paths = RunPaths(tmp_path)
+    writer = FakeWriter(BeatMarks(items=[BeatMark(index=0, point=True, emoji="🧐", emoji_word="beasts")]))
+    beat_marks(paths, OLD, writer, **QUIET)
+    cache = read_json(paths.root / "annotations.json")
+    cache["beats"][0]["emoji"] = "\u26a1\ufe0f"  # diedit manual: ⚡ + VS16, nggak ada di daftar
+    write_json_atomic(paths.root / "annotations.json", cache)
+    assert beat_marks(paths, OLD, None, **QUIET)[0] == {"point": True, "emoji": "", "emoji_word": ""}
+
+
+def test_ensure_emoji_stops_after_network_failure(tmp_path):
+    hits = []
+
+    def handler(request):
+        hits.append(request.url.path)
+        raise httpx.ConnectError("offline")
+
+    logs = []
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    assert ensure_emoji(tmp_path, client, ["1f9d0", "1f340"], logs.append, sleep=lambda s: None) == {}
+    assert set(hits) == {"/s/e/notoemoji/latest/1f9d0/lottie.json"}
+    assert len(logs) == 1
 
 
 def test_ensure_emoji_downloads_once_and_skips_missing(tmp_path):

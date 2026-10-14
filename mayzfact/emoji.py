@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Callable
 
@@ -27,12 +28,19 @@ def allowed_emoji_line() -> str:
     return "Allowed emoji: " + " ".join(EMOJI)
 
 
-def ensure_emoji(emoji_dir: Path, client: httpx.Client, codepoints: list[str], log: Callable[[str], None]) -> dict[str, Path]:
-    """Download Lottie yang belum ada. Yang gagal dilewat (emoji-nya nggak tampil, video tetap jadi)."""
+def ensure_emoji(emoji_dir: Path, client: httpx.Client, codepoints: list[str], log: Callable[[str], None],
+                 sleep: Callable[[float], None] = time.sleep) -> dict[str, Path]:
+    """Download Lottie yang belum ada. Yang gagal dilewat (emoji-nya nggak tampil, video tetap jadi).
+
+    Kalau fonts.gstatic nggak bisa dihubungi, sisanya langsung dilewat: emoji cuma hiasan, jangan bikin pipeline nunggu.
+    """
     out: dict[str, Path] = {}
     for cp in codepoints:
         try:
-            out[cp] = download(client, NOTO_LOTTIE.format(cp=cp), emoji_dir / f"{cp}.json", step="timeline")
+            out[cp] = download(client, NOTO_LOTTIE.format(cp=cp), emoji_dir / f"{cp}.json", step="timeline", sleep=sleep)
         except PipelineError as exc:
+            if isinstance(exc.__cause__, httpx.TransportError):
+                log(f"[timeline] fonts.gstatic nggak bisa dihubungi, emoji yang belum ke-download dilewat: {exc.message[:120]}")
+                break
             log(f"[timeline] emoji {cp} gagal di-download, dilewat: {exc.message[:120]}")
     return out

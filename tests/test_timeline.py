@@ -273,6 +273,29 @@ def test_subscribe_waits_until_like_finishes():
                                {"kind": "subscribe", "from": 16, "durationInFrames": 27, "clickAt": 14}]
 
 
+def test_cta_ignores_like_meaning_similar_and_subscribers():
+    for text, kinds in [("For more creatures like this, subscribe now!", ["subscribe"]),
+                        ("Hit like and subscribe, subscribers get facts first!", ["like", "subscribe"])]:
+        timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script={"beats": [{"text": text}]}, alignment=fake_alignment(text, 4.9))
+        assert [c["kind"] for c in timeline["cta"]] == kinds, text
+
+
+def test_cta_fits_before_the_video_ends():
+    text = "It is old. Like and subscribe!"
+    timeline = build_timeline(CTA_CLIPS, 2.5, 0.5, script={"beats": [{"text": text}]}, alignment=fake_alignment(text, 2.5))
+    # subscribe di frame 50 bakal kepotong di frame 75, jadi dimajuin ke 48 biar flip terakhirnya kelihatan
+    assert timeline["cta"] == [{"kind": "like", "from": 28, "durationInFrames": 16, "clickAt": 4},
+                               {"kind": "subscribe", "from": 48, "durationInFrames": 27, "clickAt": 14}]
+
+
+def test_emoji_word_inside_a_hyphenated_word():
+    text = "Look at this prehistoric-looking fish."
+    marks = {"beats": [{"point": False, "emoji": "🧐", "emoji_word": "looking"}], "emoji": {"🧐": "emoji/1f9d0.json"}}
+    timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script={"beats": [{"text": text}]}, alignment=fake_alignment(text, 4.9),
+                              marks=marks)
+    assert timeline["emojis"][0]["from"] == 50  # di "prehistoric-looking", bukan di awal beat
+
+
 def test_emoji_that_collides_with_cta_starts_after_it():
     marks = {"beats": [{"point": False, "emoji": "🍀", "emoji_word": "subscribe"}, NO_MARK], "emoji": {"🍀": "emoji/1f340.json"}}
     timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script=CTA_SCRIPT, alignment=fake_alignment(CTA_TEXT, 4.9), marks=marks)

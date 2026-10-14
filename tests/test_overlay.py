@@ -166,3 +166,4 @@ def test_prepare_overlays_only_detects_clips_with_point_beats(tmp_path, make_vid
     assert list(out) == ["clips/long.mp4"]
     assert prepare_overlays(paths, clips, SCRIPT, None, FakeDetector(), fg_min_ratio=0.5, log=lambda m: None,
                             point_beats=set()) == {}
+    assert "clips/long.mp4" in read_json(paths.root / "overlays.json")  # hasil deteksi lama nggak ikut kebuang

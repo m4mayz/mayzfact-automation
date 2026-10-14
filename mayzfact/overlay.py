@@ -102,6 +102,7 @@ def prepare_overlays(
     subjects = beat_subjects(beats)
     cache_path = paths.root / "overlays.json"
     cache = read_json(cache_path) if cache_path.exists() else {}
+    store = dict(cache)  # klip yang dilewat run ini (bukan beat point) hasil deteksinya tetap disimpan
     out: dict[str, dict] = {}
     shots = clips["shots"]
     for position, clip in enumerate(shots):
@@ -128,8 +129,8 @@ def prepare_overlays(
         except Exception as exc:  # 1 klip gagal jangan bikin hasil klip lain ikut hilang
             log(f"[timeline] overlay {clip['file']} dilewat: {type(exc).__name__}: {exc}")
             continue
-        out[clip["file"]] = {"key": key, "points": points}
-        write_json_atomic(cache_path, out)  # simpan tiap klip: deteksi mahal, jangan sampai keulang
+        out[clip["file"]] = store[clip["file"]] = {"key": key, "points": points}
+        write_json_atomic(cache_path, store)  # simpan tiap klip: deteksi mahal, jangan sampai keulang
         log(f"[timeline] overlay {clip['file']} ({query}): " + (f"{len(points)} titik" if points else "subjek nggak kedeteksi, tanpa panah"))
-    write_json_atomic(cache_path, out)
+    write_json_atomic(cache_path, store)
     return out

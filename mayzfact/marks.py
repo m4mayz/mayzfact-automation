@@ -68,7 +68,7 @@ def beat_marks(paths: RunPaths, script: dict, writer: Any, *, log: Callable[[str
     if cache_path.exists():
         cached = read_json(cache_path)
         if cached.get("key") == key:
-            return cached["beats"]
+            return normalize_marks(beats, cached["beats"])
     if writer is None:
         log("[timeline] Gemini nggak ada, beat nggak ditandain (tanpa panah/emoji)")
         return [dict(_NONE) for _ in beats]

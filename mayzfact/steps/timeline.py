@@ -37,6 +37,9 @@ EMOJI_FIT_FRAMES = 30  # kata pemicu mepet card/CTA: mulainya dimajuin sampai em
 # CTA ngikutin source i2xag frame per frame: like 16 frame (klik di frame 3), subscribe 27 frame (klik di frame 13).
 CTA_FRAMES = {"like": 16, "subscribe": 27}
 CTA_CLICK = {"like": 4, "subscribe": 14}
+CTA_SUBSCRIBE = {"subscribe", "subscribed", "subscribing"}  # bukan "subscribers"/"subscription"
+CTA_LIKE_BEFORE = {"hit", "smash", "tap", "press", "drop", "leave", "give", "a"}  # "hit like", "drop a like"
+CTA_LIKE_AFTER = {"and", "&", "or", "comment", "share", "button"} | CTA_SUBSCRIBE  # "like and subscribe"
 CLICK_LEAD_FRAMES = 3  # puncak bunyi mouse-click di ±0.1 detik
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
@@ -230,18 +233,30 @@ def _clean(word: str) -> str:
     return _EDGE_PUNCT.sub("", word).lower()
 
 
-def _cta(words: list[dict], beat_of: list[int]) -> list[dict]:
-    out = []
+def _like_cta(words: list[dict], j: int) -> bool:
+    """"like" yang ngajak (hit like, like and subscribe), bukan yang artinya "mirip" (creatures like this)."""
+    before = _clean(words[j - 1]["text"]) if j else ""
+    after = words[j + 1]["text"].strip() if j + 1 < len(words) else ""
+    return _clean(words[j]["text"]) == "like" and (
+        words[j]["text"].rstrip().endswith(",") or before in CTA_LIKE_BEFORE or (_clean(after) or after) in CTA_LIKE_AFTER)
+
+
+def _cta(words: list[dict], beat_of: list[int], total: int) -> list[dict]:
+    """Like/subscribe pas narasinya ngajak. Subscribe nunggu like selesai, dan dua-duanya muat sebelum video habis."""
+    out: list[dict] = []
+    used: set[int] = set()
     for k, word in enumerate(words):
-        if not _clean(word["text"]).startswith("subscrib"):
+        start = to_frame(word["start_s"])
+        if _clean(word["text"]) not in CTA_SUBSCRIBE or (out and start < out[-1]["from"] + out[-1]["durationInFrames"]):
             continue
-        sub_from = to_frame(word["start_s"])
-        likes = [j for j in range(k) if beat_of[j] == beat_of[k] and _clean(words[j]["text"]) == "like"]
-        if likes:  # "like" di beat yang sama sebelum "subscribe" = CTA (bukan "looks like")
-            like_from = to_frame(words[likes[-1]]["start_s"])
-            out.append({"kind": "like", "from": like_from, "durationInFrames": CTA_FRAMES["like"],
-                        "clickAt": CTA_CLICK["like"]})
-            sub_from = max(sub_from, like_from + CTA_FRAMES["like"])  # di source subscribe nunggu like selesai
+        likes = [j for j in range(k) if beat_of[j] == beat_of[k] and j not in used and _like_cta(words, j)]
+        like_from = to_frame(words[likes[-1]]["start_s"]) if likes else None
+        sub_from = start if like_from is None else max(start, like_from + CTA_FRAMES["like"])
+        sub_from = min(sub_from, total - CTA_FRAMES["subscribe"])  # flip terakhirnya jangan kepotong akhir video
+        if like_from is not None:
+            used.add(likes[-1])
+            out.append({"kind": "like", "from": min(like_from, sub_from - CTA_FRAMES["like"]),
+                        "durationInFrames": CTA_FRAMES["like"], "clickAt": CTA_CLICK["like"]})
         out.append({"kind": "subscribe", "from": sub_from, "durationInFrames": CTA_FRAMES["subscribe"],
                     "clickAt": CTA_CLICK["subscribe"]})
     return out
@@ -270,7 +285,8 @@ def _emojis(words: list[dict], beat_of: list[int], marks: dict | None, cta: list
         in_beat = [w for w, b in zip(words, beat_of) if b == index]
         if not src or not in_beat:
             continue
-        at = next((i for i, w in enumerate(in_beat) if mark.get("emoji_word") and _clean(w["text"]) == mark["emoji_word"]), 0)
+        at = next((i for i, w in enumerate(in_beat)
+                   if mark.get("emoji_word") and mark["emoji_word"] in re.findall(r"[\w']+", w["text"].lower())), 0)
         start = to_frame(in_beat[at]["start_s"])
         for action in sorted(cta, key=lambda c: c["from"]):
             if action["from"] <= start < action["from"] + action["durationInFrames"]:
@@ -324,7 +340,7 @@ def build_timeline(
             captions = _captions(words, audio_duration_s, spans, subject_words, total)
             timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
             beat_of = _beat_of(words, script["beats"])
-            cta = _cta(words, beat_of)
+            cta = _cta(words, beat_of, total)
             emojis = _emojis(words, beat_of, marks, cta, countdown, total)
         except (PipelineError, IndexError, KeyError) as exc:  # caption/card cuma hiasan: timeline tetap jadi tanpa itu
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
