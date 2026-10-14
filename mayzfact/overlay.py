@@ -9,7 +9,12 @@ from mayzfact.countdown import parse_countdown
 from mayzfact.ffmpeg import extract_frame
 from mayzfact.media import FRAME_H, FRAME_W, fg_height, layout_for
 from mayzfact.steps.clips import beat_subjects
-from mayzfact.steps.timeline import FPS, OVERLAY_DELAY_FRAMES, OVERLAY_END_GAP_FRAMES, OVERLAY_MIN_FRAMES
+from mayzfact.steps.timeline import (
+    FPS,
+    OVERLAY_DELAY_FRAMES,
+    OVERLAY_END_GAP_FRAMES,
+    OVERLAY_MIN_FRAMES,
+)
 from mayzfact.store import RunPaths, read_json, write_json_atomic
 
 MIN_SCORE = 0.12
@@ -90,7 +95,7 @@ def _detect(paths: RunPaths, clip: dict, source: Path, query: str, detector: Any
 
 def prepare_overlays(
     paths: RunPaths, clips: dict, script: dict, plan: dict | None, detector: Any, *, fg_min_ratio: float,
-    log: Callable[[str], None],
+    log: Callable[[str], None], point_beats: set[int] | None = None,
 ) -> dict[str, dict]:
     """{file: {"key", "points": [{"t", "x", "y", "w", "h"}] | None}}. Hasil di-cache di overlays.json."""
     beats = script["beats"]
@@ -98,7 +103,12 @@ def prepare_overlays(
     cache_path = paths.root / "overlays.json"
     cache = read_json(cache_path) if cache_path.exists() else {}
     out: dict[str, dict] = {}
-    for clip in clips["shots"]:
+    shots = clips["shots"]
+    for position, clip in enumerate(shots):
+        if point_beats is not None:  # cuma klip yang nutup beat point (D-023 #4); klip panjang bisa nutup beberapa beat
+            next_beat = shots[position + 1]["beat"] if position + 1 < len(shots) else len(beats)
+            if not point_beats.intersection(range(clip["beat"], max(clip["beat"] + 1, next_beat))):
+                continue
         countdown = parse_countdown(beats[clip["beat"]].get("text", ""))
         if countdown and countdown.number is not None:
             continue  # shot ini ketutup card countdown

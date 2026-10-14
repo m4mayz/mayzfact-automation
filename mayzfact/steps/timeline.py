@@ -19,7 +19,7 @@ CAPTION_HOLD_S = 0.4  # kata terakhir tetap tampil sebentar pas jeda
 CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
-SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.35, "overlay": 0.35}
+SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.35, "overlay": 0.35, "emoji": 0.6, "click": 0.8}
 SFX_LEAD_FRAMES = 3  # whoosh mulai sedikit sebelum gambar ganti (puncak whoosh-clean di ±0.1 detik)
 # Pembuka = bagian "masuk" transisi antar scene di source i2xag: scene muncul hampir putih + blur vertikal,
 # cepat tajam, terangnya pudar ke normal. Barengan SFX hook.
@@ -30,6 +30,14 @@ CIRCLE_EVERY = 5  # tiap overlay ke-5 jadi lingkaran, sisanya panah (kayak sourc
 OVERLAY_DELAY_FRAMES = 6
 OVERLAY_END_GAP_FRAMES = 15
 OVERLAY_MIN_FRAMES = 15
+# Emoji animasi (Fase 3C-2): muncul di kata pemicunya, tampil sampai akhir beat (maks 2.5 detik).
+EMOJI_MAX_FRAMES = 75
+EMOJI_MIN_FRAMES = 20
+# CTA ngikutin source i2xag frame per frame: like 16 frame (klik di frame 3), subscribe 27 frame (klik di frame 13).
+CTA_FRAMES = {"like": 16, "subscribe": 27}
+CTA_CLICK = {"like": 3, "subscribe": 13}
+CTA_MIN_LIKE_FRAMES = 6
+CLICK_LEAD_FRAMES = 3  # puncak bunyi mouse-click di ±0.1 detik
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
@@ -129,7 +137,8 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
     return captions
 
 
-def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overlays: list[dict]) -> tuple[dict | None, list[dict]]:
+def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overlays: list[dict],
+           emojis: list[dict], cta: list[dict]) -> tuple[dict | None, list[dict]]:
     if not audio:
         return None, []
     bgm = {"src": audio["bgm"], "volume": BGM_VOLUME, "fadeOutFrames": BGM_FADE_FRAMES} if audio.get("bgm") else None
@@ -150,11 +159,32 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
             add("cut", entry["from"] - SFX_LEAD_FRAMES)
     for overlay in overlays:
         add("overlay", overlay["from"])
+    for emoji in emojis:
+        add("emoji", emoji["from"])
+    for action in cta:
+        add("click", action["from"] + action["clickAt"] - CLICK_LEAD_FRAMES)
     sfx.sort(key=lambda s: s["from"])
     return bgm, sfx
 
 
-def _overlays(detections: dict | None, entries: list[dict], countdown: list[dict]) -> list[dict]:
+def _point_ranges(timings: list[dict], marks: dict | None) -> list[tuple[int, int]] | None:
+    """Rentang frame beat point (beat point yang nyambung digabung). None = nggak ada info tanda → semua shot."""
+    if marks is None or not timings:
+        return None
+    ranges: list[tuple[int, int]] = []
+    for timing, mark in zip(timings, marks["beats"]):
+        if not mark.get("point"):
+            continue
+        start, end = to_frame(timing["start_s"]), to_frame(timing["end_s"])
+        if ranges and ranges[-1][1] >= start:
+            ranges[-1] = (ranges[-1][0], end)
+        else:
+            ranges.append((start, end))
+    return ranges
+
+
+def _overlays(detections: dict | None, entries: list[dict], countdown: list[dict],
+              point_ranges: list[tuple[int, int]] | None) -> list[dict]:
     if not detections:
         return []
     out = []
@@ -163,17 +193,79 @@ def _overlays(detections: dict | None, entries: list[dict], countdown: list[dict
         covered = any(c["numberFrom"] <= entry["from"] < c["cardFrom"] + c["cardDuration"] for c in countdown)
         if not points or covered:
             continue
-        duration = entry["durationInFrames"] - OVERLAY_DELAY_FRAMES - OVERLAY_END_GAP_FRAMES
-        if duration < OVERLAY_MIN_FRAMES:
+        entry_end = entry["from"] + entry["durationInFrames"]
+        windows = [(entry["from"], entry_end)] if point_ranges is None else [
+            (max(entry["from"], a), min(entry_end, b)) for a, b in point_ranges if a < entry_end and b > entry["from"]]
+        for start, end in windows:  # klip panjang (hook nyambung) bisa nutup beberapa beat point
+            begin = start + OVERLAY_DELAY_FRAMES
+            duration = end - OVERLAY_END_GAP_FRAMES - begin
+            if duration < OVERLAY_MIN_FRAMES:
+                continue
+            number = len(out) + 1
+            out.append({
+                "type": "circle" if number % CIRCLE_EVERY == 0 else "arrow",
+                "color": OVERLAY_COLORS[len(out) % len(OVERLAY_COLORS)],
+                "from": begin, "durationInFrames": duration,
+                "keyframes": [{"frame": entry["from"] + to_frame(p["t"]) - begin, "x": p["x"], "y": p["y"], "w": p["w"], "h": p["h"]}
+                              for p in points],
+            })
+    return out
+
+
+def _beat_of(words: list[dict], beats: list[dict]) -> list[int]:
+    """Index beat buat tiap kata (dari posisi karakter di teks gabungan)."""
+    texts = beat_texts(beats)
+    starts = beat_offsets(texts)
+    out = []
+    for word in words:
+        index = 0
+        for i, offset in enumerate(starts):
+            if word["char_start"] >= offset:
+                index = i
+        out.append(index)
+    return out
+
+
+def _clean(word: str) -> str:
+    return _EDGE_PUNCT.sub("", word).lower()
+
+
+def _cta(words: list[dict], beat_of: list[int]) -> list[dict]:
+    out = []
+    for k, word in enumerate(words):
+        if not _clean(word["text"]).startswith("subscrib"):
             continue
-        number = len(out) + 1
-        out.append({
-            "type": "circle" if number % CIRCLE_EVERY == 0 else "arrow",
-            "color": OVERLAY_COLORS[len(out) % len(OVERLAY_COLORS)],
-            "from": entry["from"] + OVERLAY_DELAY_FRAMES, "durationInFrames": duration,
-            "keyframes": [{"frame": to_frame(p["t"]) - OVERLAY_DELAY_FRAMES, "x": p["x"], "y": p["y"], "w": p["w"], "h": p["h"]}
-                          for p in points],
-        })
+        sub_from = to_frame(word["start_s"])
+        likes = [j for j in range(k) if beat_of[j] == beat_of[k] and _clean(words[j]["text"]) == "like"]
+        if likes:  # "like" di beat yang sama sebelum "subscribe" = CTA (bukan "looks like")
+            like_from = to_frame(words[likes[-1]]["start_s"])
+            gap = min(CTA_FRAMES["like"], sub_from - like_from)
+            if gap >= CTA_MIN_LIKE_FRAMES:
+                out.append({"kind": "like", "from": like_from, "durationInFrames": gap, "clickAt": CTA_CLICK["like"]})
+        out.append({"kind": "subscribe", "from": sub_from, "durationInFrames": CTA_FRAMES["subscribe"],
+                    "clickAt": CTA_CLICK["subscribe"]})
+    return out
+
+
+def _emojis(words: list[dict], beat_of: list[int], timings: list[dict], marks: dict | None, cta: list[dict],
+            total: int) -> list[dict]:
+    if not marks:
+        return []
+    out = []
+    for index, mark in enumerate(marks["beats"]):
+        src = marks.get("emoji", {}).get(mark.get("emoji") or "")
+        if not src or index >= len(timings):
+            continue
+        in_beat = [w for w, b in zip(words, beat_of) if b == index]
+        if not in_beat:
+            continue
+        hit = next((w for w in in_beat if mark.get("emoji_word") and _clean(w["text"]) == mark["emoji_word"]), in_beat[0])
+        start = to_frame(hit["start_s"])
+        duration = min(min(to_frame(timings[index]["end_s"]), total) - start, EMOJI_MAX_FRAMES)
+        clash = any(start < c["from"] + c["durationInFrames"] and c["from"] < start + duration for c in cta)
+        if duration < EMOJI_MIN_FRAMES or clash:
+            continue
+        out.append({"src": src, "from": start, "durationInFrames": duration})
     return out
 
 
@@ -186,6 +278,7 @@ def build_timeline(
     alignment: dict | None = None,
     audio: dict | None = None,
     overlays: dict | None = None,
+    marks: dict | None = None,
     voice_envelope: Any = None,
     log: Callable[[str], None] = print,
 ) -> dict:
@@ -196,6 +289,9 @@ def build_timeline(
     entries = _shot_entries(shots, total, fg_min_ratio)
     countdown: list[dict] = []
     captions: list[dict] = []
+    emojis: list[dict] = []
+    cta: list[dict] = []
+    timings: list[dict] = []
     if script and alignment:
         try:
             words = word_timings(alignment)
@@ -203,12 +299,16 @@ def build_timeline(
                 words = snap_word_starts(words, voice_envelope)
             countdown, spans, subject_words = _countdown(script["beats"], alignment, words, audio_duration_s, entries, total, log)
             captions = _captions(words, audio_duration_s, spans, subject_words, total)
+            timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
+            beat_of = _beat_of(words, script["beats"])
+            cta = _cta(words, beat_of)
+            emojis = _emojis(words, beat_of, timings, marks, cta, total)
         except (PipelineError, IndexError, KeyError) as exc:  # caption/card cuma hiasan: timeline tetap jadi tanpa itu
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
             log(f"[timeline] caption & countdown dilewat: {reason}")
-            countdown, captions = [], []
-    shown = _overlays(overlays, entries, countdown)
-    bgm, sfx = _sound(audio, entries, countdown, shown)
+            countdown, captions, emojis, cta, timings = [], [], [], [], []
+    shown = _overlays(overlays, entries, countdown, _point_ranges(timings, marks))
+    bgm, sfx = _sound(audio, entries, countdown, shown, emojis, cta)
     return {
         "fps": FPS,
         "width": FRAME_W,
@@ -220,6 +320,8 @@ def build_timeline(
         "countdown": countdown,
         "captions": captions,
         "overlays": shown,
+        "emojis": emojis,
+        "cta": cta,
         "bgm": bgm,
         "sfx": sfx,
         "intro": {"durationInFrames": INTRO_FRAMES} if audio and "hook" in audio.get("sfx", {}) else None,
@@ -227,7 +329,8 @@ def build_timeline(
 
 
 def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float, script: dict | None = None,
-                 audio: dict | None = None, overlays: dict | None = None, log: Callable[[str], None] = print) -> dict:
+                 audio: dict | None = None, overlays: dict | None = None, marks: dict | None = None,
+                 log: Callable[[str], None] = print) -> dict:
     envelope = None
     if paths.voice_mp3.exists():
         from mayzfact.voice_onset import voice_envelope
@@ -237,6 +340,6 @@ def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float
         except Exception as exc:  # cuma buat ngepasin timing caption/card; tanpa ini tetap jalan pakai alignment
             log(f"[timeline] energi suara gagal dibaca, timing pakai alignment: {exc}")
     data = build_timeline(clips, tts["duration_s"], fg_min_ratio, script=script, alignment=tts.get("alignment"),
-                          audio=audio, overlays=overlays, voice_envelope=envelope, log=log)
+                          audio=audio, overlays=overlays, marks=marks, voice_envelope=envelope, log=log)
     write_json_atomic(paths.timeline_json, data)
     return data

@@ -421,19 +421,47 @@ def test_audio_failure_never_breaks_timeline(world):
 
 
 def test_timeline_step_uses_overlay_deps_and_survives_errors(world):
-    def fake_overlay(paths, log):
+    def fake_overlay(paths, log, point_beats=None):
         return {"clips/shot_01.mp4": {"points": [{"t": 0.5, "x": 1, "y": 2, "w": 3, "h": 4}]}}
 
     world.deps.overlay = fake_overlay
     paths = run(world, no_render=True)
     first_src = read_json(paths.timeline_json)["shots"][0]["src"]
-    world.deps.overlay = lambda p, log: {first_src: {"points": [{"t": 0.5, "x": 1, "y": 2, "w": 3, "h": 4}]}}
+    world.deps.overlay = lambda p, log, point_beats=None: {first_src: {"points": [{"t": 0.5, "x": 1, "y": 2, "w": 3, "h": 4}]}}
     paths = run(world, from_step="timeline", no_render=True)
     assert read_json(paths.timeline_json)["overlays"][0]["type"] == "arrow"
 
-    def broken(paths, log):
+    def broken(paths, log, point_beats=None):
         raise RuntimeError("model rusak")
 
     world.deps.overlay = broken
     paths = run(world, from_step="timeline", no_render=True)
     assert read_json(paths.timeline_json)["overlays"] == []
+
+
+
+def test_timeline_step_uses_beat_marks_for_emoji_and_arrows(world):
+    seen = {}
+
+    def fake_marks(paths, log):
+        beats = read_json(paths.script_json)["beats"]
+        marks = [{"point": False, "emoji": "", "emoji_word": ""} for _ in beats]
+        marks[0] = {"point": True, "emoji": "🧐", "emoji_word": ""}
+        return {"beats": marks, "emoji": {"🧐": "emoji/1f9d0.json"}}
+
+    def fake_overlay(paths, log, point_beats=None):
+        seen["point_beats"] = point_beats
+        return {}
+
+    world.deps.marks, world.deps.overlay = fake_marks, fake_overlay
+    paths = run(world, no_render=True)
+    timeline = read_json(paths.timeline_json)
+    assert seen["point_beats"] == {0}
+    assert timeline["emojis"][0]["src"] == "emoji/1f9d0.json"
+
+    def broken(paths, log):
+        raise RuntimeError("gemini rusak")
+
+    world.deps.marks = broken
+    paths = run(world, from_step="timeline", no_render=True)
+    assert read_json(paths.timeline_json)["emojis"] == []

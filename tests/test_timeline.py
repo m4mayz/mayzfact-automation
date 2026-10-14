@@ -208,3 +208,55 @@ def test_overlay_skipped_when_shot_too_short():
     short = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920), shot("clips/b.mp4", "video", 0.8, 1080, 1920)]}
     overlays = {"clips/a.mp4": {"points": [point(0.2)]}}
     assert build_timeline(short, 3.0, 0.5, overlays=overlays)["overlays"] == []
+
+
+
+NO_MARK = {"point": False, "emoji": "", "emoji_word": ""}
+
+
+def test_emoji_pops_on_its_word_until_beat_end():
+    marks = {"beats": [{"point": False, "emoji": "🧐", "emoji_word": "creature"}, NO_MARK,
+                       {"point": False, "emoji": "😮", "emoji_word": ""}],
+             "emoji": {"🧐": "emoji/1f9d0.json", "😮": "emoji/1f62e.json"}}
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, marks=marks,
+                              audio={"bgm": None, "sfx": {"emoji": "audio/sfx/pop.mp3"}})
+    assert timeline["emojis"] == [{"src": "emoji/1f9d0.json", "from": 39, "durationInFrames": 30},
+                                  {"src": "emoji/1f62e.json", "from": 156, "durationInFrames": 39}]
+    assert timeline["sfx"] == [{"src": "audio/sfx/pop.mp3", "from": 39, "volume": 0.6},
+                               {"src": "audio/sfx/pop.mp3", "from": 156, "volume": 0.6}]
+    assert build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN)["emojis"] == []
+
+
+CTA_TEXT = "Tap like and subscribe now. It looks like a tank."
+CTA_SCRIPT = {"beats": [{"text": "Tap like and subscribe now."}, {"text": "It looks like a tank."}]}
+CTA_CLIPS = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920)]}
+
+
+def test_cta_like_then_subscribe_with_clicks():
+    timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script=CTA_SCRIPT, alignment=fake_alignment(CTA_TEXT, 4.9),
+                              audio={"bgm": None, "sfx": {"click": "audio/sfx/click.mp3"}})
+    # "like" di beat ke-2 artinya "mirip", bukan CTA.
+    assert timeline["cta"] == [{"kind": "like", "from": 12, "durationInFrames": 16, "clickAt": 3},
+                               {"kind": "subscribe", "from": 39, "durationInFrames": 27, "clickAt": 13}]
+    assert timeline["sfx"] == [{"src": "audio/sfx/click.mp3", "from": 12, "volume": 0.8},
+                               {"src": "audio/sfx/click.mp3", "from": 49, "volume": 0.8}]
+
+
+def test_emoji_that_collides_with_cta_is_dropped():
+    marks = {"beats": [{"point": False, "emoji": "🍀", "emoji_word": "subscribe"}, NO_MARK], "emoji": {"🍀": "emoji/1f340.json"}}
+    timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script=CTA_SCRIPT, alignment=fake_alignment(CTA_TEXT, 4.9), marks=marks)
+    assert timeline["emojis"] == []
+
+
+def test_overlays_only_inside_point_beats():
+    overlays = {"clips/shot_01.mp4": {"points": [point(0.5)]}, "clips/shot_03.jpg": {"points": [point(0.2)]}}
+    marks = {"beats": [NO_MARK, NO_MARK, dict(NO_MARK, point=True)], "emoji": {}}
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, overlays=overlays, marks=marks)
+    assert [(o["from"], o["durationInFrames"]) for o in timeline["overlays"]] == [(162, 18)]
+    # Klip panjang yang nutup beberapa beat (kayak hook nyambung): panah cuma di rentang beat point.
+    one = {"shots": [shot("clips/long.mp4", "video", 0.0, 1080, 1920)]}
+    timeline = build_timeline(one, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, marks=marks,
+                              overlays={"clips/long.mp4": {"points": [point(0.5), point(6.0, x=300)]}})
+    long = timeline["overlays"][0]
+    assert (long["from"], long["durationInFrames"]) == (162, 18)
+    assert long["keyframes"][0]["frame"] == 15 - 162 and long["keyframes"][1]["frame"] == 180 - 162
