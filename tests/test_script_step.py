@@ -37,6 +37,13 @@ def test_generate_script_passes_on_first_try():
     assert "\"subject\"" in writer.prompts[0][0]
 
 
+def test_generate_script_keeps_beat_marks_from_the_writer():
+    script = make_script()
+    script.beats[0] = script.beats[0].model_copy(update={"point": True, "emoji": "🧐", "emoji_word": "w0x1"})
+    data = generate_script(SOURCE, FakeWriter([script]), **PARAMS)
+    assert (data["beats"][0]["point"], data["beats"][0]["emoji"], data["beats"][0]["emoji_word"]) == (True, "🧐", "w0x1")
+
+
 def test_generate_script_retries_once_with_feedback():
     writer = FakeWriter([make_script(words_per_beat=4), make_script()])
     data = generate_script(SOURCE, writer, **PARAMS)
