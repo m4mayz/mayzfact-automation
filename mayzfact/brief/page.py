@@ -100,7 +100,44 @@ async function pollProgress(){
   } catch (e) {}
 }
 pollProgress(); setInterval(pollProgress, 2000);
-function copyText(t){ navigator.clipboard.writeText(t); document.getElementById('msg').textContent = `Ke-copy: ${t}`; }
+function copyText(t, btn){
+  function done(){
+    document.getElementById('msg').textContent = `Ke-copy: ${t}`;
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✓ ' + orig;
+      btn.style.background = '#dcfce7';
+      btn.style.borderColor = '#86efac';
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.background = '';
+        btn.style.borderColor = '';
+      }, 1200);
+    }
+  }
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(t).then(done).catch(() => fallbackCopy(t, done));
+  } else {
+    fallbackCopy(t, done);
+  }
+}
+function fallbackCopy(t, cb){
+  const ta = document.createElement('textarea');
+  ta.value = t;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  ta.style.top = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    if (cb) cb();
+  } catch (e) {
+    document.getElementById('msg').textContent = `Gagal copy: ${t}`;
+  }
+  document.body.removeChild(ta);
+}
 """
 
 
@@ -117,7 +154,7 @@ def _shot_row(shot: dict, group: dict, val: str, state: dict) -> str:
             for k in group.get("keywords", {}).get(lang, []):
                 kw_list.append(k)
     keywords = "".join(
-        f'<button type="button" onclick=\'copyText({escape(json.dumps(k), quote=True)})\'>{escape(k)}</button>'
+        f'<button type="button" onclick=\'copyText({escape(json.dumps(k), quote=True)}, this)\'>{escape(k)}</button>'
         for k in kw_list
     )
 
