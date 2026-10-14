@@ -4,7 +4,7 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 
 ## D-001 — 2026-09-30 — Project dikerjain bertahap dalam 4 fase
 
-- **Status:** accepted. Urutan Fase 2 dan 3 masih boleh dituker.
+- **Status:** accepted. Urutan Fase 2 dan 3 masih boleh dituker. Poin 4 diganti D-025.
 - **Konteks:** Goal akhir project ini shorts yang kualitas edit-nya setara source `i2xag_1OJfM`, sesuai `flow.svg`. Kalau dikerjain sekaligus, scope-nya terlalu besar.
 - **Keputusan:**
   1. Fase 1: pipeline dasar (naskah ulang + TTS + klip stock).
@@ -278,4 +278,16 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
      - "like" cuma dihitung kalau ngajak (misalnya "hit like" atau "like and subscribe"), bukan yang artinya "mirip".
      - Subscribe nunggu like selesai, dan dua-duanya harus muat sebelum video habis.
   5. **Panah/lingkaran** cuma di shot yang beat-nya `point`. Beat tanpa tanda nggak dapat panah. Ini nutup D-023 #4.
+- **Authority:** Akmal (chat 2026-10-14).
+
+## D-025 — 2026-10-14 — Fase 4 jadi versi harness: project dijalanin lewat AI agent
+
+- **Status:** accepted. Ngegantiin D-001 poin 4.
+- **Konteks:** Alur sekarang tetap butuh Akmal di tiap video: isi link klip, review di Studio, oke-in render. Jadi pipeline yang jalan sendiri pakai cron udah nggak relevan. Akmal mau project ini dipakai lewat harness AI agent: Claude Code, Codex, OpenCode, Antigravity.
+- **Keputusan:**
+  1. Aturan main agent ada di `AGENTS.md`. `CLAUDE.md` cukup import `AGENTS.md`, karena Claude Code bacanya `CLAUDE.md`.
+  2. Alur bikin 1 video ada di skill `.agents/skills/bikin-short/SKILL.md`. Codex, OpenCode, dan Antigravity nemu skill ini otomatis, sedangkan Claude Code diarahin lewat `CLAUDE.md`.
+  3. Metadata upload (judul, deskripsi, credit klip, jadwal) ditulis agent ke `runs/<id>/upload.md`. Nggak perlu kode baru.
+  4. Akmal upload sendiri di YouTube Studio. Upload lewat YouTube Data API ditunda: project Google Cloud yang belum lolos audit bakal ngunci video upload-annya jadi private.
+  5. Milih source otomatis jadi opsional. Akmal tetap ngasih URL, atau agent nyariin kandidat.
 - **Authority:** Akmal (chat 2026-10-14).

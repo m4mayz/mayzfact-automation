@@ -362,3 +362,26 @@
 ## Delivery
 
 - Next: Fase 4 (otomatis + upload).
+
+---
+
+# Handoff — Fase 4 (versi harness AI agent)
+
+- **Updated:** 2026-10-14, Claude Code (Opus 5.5)
+- **Goal & scope:** D-025. Project dipakai lewat harness AI agent (Claude Code, Codex, OpenCode, Antigravity), bukan lewat cron.
+
+## Selesai
+
+- `AGENTS.md`: aturan main buat semua agent, mencakup keamanan, biaya, review Studio, laporan bug visual, git, dan gotcha Windows.
+- `CLAUDE.md`: import `AGENTS.md`, plus catatan soal lokasi skill.
+- `.agents/skills/bikin-short/SKILL.md`: alur 1 video dari source sampai `upload.md`, dengan checkpoint buat Akmal.
+- `README.md`: nambah bagian review di Studio, aset, dan cara pakai bareng AI agent.
+
+## Masalah terbuka
+
+1. Belum dites di Codex, OpenCode, maupun Antigravity. Lokasi file (`AGENTS.md`, `.agents/skills/`) diambil dari dokumentasi masing-masing tool per 2026-10-14.
+2. Skill `bikin-short` belum pernah dipakai buat bikin video beneran. Video berikutnya sekalian jadi tes jalur naskah baru (lihat Handoff 3C-2).
+
+## Delivery
+
+- Next: bikin 1 video baru pakai skill `bikin-short`.

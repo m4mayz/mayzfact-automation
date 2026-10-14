@@ -36,6 +36,32 @@ uv run mayzfact run <id> --from fetch --no-render   # download + potong; kelompo
 
 Link diisi per kelompok konteks (semua shot hook = 1 kelompok, sisanya per subjek). 1 baris = 1 link, boleh banyak; pipeline yang ngebagi potongan ke tiap shot tanpa tumpang tindih. Link boleh teks share Douyin apa adanya. Link RedNote ditolak (butuh login), save file-nya dari app terus upload. Tambahin ` #3` buat cuma pakai foto ke-3 dari post foto ganda. Mode lama: `CLIP_SOURCE=auto`.
 
+## Review di Remotion Studio
+
+Habis `--no-render`, buka Studio. Render final cuma setelah hasilnya oke.
+
+```bash
+cd remotion && npx remotion studio src/index.ts --public-dir=../runs/<id> --props=../runs/<id>/timeline.json --port=3000
+uv run mayzfact run <id> --from render      # setelah oke
+```
+
+Studio cuma baca `--props` pas start. Kalau `timeline.json` berubah, restart Studio.
+
+## Aset
+
+- `assets/bgm/<mood>.mp3`: BGM disiapin sendiri, nggak ikut di-commit. Gemini milih file yang mood-nya paling cocok sama naskah. Mood: mystery, suspense, dark, epic, space, tech, nature, playful, funny, inspiring, sad, energetic.
+- `assets/sfx/sfx.json`: momen → nama file di myinstants. File mp3-nya ke-download otomatis.
+- `assets/emoji/` (Lottie Noto) dan `models/` (SigLIP + OWLv2, ±1,4 GB) ke-download otomatis pas pertama kali dipakai.
+
+## Pakai bareng AI agent
+
+Aturan main buat agent ada di [`AGENTS.md`](AGENTS.md). Alur bikin 1 video ada di skill [`.agents/skills/bikin-short`](.agents/skills/bikin-short/SKILL.md).
+
+- **Codex, OpenCode, Antigravity:** baca `AGENTS.md` dan nemu skill di `.agents/skills/` otomatis.
+- **Claude Code:** baca `CLAUDE.md`, yang isinya import `AGENTS.md`.
+
+Contoh: buka agent di folder ini, terus bilang `bikin short dari https://youtu.be/<id>`.
+
 ## Hook (Fase 2)
 
 Login sekali per platform. Sesinya disimpan di `browser-profiles/`, jangan di-share.
