@@ -29,6 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     brief = sub.add_parser("brief", help="Buka halaman brief buat ngisi link klip (mode manual)")
     brief.add_argument("video", help="Video ID atau URL YouTube")
     brief.add_argument("--port", type=int, default=None, help="Port lokal (default BRIEF_PORT)")
+    brief.add_argument("--lan", action="store_true", help="Buka akses di jaringan lokal/WiFi (bisa diakses lewat HP)")
     return parser
 
 
@@ -87,6 +88,18 @@ def _login(args: argparse.Namespace, settings: Settings) -> int:
     return 0 if ok else 1
 
 
+def _lan_ip() -> str:
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+
 def _brief(args: argparse.Namespace, settings: Settings) -> int:
     from mayzfact.brief.server import make_server
     from mayzfact.steps.source import parse_video_id
@@ -95,8 +108,17 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
     if not paths.shots_plan_json.exists():
         raise PipelineError("brief", f"Plan belum ada. Jalanin dulu: mayzfact run {paths.root.name} --no-render")
-    server = make_server(paths, args.port or settings.brief_port)
-    print(f"Brief {paths.root.name}: http://127.0.0.1:{server.server_address[1]}  (Ctrl+C buat stop)")
+    bind_host = "0.0.0.0" if args.lan else "127.0.0.1"
+    server = make_server(paths, args.port or settings.brief_port, host=bind_host)
+    port = server.server_address[1]
+    if args.lan:
+        lan_ip = _lan_ip()
+        print(f"Brief {paths.root.name} (akses LAN/HP aktif):")
+        print(f"  HP / LAN : http://{lan_ip}:{port}")
+        print(f"  Lokal PC : http://127.0.0.1:{port}")
+    else:
+        print(f"Brief {paths.root.name}: http://127.0.0.1:{port}  (tambah --lan buat akses lewat HP)")
+    print("  (Ctrl+C buat stop)")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

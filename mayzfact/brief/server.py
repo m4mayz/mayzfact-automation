@@ -25,7 +25,7 @@ MAX_UPLOAD = 500 * 1024 * 1024
 PORT_TRIES = 10
 
 
-def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> ThreadingHTTPServer:
+def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_upload: int = MAX_UPLOAD) -> ThreadingHTTPServer:
     root = paths.root.resolve()
 
     def plan() -> dict:
@@ -82,9 +82,29 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
             self._send(code, json.dumps(data, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
 
         def _host_ok(self) -> bool:
-            """Host cuma boleh 127.0.0.1/localhost. Ini nutup DNS rebinding (domain luar yang di-resolve ke 127.0.0.1)."""
-            port = self.server.server_address[1]
-            return self.headers.get("Host") in {f"127.0.0.1:{port}", f"localhost:{port}"}
+            """Host cuma boleh 127.0.0.1/localhost atau IP LAN privat kalau host=0.0.0.0."""
+            port = str(self.server.server_address[1])
+            host_header = self.headers.get("Host", "").strip()
+            if not host_header:
+                return False
+            hostname = host_header.split(":")[0].lower()
+            header_port = host_header.split(":")[-1] if ":" in host_header else port
+            if header_port != port:
+                return False
+            if hostname in {"127.0.0.1", "localhost"}:
+                return True
+            if host == "0.0.0.0":
+                parts = hostname.split(".")
+                if len(parts) == 4 and all(p.isdigit() for p in parts):
+                    nums = [int(p) for p in parts]
+                    if all(0 <= n <= 255 for n in nums):
+                        if nums[0] == 10:
+                            return True
+                        if nums[0] == 192 and nums[1] == 168:
+                            return True
+                        if nums[0] == 172 and 16 <= nums[1] <= 31:
+                            return True
+            return False
 
         def do_GET(self) -> None:
             if not self._host_ok():
@@ -195,7 +215,7 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
     last: OSError | None = None
     for candidate in [0] if port == 0 else range(port, port + PORT_TRIES):
         try:
-            return ThreadingHTTPServer(("127.0.0.1", candidate), Handler)
+            return ThreadingHTTPServer((host, candidate), Handler)
         except OSError as exc:
             last = exc
     raise OSError(f"Port {port}-{port + PORT_TRIES - 1} kepakai semua: {last}")

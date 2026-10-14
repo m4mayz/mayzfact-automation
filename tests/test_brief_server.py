@@ -152,3 +152,22 @@ def test_progress_endpoint_and_panel(server):
     write_json_atomic(paths.fetch_progress_json, {"state": "running", "links_done": 1, "links_total": 3})
     assert httpx.get(base + "/api/progress").json()["links_total"] == 3
     assert 'id="progress"' in httpx.get(base + "/").text
+
+
+def test_lan_server_allows_private_ip_and_blocks_evil_domain(tmp_path):
+    paths = RunPaths(tmp_path / "abc")
+    (paths.root / "plan").mkdir(parents=True)
+    write_json_atomic(paths.shots_plan_json, PLAN)
+    srv = make_server(paths, 0, host="0.0.0.0")
+    thread = threading.Thread(target=srv.serve_forever, daemon=True)
+    thread.start()
+    port = srv.server_address[1]
+    base = f"http://127.0.0.1:{port}"
+    try:
+        assert httpx.get(base + "/api/state", headers={"Host": f"10.161.229.129:{port}"}).status_code == 200
+        assert httpx.get(base + "/api/state", headers={"Host": f"192.168.1.50:{port}"}).status_code == 200
+        assert httpx.get(base + "/api/state", headers={"Host": f"evil.example:{port}"}).status_code == 403
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
