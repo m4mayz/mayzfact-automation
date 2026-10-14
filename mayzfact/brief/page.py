@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 from html import escape
 
-from mayzfact.manual.links import lines_of
-
 _CSS = """
 body{font-family:system-ui,sans-serif;margin:0;background:#f4f4f5;color:#18181b}
 header{position:sticky;top:0;background:#18181b;color:#fff;padding:12px 16px;display:flex;gap:16px;align-items:center;z-index:2}
@@ -34,6 +32,12 @@ main{display:grid;gap:16px;min-width:0}
 .shot-input-row{display:flex;gap:8px;align-items:center}
 .shot-input-row input[type=text]{flex:1;height:36px;padding:0 10px;font-size:13px;border:1px solid #d4d4d8;border-radius:6px;box-sizing:border-box;font-family:inherit}
 .shot-input-row input[type=text]:focus{outline:none;border-color:#2563eb}
+.shot-time-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12px;color:#52525b;background:#f4f4f5;padding:6px 10px;border-radius:6px}
+.time-label{font-weight:600;color:#3f3f46}
+.time-inputs{display:flex;align-items:center;gap:12px}
+.time-inputs label{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500}
+.time-inputs input[type=number]{width:74px;height:28px;padding:0 6px;font-size:12px;border:1px solid #d4d4d8;border-radius:4px;box-sizing:border-box;background:#fff;font-family:inherit}
+.time-inputs input[type=number]:focus{outline:none;border-color:#2563eb}
 .btn-upload{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 12px;font-size:13px;font-weight:500;background:#f4f4f5;border:1px solid #d4d4d8;border-radius:6px;cursor:pointer;white-space:nowrap}
 .btn-upload:hover{background:#e4e4e7}
 .btn-upload input[type=file]{position:absolute;left:0;top:0;opacity:0;width:100%;height:100%;cursor:pointer}
@@ -43,13 +47,31 @@ main{display:grid;gap:16px;min-width:0}
 .state{font-size:13px}.state.ok{color:#15803d}.state.error,.state.missing{color:#b91c1c}.state.warn{color:#b45309}
 """
 
-_JS = """
-async function save(){
+_JS = r"""
+function collectShots(){
   const shots = {};
   document.querySelectorAll('input[data-shot]').forEach(inp => {
-    const v = inp.value.trim();
-    if (v) shots[inp.dataset.shot] = v;
+    let v = inp.value.trim();
+    if (!v) return;
+    const idx = inp.dataset.shot;
+    const startInp = document.querySelector(`input[data-time-start="${idx}"]`);
+    const endInp = document.querySelector(`input[data-time-end="${idx}"]`);
+    const startVal = startInp ? startInp.value.trim() : '';
+    const endVal = endInp ? endInp.value.trim() : '';
+    if (startVal || endVal) {
+      v = v.replace(/\s+(@\S+|#\S+)\s*$/, '');
+      if (startVal && endVal) {
+        v += ` @${startVal}-${endVal}`;
+      } else if (startVal) {
+        v += ` @${startVal}`;
+      }
+    }
+    shots[idx] = v;
   });
+  return shots;
+}
+async function save(){
+  const shots = collectShots();
   const res = await fetch('/api/links', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({shots})});
   const data = await res.json();
   const missingText = (data.missing || []).map(m => typeof m === 'number' ? `shot ${m + 1}` : m).join(', ') || '-';
@@ -59,11 +81,7 @@ async function save(){
 async function uploadShot(shotIndex, input){
   const file = input.files[0]; if (!file) return;
   document.getElementById('msg').textContent = `Upload shot ${shotIndex + 1} (${file.name})...`;
-  const shots = {};
-  document.querySelectorAll('input[data-shot]').forEach(inp => {
-    const v = inp.value.trim();
-    if (v) shots[inp.dataset.shot] = v;
-  });
+  const shots = collectShots();
   const saved = await fetch('/api/links', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({shots})});
   if (!saved.ok) { document.getElementById('msg').textContent = (await saved.json()).error; return; }
   const res = await fetch(`/api/upload?shot=${encodeURIComponent(shotIndex)}`, {
@@ -141,7 +159,7 @@ function fallbackCopy(t, cb){
 """
 
 
-def _shot_row(shot: dict, group: dict, val: str, state: dict) -> str:
+def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict) -> str:
     s_idx = shot["index"]
     refs = "".join(f'<img src="/files/{escape(f)}" loading="lazy">' for f in shot.get("ref_frames", []))
 
@@ -162,12 +180,34 @@ def _shot_row(shot: dict, group: dict, val: str, state: dict) -> str:
                        if shot.get("countdown") else "")
     media_badge = f'<span class="badge {escape(shot.get("media", "video"))}">{escape(shot.get("media", "video"))}</span>'
 
-    css = state.get("state", "") if val else "missing"
-    if css == "missing" and val:
+    url_val = ""
+    start_val = ""
+    end_val = ""
+    if isinstance(entry, dict):
+        if entry.get("file"):
+            url_val = f"file:{entry['file']}"
+        elif entry.get("url"):
+            url_val = entry["url"] + (f" #{entry['pick']}" if entry.get("pick") else "")
+        if entry.get("start_s") is not None:
+            start_val = f"{entry['start_s']:g}"
+        if entry.get("end_s") is not None:
+            end_val = f"{entry['end_s']:g}"
+    elif isinstance(entry, str) and entry.strip():
+        from mayzfact.manual.links import parse_time_range
+        clean, s_s, e_s = parse_time_range(entry)
+        url_val = clean
+        if s_s is not None:
+            start_val = f"{s_s:g}"
+        if e_s is not None:
+            end_val = f"{e_s:g}"
+
+    has_val = bool(url_val)
+    css = state.get("state", "") if has_val else "missing"
+    if css == "missing" and has_val:
         css = ""
     if css == "ok" and state.get("message"):
         css = "warn"
-    label = {"ok": "OK", "warn": "OK", "error": "GAGAL", "missing": "KOSONG"}.get(css, "TERSIMPAN" if val else "KOSONG")
+    label = {"ok": "OK", "warn": "OK", "error": "GAGAL", "missing": "KOSONG"}.get(css, "TERSIMPAN" if has_val else "KOSONG")
     message = escape(state.get("message", "") if css else "")
 
     return f"""
@@ -179,8 +219,15 @@ def _shot_row(shot: dict, group: dict, val: str, state: dict) -> str:
       {f'<div class="refs">{refs}</div>' if refs else ''}
       <div class="kw">{keywords or '<i>tanpa keyword</i>'}</div>
       <div class="shot-input-row">
-        <input type="text" data-shot="{s_idx}" value="{escape(val)}" placeholder="1 link (opsional: tambah @6 atau @6-10 buat detik) atau upload">
+        <input type="text" data-shot="{s_idx}" value="{escape(url_val)}" placeholder="1 link Douyin/TikTok/Pinterest/URL atau upload file">
         <label class="btn-upload"><input type="file" accept="video/*,image/*" onchange="uploadShot({s_idx}, this)">Upload</label>
+      </div>
+      <div class="shot-time-row">
+        <span class="time-label">Detik klip (opsional):</span>
+        <div class="time-inputs">
+          <label>Mulai: <input type="number" step="0.1" min="0" data-time-start="{s_idx}" value="{escape(start_val)}" placeholder="0.0">s</label>
+          <label>Selesai: <input type="number" step="0.1" min="0" data-time-end="{s_idx}" value="{escape(end_val)}" placeholder="otomatis">s</label>
+        </div>
       </div>
       <div class="state {css}">{label} {message}</div>
     </div>"""
@@ -193,18 +240,14 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict) -> str:
     shot_rows = []
     for shot in shots:
         s_idx = shot["index"]
-        val = ""
+        entry = None
         if "shots" in links:
             entry = links["shots"].get(str(s_idx))
-            if isinstance(entry, dict):
-                val = lines_of([entry])
-            elif isinstance(entry, str):
-                val = entry
         elif "groups" in links:
             pos = group["shots"].index(s_idx) if s_idx in group["shots"] else -1
             group_entries = links["groups"].get(group["id"], [])
             if 0 <= pos < len(group_entries):
-                val = lines_of([group_entries[pos]])
+                entry = group_entries[pos]
 
         st = {}
         if "shots" in status and str(s_idx) in status["shots"]:
@@ -212,7 +255,7 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict) -> str:
         elif "groups" in status and group["id"] in status["groups"]:
             st = status["groups"][group["id"]]
 
-        shot_rows.append(_shot_row(shot, group, val, st))
+        shot_rows.append(_shot_row(shot, group, entry, st))
 
     return f"""
 <section class="card" data-group="{escape(group['id'], quote=True)}">

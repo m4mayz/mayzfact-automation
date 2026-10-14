@@ -51,7 +51,15 @@ def test_page_lists_groups_and_escapes_text(server):
     html = httpx.get(base + "/").text
     assert 'data-shot="1" value="https://a.b/c #2"' in html
     assert 'data-shot="2" value="file:manual/fossil_1.mp4"' in html
+    assert 'data-time-start="1"' in html
+    assert 'data-time-end="1"' in html
     assert "1/2 kelompok" in html
+
+    write_json_atomic(paths.links_json, {"shots": {"1": {"url": "https://a.b/c", "start_s": 6.5, "end_s": 10.0}}})
+    html2 = httpx.get(base + "/").text
+    assert 'data-shot="1" value="https://a.b/c"' in html2
+    assert 'data-time-start="1" value="6.5"' in html2
+    assert 'data-time-end="1" value="10"' in html2
 
 
 def test_save_links_validates(server):

@@ -187,7 +187,14 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                     part.replace(dest)
                     rel = f"manual/{dest.name}"
                     links = load_links(paths.links_json)
-                    links.setdefault("shots", {})[str(shot_idx)] = {"file": rel}
+                    old_entry = links.get("shots", {}).get(str(shot_idx))
+                    entry = {"file": rel}
+                    if isinstance(old_entry, dict):
+                        if old_entry.get("start_s") is not None:
+                            entry["start_s"] = old_entry["start_s"]
+                        if old_entry.get("end_s") is not None:
+                            entry["end_s"] = old_entry["end_s"]
+                    links.setdefault("shots", {})[str(shot_idx)] = entry
                     save_links(paths.links_json, links)
                     return self._json(200, {"file": rel})
 
