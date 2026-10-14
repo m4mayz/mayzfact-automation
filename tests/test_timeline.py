@@ -240,6 +240,16 @@ def test_emoji_runs_past_its_beat_but_stops_before_next_emoji_or_video_end():
                                   {"src": "emoji/1f62e.json", "from": 111, "durationInFrames": 21}]
 
 
+def test_emoji_word_right_before_a_card_starts_on_an_earlier_word():
+    script = {"beats": [{"text": "Look at this old crab."}, {"text": "Number five, horseshoe crab."}, {"text": "It is old."}]}
+    align = fake_alignment("Look at this old crab. Number five, horseshoe crab. It is old.", 6.2)
+    marks = {"beats": [{"point": False, "emoji": "🧐", "emoji_word": "crab"}, NO_MARK, NO_MARK],
+             "emoji": {"🧐": "emoji/1f9d0.json"}}
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=script, alignment=align, marks=marks)
+    # "crab" (51) cuma 18 frame sebelum card #5 (69), jadi mulainya dimajuin ke "old" (39) biar tampil 1 detik
+    assert timeline["emojis"] == [{"src": "emoji/1f9d0.json", "from": 39, "durationInFrames": 30}]
+
+
 CTA_TEXT = "Tap like and subscribe now. It looks like a tank."
 CTA_SCRIPT = {"beats": [{"text": "Tap like and subscribe now."}, {"text": "It looks like a tank."}]}
 CTA_CLIPS = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920)]}

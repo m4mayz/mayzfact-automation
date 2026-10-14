@@ -33,6 +33,7 @@ OVERLAY_MIN_FRAMES = 15
 # Emoji animasi (Fase 3C-2): muncul di kata pemicunya, tampil sampai akhir beat (maks 2.5 detik).
 EMOJI_MAX_FRAMES = 75
 EMOJI_MIN_FRAMES = 20
+EMOJI_FIT_FRAMES = 30  # kata pemicu mepet card/CTA: mulainya dimajuin sampai emoji dapat ±1 detik
 # CTA ngikutin source i2xag frame per frame: like 16 frame (klik di frame 3), subscribe 27 frame (klik di frame 13).
 CTA_FRAMES = {"like": 16, "subscribe": 27}
 CTA_CLICK = {"like": 3, "subscribe": 13}
@@ -251,34 +252,44 @@ def _emojis(words: list[dict], beat_of: list[int], marks: dict | None, cta: list
             total: int) -> list[dict]:
     """Emoji muncul di kata pemicunya dan boleh nyebrang ke beat berikutnya (kayak 🍀 di source), maksimal 2.5 detik.
 
-    Berhenti sebelum emoji berikutnya, card countdown berikutnya, atau akhir video. Kalau nabrak CTA, mulai setelah CTA.
+    Berhenti sebelum emoji berikutnya, card countdown berikutnya, CTA, atau akhir video. Kalau nabrak CTA, mulai setelah
+    CTA. Kalau kata pemicunya mepet card/CTA, mulainya dimajuin ke kata sebelumnya di beat itu (kayak 🤯 di source).
     """
     if not marks:
         return []
+
+    def stop(frame: int) -> int:
+        return min([total] + [c["numberFrom"] for c in countdown if c["numberFrom"] > frame]
+                   + [c["from"] for c in cta if c["from"] > frame])
+
+    def hits_cta(begin: int, end: int) -> bool:
+        return any(c["from"] < end and begin < c["from"] + c["durationInFrames"] for c in cta)
+
     starts = []
     for index, mark in enumerate(marks["beats"]):
         src = marks.get("emoji", {}).get(mark.get("emoji") or "")
         in_beat = [w for w, b in zip(words, beat_of) if b == index]
         if not src or not in_beat:
             continue
-        hit = next((w for w in in_beat if mark.get("emoji_word") and _clean(w["text"]) == mark["emoji_word"]), in_beat[0])
-        start = to_frame(hit["start_s"])
+        at = next((i for i, w in enumerate(in_beat) if mark.get("emoji_word") and _clean(w["text"]) == mark["emoji_word"]), 0)
+        start = to_frame(in_beat[at]["start_s"])
         for action in sorted(cta, key=lambda c: c["from"]):
             if action["from"] <= start < action["from"] + action["durationInFrames"]:
                 start = action["from"] + action["durationInFrames"]
+        while at > 0 and stop(start) - start < EMOJI_FIT_FRAMES:
+            earlier = to_frame(in_beat[at - 1]["start_s"])
+            if hits_cta(earlier, start):
+                break
+            at, start = at - 1, earlier
         starts.append((start, src))
     starts.sort()
     out = []
     for i, (start, src) in enumerate(starts):
         if any(c["numberFrom"] <= start < c["cardFrom"] + c["cardDuration"] for c in countdown):
             continue  # jatuh di atas card countdown
-        limits = [start + EMOJI_MAX_FRAMES, total]
-        limits += [s for s, _ in starts[i + 1:i + 2]]
-        limits += [c["numberFrom"] for c in countdown if c["numberFrom"] > start]
-        limits += [c["from"] for c in cta if c["from"] > start]
-        duration = min(limits) - start
-        if duration >= EMOJI_MIN_FRAMES:
-            out.append({"src": src, "from": start, "durationInFrames": duration})
+        end = min([start + EMOJI_MAX_FRAMES, stop(start)] + [s for s, _ in starts[i + 1:i + 2]])
+        if end - start >= EMOJI_MIN_FRAMES:
+            out.append({"src": src, "from": start, "durationInFrames": end - start})
     return out
 
 
