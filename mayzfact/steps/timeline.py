@@ -36,8 +36,7 @@ EMOJI_MIN_FRAMES = 20
 EMOJI_FIT_FRAMES = 30  # kata pemicu mepet card/CTA: mulainya dimajuin sampai emoji dapat ±1 detik
 # CTA ngikutin source i2xag frame per frame: like 16 frame (klik di frame 3), subscribe 27 frame (klik di frame 13).
 CTA_FRAMES = {"like": 16, "subscribe": 27}
-CTA_CLICK = {"like": 3, "subscribe": 13}
-CTA_MIN_LIKE_FRAMES = 6
+CTA_CLICK = {"like": 4, "subscribe": 14}
 CLICK_LEAD_FRAMES = 3  # puncak bunyi mouse-click di ±0.1 detik
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
@@ -240,9 +239,9 @@ def _cta(words: list[dict], beat_of: list[int]) -> list[dict]:
         likes = [j for j in range(k) if beat_of[j] == beat_of[k] and _clean(words[j]["text"]) == "like"]
         if likes:  # "like" di beat yang sama sebelum "subscribe" = CTA (bukan "looks like")
             like_from = to_frame(words[likes[-1]]["start_s"])
-            gap = min(CTA_FRAMES["like"], sub_from - like_from)
-            if gap >= CTA_MIN_LIKE_FRAMES:
-                out.append({"kind": "like", "from": like_from, "durationInFrames": gap, "clickAt": CTA_CLICK["like"]})
+            out.append({"kind": "like", "from": like_from, "durationInFrames": CTA_FRAMES["like"],
+                        "clickAt": CTA_CLICK["like"]})
+            sub_from = max(sub_from, like_from + CTA_FRAMES["like"])  # di source subscribe nunggu like selesai
         out.append({"kind": "subscribe", "from": sub_from, "durationInFrames": CTA_FRAMES["subscribe"],
                     "clickAt": CTA_CLICK["subscribe"]})
     return out

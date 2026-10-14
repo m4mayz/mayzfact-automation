@@ -1,5 +1,5 @@
 import React from 'react';
-import {interpolate, random, Sequence, spring, useCurrentFrame, useVideoConfig} from 'remotion';
+import {interpolate, random, Sequence, useCurrentFrame} from 'remotion';
 import {MONTSERRAT} from './fonts';
 import type {CtaAction} from './types';
 
@@ -38,12 +38,13 @@ const Cursor: React.FC<{x: number; y: number; opacity?: number; pressed?: boolea
 );
 
 // Partikel kecil (jempol mini / segitiga confetti) yang terbang keluar dari satu titik.
-const Burst: React.FC<{seed: string; frame: number; count: number; kind: 'thumb' | 'triangle'; spread: number}> = ({
+const Burst: React.FC<{seed: string; frame: number; count: number; kind: 'thumb' | 'triangle'; spread: number; life?: number}> = ({
   seed,
   frame,
   count,
   kind,
   spread,
+  life = 12,
 }) => (
   <>
     {Array.from({length: count}, (_, i) => {
@@ -54,7 +55,7 @@ const Burst: React.FC<{seed: string; frame: number; count: number; kind: 'thumb'
       const y = CY - 40 + Math.sin(angle) * speed * t + (kind === 'triangle' ? 90 * t * t : 0);
       const size = (kind === 'triangle' ? 16 : 22) * (0.6 + 0.6 * random(`${seed}-z-${i}`));
       const color = i % 2 === 0 ? (kind === 'triangle' ? RED : BLUE) : 'white';
-      const opacity = interpolate(frame, [0, 2, 9, 12], [0, 1, 1, 0], clamp);
+      const opacity = interpolate(frame, [0, 2, life - 3, life], [0, 1, 1, 0], clamp);
       const spin = 360 * random(`${seed}-r-${i}`) + frame * 25;
       return kind === 'thumb' ? (
         <Thumb key={i} size={size} color={color} style={{position: 'absolute', left: x, top: y, opacity, transform: `rotate(${spin / 6}deg)`}} />
@@ -67,112 +68,137 @@ const Burst: React.FC<{seed: string; frame: number; count: number; kind: 'thumb'
   </>
 );
 
-// LIKE (16 frame, klik di frame 3): tombol bulat biru → klik → pecah → jempol biru gede naik → miring, mengecil, hilang.
+// Ujung kursor di akhir like = di awal subscribe, jadi kursornya nyambung kayak di source.
+const CURSOR_REST = {x: CX + 135, y: CY + 97};
+
+// LIKE (16 frame, klik di frame 4), ngikutin source i2xag frame per frame: tombol bulat biru + tulisan LIKE →
+// klik: jempol putih → jadi jempol biru gede + jempol mini muncrat → miring searah jarum jam → kebalik
+// (jempol ke bawah) → mengecil jadi ikon jempol yang dipakai subscribe.
 const Like: React.FC<{action: CtaAction}> = ({action}) => {
   const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
   const click = action.clickAt;
   const end = action.durationInFrames;
-  const button = frame < click ? spring({frame, fps, config: {damping: 12, stiffness: 260}, durationInFrames: 3}) : 0;
   const after = frame - click;
-  const grow = interpolate(after, [0, 3, 8], [0.4, 1.35, 1.5], clamp);
-  const fall = interpolate(frame, [end - 5, end], [0, 1], clamp);
-  const bigScale = grow * (1 - 0.65 * fall);
-  const bigOpacity = after < 0 ? 0 : interpolate(frame, [end - 2, end], [1, 0], clamp);
-  const cursorX = interpolate(frame, [0, click], [CX + 90, CX + 18], clamp);
-  const cursorY = interpolate(frame, [0, click], [CY + 110, CY + 22], clamp);
+  const white = after < 3;
+  const down = frame === end - 2;
+  const small = frame >= end - 1;
+  const tilt = down || small ? 0 : interpolate(frame, [end - 6, end - 5, end - 4, end - 3], [0, 20, 55, 85], clamp);
+  const scale = small ? 0.4 : down ? 1.2 : interpolate(after, [0, 1, 2, 3, 4], [0.55, 0.95, 1.15, 1.3, 1.5], clamp);
+  const cursorX = interpolate(frame, [end - 3, end - 2], [CX + 30, CURSOR_REST.x], clamp);
+  const cursorY = interpolate(frame, [end - 3, end - 2], [CY + 10, CURSOR_REST.y], clamp);
   return (
     <>
-      {frame < click ? (
+      {after < 0 ? (
         <div
           style={{
             position: 'absolute',
-            left: CX - 80,
-            top: CY - 80,
-            width: 160,
-            height: 160,
+            left: CX - 82,
+            top: CY - 82,
+            width: 164,
+            height: 164,
             borderRadius: '50%',
             background: `radial-gradient(circle at 35% 30%, #4f8cff, ${BLUE} 60%, ${BLUE_DARK})`,
             boxShadow: '0 10px 24px rgba(0,0,0,0.45)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            transform: `scale(${button})`,
           }}
         >
           <Thumb size={84} color="white" />
         </div>
       ) : null}
-      {after >= 0 ? <Burst seed={`like-${action.from}`} frame={after} count={10} kind="thumb" spread={260} /> : null}
+      {after <= 0 ? (
+        // Tulisan LIKE di bawah tombol; pas diklik gepeng, habis itu hilang.
+        <div
+          style={{
+            position: 'absolute',
+            left: CX - 150,
+            top: CY + 92,
+            width: 300,
+            textAlign: 'center',
+            fontFamily: MONTSERRAT,
+            fontWeight: 800,
+            fontSize: 66,
+            lineHeight: 1,
+            color: 'white',
+            textShadow: '0 4px 12px rgba(0,0,0,0.55)',
+            transform: `scaleY(${after === 0 ? 0.25 : 1})`,
+          }}
+        >
+          LIKE
+        </div>
+      ) : null}
+      {after >= 3 ? <Burst seed={`like-${action.from}`} frame={after - 3} count={10} kind="thumb" spread={800} life={6} /> : null}
       {after >= 0 ? (
         <div
           style={{
             position: 'absolute',
             left: CX - 90,
-            top: CY - 150,
+            top: CY - 90,
             width: 180,
             height: 180,
-            opacity: bigOpacity,
-            transform: `translate(${70 * fall}px, ${-30 * grow + 110 * fall}px) rotate(${-8 + 34 * fall}deg) scale(${bigScale})`,
-            filter: `drop-shadow(7px 7px 0 ${BLUE_DARK}) drop-shadow(0 12px 18px rgba(0,0,0,0.45))`,
+            transform: `rotate(${tilt}deg) scale(${scale}) scaleY(${down ? -1 : 1})`,
+            filter: `drop-shadow(7px 7px 0 ${white ? '#cbd5e1' : BLUE_DARK}) drop-shadow(0 12px 18px rgba(0,0,0,0.45))`,
           }}
         >
-          <Thumb size={180} color={BLUE} />
+          <Thumb size={180} color={white ? 'white' : BLUE} />
         </div>
       ) : null}
-      <Cursor x={cursorX} y={cursorY} pressed={frame === click} opacity={interpolate(frame, [end - 4, end], [1, 0], clamp)} />
+      <Cursor x={cursorX} y={cursorY} pressed={frame === click} />
     </>
   );
 };
 
-const PILL_W = 520;
-const PILL_H = 110;
+const PILL_W = 470;
+const PILL_H = 94;
+const THUMB_GAP = 64; // jarak pusat ikon jempol ke sisi kiri tombol
 const WORD_IN = 'SUBSCRIBE';
 const WORD_DONE = 'SUBSCRIBED';
 
-// SUBSCRIBE (27 frame, klik di frame 13): kotak putih melebar → huruf merah mantul masuk → kursor naik → klik +
-// confetti → flip jadi merah "SUBSCRIBED" gede, goyang → flip lagi → ukuran normal → hilang.
+// SUBSCRIBE (27 frame, klik di frame 14), ngikutin source i2xag frame per frame: tombol putih melebar dari tengah
+// (ikon jempol nempel di kirinya) → huruf merah mantul masuk → kursor naik → klik + confetti → flip 360° jadi merah
+// "SUBSCRIBED" gede, goyang → flip 360° lagi, balik ke ukuran normal.
 const Subscribe: React.FC<{action: CtaAction}> = ({action}) => {
   const frame = useCurrentFrame();
-  const click = action.clickAt;
-  const end = action.durationInFrames;
-  const done = frame >= click + 1;
-  const widen = interpolate(frame, [0, 2], [0.05, 1], clamp);
-  // Flip pertama (klik): putih → merah; flip kedua: merah gede → merah normal.
-  const flip1 = interpolate(frame, [click, click + 1, click + 2], [1, 0, 1], clamp);
-  const flip2 = interpolate(frame, [click + 8, click + 10, click + 11], [1, 0, 1], clamp);
-  const flipY = frame < click + 2 ? flip1 : flip2;
-  const big = done ? interpolate(frame, [click + 2, click + 8, click + 10], [1.18, 1.22, 1], clamp) : interpolate(frame, [click, click + 1], [1, 0.94], clamp);
-  const tilt = done
-    ? interpolate(frame, [click + 1, click + 4, click + 6, click + 8, click + 10], [-6, 0, -8, -4, 0], clamp)
-    : interpolate(frame, [click, click + 1], [0, -4], clamp);
-  const opacity = interpolate(frame, [end - 2, end], [1, 0], clamp);
-  const cursorY = interpolate(frame, [4, click], [CY + 220, CY + 18], clamp);
-  const pillLeft = CX - PILL_W / 2 + 40;
+  const c = action.clickAt;
+  const widen = interpolate(frame, [0, 1, 2, 3], [0.06, 0.55, 0.95, 1], clamp);
+  // Flip di sumbu X: scaleY = cos(sudut), jadi di 180° tulisannya kebalik kayak di source.
+  const angle =
+    frame < c + 8
+      ? interpolate(frame, [c - 1, c, c + 1, c + 2, c + 3], [0, 20, 180, 250, 360], clamp)
+      : interpolate(frame, [c + 8, c + 9, c + 10, c + 11, c + 12], [0, 80, 180, 315, 360], clamp);
+  const done = frame >= c + 3;
+  const scale = interpolate(frame, [c, c + 1, c + 3, c + 8, c + 9, c + 10, c + 11, c + 12], [1, 1.3, 1.42, 1.38, 1.35, 1.24, 1.08, 1], clamp);
+  const tilt = interpolate(
+    frame,
+    [c - 1, c, c + 1, c + 2, c + 3, c + 4, c + 5, c + 6, c + 7, c + 8, c + 9, c + 10, c + 11, c + 12],
+    [0, 3, 0, -15, 5, -1, -4, -6, -7, -6, -3, -1, -2, 0],
+    clamp,
+  );
+  const cursorX = interpolate(frame, [5, 6], [CURSOR_REST.x, CX + 146], clamp);
+  const cursorY = interpolate(frame, [5, 7, 8, 9], [CURSOR_REST.y, CY + 85, CY + 60, CY + 32], clamp);
   return (
     <>
-      <div style={{position: 'absolute', left: pillLeft - 92, top: CY - 36, opacity}}>
+      <div style={{position: 'absolute', left: CX - (PILL_W / 2) * widen - THUMB_GAP - 36, top: CY - 36}}>
         <Thumb size={72} color={BLUE} style={{filter: `drop-shadow(3px 3px 0 ${BLUE_DARK})`}} />
       </div>
       <div
         style={{
           position: 'absolute',
-          left: pillLeft,
+          left: CX - PILL_W / 2,
           top: CY - PILL_H / 2,
           width: PILL_W,
           height: PILL_H,
-          opacity,
-          transformOrigin: done ? '50% 50%' : '0% 50%',
-          transform: `rotate(${tilt}deg) scale(${big * (done ? 1 : 1)}) scaleX(${done ? 1 : widen}) scaleY(${flipY})`,
+          transform: `rotate(${tilt}deg) scale(${scale}) scaleX(${widen}) scaleY(${Math.cos((angle * Math.PI) / 180)})`,
           background: done ? RED : 'white',
-          borderRadius: 18,
+          borderRadius: 16,
           boxShadow: '0 10px 22px rgba(0,0,0,0.45)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           fontFamily: MONTSERRAT,
           fontWeight: 800,
-          fontSize: done ? 62 : 64,
+          fontSize: done ? 56 : 62,
           letterSpacing: 1,
           color: done ? 'white' : RED,
         }}
@@ -189,10 +215,8 @@ const Subscribe: React.FC<{action: CtaAction}> = ({action}) => {
               );
             })}
       </div>
-      {frame >= click ? <Burst seed={`sub-${action.from}`} frame={frame - click} count={16} kind="triangle" spread={300} /> : null}
-      {frame >= 4 ? (
-        <Cursor x={CX + 120} y={cursorY} pressed={frame === click} opacity={interpolate(frame, [click + 7, click + 10], [1, 0], clamp)} />
-      ) : null}
+      {frame >= c ? <Burst seed={`sub-${action.from}`} frame={frame - c} count={16} kind="triangle" spread={300} /> : null}
+      <Cursor x={cursorX} y={cursorY} pressed={frame === c} />
     </>
   );
 };

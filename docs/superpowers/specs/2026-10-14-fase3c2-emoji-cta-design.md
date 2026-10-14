@@ -54,14 +54,18 @@ Semua titik waktu pakai kata yang udah di-snap ke suara (`voice_onset`).
 
 **`emojis: [{src, from, durationInFrames}]`**
 
-- `from` = awal `emoji_word` (atau awal beat).
-- Durasi = `min(akhir beat - from, 75)` frame. Kalau hasilnya `< 20` frame, emoji nggak dipasang.
-- Emoji yang waktunya nabrak CTA nggak dipasang.
+- `from` = awal `emoji_word` (atau awal beat). Kalau jatuh di tengah CTA, digeser ke akhir CTA.
+- Emoji boleh nyambung lewat akhir beat-nya (🍀 di source tampil ±2 detik). Berhentinya di yang paling dulu dari:
+  `from + 75`, card countdown berikutnya, emoji berikutnya, CTA berikutnya, atau akhir video.
+- Kalau kata pemicunya mepet card/CTA (`< 30` frame), mulainya dimajuin ke kata sebelumnya di beat itu, tapi nggak
+  nyebrang CTA (🤯 di source muncul di awal frasa, terus berhenti pas card).
+- Kalau hasilnya tetap `< 20` frame, emoji nggak dipasang.
 
 **`cta: [{kind, from, durationInFrames, clickAt}]`**
 
-- `subscribe`: tiap kata yang diawali "subscrib". Durasi 27 frame, `clickAt` 13.
-- `like`: kata "like" yang ada di beat yang sama sebelum "subscribe". Durasi 16 frame, `clickAt` 3.
+- `subscribe`: tiap kata yang diawali "subscrib". Durasi 27 frame, `clickAt` 14.
+- `like`: kata "like" yang ada di beat yang sama sebelum "subscribe". Durasi 16 frame, `clickAt` 4.
+- Kalau "subscribe" mulai sebelum like selesai, subscribe nunggu like selesai (di source juga gitu).
 
 **SFX baru:**
 
@@ -81,25 +85,28 @@ Semua titik waktu pakai kata yang udah di-snap ke suara (`voice_onset`).
 **`Emojis.tsx`**
 
 - Lottie (`@remotion/lottie` 4.0.534 + `lottie-web` 5.13.0), data diambil lewat `fetch(staticFile)` + `delayRender`.
-- Ukuran 240px, tengah horizontal, pusatnya di y = 1190.
+- Box Lottie 370px (emoji yang kelihatan ±300px, kayak di source), tengah horizontal, pusatnya di y = 1180.
 - Masuk pakai pop spring, keluar pakai fade 6 frame.
 
 **`Cta.tsx`**, posisi tengah di y ±1190, ngikutin source frame per frame:
 
 - **like** (16 frame):
-  1. frame 0–2: tombol bulat biru dengan jempol putih, kursor di atasnya.
-  2. frame 3: klik, partikel pecah.
-  3. frame 4–11: jempol biru gede naik dan membesar, partikel jempol kecil di sekitarnya.
-  4. frame 12–16: jempolnya miring, mengecil, terus hilang.
+  1. frame 0–3: tombol bulat biru dengan jempol putih + tulisan "LIKE" di bawahnya, kursor di atas tombol.
+  2. frame 4: klik. Tombol hilang, tinggal jempol putih, tulisan LIKE gepeng.
+  3. frame 5–6: jempol putih membesar.
+  4. frame 7–10: jadi jempol biru gede, jempol mini muncrat cepat.
+  5. frame 11–13: jempolnya miring searah jarum jam sampai rebahan.
+  6. frame 14: kebalik (jempol ke bawah). Kursor pindah ke kanan bawah.
+  7. frame 15: mengecil jadi ikon jempol yang dipakai subscribe.
 - **subscribe** (27 frame):
-  1. frame 0–1: ikon jempol kecil, terus kotak putih melebar.
-  2. frame 1–5: huruf merah "SUBSCRIBE" masuk mantul satu-satu.
-  3. frame 5–13: kursor naik dari bawah.
-  4. frame 13: klik, tombol miring, confetti segitiga merah/putih.
-  5. frame 14–15: flip jadi merah "SUBSCRIBED", lebih gede.
-  6. frame 15–21: goyang.
-  7. frame 21–24: flip lagi.
-  8. frame 24–26: balik ke ukuran normal, terus hilang.
+  1. frame 0–3: tombol putih melebar dari tengah, ikon jempol nempel di kirinya.
+  2. frame 1–6: huruf merah "SUBSCRIBE" masuk mantul satu-satu.
+  3. frame 5–9: kursor naik ke tombol.
+  4. frame 14: klik, tombol miring, confetti segitiga merah/putih.
+  5. frame 15–17: flip 360° di sumbu X (tulisan sempat kebalik), jadi merah "SUBSCRIBED" 1.42×.
+  6. frame 17–22: goyang.
+  7. frame 22–26: flip 360° lagi sambil balik ke ukuran normal.
+  8. frame 27: hilang (langsung, tanpa fade).
 - Font tombol: Montserrat 800 (`@remotion/google-fonts`).
 
 **Urutan layer:** shots → card → overlays → emojis → captions → CTA.

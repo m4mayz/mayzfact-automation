@@ -3,8 +3,8 @@ import {Lottie, type LottieAnimationData} from '@remotion/lottie';
 import {continueRender, delayRender, interpolate, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {EmojiOverlay} from './types';
 
-const SIZE = 240;
-const CENTER_Y = 1190; // tepat di atas caption (caption di 75% = 1440)
+const SIZE = 370; // emoji yang kelihatan ±300px, kayak di source
+const CENTER_Y = 1180; // tepat di atas caption (caption di 75% = 1440)
 const FADE_FRAMES = 6;
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
