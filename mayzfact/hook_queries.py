@@ -81,7 +81,7 @@ def translate_queries(writer: HookQueryWriter | None, queries: list[str], log: C
             TRANSLATE_PROMPT_PATH.read_text(encoding="utf-8"), json.dumps(queries, ensure_ascii=False), Translations, step="plan"
         )
     except PipelineError as exc:
-        log(f"[plan] Gemini gagal nerjemahin keyword, kolom 中文 dikosongin: {exc.message[:120]}")
+        log(f"[plan] Gemini gagal nerjemahin keyword, kolom zh dikosongin: {exc.message[:120]}")
         return {}
     wanted = set(queries)
     return {item.en: item.zh.strip() for item in result.items if item.en in wanted and item.zh.strip()}
