@@ -10,6 +10,9 @@ class Beat(BaseModel):
     media: Literal["video", "photo"]
     queries: list[str]
     subject: str = ""  # hewan/objek yang lagi dibahas, dipakai buat nilai relevansi klip
+    point: bool = False  # beat ngajak lihat sesuatu di layar → panah/lingkaran (Fase 3C-2)
+    emoji: str = ""  # emoji animasi di atas caption, dari daftar mayzfact.emoji.EMOJI
+    emoji_word: str = ""  # kata di beat ini tempat emoji muncul
 
 
 class Script(BaseModel):
@@ -38,3 +41,14 @@ class Translations(BaseModel):
 
 class BgmChoice(BaseModel):
     file: str
+
+
+class BeatMark(BaseModel):
+    index: int
+    point: bool
+    emoji: str
+    emoji_word: str
+
+
+class BeatMarks(BaseModel):
+    items: list[BeatMark]

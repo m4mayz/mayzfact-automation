@@ -149,3 +149,21 @@ def test_short_clip_is_not_detected_and_key_has_ratio(tmp_path, make_video):
     calls = len(detector.calls)
     prepare_overlays(paths, clips, SCRIPT, None, detector, fg_min_ratio=0.6, log=lambda m: None)
     assert len(detector.calls) > calls  # ratio beda → posisi layar beda → deteksi ulang
+
+
+
+def test_prepare_overlays_only_detects_clips_with_point_beats(tmp_path, make_video):
+    import shutil
+
+    paths = RunPaths(tmp_path / "run")
+    (paths.root / "clips").mkdir(parents=True)
+    for name in ("long.mp4", "shot_03.mp4"):
+        shutil.copy(make_video(1080, 1920, 2.2), paths.root / "clips" / name)
+    # klip panjang mulai di beat 0 dan nutup beat 0-1 (klip berikutnya mulai di beat 2)
+    clips = {"shots": [clip(0, 0, "clips/long.mp4", end=2.0), clip(1, 2, "clips/shot_03.mp4", start=4.0, end=6.0)]}
+    detector = FakeDetector()
+    out = prepare_overlays(paths, clips, SCRIPT, None, detector, fg_min_ratio=0.5, log=lambda m: None, point_beats={1})
+    assert list(out) == ["clips/long.mp4"]
+    assert prepare_overlays(paths, clips, SCRIPT, None, FakeDetector(), fg_min_ratio=0.5, log=lambda m: None,
+                            point_beats=set()) == {}
+    assert "clips/long.mp4" in read_json(paths.root / "overlays.json")  # hasil deteksi lama nggak ikut kebuang

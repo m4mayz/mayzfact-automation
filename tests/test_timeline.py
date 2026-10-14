@@ -208,3 +208,110 @@ def test_overlay_skipped_when_shot_too_short():
     short = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920), shot("clips/b.mp4", "video", 0.8, 1080, 1920)]}
     overlays = {"clips/a.mp4": {"points": [point(0.2)]}}
     assert build_timeline(short, 3.0, 0.5, overlays=overlays)["overlays"] == []
+
+
+
+NO_MARK = {"point": False, "emoji": "", "emoji_word": ""}
+
+
+def test_emoji_pops_on_its_word_until_beat_end():
+    marks = {"beats": [{"point": False, "emoji": "🧐", "emoji_word": "creature"}, NO_MARK,
+                       {"point": False, "emoji": "😮", "emoji_word": ""}],
+             "emoji": {"🧐": "emoji/1f9d0.json", "😮": "emoji/1f62e.json"}}
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, marks=marks,
+                              audio={"bgm": None, "sfx": {"emoji": "audio/sfx/pop.mp3"}})
+    assert timeline["emojis"] == [{"src": "emoji/1f9d0.json", "from": 39, "durationInFrames": 30},
+                                  {"src": "emoji/1f62e.json", "from": 156, "durationInFrames": 39}]
+    assert timeline["sfx"] == [{"src": "audio/sfx/pop.mp3", "from": 39, "volume": 0.6},
+                               {"src": "audio/sfx/pop.mp3", "from": 156, "volume": 0.6}]
+    assert build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN)["emojis"] == []
+
+
+def test_emoji_runs_past_its_beat_but_stops_before_next_emoji_or_video_end():
+    script = {"beats": [{"text": "Look at this creature."}, {"text": "It is so old."}, {"text": "Wow."}]}
+    text = "Look at this creature. It is so old. Wow."
+    marks = {"beats": [{"point": False, "emoji": "🧐", "emoji_word": "creature"}, NO_MARK,
+                       {"point": False, "emoji": "😮", "emoji_word": "wow"}],
+             "emoji": {"🧐": "emoji/1f9d0.json", "😮": "emoji/1f62e.json"}}
+    one = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920)]}
+    timeline = build_timeline(one, 4.4, 0.5, script=script, alignment=fake_alignment(text, 4.1), marks=marks)
+    # 🧐 mulai di "creature" (frame 39), nyebrang ke beat ke-2 sampai 😮 mulai di "Wow" (frame 111)
+    assert timeline["emojis"] == [{"src": "emoji/1f9d0.json", "from": 39, "durationInFrames": 72},
+                                  {"src": "emoji/1f62e.json", "from": 111, "durationInFrames": 21}]
+
+
+def test_emoji_word_right_before_a_card_starts_on_an_earlier_word():
+    script = {"beats": [{"text": "Look at this old crab."}, {"text": "Number five, horseshoe crab."}, {"text": "It is old."}]}
+    align = fake_alignment("Look at this old crab. Number five, horseshoe crab. It is old.", 6.2)
+    marks = {"beats": [{"point": False, "emoji": "🧐", "emoji_word": "crab"}, NO_MARK, NO_MARK],
+             "emoji": {"🧐": "emoji/1f9d0.json"}}
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=script, alignment=align, marks=marks)
+    # "crab" (51) cuma 18 frame sebelum card #5 (69), jadi mulainya dimajuin ke "old" (39) biar tampil 1 detik
+    assert timeline["emojis"] == [{"src": "emoji/1f9d0.json", "from": 39, "durationInFrames": 30}]
+
+
+CTA_TEXT = "Tap like and subscribe now. It looks like a tank."
+CTA_SCRIPT = {"beats": [{"text": "Tap like and subscribe now."}, {"text": "It looks like a tank."}]}
+CTA_CLIPS = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920)]}
+
+
+def test_cta_like_then_subscribe_with_clicks():
+    timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script=CTA_SCRIPT, alignment=fake_alignment(CTA_TEXT, 4.9),
+                              audio={"bgm": None, "sfx": {"click": "audio/sfx/click.mp3"}})
+    # "like" di beat ke-2 artinya "mirip", bukan CTA.
+    assert timeline["cta"] == [{"kind": "like", "from": 12, "durationInFrames": 16, "clickAt": 4},
+                               {"kind": "subscribe", "from": 39, "durationInFrames": 27, "clickAt": 14}]
+    assert timeline["sfx"] == [{"src": "audio/sfx/click.mp3", "from": 13, "volume": 0.8},
+                               {"src": "audio/sfx/click.mp3", "from": 50, "volume": 0.8}]
+
+
+def test_subscribe_waits_until_like_finishes():
+    text = "Like, subscribe."
+    timeline = build_timeline(CTA_CLIPS, 1.5, 0.5, script={"beats": [{"text": text}]}, alignment=fake_alignment(text, 1.0))
+    # "subscribe" cuma 11 frame setelah "like": animasi subscribe nunggu like selesai, kayak di source
+    assert timeline["cta"] == [{"kind": "like", "from": 0, "durationInFrames": 16, "clickAt": 4},
+                               {"kind": "subscribe", "from": 16, "durationInFrames": 27, "clickAt": 14}]
+
+
+def test_cta_ignores_like_meaning_similar_and_subscribers():
+    for text, kinds in [("For more creatures like this, subscribe now!", ["subscribe"]),
+                        ("Hit like and subscribe, subscribers get facts first!", ["like", "subscribe"])]:
+        timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script={"beats": [{"text": text}]}, alignment=fake_alignment(text, 4.9))
+        assert [c["kind"] for c in timeline["cta"]] == kinds, text
+
+
+def test_cta_fits_before_the_video_ends():
+    text = "It is old. Like and subscribe!"
+    timeline = build_timeline(CTA_CLIPS, 2.5, 0.5, script={"beats": [{"text": text}]}, alignment=fake_alignment(text, 2.5))
+    # subscribe di frame 50 bakal kepotong di frame 75, jadi dimajuin ke 48 biar flip terakhirnya kelihatan
+    assert timeline["cta"] == [{"kind": "like", "from": 28, "durationInFrames": 16, "clickAt": 4},
+                               {"kind": "subscribe", "from": 48, "durationInFrames": 27, "clickAt": 14}]
+
+
+def test_emoji_word_inside_a_hyphenated_word():
+    text = "Look at this prehistoric-looking fish."
+    marks = {"beats": [{"point": False, "emoji": "🧐", "emoji_word": "looking"}], "emoji": {"🧐": "emoji/1f9d0.json"}}
+    timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script={"beats": [{"text": text}]}, alignment=fake_alignment(text, 4.9),
+                              marks=marks)
+    assert timeline["emojis"][0]["from"] == 50  # di "prehistoric-looking", bukan di awal beat
+
+
+def test_emoji_that_collides_with_cta_starts_after_it():
+    marks = {"beats": [{"point": False, "emoji": "🍀", "emoji_word": "subscribe"}, NO_MARK], "emoji": {"🍀": "emoji/1f340.json"}}
+    timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script=CTA_SCRIPT, alignment=fake_alignment(CTA_TEXT, 4.9), marks=marks)
+    # subscribe 39-66 → 🍀 mulai di 66, maksimal 75 frame tapi berhenti di akhir video (150)
+    assert timeline["emojis"] == [{"src": "emoji/1f340.json", "from": 66, "durationInFrames": 75}]
+
+
+def test_overlays_only_inside_point_beats():
+    overlays = {"clips/shot_01.mp4": {"points": [point(0.5)]}, "clips/shot_03.jpg": {"points": [point(0.2)]}}
+    marks = {"beats": [NO_MARK, NO_MARK, dict(NO_MARK, point=True)], "emoji": {}}
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, overlays=overlays, marks=marks)
+    assert [(o["from"], o["durationInFrames"]) for o in timeline["overlays"]] == [(162, 18)]
+    # Klip panjang yang nutup beberapa beat (kayak hook nyambung): panah cuma di rentang beat point.
+    one = {"shots": [shot("clips/long.mp4", "video", 0.0, 1080, 1920)]}
+    timeline = build_timeline(one, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, marks=marks,
+                              overlays={"clips/long.mp4": {"points": [point(0.5), point(6.0, x=300)]}})
+    long = timeline["overlays"][0]
+    assert (long["from"], long["durationInFrames"]) == (162, 18)
+    assert long["keyframes"][0]["frame"] == 15 - 162 and long["keyframes"][1]["frame"] == 180 - 162

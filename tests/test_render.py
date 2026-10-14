@@ -44,6 +44,12 @@ def test_render_fixture_timeline(tmp_path, make_video, make_photo, sine_mp3):
                               overlays={"clips/shot_01.mp4": {"points": [{"t": 0.2, "x": 300, "y": 600, "w": 400, "h": 500}]},
                                         "clips/shot_03.jpg": {"points": [{"t": 0.0, "x": 200, "y": 100, "w": 600, "h": 500}]}})
     assert timeline["countdown"] and timeline["captions"] and timeline["bgm"] and timeline["sfx"] and timeline["overlays"]
+    (paths.root / "emoji").mkdir()
+    write_json_atomic(paths.root / "emoji" / "1f9d0.json",
+                      {"v": "5.7.4", "fr": 30, "ip": 0, "op": 30, "w": 100, "h": 100, "nm": "t", "ddd": 0, "assets": [], "layers": []})
+    timeline["emojis"] = [{"src": "emoji/1f9d0.json", "from": 5, "durationInFrames": 25}]
+    timeline["cta"] = [{"kind": "like", "from": 30, "durationInFrames": 16, "clickAt": 4},
+                       {"kind": "subscribe", "from": 46, "durationInFrames": 27, "clickAt": 14}]
     write_json_atomic(paths.timeline_json, timeline)
 
     run_render(paths)
