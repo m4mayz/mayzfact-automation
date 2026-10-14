@@ -55,6 +55,19 @@ export type Overlay = {
   keyframes: OverlayKeyframe[];
 };
 
+export type EmojiOverlay = {
+  src: string;
+  from: number;
+  durationInFrames: number;
+};
+
+export type CtaAction = {
+  kind: 'like' | 'subscribe';
+  from: number;
+  durationInFrames: number;
+  clickAt: number;
+};
+
 export type Intro = {
   durationInFrames: number;
 };
@@ -74,4 +87,6 @@ export type TimelineProps = {
   sfx?: Sfx[];
   intro?: Intro | null;
   overlays?: Overlay[];
+  emojis?: EmojiOverlay[];
+  cta?: CtaAction[];
 };
