@@ -239,7 +239,7 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 
 ## D-023 — 2026-10-13 — Timing ikut suara asli; panah/lingkaran sebentar + muter; nanti dipicu script
 
-- **Status:** accepted. Poin 1–3 udah diimplementasi, poin 4 dicatat buat nanti.
+- **Status:** accepted. Poin 1–3 diimplementasi di 3C-1, poin 4 di 3C-2 (lihat D-024).
 - **Konteks:** Akmal review 3C-1 + 3B di Studio.
   - Panah tampil sepanjang shot dan geraknya kelambatan.
   - Angka countdown kerasa "nunggu SFX".
@@ -259,3 +259,23 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
      - Lingkaran digambar dalam 6 frame.
   4. **Panah dipicu script (nanti):** nggak semua klip dapat panah. Panah muncul kalau narasinya ngajak lihat, misalnya "look at this". Ini butuh perubahan di logic script dan cuma buat kasus tertentu, jadi dikerjain nanti.
 - **Authority:** Akmal (chat 2026-10-13).
+
+## D-024 — 2026-10-14 — Emoji animasi + CTA like/subscribe; panah cuma di beat yang ngajak lihat
+
+- **Status:** accepted, diimplementasi di 3C-2.
+- **Konteks:** Fase 3C-2. Akmal mau emoji yang ada animasinya kayak di source i2xag, dan SFX-nya dia yang milih.
+- **Keputusan:**
+  1. **Tanda beat "Gabungan".** Naskah baru dapat `point`/`emoji`/`emoji_word` dari prompt rewrite. Naskah lama ditandain Gemini tanpa ganti suara, hasilnya di-cache di `annotations.json`.
+  2. **Emoji:** Noto Emoji Animation (Lottie, CC BY 4.0). Pilihannya dibatasi 28 emoji yang udah dicek ada animasinya. Muncul barengan `pop_7e9Is8L.mp3`.
+  3. **Timing emoji:**
+     - Mulai di `emoji_word`. Kalau jatuh di tengah CTA, mulainya digeser ke akhir CTA.
+     - Boleh nyambung lewat akhir beat-nya, maksimal 2,5 detik.
+     - Berhenti sebelum card countdown, emoji, atau CTA berikutnya, atau pas video habis.
+     - Kalau kata pemicunya kurang dari 1 detik sebelum card/CTA, mulainya dimajuin ke kata sebelumnya.
+     - Kalau tetap kurang dari 20 frame, emojinya nggak dipasang.
+  4. **CTA like/subscribe:**
+     - Animasinya ngikutin source frame per frame. Bunyi klik pakai `mouse-click-by-ek6_VR0O6PL.mp3`.
+     - "like" cuma dihitung kalau ngajak (misalnya "hit like" atau "like and subscribe"), bukan yang artinya "mirip".
+     - Subscribe nunggu like selesai, dan dua-duanya harus muat sebelum video habis.
+  5. **Panah/lingkaran** cuma di shot yang beat-nya `point`. Beat tanpa tanda nggak dapat panah. Ini nutup D-023 #4.
+- **Authority:** Akmal (chat 2026-10-14).

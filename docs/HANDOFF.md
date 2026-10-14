@@ -304,7 +304,7 @@
 
 ## Masalah terbuka
 
-1. **D-023 #4:** panah/lingkaran harusnya dipicu script (misalnya "look at this"), bukan muncul di tiap shot. Ini butuh perubahan logic script, jadi dikerjain nanti.
+1. **D-023 #4:** panah/lingkaran harusnya dipicu script (misalnya "look at this"), bukan muncul di tiap shot. Ini butuh perubahan logic script, jadi dikerjain nanti. *(Udah dikerjain di 3C-2, lihat D-024.)*
 2. **Minor yang ditunda:**
    - angka bisa nggak tampil kalau `numberAt` ≥ durasi number card (kasus clamp yang jarang)
    - snap awal kata bisa telat 1–3 frame di konsonan
@@ -317,3 +317,48 @@
 ## Delivery
 
 - Next: 3C-2, yaitu emoji + CTA subscribe. Bisa dibahas bareng D-023 #4.
+
+---
+
+# Handoff — Fase 3C-2 (emoji animasi, CTA like/subscribe, panah dipicu naskah)
+
+- **Updated:** 2026-10-14, Claude Code (Opus 5.5)
+- **Goal & scope:** [spec 3C-2](superpowers/specs/2026-10-14-fase3c2-emoji-cta-design.md), [plan](superpowers/plans/2026-10-14-fase3c2-emoji-cta.md), keputusan D-024.
+
+## Selesai
+
+- **Tanda per beat** (`point`, `emoji`, `emoji_word`):
+  - Naskah baru dapat tanda dari prompt rewrite (`rewrite.md` + daftar emoji yang boleh).
+  - Naskah lama ditandain Gemini tanpa ganti suara (`mayzfact/marks.py`, prompt `mark_beats.md`). Hasilnya di-cache di `runs/<id>/annotations.json` dengan key hash teks naskah.
+  - Kalau Gemini gagal, semua beat jadi tanpa tanda dan hasilnya nggak di-cache.
+- **Emoji animasi Noto (Lottie, CC BY 4.0):**
+  - `mayzfact/emoji.py` download 28 emoji yang boleh ke `assets/emoji/` (di-gitignore), terus di-copy ke `runs/<id>/emoji/`.
+  - Tampil di atas caption (box 370px). Pop masuk barengan `pop_7e9Is8L.mp3`, fade 6 frame.
+  - Timing-nya lihat D-024 #3.
+- **CTA like/subscribe** (`remotion/src/Cta.tsx`) ngikutin source i2xag frame per frame. Klik pakai `mouse-click-by-ek6_VR0O6PL.mp3`.
+- **Panah/lingkaran cuma di beat `point`.** OWLv2 juga cuma jalan di klip yang nutup beat itu. Ini nutup D-023 #4.
+- **Review Akmal:** Studio oke, `final.mp4` i2xag oke (2026-10-14).
+- **Final review Opus:** semua temuan udah di-fix.
+  - 1 Critical: tanda dari prompt rewrite kebuang di `normalize_script`.
+  - 1 Important: "like" yang artinya "mirip" ikut dianggap CTA.
+  - 6 Minor: like dobel, CTA kepotong di akhir video, cache annotations nggak dibersihin, `emoji_word` di kata ber-hyphen, `overlays.json` ngebuang hasil lama, download emoji lama kalau offline.
+- **Workspace:** `master` (merge `8974d33`). Belum di-push.
+
+## Verifikasi
+
+- 361 test lolos, render test lolos, `tsc` bersih.
+- E2E i2xag (naskah lama, jadi lewat jalur Gemini):
+  - Beat `point`: 0, 4, 7, 9, 14. Hasilnya 5 panah/lingkaran.
+  - Emoji: 🍀 frame 257, 🤯 475, 🤨 866, 🦖 1158, 💀 1436.
+  - CTA: like di frame 208, subscribe di frame 224.
+- **Belum dites:** jalur naskah baru end-to-end (prompt rewrite → `script.json` → tanda). Ngetesnya butuh kredit ElevenLabs (`--new-voice`).
+
+## Masalah terbuka
+
+1. **Jalur naskah baru belum pernah jalan beneran.** Di video berikutnya, cek `script.json`: tiap beat harus punya `point`/`emoji`, dan minimal ada beberapa yang keisi.
+2. **Kalau `deps.marks` error** (bukan karena Gemini gagal), panah balik muncul di semua shot. Kasusnya jarang, misalnya error disk.
+3. **Minor 3C-1 yang ditunda** masih ada (lihat daftar di Handoff 3C-1).
+
+## Delivery
+
+- Next: Fase 4 (otomatis + upload).
