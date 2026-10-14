@@ -227,6 +227,19 @@ def test_emoji_pops_on_its_word_until_beat_end():
     assert build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN)["emojis"] == []
 
 
+def test_emoji_runs_past_its_beat_but_stops_before_next_emoji_or_video_end():
+    script = {"beats": [{"text": "Look at this creature."}, {"text": "It is so old."}, {"text": "Wow."}]}
+    text = "Look at this creature. It is so old. Wow."
+    marks = {"beats": [{"point": False, "emoji": "🧐", "emoji_word": "creature"}, NO_MARK,
+                       {"point": False, "emoji": "😮", "emoji_word": "wow"}],
+             "emoji": {"🧐": "emoji/1f9d0.json", "😮": "emoji/1f62e.json"}}
+    one = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920)]}
+    timeline = build_timeline(one, 4.4, 0.5, script=script, alignment=fake_alignment(text, 4.1), marks=marks)
+    # 🧐 mulai di "creature" (frame 39), nyebrang ke beat ke-2 sampai 😮 mulai di "Wow" (frame 111)
+    assert timeline["emojis"] == [{"src": "emoji/1f9d0.json", "from": 39, "durationInFrames": 72},
+                                  {"src": "emoji/1f62e.json", "from": 111, "durationInFrames": 21}]
+
+
 CTA_TEXT = "Tap like and subscribe now. It looks like a tank."
 CTA_SCRIPT = {"beats": [{"text": "Tap like and subscribe now."}, {"text": "It looks like a tank."}]}
 CTA_CLIPS = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920)]}
@@ -242,10 +255,11 @@ def test_cta_like_then_subscribe_with_clicks():
                                {"src": "audio/sfx/click.mp3", "from": 49, "volume": 0.8}]
 
 
-def test_emoji_that_collides_with_cta_is_dropped():
+def test_emoji_that_collides_with_cta_starts_after_it():
     marks = {"beats": [{"point": False, "emoji": "🍀", "emoji_word": "subscribe"}, NO_MARK], "emoji": {"🍀": "emoji/1f340.json"}}
     timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script=CTA_SCRIPT, alignment=fake_alignment(CTA_TEXT, 4.9), marks=marks)
-    assert timeline["emojis"] == []
+    # subscribe 39-66 → 🍀 mulai di 66, maksimal 75 frame tapi berhenti di akhir video (150)
+    assert timeline["emojis"] == [{"src": "emoji/1f340.json", "from": 66, "durationInFrames": 75}]
 
 
 def test_overlays_only_inside_point_beats():

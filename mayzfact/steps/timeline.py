@@ -247,25 +247,38 @@ def _cta(words: list[dict], beat_of: list[int]) -> list[dict]:
     return out
 
 
-def _emojis(words: list[dict], beat_of: list[int], timings: list[dict], marks: dict | None, cta: list[dict],
+def _emojis(words: list[dict], beat_of: list[int], marks: dict | None, cta: list[dict], countdown: list[dict],
             total: int) -> list[dict]:
+    """Emoji muncul di kata pemicunya dan boleh nyebrang ke beat berikutnya (kayak 🍀 di source), maksimal 2.5 detik.
+
+    Berhenti sebelum emoji berikutnya, card countdown berikutnya, atau akhir video. Kalau nabrak CTA, mulai setelah CTA.
+    """
     if not marks:
         return []
-    out = []
+    starts = []
     for index, mark in enumerate(marks["beats"]):
         src = marks.get("emoji", {}).get(mark.get("emoji") or "")
-        if not src or index >= len(timings):
-            continue
         in_beat = [w for w, b in zip(words, beat_of) if b == index]
-        if not in_beat:
+        if not src or not in_beat:
             continue
         hit = next((w for w in in_beat if mark.get("emoji_word") and _clean(w["text"]) == mark["emoji_word"]), in_beat[0])
         start = to_frame(hit["start_s"])
-        duration = min(min(to_frame(timings[index]["end_s"]), total) - start, EMOJI_MAX_FRAMES)
-        clash = any(start < c["from"] + c["durationInFrames"] and c["from"] < start + duration for c in cta)
-        if duration < EMOJI_MIN_FRAMES or clash:
-            continue
-        out.append({"src": src, "from": start, "durationInFrames": duration})
+        for action in sorted(cta, key=lambda c: c["from"]):
+            if action["from"] <= start < action["from"] + action["durationInFrames"]:
+                start = action["from"] + action["durationInFrames"]
+        starts.append((start, src))
+    starts.sort()
+    out = []
+    for i, (start, src) in enumerate(starts):
+        if any(c["numberFrom"] <= start < c["cardFrom"] + c["cardDuration"] for c in countdown):
+            continue  # jatuh di atas card countdown
+        limits = [start + EMOJI_MAX_FRAMES, total]
+        limits += [s for s, _ in starts[i + 1:i + 2]]
+        limits += [c["numberFrom"] for c in countdown if c["numberFrom"] > start]
+        limits += [c["from"] for c in cta if c["from"] > start]
+        duration = min(limits) - start
+        if duration >= EMOJI_MIN_FRAMES:
+            out.append({"src": src, "from": start, "durationInFrames": duration})
     return out
 
 
@@ -302,7 +315,7 @@ def build_timeline(
             timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
             beat_of = _beat_of(words, script["beats"])
             cta = _cta(words, beat_of)
-            emojis = _emojis(words, beat_of, timings, marks, cta, total)
+            emojis = _emojis(words, beat_of, marks, cta, countdown, total)
         except (PipelineError, IndexError, KeyError) as exc:  # caption/card cuma hiasan: timeline tetap jadi tanpa itu
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
             log(f"[timeline] caption & countdown dilewat: {reason}")
