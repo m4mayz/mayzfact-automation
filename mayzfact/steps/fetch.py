@@ -288,6 +288,10 @@ def run_fetch(
 
                 group_failed = False
                 group_warnings = []
+                prev_entry = None
+                prev_source = None
+                prev_end_time = 0.0
+
                 for s in g_shots:
                     s_idx = s["index"]
                     s_key = str(s_idx)
@@ -301,15 +305,28 @@ def run_fetch(
 
                         target, low = _target(s, paths, encoder)
                         duration = s["end_s"] - s["start_s"]
-                        chosen = _best(sources, target, duration, used_sources=False)
                         warn = []
+                        chosen = None
+
+                        # Jika shot ini pakai entry video yang persis sama dengan shot sebelumnya di grup ini
+                        if prev_entry == entry and prev_source and prev_source.kind == "video":
+                            cont_start = prev_end_time
+                            cont_end = cont_start + duration + TAIL_S
+                            if cont_end <= prev_source.total_s + 1e-4:
+                                chosen = (prev_source, 1.0, cont_start)
+
                         if chosen is None:
-                            chosen = _best(sources, target, duration, used_sources=True)
+                            chosen = _best(sources, target, duration, used_sources=False)
                             if chosen is None:
-                                raise PipelineError("fetch", f"klip shot {s_idx + 1} udah kepakai semua atau kependekan")
-                            warn.append("pakai bagian lain dari video yang udah kepakai")
+                                chosen = _best(sources, target, duration, used_sources=True)
+                                if chosen is None:
+                                    raise PipelineError("fetch", f"klip shot {s_idx + 1} udah kepakai semua atau kependekan")
+                                warn.append("pakai bagian lain dari video yang udah kepakai")
                         source, score, start = chosen
                         source.used.append((start, start + duration + TAIL_S))
+                        prev_entry = entry
+                        prev_source = source
+                        prev_end_time = start + duration
                         if score < low:
                             warn.append(f"skor rendah ({score:.2f})")
 

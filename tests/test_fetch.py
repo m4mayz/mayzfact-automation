@@ -271,3 +271,21 @@ def test_fetch_with_shots_dict(tmp_path, cut_video):
     status = read_json(paths.links_status_json)
     assert all(s["state"] == "ok" for s in status["shots"].values())
 
+
+def test_consecutive_shots_with_same_video_play_continuously(tmp_path, cut_video):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = [{"id": "content", "label": "content", "shots": [2, 3]}]
+    plan["shots"] = [
+        {**plan["shots"][2], "start_s": 0.0, "end_s": 0.4, "media": "video"},
+        {**plan["shots"][3], "start_s": 0.4, "end_s": 0.8, "media": "video"},
+    ]
+    save_links(paths.links_json, {"shots": {
+        "2": {"url": "https://a.b/video"},
+        "3": {"url": "https://a.b/video"},
+    }})
+    data = run_fetch(paths, plan, obtain=lambda e, r: [cut_video], encoder=FakeEncoder(), **QUIET)
+    s2, s3 = data["shots"]
+    assert abs(s3["source_s"] - (s2["source_s"] + 0.4)) < 1e-3
+
+
