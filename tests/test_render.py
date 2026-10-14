@@ -30,7 +30,7 @@ def test_render_fixture_timeline(tmp_path, make_video, make_photo, sine_mp3):
     shutil.copy(sine_mp3, paths.voice_mp3)
     clips = {"shots": [
         {"file": "clips/shot_01.mp4", "kind": "video", "start_s": 0.0, "width": 1080, "height": 1920},
-        {"file": "clips/shot_02.mp4", "kind": "video", "start_s": 1.0, "width": 1920, "height": 1080},
+        {"file": "clips/shot_02.mp4", "kind": "video", "start_s": 1.5, "width": 1920, "height": 1080},
         {"file": "clips/shot_03.jpg", "kind": "photo", "start_s": 2.0, "width": 1600, "height": 1000},
     ]}
     text = "Look here. Number one, crab. Old."
@@ -40,8 +40,10 @@ def test_render_fixture_timeline(tmp_path, make_video, make_photo, sine_mp3):
     shutil.copy(sine_mp3, paths.root / "audio" / "bgm.mp3")
     audio = {"bgm": "audio/bgm.mp3", "sfx": {"hook": "audio/sfx/boom.mp3", "number": "audio/sfx/boom.mp3"}}
     timeline = build_timeline(clips, audio_duration_s=3.0, fg_min_ratio=0.5, script=script,
-                              alignment=fake_alignment(text, 2.97), audio=audio)
-    assert timeline["countdown"] and timeline["captions"] and timeline["bgm"] and timeline["sfx"]
+                              alignment=fake_alignment(text, 2.97), audio=audio,
+                              overlays={"clips/shot_01.mp4": {"points": [{"t": 0.2, "x": 300, "y": 600, "w": 400, "h": 500}]},
+                                        "clips/shot_03.jpg": {"points": [{"t": 0.0, "x": 200, "y": 100, "w": 600, "h": 500}]}})
+    assert timeline["countdown"] and timeline["captions"] and timeline["bgm"] and timeline["sfx"] and timeline["overlays"]
     write_json_atomic(paths.timeline_json, timeline)
 
     run_render(paths)

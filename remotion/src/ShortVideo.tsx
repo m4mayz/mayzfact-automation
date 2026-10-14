@@ -4,12 +4,13 @@ import {Audio} from '@remotion/media';
 import {Captions} from './Captions';
 import {IntroWhip} from './Intro';
 import {NumberCard} from './NumberCard';
+import {Overlays} from './Overlays';
 import {ShotView} from './ShotView';
 import {SoundLayer} from './SoundLayer';
 import {SubjectCard} from './SubjectCard';
 import type {TimelineProps} from './types';
 
-export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null}) => {
+export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null, overlays = []}) => {
   const {fps} = useVideoConfig();
   // Shot yang seluruh durasinya ketutup card countdown nggak dirender, biar videonya nggak tembus di belakang card.
   // Klip shot itu tetap tampil di dalam subject card.
@@ -28,7 +29,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
         // Card opaque di atas shot beat countdown: number card dulu, terus subject card.
         <React.Fragment key={`card-${card.number}-${card.numberFrom}`}>
           <Sequence from={card.numberFrom} durationInFrames={card.numberDuration}>
-            <NumberCard number={card.number} durationInFrames={card.numberDuration} />
+            <NumberCard number={card.number} numberAt={card.numberAt ?? 0} durationInFrames={card.numberDuration} />
           </Sequence>
           <Sequence from={card.cardFrom} durationInFrames={card.cardDuration} premountFor={fps}>
             <SubjectCard card={card} />
@@ -36,6 +37,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
         </React.Fragment>
       ))}
       </IntroWhip>
+      <Overlays overlays={overlays} />
       <Captions captions={captions} />
       {audio ? <Audio src={staticFile(audio)} /> : null}
       <SoundLayer bgm={bgm} sfx={sfx} />

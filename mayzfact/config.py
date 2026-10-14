@@ -15,6 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RUNS_DIR = PROJECT_ROOT / "runs"
 CACHE_DIR = PROJECT_ROOT / "cache"
 BROWSER_PROFILES_DIR = PROJECT_ROOT / "browser-profiles"
+MODELS_DIR = PROJECT_ROOT / "models"  # cache model ML (SigLIP, OWLv2), di-gitignore
 
 
 @dataclass(frozen=True)

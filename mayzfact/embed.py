@@ -8,6 +8,7 @@ from typing import Any, Protocol
 import numpy as np
 from PIL import Image, ImageOps
 
+from mayzfact.config import MODELS_DIR
 from mayzfact.errors import PipelineError
 
 MODEL_NAME = "ViT-B-16-SigLIP"
@@ -45,8 +46,9 @@ def _open_rgb(path: Path) -> Image.Image:
 
 
 class SiglipEncoder:
-    def __init__(self, batch_size: int = 32) -> None:
+    def __init__(self, batch_size: int = 32, cache_dir: Path = MODELS_DIR) -> None:
         self._batch_size = batch_size
+        self._cache_dir = str(cache_dir)
         self._model: Any = None
 
     def _load(self) -> None:
@@ -56,7 +58,9 @@ class SiglipEncoder:
             import open_clip
             import torch
 
-            model, _, preprocess = open_clip.create_model_and_transforms(MODEL_NAME, pretrained=PRETRAINED)
+            model, _, preprocess = open_clip.create_model_and_transforms(
+                MODEL_NAME, pretrained=PRETRAINED, cache_dir=self._cache_dir
+            )
         except Exception as exc:
             raise PipelineError(
                 "hook",
@@ -65,7 +69,7 @@ class SiglipEncoder:
         model.eval()
         self._torch = torch
         self._preprocess = preprocess
-        self._tokenizer = open_clip.get_tokenizer(MODEL_NAME)
+        self._tokenizer = open_clip.get_tokenizer(MODEL_NAME, cache_dir=self._cache_dir)
         self._model = model
 
     def images(self, paths: list[Path]) -> np.ndarray:
