@@ -251,7 +251,10 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
      - Subject card mulai pas nama subjek kedengeran.
   3. **Panah/lingkaran:**
      - Muncul 6 frame setelah shot mulai, barengan `quick-ting.mp3`.
-     - Tampil maksimal 40 frame dan selalu selesai sebelum klip habis, terus fade.
+     - Tampil sampai fade-nya selesai 0,5 detik (15 frame) sebelum ganti klip. Batas 40 frame awal dihapus atas permintaan Akmal.
+     - Panah nyapu 1× setengah putaran (kanan → atas → kiri) sepanjang durasi tampil. Sempat diganti muter terus, tapi Akmal minta balik ke 1 sapuan.
+     - Volume quick-ting 0,35.
+     - Query dari keyword dipotong 2 kata, karena keyword panjang bikin OWLv2 nangkep benda lain.
      - Panah muter setengah putaran di sekeliling subjek.
      - Lingkaran digambar dalam 6 frame.
   4. **Panah dipicu script (nanti):** nggak semua klip dapat panah. Panah muncul kalau narasinya ngajak lihat, misalnya "look at this". Ini butuh perubahan di logic script dan cuma buat kasus tertentu, jadi dikerjain nanti.

@@ -36,5 +36,5 @@ testpaths = ["tests"]
 addopts = "-m 'not render and not clip'"
 markers = [
   "render: jalanin Remotion beneran (lambat, butuh Node 22)",
-  "clip: load model SigLIP asli (lambat, download ±800 MB sekali)",
+  "clip: load model ML asli SigLIP/OWLv2 (lambat; model ada di models/)",
 ]

@@ -85,3 +85,26 @@ Kayak di source `i2xag`: panah merah/kuning nunjuk subjek dan ngikutin gerakanny
   - test model asli pakai marker `clip`
 - `tsc` + test render.
 - **DoD:** di Studio, run i2xag nampilin panah/lingkaran yang nempel di subjek. Render cuma setelah Akmal oke.
+
+## 8. Revisi setelah review Studio (D-023)
+
+Bagian ini menggantikan §4 dan §5 kalau ada yang bertentangan.
+
+**Timing overlay:**
+- `from` = awal shot + 6 frame.
+- `durationInFrames` = durasi shot − 6 − 15, jadi fade-nya selesai 0,5 detik sebelum ganti klip.
+- Shot yang hasilnya `< 15` frame nggak dapat overlay. Shot yang lebih pendek dari 1,2 detik nggak dideteksi sama sekali.
+- SFX `overlay` (`quick-ting.mp3`, volume 0,35) bunyi pas overlay muncul.
+
+**Animasi:**
+- Panah: pop 4 frame, terus nyapu 1× dari 20° ke −160° (kanan → atas → kiri) dengan easing in-out sepanjang durasi. Ujungnya selalu nunjuk ke tengah subjek. Fade di 8 frame terakhir.
+- Lingkaran: digambar dalam 6 frame, terus fade di 8 frame terakhir.
+
+**Deteksi:**
+- Query dari keyword dipotong 2 kata.
+- Cache key = size + mtime + `fg_min_ratio` + query.
+- Cache ditulis tiap 1 klip selesai, dan klip yang error dilewat tanpa ngebuang hasil klip lain.
+
+**Timing suara:** awal kata di-snap ke energi `voice.mp3` (`voice_onset.py`).
+- Card countdown dapat `numberAt`, yaitu momen angka melesat masuk barengan whoosh.
+- `cardFrom` = awal kata subjek yang kedengeran.

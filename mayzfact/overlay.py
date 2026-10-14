@@ -9,12 +9,15 @@ from mayzfact.countdown import parse_countdown
 from mayzfact.ffmpeg import extract_frame
 from mayzfact.media import FRAME_H, FRAME_W, fg_height, layout_for
 from mayzfact.steps.clips import beat_subjects
+from mayzfact.steps.timeline import FPS, OVERLAY_DELAY_FRAMES, OVERLAY_END_GAP_FRAMES, OVERLAY_MIN_FRAMES
 from mayzfact.store import RunPaths, read_json, write_json_atomic
 
 MIN_SCORE = 0.12
 MIN_VALID = 0.5
 SAMPLE_EVERY_S = 1.0
 DETECT_WIDTH = 960
+# Shot lebih pendek dari ini pasti nggak dapat overlay di timeline, jadi nggak usah dideteksi (±3.8 detik/frame).
+MIN_SHOT_S = (OVERLAY_DELAY_FRAMES + OVERLAY_END_GAP_FRAMES + OVERLAY_MIN_FRAMES) / FPS
 
 
 def screen_box(box: tuple[float, float, float, float], width: int, height: int, *, fg_min_ratio: float) -> tuple[int, int, int, int]:
@@ -69,6 +72,22 @@ def shot_query(clip: dict, beats: list[dict], subjects: list[str | None], plan: 
     return " ".join(keyword.split()[:KEYWORD_WORDS]) if keyword else None
 
 
+def _detect(paths: RunPaths, clip: dict, source: Path, query: str, detector: Any, fg_min_ratio: float) -> list[dict] | None:
+    times = sample_times(clip["kind"], clip["end_s"] - clip["start_s"])
+    found: list[dict | None] = []
+    for i, t in enumerate(times):
+        image = source if clip["kind"] != "video" else extract_frame(
+            source, t, paths.root / "overlay" / f"{Path(clip['file']).stem}_{i:02d}.jpg", width=DETECT_WIDTH)
+        hit = detector.best_box(image, query)
+        if hit and hit[0] >= MIN_SCORE:
+            x, y, w, h = screen_box(hit[1], clip["width"], clip["height"], fg_min_ratio=fg_min_ratio)
+            found.append({"x": x, "y": y, "w": w, "h": h})
+        else:
+            found.append(None)
+    filled = fill_points(found)
+    return [{"t": t, "x": p["x"], "y": p["y"], "w": p["w"], "h": p["h"]} for p, t in zip(filled, times)] if filled else None
+
+
 def prepare_overlays(
     paths: RunPaths, clips: dict, script: dict, plan: dict | None, detector: Any, *, fg_min_ratio: float,
     log: Callable[[str], None],
@@ -87,26 +106,20 @@ def prepare_overlays(
         source = paths.root / clip["file"]
         if not query or not source.exists():
             continue
+        if clip["end_s"] - clip["start_s"] < MIN_SHOT_S:
+            continue
         stat = source.stat()
-        key = f"{stat.st_size}-{stat.st_mtime_ns}-{query}"
+        key = f"{stat.st_size}-{stat.st_mtime_ns}-{fg_min_ratio}-{query}"  # posisi layar ikut fg_min_ratio
         if cache.get(clip["file"], {}).get("key") == key:
             out[clip["file"]] = cache[clip["file"]]
             continue
-        times = sample_times(clip["kind"], clip["end_s"] - clip["start_s"])
-        found: list[dict | None] = []
-        for i, t in enumerate(times):
-            image = source if clip["kind"] != "video" else extract_frame(
-                source, t, paths.root / "overlay" / f"{Path(clip['file']).stem}_{i:02d}.jpg", width=DETECT_WIDTH)
-            hit = detector.best_box(image, query)
-            if hit and hit[0] >= MIN_SCORE:
-                x, y, w, h = screen_box(hit[1], clip["width"], clip["height"], fg_min_ratio=fg_min_ratio)
-                found.append({"x": x, "y": y, "w": w, "h": h})
-            else:
-                found.append(None)
-        filled = fill_points(found)
-        points = [dict(p, t=t) for p, t in zip(filled, times)] if filled else None
-        points = [{"t": p["t"], "x": p["x"], "y": p["y"], "w": p["w"], "h": p["h"]} for p in points] if points else None
+        try:
+            points = _detect(paths, clip, source, query, detector, fg_min_ratio)
+        except Exception as exc:  # 1 klip gagal jangan bikin hasil klip lain ikut hilang
+            log(f"[timeline] overlay {clip['file']} dilewat: {type(exc).__name__}: {exc}")
+            continue
         out[clip["file"]] = {"key": key, "points": points}
-        log(f"[timeline] overlay {clip['file']} ({query}): " + (f"{len(times)} titik" if points else "subjek nggak kedeteksi, tanpa panah"))
+        write_json_atomic(cache_path, out)  # simpan tiap klip: deteksi mahal, jangan sampai keulang
+        log(f"[timeline] overlay {clip['file']} ({query}): " + (f"{len(points)} titik" if points else "subjek nggak kedeteksi, tanpa panah"))
     write_json_atomic(cache_path, out)
     return out

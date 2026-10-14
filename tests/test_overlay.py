@@ -111,3 +111,41 @@ def test_owlv2_finds_a_red_square(tmp_path):
     canvas.save(image)
     score, (x0, y0, x1, y1) = Owlv2Detector().best_box(image, "a red square")
     assert score > 0.1 and x0 > 0.4 and y0 > 0.4
+
+
+def test_one_failing_clip_keeps_other_results_cached(tmp_path, make_video):
+    import shutil
+
+    paths = RunPaths(tmp_path / "run")
+    (paths.root / "clips").mkdir(parents=True)
+    for name in ("shot_01.mp4", "shot_03.mp4"):
+        shutil.copy(make_video(1080, 1920, 2.2), paths.root / "clips" / name)
+    clips = {"shots": [clip(0, 0, "clips/shot_01.mp4"), clip(2, 2, "clips/shot_03.mp4", start=4.0, end=6.0)]}
+
+    class Flaky(FakeDetector):
+        def best_box(self, image, query):
+            if query == "horseshoe crab":
+                raise RuntimeError("model error")
+            return super().best_box(image, query)
+
+    logs = []
+    out = prepare_overlays(paths, clips, SCRIPT, None, Flaky(), fg_min_ratio=0.5, log=logs.append)
+    assert out["clips/shot_01.mp4"]["points"] and "clips/shot_03.mp4" not in out
+    assert "clips/shot_01.mp4" in read_json(paths.root / "overlays.json")
+    assert any("shot_03" in line for line in logs)
+
+
+def test_short_clip_is_not_detected_and_key_has_ratio(tmp_path, make_video):
+    import shutil
+
+    paths = RunPaths(tmp_path / "run")
+    (paths.root / "clips").mkdir(parents=True)
+    shutil.copy(make_video(1080, 1920, 2.2), paths.root / "clips" / "shot_01.mp4")
+    shutil.copy(make_video(1080, 1920, 1.2), paths.root / "clips" / "shot_03.mp4")
+    clips = {"shots": [clip(0, 0, "clips/shot_01.mp4"), clip(2, 2, "clips/shot_03.mp4", start=4.0, end=5.0)]}
+    detector = FakeDetector()
+    out = prepare_overlays(paths, clips, SCRIPT, None, detector, fg_min_ratio=0.5, log=lambda m: None)
+    assert "clips/shot_03.mp4" not in out and all(q != "horseshoe crab" for _, q in detector.calls)
+    calls = len(detector.calls)
+    prepare_overlays(paths, clips, SCRIPT, None, detector, fg_min_ratio=0.6, log=lambda m: None)
+    assert len(detector.calls) > calls  # ratio beda → posisi layar beda → deteksi ulang
