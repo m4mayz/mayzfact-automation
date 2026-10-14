@@ -106,3 +106,23 @@ def test_normalize_script_keeps_subject_trimmed():
     raw = Script(beats=[Beat(text="Number five, horseshoe crab.", media="video", queries=["crab"], subject="  horseshoe crab ")], fallback_query="ocean")
     assert normalize_script(raw).beats[0].subject == "horseshoe crab"
     assert Beat(text="x", media="video", queries=["q"]).subject == ""
+
+
+def test_countdown_item_with_fewer_than_two_explanation_beats_is_reported():
+    beats = [
+        Beat(text="Here are five ancient creatures still alive!", media="video", queries=["creatures"]),
+        Beat(text="Number five, horseshoe crab.", media="photo", queries=["crab"]),
+        Beat(text="It looks like a prehistoric tank.", media="video", queries=["crab crawling"]),
+        Beat(text="Number four, nautilus.", media="photo", queries=["nautilus"]),
+        Beat(text="It floated before dinosaurs existed.", media="video", queries=["nautilus swim"]),
+        Beat(text="Its spiral shell is pure geometry.", media="video", queries=["nautilus shell"]),
+        Beat(text="Number one, common kestrel.", media="photo", queries=["kestrel"]),
+        Beat(text="It hovers motionless in the wind.", media="video", queries=["kestrel hover"]),
+        Beat(text="Its eyes track tiny mice below.", media="video", queries=["kestrel hunting"]),
+    ]
+    script = Script(beats=beats, fallback_query="ancient creatures")
+    problems, _ = check_script(script, SOURCE_TEXT, DURATION)
+    assert any("Number five" in p and "explanation beat" in p for p in problems)
+    # Number four and Number one have 2 explanation beats, so they should not be reported
+    assert not any("Number four" in p for p in problems)
+    assert not any("Number one" in p for p in problems)

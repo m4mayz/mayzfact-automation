@@ -27,8 +27,8 @@ class Settings:
     elevenlabs_model: str = "eleven_v3"
     pexels_api_key: str = ""
     pixabay_api_key: str = ""
-    target_duration_ratio: float = 0.6
-    min_duration_seconds: float = 32.0
+    target_duration_ratio: float = 0.8
+    min_duration_seconds: float = 42.0
     max_shot_seconds: float = 4.0
     photo_ratio: float = 0.3
     fg_min_height_ratio: float = 0.5

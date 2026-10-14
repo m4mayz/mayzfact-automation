@@ -14,7 +14,7 @@ from tests.factories import cand, fake_alignment, make_script
 
 VIDEO_ID = "i2xag_1OJfM"
 KEYS = {"gemini_api_keys": ("g",), "elevenlabs_api_keys": ("e",), "elevenlabs_voice_id": "v", "pexels_api_key": "p", "pixabay_api_key": "x"}
-SETTINGS = Settings(**KEYS, max_shot_seconds=10.0, clip_source="auto")
+SETTINGS = Settings(**KEYS, max_shot_seconds=10.0, clip_source="auto", target_duration_ratio=0.6, min_duration_seconds=32.0)
 TRANSCRIPT = [{"text": "Five ancient creatures are still alive today", "start": 0.0, "duration": 53.3}]
 NONE_DONE = {step: False for step in STEPS}
 ALL_DONE = {step: True for step in STEPS}
@@ -343,7 +343,7 @@ def test_no_render_stops_after_timeline(world):
     assert world.renders == 0
 
 
-MANUAL = Settings(**KEYS, max_shot_seconds=10.0, clip_source="manual")
+MANUAL = Settings(**KEYS, max_shot_seconds=10.0, clip_source="manual", target_duration_ratio=0.6, min_duration_seconds=32.0)
 
 
 def test_manual_mode_runs_plan_then_waits_for_links(world):

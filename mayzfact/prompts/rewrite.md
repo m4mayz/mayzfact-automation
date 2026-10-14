@@ -13,7 +13,7 @@ Rules:
 - Keep the source's call to action (like, subscribe, comment), but say it in new words.
 - Keep the source's moments that invite the viewer to look at something on screen (for example "look at this thing", "look at that shell", "what even is this"), at the same places, in new words.
 - You may make the hook stronger, as long as the core message stays the same.
-- If the source counts items (for example "Number five ... number one"), keep the same numbering and the same order, and announce every item the same way. Never mix the countdown with words like "first", "next", "then" or "finally".
+- If the source counts items (for example "Number five ... number one"), keep the same numbering and the same order, and announce every item the same way ("Number five, [subject]."). Never mix the countdown with words like "first", "next", "then" or "finally". After each item's announcement beat, you MUST provide at least 2 explanation beats describing that item (e.g., what it does or looks like, followed by an amazing fact or detail) so each item gets enough narration time before the next number.
 - No emojis, hashtags, stage directions, sound effects or text in brackets.
 
 Split the narration into beats. One beat is one short sentence or clause that carries one visual idea, 1.5 to 3.5 seconds when spoken. Every beat has at most 10 words: split longer sentences into several beats, and give each beat its own search terms for what is visible at that moment.

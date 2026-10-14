@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 from typing import Protocol
 
+from mayzfact.countdown import parse_countdown
 from mayzfact.emoji import allowed_emoji_line
 from mayzfact.errors import PipelineError
 from mayzfact.models import Script
@@ -69,6 +70,23 @@ def check_script(script: Script, source_text: str, duration_s: float) -> tuple[l
             )
         if not beat.queries:
             problems.append(f"Beat {number} has no search queries.")
+    countdown_indices = [
+        (i, parse_countdown(b.text))
+        for i, b in enumerate(script.beats)
+        if parse_countdown(b.text) and parse_countdown(b.text).number is not None
+    ]
+    for idx_in_list, (beat_idx, _) in enumerate(countdown_indices):
+        next_beat_idx = (
+            countdown_indices[idx_in_list + 1][0]
+            if idx_in_list + 1 < len(countdown_indices)
+            else len(script.beats)
+        )
+        explanation_count = next_beat_idx - (beat_idx + 1)
+        if explanation_count < 2:
+            problems.append(
+                f"Countdown item '{script.beats[beat_idx].text.strip()}' has only {explanation_count} explanation beat(s); "
+                f"each item must have at least 2 beats describing it."
+            )
     if not script.fallback_query:
         problems.append("fallback_query is empty.")
     overlap = ngram_overlap(full_text, source_text)
