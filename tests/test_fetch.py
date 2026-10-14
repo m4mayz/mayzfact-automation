@@ -242,3 +242,32 @@ def test_progress_marked_failed_when_fetch_crashes(tmp_path, monkeypatch):
     with pytest.raises(KeyboardInterrupt):
         run_fetch(paths, plan, obtain=lambda e, r: [], encoder=FakeEncoder(), **QUIET)
     assert read_json(paths.fetch_progress_json)["state"] == "failed"
+
+
+def test_fetch_with_shots_dict(tmp_path, cut_video):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    # 4 shots: 0, 1, 2, 3
+    save_links(paths.links_json, {"shots": {
+        "0": {"url": "https://www.douyin.com/video/1"},
+        "1": {"url": "https://www.douyin.com/video/1"},
+        "2": {"url": "https://x.com/post"},
+    }})
+    files = {"https://www.douyin.com/video/1": [cut_video], "https://x.com/post": photos(tmp_path, "other", "crab")}
+    with pytest.raises(AwaitingInput, match="horseshoe crab|shot 4"):
+        run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
+    status = read_json(paths.links_status_json)
+    assert status["shots"]["3"]["state"] == "missing"
+
+    save_links(paths.links_json, {"shots": {
+        "0": {"url": "https://www.douyin.com/video/1"},
+        "1": {"url": "https://www.douyin.com/video/1"},
+        "2": {"url": "https://x.com/post"},
+        "3": {"url": "https://x.com/post2"},
+    }})
+    files["https://x.com/post2"] = photos(tmp_path, "good")
+    data = run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
+    assert len(data["shots"]) >= 3
+    status = read_json(paths.links_status_json)
+    assert all(s["state"] == "ok" for s in status["shots"].values())
+

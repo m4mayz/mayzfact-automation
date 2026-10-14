@@ -15,6 +15,7 @@ from mayzfact.manual.links import (
     VIDEO_EXTS,
     load_links,
     missing_groups,
+    missing_shots,
     normalize_links,
     save_links,
 )
@@ -128,37 +129,67 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
             url = urlparse(self.path)
             if url.path == "/api/links":
                 try:
-                    data = normalize_links(json.loads(self.rfile.read(length) or b"{}"), group_ids())
+                    data = normalize_links(json.loads(self.rfile.read(length) or b"{}"), group_ids(), shot_count=len(plan().get("shots", [])))
                 except (ValueError, TypeError, AttributeError) as exc:
                     return self._json(400, {"error": str(exc)})
                 save_links(paths.links_json, data)
-                return self._json(200, {"ok": True, "missing": missing_groups(plan(), data)})
+                missing = missing_shots(plan(), data) if "shots" in data else missing_groups(plan(), data)
+                return self._json(200, {"ok": True, "missing": missing})
             if url.path == "/api/upload":
-                group = parse_qs(url.query).get("group", [""])[0]
+                qs = parse_qs(url.query)
+                shot_param = qs.get("shot", [""])[0]
+                group = qs.get("group", [""])[0]
                 suffix = PurePosixPath(unquote(self.headers.get("X-Filename", ""))).suffix.lower()
-                if group not in group_ids():  # id kelompok cuma [a-z0-9-], aman dipakai di nama file
-                    return self._reject(400, f"kelompok {group or '?'} nggak ada di plan", length)
                 if suffix not in VIDEO_EXTS | IMAGE_EXTS:
                     return self._reject(400, f"ekstensi {suffix or '?'} nggak didukung", length)
                 if length > max_upload:
                     return self._reject(413, f"file kegedean (maks {max_upload // (1024 * 1024)} MB)", length)
                 if length <= 0:
                     return self._reject(400, "file kosong", length)
+
+                total_shots = len(plan().get("shots", []))
                 paths.manual_dir.mkdir(parents=True, exist_ok=True)
-                taken = [int(p.stem.rsplit("_", 1)[1]) for p in paths.manual_dir.glob(f"{group}_*.*") if p.stem.rsplit("_", 1)[1].isdigit()]
-                dest = paths.manual_dir / f"{group}_{max(taken, default=0) + 1}{suffix}"
-                part = dest.with_name(dest.name + ".part")
-                with part.open("wb") as fh:
-                    self._body(length, fh)
-                if part.stat().st_size != length:  # koneksi putus di tengah
-                    part.unlink()
-                    return self._json(400, {"error": "upload putus di tengah, coba lagi"})
-                part.replace(dest)
-                rel = f"manual/{dest.name}"
-                links = load_links(paths.links_json)
-                links["groups"].setdefault(group, []).append({"file": rel})
-                save_links(paths.links_json, links)
-                return self._json(200, {"file": rel})
+
+                if shot_param:
+                    try:
+                        shot_idx = int(shot_param)
+                    except ValueError:
+                        return self._reject(400, f"shot index '{shot_param}' nggak valid", length)
+                    if shot_idx < 0 or shot_idx >= total_shots:
+                        return self._reject(400, f"shot {shot_idx + 1} nggak ada di plan", length)
+                    dest = paths.manual_dir / f"shot_{shot_idx + 1}{suffix}"
+                    part = dest.with_name(dest.name + ".part")
+                    with part.open("wb") as fh:
+                        self._body(length, fh)
+                    if part.stat().st_size != length:
+                        part.unlink()
+                        return self._json(400, {"error": "upload putus di tengah, coba lagi"})
+                    part.replace(dest)
+                    rel = f"manual/{dest.name}"
+                    links = load_links(paths.links_json)
+                    links.setdefault("shots", {})[str(shot_idx)] = {"file": rel}
+                    save_links(paths.links_json, links)
+                    return self._json(200, {"file": rel})
+
+                if group:
+                    if group not in group_ids():  # id kelompok cuma [a-z0-9-], aman dipakai di nama file
+                        return self._reject(400, f"kelompok {group or '?'} nggak ada di plan", length)
+                    taken = [int(p.stem.rsplit("_", 1)[1]) for p in paths.manual_dir.glob(f"{group}_*.*") if p.stem.rsplit("_", 1)[1].isdigit()]
+                    dest = paths.manual_dir / f"{group}_{max(taken, default=0) + 1}{suffix}"
+                    part = dest.with_name(dest.name + ".part")
+                    with part.open("wb") as fh:
+                        self._body(length, fh)
+                    if part.stat().st_size != length:  # koneksi putus di tengah
+                        part.unlink()
+                        return self._json(400, {"error": "upload putus di tengah, coba lagi"})
+                    part.replace(dest)
+                    rel = f"manual/{dest.name}"
+                    links = load_links(paths.links_json)
+                    links.setdefault("groups", {}).setdefault(group, []).append({"file": rel})
+                    save_links(paths.links_json, links)
+                    return self._json(200, {"file": rel})
+
+                return self._reject(400, "parameter shot atau group wajib diisi", length)
             self._reject(404, "nggak ada", length)
 
     last: OSError | None = None

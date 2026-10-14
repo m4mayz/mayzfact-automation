@@ -11,7 +11,7 @@ import numpy as np
 from mayzfact.embed import Encoder, mean_unit
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.ffmpeg import probe, sample_frames
-from mayzfact.manual.links import link_kind, load_links, missing_groups
+from mayzfact.manual.links import link_kind, load_links, missing_groups, missing_shots
 from mayzfact.manual.obtain import cache_key, media_kind
 from mayzfact.steps.clips import normalize_local
 from mayzfact.store import RunPaths, write_json_atomic
@@ -233,17 +233,132 @@ def run_fetch(
     log: Callable[[str], None] = print,
 ) -> dict:
     links = load_links(paths.links_json)
-    missing = set(missing_groups(plan, links))
     paths.clips_dir.mkdir(parents=True, exist_ok=True)
     for old in paths.clips_dir.glob("shot_*"):
         old.unlink()
     shots = {shot["index"]: shot for shot in plan["shots"]}
-    status: dict[str, dict] = {}
-    problems: list[str] = []
+    shown: dict[Path, list[tuple[float, float]]] = {}
     clips: list[dict] = []
+    problems: list[str] = []
+
+    if "shots" in links:
+        missing = set(missing_shots(plan, links))
+        shots_data = links.get("shots", {})
+        links_total = len(shots_data)
+        progress = Progress(paths.fetch_progress_json, links_total, len(plan["shots"]), log)
+        group_status: dict[str, dict] = {}
+        shot_status: dict[str, dict] = {}
+        obtain_cache: dict[str, list[Path]] = {}
+
+        def get_files(entry: dict) -> list[Path]:
+            key = entry.get("url") or entry.get("file") or str(entry)
+            if key not in obtain_cache:
+                obtain_cache[key] = obtain(entry, paths.root)
+            return obtain_cache[key]
+
+        try:
+            for group in plan["groups"]:
+                gid = group["id"]
+                g_shots = [shots[i] for i in group["shots"]]
+                g_missing = [s for s in g_shots if s["index"] in missing]
+                if g_missing:
+                    for s in g_missing:
+                        shot_status[str(s["index"])] = {"state": "missing", "message": "belum diisi"}
+                        problems.append(f"shot {s['index'] + 1}")
+                    group_status[gid] = {"state": "missing", "message": f"{len(g_missing)} shot belum diisi"}
+                    continue
+
+                if gid == "hook" and len(g_shots) > 1:
+                    first_entry = shots_data[str(g_shots[0]["index"])]
+                    if all(shots_data.get(str(s["index"])) == first_entry for s in g_shots):
+                        try:
+                            srcs = _sources(first_entry, get_files(first_entry), paths, encoder)
+                            if len(srcs) == 1 and srcs[0].kind == "video":
+                                for src in srcs:
+                                    src.used = shown.setdefault(src.path, [])
+                                clip = _continuous(group, g_shots, srcs[0], paths, encoder, fg_min_ratio, progress)
+                                if clip is not None:
+                                    clips.append(clip)
+                                    group_status[gid] = {"state": "ok", "message": ""}
+                                    for s in g_shots:
+                                        shot_status[str(s["index"])] = {"state": "ok", "message": ""}
+                                    continue
+                        except Exception:
+                            pass
+
+                group_failed = False
+                group_warnings = []
+                for s in g_shots:
+                    s_idx = s["index"]
+                    s_key = str(s_idx)
+                    entry = shots_data[s_key]
+                    progress.update(current=f"{group['label']}: shot {s_idx + 1}")
+                    try:
+                        files = get_files(entry)
+                        sources = _sources(entry, files, paths, encoder)
+                        for src in sources:
+                            src.used = shown.setdefault(src.path, [])
+
+                        target, low = _target(s, paths, encoder)
+                        duration = s["end_s"] - s["start_s"]
+                        chosen = _best(sources, target, duration, used_sources=False)
+                        warn = []
+                        if chosen is None:
+                            chosen = _best(sources, target, duration, used_sources=True)
+                            if chosen is None:
+                                raise PipelineError("fetch", f"klip shot {s_idx + 1} udah kepakai semua atau kependekan")
+                            warn.append("pakai bagian lain dari video yang udah kepakai")
+                        source, score, start = chosen
+                        source.used.append((start, start + duration + TAIL_S))
+                        if score < low:
+                            warn.append(f"skor rendah ({score:.2f})")
+
+                        out = normalize_local(s["index"], s["start_s"], s["end_s"], source.path, source.kind,
+                                              start + duration / 2, paths, fg_min_ratio)
+                        url = source.entry.get("url")
+                        clips.append({
+                            "index": s["index"], "beat": s["beat"], "start_s": s["start_s"], "end_s": s["end_s"], **out,
+                            "provider": link_kind(url) if url else "upload",
+                            "provider_id": cache_key(url) if url else Path(source.entry["file"]).name,
+                            "page_url": url or source.entry["file"], "author": "", "query": "manual",
+                            "match": round(score, 4), "hook_segment": s["hook_segment"], "source_s": round(start, 2),
+                        })
+                        progress.data["shots_done"] += 1
+                        progress.log(f"[fetch] shot {s_idx + 1} ({group['label']}): {source.kind} skor {score:.3f} dari detik {start:.1f}")
+                        msg = "; ".join(warn)
+                        shot_status[s_key] = {"state": "ok", "message": msg}
+                        if msg:
+                            group_warnings.append(f"shot {s_idx + 1}: {msg}")
+                    except Exception as exc:
+                        group_failed = True
+                        problems.append(f"shot {s_idx + 1}")
+                        shot_status[s_key] = {"state": "error", "message": _message(exc)[:600]}
+                        progress.log(f"[fetch] shot {s_idx + 1} ({group['label']}): GAGAL {_message(exc).splitlines()[0][:160]}")
+
+                if group_failed:
+                    group_status[gid] = {"state": "error", "message": "ada shot yang gagal"}
+                else:
+                    group_status[gid] = {"state": "ok", "message": "; ".join(group_warnings)}
+
+            write_json_atomic(paths.links_status_json, {"groups": group_status, "shots": shot_status})
+            if problems:
+                progress.update(state="awaiting", current="")
+                raise AwaitingInput(
+                    "fetch", f"{len(problems)} shot perlu diisi/diganti: {', '.join(problems)}. Buka: mayzfact brief {paths.root.name}"
+                )
+            data = {"shots": sorted(clips, key=lambda clip: clip["index"])}
+            write_json_atomic(paths.clips_json, data)
+            progress.update(state="done", current="")
+        finally:
+            if progress.data["state"] == "running":
+                progress.update(state="failed", current="")
+        return data
+
+    missing = set(missing_groups(plan, links))
+    status = {}
+    shot_status = {}
     links_total = sum(len(links["groups"].get(g["id"], [])) for g in plan["groups"])
     progress = Progress(paths.fetch_progress_json, links_total, len(plan["shots"]), log)
-    shown: dict[Path, list[tuple[float, float]]] = {}
     try:
         for group in plan["groups"]:
             gid = group["id"]
@@ -254,14 +369,17 @@ def run_fetch(
             try:
                 group_clips, warnings = _run_group(group, [shots[i] for i in group["shots"]], links["groups"][gid],
                                                    obtain, paths, encoder, fg_min_ratio, progress, shown)
-            except Exception as exc:  # error apa pun cukup bikin kelompok ini gagal, kelompok lain tetap diproses
+            except Exception as exc:
                 status[gid] = {"state": "error", "message": _message(exc)[:600]}
                 problems.append(group["label"])
                 progress.log(f"[fetch] {group['label']}: {_message(exc).splitlines()[0][:160]}")
                 continue
             clips += group_clips
             status[gid] = {"state": "ok", "message": "; ".join(warnings)}
-        write_json_atomic(paths.links_status_json, {"groups": status})
+        for shot in plan["shots"]:
+            s_gid = shot.get("group")
+            shot_status[str(shot["index"])] = status.get(s_gid, {"state": "ok", "message": ""})
+        write_json_atomic(paths.links_status_json, {"groups": status, "shots": shot_status})
         if problems:
             progress.update(state="awaiting", current="")
             raise AwaitingInput(
@@ -271,6 +389,6 @@ def run_fetch(
         write_json_atomic(paths.clips_json, data)
         progress.update(state="done", current="")
     finally:
-        if progress.data["state"] == "running":  # crash / Ctrl+C: jangan biarin brief nampilin "Lagi jalan" selamanya
+        if progress.data["state"] == "running":
             progress.update(state="failed", current="")
     return data

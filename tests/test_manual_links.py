@@ -72,7 +72,7 @@ def test_load_save_and_missing(tmp_path):
     plan = {"groups": [{"id": "hook"}, {"id": "crab"}, {"id": "fossil"}]}
     assert missing_groups(plan, load_links(path)) == ["hook", "fossil"]
     save_links(path, {"shots": {"1": {"url": "https://a.b/c"}}})
-    assert load_links(path) == {"groups": {}}
+    assert load_links(path) == {"shots": {"1": {"url": "https://a.b/c"}}}
 
 
 def test_rednote_links_are_rejected_with_upload_hint():
@@ -80,3 +80,24 @@ def test_rednote_links_are_rejected_with_upload_hint():
         with pytest.raises(ValueError, match="upload"):
             normalize_links({"groups": {"hook": url}}, ["hook"])
     assert normalize_links({"groups": {"hook": "file:manual/hook_1.mp4"}}, ["hook"])["groups"]["hook"] == [{"file": "manual/hook_1.mp4"}]
+
+
+def test_normalize_links_per_shot():
+    from mayzfact.manual.links import missing_shots
+    raw = {"shots": {
+        "0": "复制 https://v.douyin.com/x/ 打开",
+        "1": "https://a.b/p.jpg #2",
+        "2": "file:manual/shot_03.mp4",
+        "3": "",
+    }}
+    res = normalize_links(raw, shot_count=4)
+    assert res == {"shots": {
+        "0": {"url": "https://v.douyin.com/x/"},
+        "1": {"url": "https://a.b/p.jpg", "pick": 2},
+        "2": {"file": "manual/shot_03.mp4"},
+    }}
+    plan = {"shots": [{"index": i} for i in range(4)]}
+    assert missing_shots(plan, res) == [3]
+
+    with pytest.raises(ValueError, match="shot 10"):
+        normalize_links({"shots": {"9": "https://a.b/c"}}, shot_count=4)

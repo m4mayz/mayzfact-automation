@@ -46,9 +46,12 @@ def test_page_lists_groups_and_escapes_text(server):
     assert "0/2 kelompok" in html
     assert "/files/plan/fossil_0.jpg" in html
     assert "CARD #2" in html
+    assert 'data-shot="0"' in html and 'data-shot="1"' in html and 'data-shot="2"' in html
     write_json_atomic(paths.links_json, {"groups": {"fossil": [{"url": "https://a.b/c", "pick": 2}, {"file": "manual/fossil_1.mp4"}]}})
     html = httpx.get(base + "/").text
-    assert "https://a.b/c #2\nfile:manual/fossil_1.mp4</textarea>" in html and "1/2 kelompok" in html
+    assert 'data-shot="1" value="https://a.b/c #2"' in html
+    assert 'data-shot="2" value="file:manual/fossil_1.mp4"' in html
+    assert "1/2 kelompok" in html
 
 
 def test_save_links_validates(server):
@@ -58,6 +61,31 @@ def test_save_links_validates(server):
     assert read_json(paths.links_json) == {"groups": {"hook": [{"url": "https://v.douyin.com/x/"}, {"url": "https://a.b/c", "pick": 3}]}}
     bad = httpx.post(base + "/api/links", json={"groups": {"nautilus": "https://a.b/c"}})
     assert bad.status_code == 400 and "nautilus" in bad.json()["error"]
+
+
+def test_save_links_per_shot(server):
+    paths, base = server
+    ok = httpx.post(base + "/api/links", json={"shots": {"0": "https://v.douyin.com/x/", "1": "https://a.b/c #2"}})
+    assert ok.status_code == 200 and ok.json()["missing"] == [2]
+    assert read_json(paths.links_json) == {
+        "shots": {
+            "0": {"url": "https://v.douyin.com/x/"},
+            "1": {"url": "https://a.b/c", "pick": 2},
+        }
+    }
+    bad = httpx.post(base + "/api/links", json={"shots": {"99": "https://a.b/c"}})
+    assert bad.status_code == 400 and "shot 100" in bad.json()["error"]
+
+
+def test_upload_file_to_shot(server):
+    paths, base = server
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/c"}})
+    ok = httpx.post(base + "/api/upload?shot=1", content=b"shot-bytes", headers={"X-Filename": "klip.MP4"})
+    assert ok.status_code == 200 and ok.json()["file"] == "manual/shot_2.mp4"
+    assert (paths.root / "manual" / "shot_2.mp4").read_bytes() == b"shot-bytes"
+    links = read_json(paths.links_json)
+    assert links["shots"]["1"] == {"file": "manual/shot_2.mp4"}
+    assert httpx.post(base + "/api/upload?shot=99", content=b"x", headers={"X-Filename": "a.jpg"}).status_code == 400
 
 
 def test_upload_appends_file_to_group(server):

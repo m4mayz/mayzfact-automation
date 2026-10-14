@@ -44,7 +44,9 @@ def link_kind(url: str) -> str:
 
 def load_links(path: Path) -> dict:
     data = read_json(path) if path.exists() else {}
-    return data if "groups" in data else {"groups": {}}  # format lama per shot diabaikan
+    if "shots" in data or "groups" in data:
+        return data
+    return {"groups": {}}
 
 
 def save_links(path: Path, data: dict) -> None:
@@ -74,11 +76,33 @@ def lines_of(entries: list[dict]) -> str:
     )
 
 
-def normalize_links(raw: dict, group_ids: list[str]) -> dict:
-    """{"groups": {id: teks textarea | list entry}} → {"groups": {id: [entry, …]}}. Kelompok kosong dibuang."""
+def normalize_links(raw: dict, group_ids: list[str] | None = None, shot_count: int | None = None) -> dict:
+    """{"shots": {idx: link_string | entry}} atau legacy {"groups": {gid: lines}}."""
+    if "shots" in raw:
+        shots: dict[str, dict] = {}
+        for key, value in (raw.get("shots") or {}).items():
+            try:
+                idx = int(key)
+            except (ValueError, TypeError):
+                raise ValueError(f"index shot {key} nggak valid")
+            if shot_count is not None and (idx < 0 or idx >= shot_count):
+                raise ValueError(f"shot {idx + 1 if idx >= 0 else idx} nggak ada di plan")
+            if isinstance(value, str):
+                line = value.strip()
+                if not line:
+                    continue
+                entry = _entry(line, f"shot {idx + 1}")
+            elif isinstance(value, dict):
+                entry = value
+            else:
+                continue
+            shots[str(idx)] = entry
+        return {"shots": shots}
+
     groups: dict[str, list[dict]] = {}
+    valid_groups = group_ids or []
     for gid, value in (raw.get("groups") or {}).items():
-        if gid not in group_ids:
+        if valid_groups and gid not in valid_groups:
             raise ValueError(f"kelompok {gid} nggak ada di plan")
         lines = value.splitlines() if isinstance(value, str) else [lines_of([v]) for v in value if isinstance(v, dict)]
         entries = [_entry(line.strip(), f"kelompok {gid} baris {n}") for n, line in enumerate(lines, 1) if line.strip()]
@@ -90,3 +114,8 @@ def normalize_links(raw: dict, group_ids: list[str]) -> dict:
 def missing_groups(plan: dict, links: dict) -> list[str]:
     filled = links.get("groups", {})
     return [group["id"] for group in plan["groups"] if not filled.get(group["id"])]
+
+
+def missing_shots(plan: dict, links: dict) -> list[int]:
+    filled = links.get("shots", {})
+    return [s["index"] for s in plan.get("shots", []) if str(s["index"]) not in filled]
