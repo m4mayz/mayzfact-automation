@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 from typing import Protocol
 
+from mayzfact.emoji import allowed_emoji_line
 from mayzfact.errors import PipelineError
 from mayzfact.models import Beat, Script
 from mayzfact.store import RunPaths, write_json_atomic
@@ -112,7 +113,7 @@ def generate_script(
 ) -> dict:
     duration_s = target_duration(source["duration_s"], ratio, minimum_s)
     source_text = " ".join(s["text"] for s in source["transcript"])
-    system = PROMPT_PATH.read_text(encoding="utf-8")
+    system = PROMPT_PATH.read_text(encoding="utf-8") + "\n" + allowed_emoji_line()
     feedback: list[str] | None = None
     previous: Script | None = None
     problems: list[str] = []

@@ -29,7 +29,8 @@ def test_generate_script_passes_on_first_try():
     assert (data["target_seconds"], data["target_words"], data["word_count"]) == (42.48, 110, 110)
     assert data["ngram_overlap"] == 0.0
     assert data["fallback_query"] == "ocean animals"
-    assert data["beats"][0] == {"text": make_script().beats[0].text, "media": "video", "queries": ["query 0", "animal close up"], "subject": ""}
+    assert data["beats"][0] == {"text": make_script().beats[0].text, "media": "video", "queries": ["query 0", "animal close up"],
+                                "subject": "", "point": False, "emoji": "", "emoji_word": ""}
     assert len(writer.prompts) == 1
     assert "Split the narration into beats" in writer.prompts[0][0]
     assert "same numbering" in writer.prompts[0][0]
@@ -55,3 +56,12 @@ def test_run_script_writes_json(tmp_path):
     paths = RunPaths(tmp_path)
     data = run_script(paths, SOURCE, FakeWriter([make_script()]), **PARAMS)
     assert read_json(paths.script_json) == data
+
+
+
+def test_rewrite_prompt_asks_for_marks_and_lists_allowed_emoji():
+    writer = FakeWriter([make_script()])
+    generate_script(SOURCE, writer, **PARAMS)
+    system = writer.prompts[0][0]
+    assert '"point"' in system and '"emoji_word"' in system and "look at" in system.lower()
+    assert "Allowed emoji:" in system and "🧐" in system and "🍀" in system
