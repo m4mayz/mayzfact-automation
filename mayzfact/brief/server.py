@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from urllib.parse import parse_qs, unquote, urlparse
 
 from mayzfact.brief.page import render_page
@@ -46,6 +47,36 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
             self.end_headers()
             self.wfile.write(body)
 
+        def _file(self, target: Path) -> None:
+            """Kirim file per 1 MB. Header Range didukung, soalnya Chrome cuma bisa seek video kalau server ngerti Range."""
+            size = target.stat().st_size
+            start, end, code = 0, size - 1, 200
+            match = re.fullmatch(r"bytes=(\d*)-(\d*)", self.headers.get("Range", "").strip())
+            if match and (match[1] or match[2]):
+                start, end, code = (int(match[1]), int(match[2] or size - 1), 206) if match[1] else (size - int(match[2]), size - 1, 206)
+                start, end = max(start, 0), min(end, size - 1)
+                if start > end:
+                    self.send_response(416)
+                    self.send_header("Content-Range", f"bytes */{size}")
+                    self.send_header("Content-Length", "0")
+                    return self.end_headers()
+            self.send_response(code)
+            self.send_header("Content-Type", mimetypes.guess_type(target.name)[0] or "application/octet-stream")
+            self.send_header("Content-Length", str(end - start + 1))
+            self.send_header("Accept-Ranges", "bytes")
+            if code == 206:
+                self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+            self.end_headers()
+            remaining = end - start + 1
+            try:
+                with target.open("rb") as fh:
+                    fh.seek(start)
+                    while remaining > 0 and (chunk := fh.read(min(remaining, 1024 * 1024))):
+                        self.wfile.write(chunk)
+                        remaining -= len(chunk)
+            except ConnectionError:  # browser batalin request pas video di-seek, normal
+                pass
+
         def _json(self, code: int, data: dict) -> None:
             self._send(code, json.dumps(data, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
 
@@ -59,7 +90,8 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
                 return self._json(403, {"error": "host nggak dikenal"})
             url = urlparse(self.path)
             if url.path == "/":
-                html = render_page(paths.root.name, plan(), load_links(paths.links_json), status())
+                source = paths.source_mp4.name if paths.source_mp4.exists() else None
+                html = render_page(paths.root.name, plan(), load_links(paths.links_json), status(), source=source)
                 return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
             if url.path == "/api/progress":
                 progress = paths.fetch_progress_json
@@ -69,8 +101,7 @@ def make_server(paths: RunPaths, port: int, *, max_upload: int = MAX_UPLOAD) -> 
             if url.path.startswith("/files/"):
                 target = (root / unquote(url.path[len("/files/"):])).resolve()
                 if root in target.parents and target.is_file():
-                    kind = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
-                    return self._send(200, target.read_bytes(), kind)
+                    return self._file(target)
             self._json(404, {"error": "nggak ada"})
 
         def _body(self, length: int, out=None) -> None:

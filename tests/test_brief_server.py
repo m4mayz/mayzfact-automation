@@ -83,6 +83,21 @@ def test_files_are_confined_to_run_dir(server):
     assert httpx.get(base + "/api/state").json()["plan"]["shots"][0]["index"] == 0
 
 
+def test_source_video_is_shown_and_seekable(server):
+    paths, base = server
+    assert "<video" not in httpx.get(base + "/").text  # source.mp4 belum ada
+    paths.source_mp4.write_bytes(b"0123456789")
+    assert '<video src="/files/source.mp4"' in httpx.get(base + "/").text
+    full = httpx.get(base + "/files/source.mp4")
+    assert full.content == b"0123456789" and full.headers["accept-ranges"] == "bytes"
+    # Chrome cuma bisa seek video kalau server ngerti header Range
+    part = httpx.get(base + "/files/source.mp4", headers={"Range": "bytes=2-5"})
+    assert part.status_code == 206 and part.content == b"2345" and part.headers["content-range"] == "bytes 2-5/10"
+    assert httpx.get(base + "/files/source.mp4", headers={"Range": "bytes=7-"}).content == b"789"
+    assert httpx.get(base + "/files/source.mp4", headers={"Range": "bytes=-3"}).content == b"789"
+    assert httpx.get(base + "/files/source.mp4", headers={"Range": "bytes=20-"}).status_code == 416
+
+
 def test_cross_site_posts_are_rejected(server):
     paths, base = server
     evil = {"Origin": "https://evil.example"}

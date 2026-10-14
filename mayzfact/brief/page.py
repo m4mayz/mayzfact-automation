@@ -11,7 +11,11 @@ _CSS = """
 body{font-family:system-ui,sans-serif;margin:0;background:#f4f4f5;color:#18181b}
 header{position:sticky;top:0;background:#18181b;color:#fff;padding:12px 16px;display:flex;gap:16px;align-items:center;z-index:2}
 header button{padding:8px 16px;font-size:15px;cursor:pointer}
-main{max-width:980px;margin:0 auto;padding:16px;display:grid;gap:12px}
+.layout{max-width:1320px;margin:0 auto;padding:16px;display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+.layout.nosource{max-width:980px;grid-template-columns:1fr}
+main{display:grid;gap:12px;min-width:0}
+.source{position:sticky;top:64px;display:grid;gap:6px}.source video{width:100%;max-height:calc(100vh - 110px);border-radius:10px;background:#000}
+@media (max-width:900px){.layout{grid-template-columns:1fr}.source{position:static}.source video{max-height:60vh}}
 .card{background:#fff;border-radius:10px;padding:14px;display:grid;gap:8px;box-shadow:0 1px 3px #0002}
 .tag{font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:#e4e4e7}
 .tag.hook{background:#fde68a}
@@ -112,7 +116,7 @@ def _card(group: dict, shots: list[dict], entries: list[dict], state: dict) -> s
 </section>"""
 
 
-def render_page(run_id: str, plan: dict, links: dict, status: dict) -> str:
+def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str | None = None) -> str:
     entries = links.get("groups", {})
     states = status.get("groups", {})
     shots = {shot["index"]: shot for shot in plan["shots"]}
@@ -122,10 +126,13 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict) -> str:
         _card(group, [shots[i] for i in group["shots"]], entries.get(group["id"], []), states.get(group["id"], {}))
         for group in groups
     )
+    # Video source nempel di kiri biar bisa diputer sambil ngisi link.
+    aside = (f'<aside class="source"><b>Video source</b><video src="/files/{escape(source, quote=True)}" controls preload="metadata">'
+             "</video></aside>") if source else ""
     return f"""<!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Brief {escape(run_id)}</title><style>{_CSS}</style></head>
 <body><header><b>Brief {escape(run_id)}</b><span>{filled}/{len(groups)} kelompok terisi ({len(plan['shots'])} shot)</span>
 <button onclick="save()">Simpan</button><span id="msg"></span></header>
-<main><section id="progress"></section>{cards}</main>
+<div class="layout{'' if source else ' nosource'}">{aside}<main><section id="progress"></section>{cards}</main></div>
 <script>{_JS}</script></body></html>"""
