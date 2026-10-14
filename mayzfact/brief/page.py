@@ -179,7 +179,7 @@ def _shot_row(shot: dict, group: dict, val: str, state: dict) -> str:
       {f'<div class="refs">{refs}</div>' if refs else ''}
       <div class="kw">{keywords or '<i>tanpa keyword</i>'}</div>
       <div class="shot-input-row">
-        <input type="text" data-shot="{s_idx}" value="{escape(val)}" placeholder="1 link Douyin/TikTok/Pinterest/URL langsung (atau file upload)">
+        <input type="text" data-shot="{s_idx}" value="{escape(val)}" placeholder="1 link (opsional: tambah @6 atau @6-10 buat detik) atau upload">
         <label class="btn-upload"><input type="file" accept="video/*,image/*" onchange="uploadShot({s_idx}, this)">Upload</label>
       </div>
       <div class="state {css}">{label} {message}</div>

@@ -43,7 +43,10 @@ def _message(exc: Exception) -> str:
 def _target(shot: dict, paths: RunPaths, encoder: Encoder) -> tuple[np.ndarray, float]:
     if shot["ref_frames"]:
         return mean_unit(encoder.images([paths.root / f for f in shot["ref_frames"]])), LOW_IMAGE_SCORE
-    text = shot.get("subject") or (shot["keywords"]["en"] or [shot["text"]])[0]
+    kws = (shot.get("keywords") or {}).get("en") or []
+    if kws:
+        return mean_unit(encoder.texts(kws)), LOW_TEXT_SCORE
+    text = shot.get("subject") or shot.get("text") or "nature"
     return encoder.texts([text])[0], LOW_TEXT_SCORE
 
 
@@ -142,18 +145,22 @@ def _continuous(group: dict, shots: list[dict], source: Source, paths: RunPaths,
     span = last - first
     if source.total_s < span + TAIL_S:
         return None
-    times = np.array(source.times)
-    sims = [source.vectors @ _target(shot, paths, encoder)[0] for shot in shots]
-    mids = [(shot["start_s"] + shot["end_s"]) / 2 - first for shot in shots]
-    best: tuple[float, float] | None = None
-    for start in source.times:
-        if start + span + TAIL_S > source.total_s + 1e-6:
-            break
-        score = float(np.mean([sim[int(np.argmin(np.abs(times - (start + mid))))] for sim, mid in zip(sims, mids)]))
-        if best is None or score > best[0]:
-            best = (score, start)
-    if best is None:
-        return None
+    if source.entry.get("start_s") is not None:
+        start = min(max(0.0, float(source.entry["start_s"])), max(0.0, source.total_s - span - TAIL_S))
+        best = (1.0, start)
+    else:
+        times = np.array(source.times)
+        sims = [source.vectors @ _target(shot, paths, encoder)[0] for shot in shots]
+        mids = [(shot["start_s"] + shot["end_s"]) / 2 - first for shot in shots]
+        best: tuple[float, float] | None = None
+        for start in source.times:
+            if start + span + TAIL_S > source.total_s + 1e-6:
+                break
+            score = float(np.mean([sim[int(np.argmin(np.abs(times - (start + mid))))] for sim, mid in zip(sims, mids)]))
+            if best is None or score > best[0]:
+                best = (score, start)
+        if best is None:
+            return None
     score, start = best
     source.used.append((start, start + span + TAIL_S))
     head = shots[0]
@@ -198,15 +205,21 @@ def _run_group(group: dict, shots: list[dict], entries: list[dict], obtain: Call
         number = shot["index"] + 1
         duration = shot["end_s"] - shot["start_s"]
         target, low = _target(shot, paths, encoder)
-        chosen = _best(sources, target, duration, used_sources=False)
+        chosen = None
+        if len(sources) == 1 and sources[0].entry.get("start_s") is not None and sources[0].kind == "video":
+            c_start = float(sources[0].entry["start_s"])
+            clamped = min(max(0.0, c_start), max(0.0, sources[0].total_s - duration - TAIL_S))
+            chosen = (sources[0], 1.0, clamped)
         if chosen is None:
-            chosen = _best(sources, target, duration, used_sources=True)
+            chosen = _best(sources, target, duration, used_sources=False)
             if chosen is None:
-                raise PipelineError("fetch", f"shot {number}: klip di kelompok ini udah kepakai semua (atau kependekan), tambah link lagi")
-            warnings.append(f"shot {number} pakai bagian lain dari video yang udah kepakai")
+                chosen = _best(sources, target, duration, used_sources=True)
+                if chosen is None:
+                    raise PipelineError("fetch", f"shot {number}: klip di kelompok ini udah kepakai semua (atau kependekan), tambah link lagi")
+                warnings.append(f"shot {number} pakai bagian lain dari video yang udah kepakai")
         source, score, start = chosen
         source.used.append((start, start + duration + TAIL_S))
-        if score < low:
+        if source.entry.get("start_s") is None and score < low:
             warnings.append(f"shot {number} skor rendah ({score:.2f})")
         out = normalize_local(shot["index"], shot["start_s"], shot["end_s"], source.path, source.kind,
                               start + duration / 2, paths, fg_min_ratio)
@@ -308,8 +321,14 @@ def run_fetch(
                         warn = []
                         chosen = None
 
+                        # Jika Akmal menentukan custom timestamp manual di link (@start atau @start-end)
+                        if entry.get("start_s") is not None and sources and sources[0].kind == "video":
+                            v_source = sources[0]
+                            c_start = float(entry["start_s"])
+                            clamped = min(max(0.0, c_start), max(0.0, v_source.total_s - duration - TAIL_S))
+                            chosen = (v_source, 1.0, clamped)
                         # Jika shot ini pakai entry video yang persis sama dengan shot sebelumnya di grup ini
-                        if prev_entry == entry and prev_source and prev_source.kind == "video":
+                        elif prev_entry == entry and prev_source and prev_source.kind == "video":
                             cont_start = prev_end_time
                             cont_end = cont_start + duration + TAIL_S
                             if cont_end <= prev_source.total_s + 1e-4:
@@ -327,7 +346,7 @@ def run_fetch(
                         prev_entry = entry
                         prev_source = source
                         prev_end_time = start + duration
-                        if score < low:
+                        if entry.get("start_s") is None and score < low:
                             warn.append(f"skor rendah ({score:.2f})")
 
                         out = normalize_local(s["index"], s["start_s"], s["end_s"], source.path, source.kind,

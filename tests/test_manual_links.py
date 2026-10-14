@@ -101,3 +101,52 @@ def test_normalize_links_per_shot():
 
     with pytest.raises(ValueError, match="shot 10"):
         normalize_links({"shots": {"9": "https://a.b/c"}}, shot_count=4)
+
+
+def test_parse_time_range():
+    from mayzfact.manual.links import parse_time_range
+    assert parse_time_range("https://example.com/v.mp4 @10") == ("https://example.com/v.mp4", 10.0, None)
+    assert parse_time_range("https://example.com/v.mp4 @6-10") == ("https://example.com/v.mp4", 6.0, 10.0)
+    assert parse_time_range("https://example.com/v.mp4 @6.5-10.2") == ("https://example.com/v.mp4", 6.5, 10.2)
+    assert parse_time_range("https://example.com/v.mp4 #6-10") == ("https://example.com/v.mp4", 6.0, 10.0)
+    assert parse_time_range("https://example.com/v.mp4 #6s") == ("https://example.com/v.mp4", 6.0, None)
+    assert parse_time_range("file:manual/video.mp4 @5") == ("file:manual/video.mp4", 5.0, None)
+    assert parse_time_range("https://example.com/pic #3") == ("https://example.com/pic #3", None, None)
+
+
+def test_normalize_links_parses_timestamps():
+    raw = {"shots": {
+        "0": "https://a.b/clip.mp4 @10",
+        "1": "https://a.b/clip.mp4 @6-10",
+        "2": "file:manual/test.mp4 @5.5",
+        "3": "https://a.b/gallery.jpg #2",
+        "4": "https://a.b/clip.mp4 #6-10",
+    }}
+    res = normalize_links(raw, shot_count=5)
+    assert res["shots"]["0"] == {"url": "https://a.b/clip.mp4", "start_s": 10.0}
+    assert res["shots"]["1"] == {"url": "https://a.b/clip.mp4", "start_s": 6.0, "end_s": 10.0}
+    assert res["shots"]["2"] == {"file": "manual/test.mp4", "start_s": 5.5}
+    assert res["shots"]["3"] == {"url": "https://a.b/gallery.jpg", "pick": 2}
+    assert res["shots"]["4"] == {"url": "https://a.b/clip.mp4", "start_s": 6.0, "end_s": 10.0}
+
+
+def test_normalize_links_rejects_invalid_timestamps():
+    with pytest.raises(ValueError, match="lebih besar"):
+        normalize_links({"shots": {"0": "https://a.b/c.mp4 @10-6"}}, shot_count=1)
+
+
+def test_lines_of_formats_timestamps():
+    entries = [
+        {"url": "https://a.b/c.mp4", "start_s": 10.0},
+        {"url": "https://a.b/c.mp4", "start_s": 6.0, "end_s": 10.0},
+        {"file": "manual/v.mp4", "start_s": 5.5},
+        {"url": "https://a.b/p.jpg", "pick": 2},
+    ]
+    expected = (
+        "https://a.b/c.mp4 @10\n"
+        "https://a.b/c.mp4 @6-10\n"
+        "file:manual/v.mp4 @5.5\n"
+        "https://a.b/p.jpg #2"
+    )
+    assert lines_of(entries) == expected
+

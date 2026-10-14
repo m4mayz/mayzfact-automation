@@ -289,3 +289,40 @@ def test_consecutive_shots_with_same_video_play_continuously(tmp_path, cut_video
     assert abs(s3["source_s"] - (s2["source_s"] + 0.4)) < 1e-3
 
 
+def test_fetch_with_custom_timestamp_override(tmp_path, cut_video):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = [{"id": "content", "label": "content", "shots": [2]}]
+    plan["shots"] = [
+        {**plan["shots"][2], "start_s": 0.0, "end_s": 0.4, "media": "video"},
+    ]
+    # Tentukan custom timestamp 0.3s
+    save_links(paths.links_json, {"shots": {
+        "2": {"url": "https://a.b/video", "start_s": 0.3},
+    }})
+    data = run_fetch(paths, plan, obtain=lambda e, r: [cut_video], encoder=FakeEncoder(), **QUIET)
+    s2 = data["shots"][0]
+    assert abs(s2["source_s"] - 0.3) < 1e-3
+
+
+def test_target_prefers_action_keywords(tmp_path):
+    from mayzfact.steps.fetch import _target
+
+    class RecordingEncoder:
+        def __init__(self):
+            self.encoded_texts = []
+
+        def texts(self, t):
+            self.encoded_texts.extend(t)
+            return unit(np.ones((len(t), 3), dtype=np.float32))
+
+    encoder = RecordingEncoder()
+    paths = RunPaths(tmp_path / "run")
+    s = shot(0, 0.0, 1.0, "g", subject="vulture")
+    s["keywords"]["en"] = ["vulture dropping bone from sky"]
+    _target(s, paths, encoder)
+    # Harus meng-encode keywords visual, bukan cuma subject
+    assert "vulture dropping bone from sky" in encoder.encoded_texts
+
+
+
