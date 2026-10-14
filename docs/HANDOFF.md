@@ -270,3 +270,50 @@
 ## Delivery
 
 - Next: 3C overlay (panah, lingkaran, emoji) + CTA subscribe.
+
+---
+
+# Handoff — Fase 3C-1 (panah + lingkaran, timing suara)
+
+- **Updated:** 2026-10-14, Claude Code (Opus 5.5)
+- **Goal & scope:** [spec 3C-1](superpowers/specs/2026-10-13-fase3c1-arrows-design.md) + revisi D-023, [plan](superpowers/plans/2026-10-13-fase3c1-arrows.md).
+
+## Selesai
+
+- **Model ML di project.** Folder `models/` (di-gitignore, `MODELS_DIR`) isinya SigLIP (778 MB, dipindah dari C:) sama OWLv2 `google/owlv2-base-patch16-ensemble` revisi `cfd3195b` (621 MB). Dua-duanya bisa jalan offline.
+- **Deteksi subjek per shot.** `mayzfact/detect.py` + `overlay.py`:
+  - Frame dicek tiap 1 detik. Query-nya nama subjek, atau 2 kata pertama keyword kalau shot-nya nggak punya subjek.
+  - Kotak hasil deteksi diubah ke koordinat layar 1080×1920, ngikutin layout full/blur.
+  - Hasilnya di-cache di `runs/<id>/overlays.json`. Kecepatan ±3,8 detik per frame di CPU, jadi ±3 menit per video kalau belum ke-cache.
+- **Panah/lingkaran:**
+  - Muncul 6 frame setelah shot mulai, barengan `quick-ting` (volume 0,35), dan selesai fade 0,5 detik sebelum ganti klip.
+  - Panah nyapu 1× setengah putaran (kanan → atas → kiri) sambil nunjuk subjek.
+  - Tiap overlay ke-5 jadi lingkaran.
+  - Warna gantian merah/kuning.
+- **Timing ikut suara asli.** `voice_onset.py` geser awal kata ke energi `voice.mp3`, karena alignment ElevenLabs kecepetan 0,1–0,9 detik di awal kalimat. Efeknya:
+  - Caption kata pertama nggak kecepetan lagi.
+  - Angka countdown melesat masuk pas "Number" kedengeran, barengan puncak `whoosh-clean.mp3`.
+  - Subject card mulai pas nama subjek disebut.
+- **Review Akmal di Studio (2026-10-13/14):** oke, setelah beberapa revisi:
+  - Durasi panah/lingkaran.
+  - Gerak panah: sempat muter terus, akhirnya jadi 1 sapuan.
+  - Volume quick-ting.
+  - Panah hook sempat nunjuk menara. Penyebabnya query kepanjangan.
+- **Final review Opus:** 1 Important udah di-fix. Sebelumnya, kalau 1 klip error, hasil deteksi klip lain ikut hilang dan deteksinya keulang terus. Sekarang cache ditulis per klip, dan klip yang error dilewat.
+- **Workspace:** `master` (merge `39bb668`). Belum di-push.
+
+## Masalah terbuka
+
+1. **D-023 #4:** panah/lingkaran harusnya dipicu script (misalnya "look at this"), bukan muncul di tiap shot. Ini butuh perubahan logic script, jadi dikerjain nanti.
+2. **Minor yang ditunda:**
+   - angka bisa nggak tampil kalau `numberAt` ≥ durasi number card (kasus clamp yang jarang)
+   - snap awal kata bisa telat 1–3 frame di konsonan
+   - overlay masih tajam di 1 frame terakhir intro
+   - label error `extract_frame` masih "hook"
+   - potong 2 kata keyword bisa jadi "a giant"
+   - frame `runs/<id>/overlay/*.jpg` nggak dibersihin
+3. **Cache deteksi:** `overlays.json` di run i2xag dibikin sebelum cache key ikut `fg_min_ratio`, jadi `--from timeline` berikutnya bakal deteksi ulang sekali (±3 menit).
+
+## Delivery
+
+- Next: 3C-2, yaitu emoji + CTA subscribe. Bisa dibahas bareng D-023 #4.
