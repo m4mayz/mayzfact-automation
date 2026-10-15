@@ -82,7 +82,8 @@ Ngecek `script.json` pakai aturan yang sama kayak `check_script` sekarang, plus 
 - Pakai kata sehari-hari. Kalau mau beda dari source, ubah struktur kalimat dan sudut pandangnya, jangan cuma ganti sinonim.
 - Pertahankan kata pembatas source ("some species", "one of the"). Jangan dilebih-lebihin.
 - Teaser nomor 1 di hook dipertahankan kalau source punya.
-- Tunjukin ke Akmal: tabel beat (teks baru | kalimat source yang jadi dasarnya), plus BGM yang dipilih. Tunggu "oke" atau koreksi.
+- `queries` tiap beat harus ngegambarin **yang kelihatan pas beat itu**, nyambung sama teksnya: subjek + aksi + tempat ("mantis shrimp punching underwater"), bukan topik umum. Beat CTA/intro pakai visual yang cocok sama kalimatnya (misalnya "person tapping phone screen" buat "smash like"). Keyword yang nggak nyambung sama teks beat = naskah ditolak pas review.
+- Tunjukin ke Akmal: tabel beat (teks baru | kalimat source yang jadi dasarnya | keyword), plus BGM yang dipilih. Tunggu "oke" atau koreksi.
 - Contoh naskah yang bagus: 1 contoh pendek di skill, diambil dari source `4735ZE89GXQ` item mantis shrimp.
 
 ## 7. Yang dihapus
