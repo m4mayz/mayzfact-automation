@@ -1,16 +1,13 @@
-"""Step script: rewrite transcript jadi naskah baru (aturan + prompt)."""
+"""Aturan naskah: dicek pas `mayzfact check-script` dan sebelum TTS. Naskahnya ditulis agent, bukan di sini."""
 
 from __future__ import annotations
 
 import math
-from pathlib import Path
-from typing import Protocol
 
 from mayzfact.countdown import parse_countdown
-from mayzfact.emoji import allowed_emoji_line
 from mayzfact.errors import PipelineError
 from mayzfact.models import Script
-from mayzfact.store import RunPaths, write_json_atomic
+from mayzfact.store import RunPaths, read_json
 from mayzfact.text import clean_text, ngram_overlap, words
 
 WORDS_PER_SECOND = 2.6
@@ -19,7 +16,6 @@ PHOTO_SHARE_RANGE = (0.15, 0.45)
 MAX_NGRAM_OVERLAP = 0.15
 MAX_BEAT_WORDS = 10  # ±3.5 detik dengan 2.6 kata/detik
 CTA_WORDS = ("like", "subscribe", "comment")  # kata pemicu animasi CTA; kalau source nyebut, naskah juga harus
-PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "rewrite.md"
 
 
 def target_duration(source_duration_s: float, ratio: float, minimum_s: float) -> float:
@@ -108,64 +104,24 @@ def check_script(script: Script, source_text: str, duration_s: float,
     return problems, overlap
 
 
-def build_user_prompt(
-    source: dict,
-    duration_s: float,
-    photo_ratio: float,
-    feedback: list[str] | None = None,
-    previous: Script | None = None,
-) -> str:
-    target, low, high = word_range(duration_s)
-    lines = [
-        f"Source duration: {source['duration_s']:.1f} seconds.",
-        f"Target narration: about {duration_s:.0f} seconds, about {target} words in total (allowed: {low}-{high}).",
-        f'About {photo_ratio:.0%} of the beats should use media "photo". The first beat must use "video".',
-        "",
-        "Source transcript with timestamps:",
-        *(f"[{s['start']:.1f}s] {s['text']}" for s in source["transcript"]),
-    ]
-    if feedback:
-        lines += ["", "Your previous answer was rejected:", *(f"- {p}" for p in feedback)]
-        if previous is not None:
-            lines += ["Previous answer:", previous.model_dump_json()]
-        lines.append("Write a corrected answer.")
-    return "\n".join(lines)
+AWAIT_SCRIPT_HINT = ("Naskah belum ada. Agent nulis runs/<id>/script.json (lihat .agents/skills/bikin-short/SKILL.md), "
+                     "terus cek: uv run mayzfact check-script <id>")
 
 
-class ScriptWriter(Protocol):
-    def write(self, system: str, user: str) -> Script: ...
+def load_script(paths: RunPaths) -> Script:
+    if not paths.script_json.exists():
+        raise PipelineError("script", f"{paths.script_json} belum ada. {AWAIT_SCRIPT_HINT}")
+    try:
+        return normalize_script(Script(**read_json(paths.script_json)))
+    except (ValueError, TypeError) as exc:  # JSON rusak atau field kurang (ValidationError juga ValueError)
+        raise PipelineError("script", f"script.json nggak valid (cek JSON/field-nya): {str(exc)[:300]}") from exc
 
 
-def generate_script(
-    source: dict, writer: ScriptWriter, *, ratio: float, minimum_s: float, photo_ratio: float
-) -> dict:
+def check_script_file(paths: RunPaths, source: dict, *, ratio: float, minimum_s: float,
+                      bgm_choices: list[str] | None) -> list[str]:
+    """Cek runs/<id>/script.json yang ditulis agent pakai aturan yang sama kayak check_script."""
+    script = load_script(paths)
     duration_s = target_duration(source["duration_s"], ratio, minimum_s)
     source_text = " ".join(s["text"] for s in source["transcript"])
-    system = PROMPT_PATH.read_text(encoding="utf-8") + "\n" + allowed_emoji_line()
-    feedback: list[str] | None = None
-    previous: Script | None = None
-    problems: list[str] = []
-    for _ in range(2):
-        prompt = build_user_prompt(source, duration_s, photo_ratio, feedback, previous)
-        script = normalize_script(writer.write(system, prompt))
-        problems, overlap = check_script(script, source_text, duration_s)
-        if not problems:
-            target, _, _ = word_range(duration_s)
-            return {
-                "target_seconds": round(duration_s, 2),
-                "target_words": target,
-                "word_count": len(words(" ".join(b.text for b in script.beats))),
-                "ngram_overlap": round(overlap, 3),
-                "fallback_query": script.fallback_query,
-                "beats": [b.model_dump() for b in script.beats],
-            }
-        feedback, previous = problems, script
-    raise PipelineError("script", "Naskah dari Gemini masih gagal dicek setelah retry: " + " ".join(problems))
-
-
-def run_script(
-    paths: RunPaths, source: dict, writer: ScriptWriter, *, ratio: float, minimum_s: float, photo_ratio: float
-) -> dict:
-    data = generate_script(source, writer, ratio=ratio, minimum_s=minimum_s, photo_ratio=photo_ratio)
-    write_json_atomic(paths.script_json, data)
-    return data
+    problems, _ = check_script(script, source_text, duration_s, bgm_choices)
+    return problems

@@ -1,6 +1,5 @@
 from mayzfact.models import Beat, Script
 from mayzfact.steps.script import (
-    build_user_prompt,
     check_script,
     normalize_script,
     target_duration,
@@ -81,17 +80,6 @@ def test_normalize_script_cleans_text_and_forces_first_video():
     assert script.beats[1].media == "photo"
     assert script.fallback_query == "ocean"
 
-
-def test_user_prompt_has_targets_transcript_and_feedback():
-    prompt = build_user_prompt(SOURCE, DURATION, 0.3)
-    assert "about 110 words in total (allowed: 94-126)" in prompt
-    assert "[2.5s] to this video" in prompt
-    assert "30%" in prompt
-    assert "rejected" not in prompt
-    retry = build_user_prompt(SOURCE, DURATION, 0.3, feedback=["Too short."], previous=make_script(n_beats=1))
-    assert "Your previous answer was rejected:" in retry
-    assert "- Too short." in retry
-    assert '"fallback_query":"ocean animals"' in retry
 
 
 def test_long_beat_is_reported():
