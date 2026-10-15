@@ -162,3 +162,11 @@ def test_cta_check_uses_the_same_trigger_rules_as_the_timeline():
     # "like" yang ngajak lolos
     script.beats[1] = script.beats[1].model_copy(update={"text": "Comment below, hit like and subscribe now!"})
     assert not [p for p in check_script(script, source, DURATION)[0] if "like" in p or "subscribe" in p]
+
+
+def test_countdown_announcements_do_not_count_as_copied():
+    source = "Intro words here. Number five, horseshoe crab. More source words follow after that."
+    script = make_script()
+    script.beats[1] = script.beats[1].model_copy(update={"text": "Number five, horseshoe crab."})
+    _, overlap = check_script(script, source, DURATION)
+    assert overlap == 0.0  # "Number N, subject" wajib sama persis, jadi nggak dihitung sebagai jiplakan

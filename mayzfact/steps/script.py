@@ -95,7 +95,9 @@ def check_script(script: Script, source_text: str, duration_s: float,
                         + ", ".join(hint[w] for w in missing_cta) + " too (that is what triggers the on-screen CTA).")
     if bgm_choices is not None and script.bgm and script.bgm not in bgm_choices:
         problems.append(f"bgm {script.bgm!r} is not in assets/bgm. Choose one of: {', '.join(bgm_choices) or '(none)'}.")
-    overlap = ngram_overlap(full_text, source_text)
+    # Beat "Number N, subject" wajib sama persis dengan source, jadi nggak ikut dihitung sebagai jiplakan.
+    prose = " ".join(b.text for b in script.beats if not (parse_countdown(b.text) and parse_countdown(b.text).number is not None))
+    overlap = ngram_overlap(prose, source_text)
     if overlap > MAX_NGRAM_OVERLAP:
         problems.append(
             f"{overlap:.0%} of the 4-word phrases are copied from the source; "
