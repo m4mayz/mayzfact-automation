@@ -223,4 +223,4 @@ def test_brief_refuses_shots_without_reference_frames(monkeypatch, tmp_path, cap
     monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
     assert cli.main(["brief", "i2xag_1OJfM"]) == 1
     err = capsys.readouterr().err
-    assert "Shot 2, 3" in err and "--from plan" in err
+    assert "Shot 2, 3" in err and "--from plan --no-render" in err

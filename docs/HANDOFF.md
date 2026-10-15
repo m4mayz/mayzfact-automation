@@ -475,8 +475,9 @@
 - Tombol waktu per shot muter `voice.mp3` (play/stop, berhenti di `end_s`). Disabled kalau suara belum ada.
 - `mayzfact/brief/prefetch.py`: worker download di server brief, `prefetch.json`, badge status per shot yang di-poll bareng `/api/progress`. Pas server start, link yang belum `siap` di-enqueue ulang.
 - `steps/plan.py`: `ref_frames` per shot (`plan/shot_NN_K.jpg`), fallback posisi proporsional. `group.ref_frames` dihapus.
-- `mayzfact brief` nolak jalan kalau ada shot tanpa frame, pesannya nyebut shot + `--from plan`.
-- 411 test lolos.
+- `mayzfact brief` nolak jalan kalau ada shot tanpa frame, pesannya nyebut shot + `--from plan --no-render`.
+- Review akhir (Opus): frame referensi cuma jadi target match buat shot hook (shot lain pakai keywords), autosave nggak ngulang link `siap`/`gagal` (Simpan = coba lagi), badge prefetch nempel ke link baru tanpa reload, worker nggak mati gara-gara log/`prefetch.json` error.
+- 414 test lolos.
 
 ## Masalah terbuka
 

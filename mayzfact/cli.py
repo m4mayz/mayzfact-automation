@@ -182,14 +182,13 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
     missing = missing_frames(paths, read_json(paths.shots_plan_json))
     if missing:
         raise PipelineError("brief", f"Shot {', '.join(str(i + 1) for i in missing)} belum punya frame referensi. "
-                            f"Jalanin: mayzfact run {paths.root.name} --from plan")
+                            f"Jalanin: mayzfact run {paths.root.name} --from plan --no-render")
     # Link yang disimpan langsung di-download di background (cache sama kayak fetch), biar fetch tinggal motong.
     client = httpx.Client(headers={"User-Agent": DESKTOP_UA}, timeout=httpx.Timeout(120.0, connect=15.0), follow_redirects=True)
     prefetcher = Prefetcher(paths, Obtainer(CACHE_DIR / "manual", client, log=print).obtain, log=print)
+    server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0", prefetcher=prefetcher)  # port bentrok = berhenti di sini
     prefetcher.start()
-    done = {u for u, st in prefetcher.snapshot().items() if st.get("state") == "siap"}
-    prefetcher.enqueue([u for u in link_urls(load_links(paths.links_json)) if u not in done])  # link lama yang belum siap
-    server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0", prefetcher=prefetcher)
+    prefetcher.enqueue(link_urls(load_links(paths.links_json)), retry_failed=True)  # link lama yang belum siap, termasuk yang gagal
     port = server.server_address[1]
     lan_ip = _lan_ip()
     print(f"Brief {paths.root.name} (akses LAN/HP aktif):")

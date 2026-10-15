@@ -86,7 +86,7 @@ CLI nge-print 2 alamat: `Lokal PC` (http://127.0.0.1:3100) dan `HP / LAN` (IP Wi
 
 1. Buka salah satu alamat itu. Video source ada di halaman, bisa diputer sambil ngisi. Tombol waktu di tiap shot muter suara naskah beat itu.
 2. Isi 1 link per shot (Douyin/TikTok/Pinterest/YouTube), atau upload file. Kolom Mulai/Selesai (detik) opsional, buat milih potongan tertentu dari klip. Tiap shot punya 3 frame source sebagai referensi.
-3. Klik Simpan. Link langsung di-download di background; status per shot kelihatan (`antre` / `download…` / `siap` / `gagal`). Kalau ada yang `gagal`, ganti link-nya dulu.
+3. Klik Simpan. Link langsung di-download di background; status per shot kelihatan (`antre` / `download…` / `siap` / `gagal`). Kalau ada yang `gagal`, ganti link-nya, atau klik Simpan lagi buat coba ulang (autosave nggak ngulang yang gagal).
 4. Kalau semua `siap`, kabarin.
 
 Tunggu sampai Akmal bilang udah. Kalau `brief` nolak jalan karena "belum punya frame referensi", jalanin `uv run mayzfact run <id> --from plan --no-render` dulu (`links.json` nggak disentuh).

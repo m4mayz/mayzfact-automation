@@ -41,7 +41,9 @@ def _message(exc: Exception) -> str:
 
 
 def _target(shot: dict, paths: RunPaths, encoder: Encoder) -> tuple[np.ndarray, float]:
-    if shot["ref_frames"]:
+    # Semua shot punya ref_frames (buat Akmal milih link), tapi cuma hook yang niru footage source,
+    # jadi cuma hook yang dicocokin pakai gambar. Shot lain pakai keywords.
+    if shot.get("hook_segment") is not None and shot.get("ref_frames"):
         return mean_unit(encoder.images([paths.root / f for f in shot["ref_frames"]])), LOW_IMAGE_SCORE
     kws = (shot.get("keywords") or {}).get("en") or []
     if kws:

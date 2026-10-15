@@ -325,4 +325,34 @@ def test_target_prefers_action_keywords(tmp_path):
     assert "vulture dropping bone from sky" in encoder.encoded_texts
 
 
+def test_target_uses_reference_frames_only_for_hook_shots(tmp_path):
+    """Semua shot sekarang punya ref_frames (buat Akmal), tapi cuma hook yang dicocokin pakai gambar source."""
+    from mayzfact.steps.fetch import LOW_IMAGE_SCORE, LOW_TEXT_SCORE, _target
+
+    class RecordingEncoder:
+        def __init__(self):
+            self.encoded_texts, self.encoded_images = [], []
+
+        def texts(self, t):
+            self.encoded_texts.extend(t)
+            return unit(np.ones((len(t), 3), dtype=np.float32))
+
+        def images(self, files):
+            self.encoded_images.extend(files)
+            return unit(np.ones((len(files), 3), dtype=np.float32))
+
+    paths = RunPaths(tmp_path / "run")
+    make_plan(paths)
+    encoder = RecordingEncoder()
+    content = shot(2, 0.6, 1.6, "horseshoe-crab", subject="horseshoe crab")
+    content["ref_frames"] = ["plan/seg_02_0.jpg", "plan/seg_02_1.jpg", "plan/seg_02_2.jpg"]
+    content["keywords"]["en"] = ["horseshoe crab on beach"]
+    _, low = _target(content, paths, encoder)
+    assert encoder.encoded_images == [] and encoder.encoded_texts == ["horseshoe crab on beach"] and low == LOW_TEXT_SCORE
+
+    hook = shot(0, 0.0, 0.3, "hook", hook=0)
+    _, low = _target(hook, paths, encoder)
+    assert len(encoder.encoded_images) == 3 and low == LOW_IMAGE_SCORE
+
+
 

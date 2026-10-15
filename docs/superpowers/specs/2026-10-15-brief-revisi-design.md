@@ -48,7 +48,7 @@ Batasan: download cuma buat URL. Kalau Obtainer butuh captcha/login, state-nya `
 | Kasus | Perilaku |
 | --- | --- |
 | `voice.mp3` nggak ada pas brief dibuka | Tombol waktu disabled + tooltip "suara belum ada". (Normal: brief jalan setelah tts, jadi jarang.) |
-| Download gagal (link mati, captcha, timeout) | State `gagal` + pesan di shot. Nggak ngulang otomatis. Simpan ulang link yang sama = coba lagi. |
+| Download gagal (link mati, captcha, timeout) | State `gagal` + pesan di shot. Autosave nggak ngulang yang gagal. Klik Simpan (atau start `brief` lagi) = coba lagi. |
 | Server brief ditutup pas antrean masih ada | Sisanya di-download pas `run --from fetch` (jalur lama tetap jalan). |
 | `ffmpeg` gagal ambil frame | Shot itu `ref_frames` kosong, `plan` log error-nya, dan `brief` nolak jalan sampai dibenerin. |
 

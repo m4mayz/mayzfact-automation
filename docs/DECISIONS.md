@@ -335,6 +335,6 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Konteks:** Revisi brief dari Akmal setelah ngisi link video pertama lewat harness.
 - **Keputusan:**
   1. Tombol waktu di tiap shot muter `voice.mp3` dari `start_s` sampai `end_s` (waktu itu milik suara kita, bukan source). Video source tetap ada dengan kontrol bawaan.
-  2. Link yang disimpan langsung di-download worker di server brief, pakai `Obtainer` + cache yang sama dengan fetch. Status per URL di `runs/<id>/prefetch.json`, kelihatan di halaman. Link gagal nggak diulang otomatis; simpan ulang = coba lagi.
+  2. Link yang disimpan langsung di-download worker di server brief, pakai `Obtainer` + cache yang sama dengan fetch. Status per URL di `runs/<id>/prefetch.json`, kelihatan di halaman. Link gagal nggak diulang sama autosave (biar link captcha nggak dihajar tiap ketik); klik Simpan atau start server lagi = coba lagi. Link `siap` nggak diulang sama sekali.
   3. Tiap shot punya 3 frame referensi dari source: hook dari segmen hook, shot subjek dari rentang subjeknya di transcript, sisanya (CTA/intro) dari posisi proporsional. `mayzfact brief` nolak jalan kalau ada shot tanpa frame. Frame per kelompok dihapus.
 - **Authority:** Akmal (chat 2026-10-15).

@@ -141,9 +141,10 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 if prefetcher:
                     # Download link udah pindah ke brief, jadi angka "Links Downloaded" diambil dari sini, bukan dari fetch.
                     snap = prefetcher.snapshot()
+                    urls = link_urls(load_links(paths.links_json))  # link yang udah diganti/dihapus nggak dihitung
                     payload["prefetch"] = snap
-                    payload["links_total"] = len(snap)
-                    payload["links_done"] = sum(1 for st in snap.values() if st.get("state") == "siap")
+                    payload["links_total"] = len(urls)
+                    payload["links_done"] = sum(1 for u in urls if snap.get(u, {}).get("state") == "siap")
                 return self._json(200, payload)
             if url.path == "/api/state":
                 return self._json(200, {"plan": plan(), "links": load_links(paths.links_json), "status": status()})
@@ -177,14 +178,17 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             url = urlparse(self.path)
             if url.path == "/api/links":
                 try:
-                    data = normalize_links(json.loads(self.rfile.read(length) or b"{}"), group_ids(), shot_count=len(plan().get("shots", [])))
+                    body = json.loads(self.rfile.read(length) or b"{}")
+                    data = normalize_links(body, group_ids(), shot_count=len(plan().get("shots", [])))
                 except (ValueError, TypeError, AttributeError) as exc:
                     return self._json(400, {"error": str(exc)})
                 save_links(paths.links_json, data)
-                if prefetcher:  # download langsung, nggak nunggu agent jalanin fetch
-                    prefetcher.enqueue(link_urls(data))
+                if prefetcher:  # download langsung, nggak nunggu agent jalanin fetch; autosave nggak ngulang yang gagal
+                    prefetcher.enqueue(link_urls(data), retry_failed=bool(body.get("retry")))
                 missing = missing_shots(plan(), data) if "shots" in data else missing_groups(plan(), data)
-                return self._json(200, {"ok": True, "missing": missing})
+                # URL hasil normalisasi per shot, buat JS nempelin badge prefetch tanpa reload
+                urls = {idx: entry.get("url", "") for idx, entry in data.get("shots", {}).items()}
+                return self._json(200, {"ok": True, "missing": missing, "urls": urls})
             if url.path == "/api/upload":
                 qs = parse_qs(url.query)
                 shot_param = qs.get("shot", [""])[0]

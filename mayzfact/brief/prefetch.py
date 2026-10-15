@@ -36,11 +36,13 @@ class Prefetcher:
     def is_alive(self) -> bool:
         return self._thread.is_alive()
 
-    def enqueue(self, urls: list[str]) -> None:
+    def enqueue(self, urls: list[str], *, retry_failed: bool = False) -> None:
+        """URL baru masuk antrean. Yang siap/lagi jalan dilewatin; yang gagal cuma diulang kalau retry_failed (klik Simpan)."""
+        skip = _BUSY + ("siap",) if retry_failed else _BUSY + ("siap", "gagal")
         with self._lock:
             for url in dict.fromkeys(urls):
-                if self._state.get(url, {}).get("state") in _BUSY:
-                    continue  # lagi jalan, jangan dobel
+                if self._state.get(url, {}).get("state") in skip:
+                    continue
                 self._state[url] = {"state": "antre", "message": "", "files": []}
                 self._queue.put(url)
             self._save()
@@ -72,18 +74,37 @@ class Prefetcher:
     def _save(self) -> None:
         write_json_atomic(self._paths.prefetch_json, self._state)
 
+    def _say(self, message: str) -> None:
+        try:
+            self._log(message)
+        except Exception:  # stdout cp1252 nggak bisa nulis URL CJK; log bukan alasan worker mati
+            pass
+
     def _run(self) -> None:
         while True:
             url = self._queue.get()
             if url is None:
                 return
-            self._set(url, state="download", message="")
             try:
-                files = self._obtain({"url": url}, self._paths.root)
-                self._set(url, state="siap", message="", files=[f.name for f in files])
-                self._log(f"[brief] siap: {url}")
-            except PipelineError as exc:
-                self._set(url, state="gagal", message=exc.message.splitlines()[0][:160])
-                self._log(f"[brief] gagal: {url}: {exc.message.splitlines()[0][:120]}")
-            except Exception as exc:  # resolver pihak ketiga bisa ngelempar apa aja; worker jangan mati
-                self._set(url, state="gagal", message=f"{type(exc).__name__}: {str(exc)[:120]}")
+                self._one(url)
+            except Exception as exc:  # apa pun yang lolos (nulis prefetch.json, dll): worker tetap hidup
+                try:
+                    self._set(url, state="gagal", message=f"{type(exc).__name__}: {str(exc)[:120]}")
+                except Exception:
+                    pass
+
+    def _one(self, url: str) -> None:
+        self._set(url, state="download", message="")
+        try:
+            files = self._obtain({"url": url}, self._paths.root)
+        except PipelineError as exc:
+            reason = exc.message.splitlines()[0]
+            self._set(url, state="gagal", message=reason[:160])
+            self._say(f"[brief] gagal: {url}: {reason[:120]}")
+            return
+        except Exception as exc:  # resolver pihak ketiga bisa ngelempar apa aja
+            self._set(url, state="gagal", message=f"{type(exc).__name__}: {str(exc)[:120]}")
+            self._say(f"[brief] gagal: {url}: {type(exc).__name__}")
+            return
+        self._set(url, state="siap", message="", files=[f.name for f in files])
+        self._say(f"[brief] siap: {url}")

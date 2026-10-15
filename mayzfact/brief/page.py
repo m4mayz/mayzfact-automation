@@ -1491,6 +1491,9 @@ function scheduleAutoSave() {
       });
       if (res.ok) {
         setMsg('Tersimpan otomatis ✓');
+        const data = await res.json();
+        if (data.urls) setPrefetchUrls(data.urls);
+        pollProgress();
       } else {
         setMsg('Gagal simpan');
       }
@@ -1498,6 +1501,17 @@ function scheduleAutoSave() {
       setMsg('Gagal simpan');
     }
   }, 750);
+}
+
+// Habis autosave, badge prefetch nempel ke URL yang baru disimpan; label lama dihapus sampai poll berikutnya.
+function setPrefetchUrls(urls) {
+  document.querySelectorAll('.prefetch[data-shot-badge]').forEach(el => {
+    const url = urls[el.dataset.shotBadge] || '';
+    if (el.dataset.prefetchUrl === url) return;
+    el.dataset.prefetchUrl = url;
+    el.textContent = '';
+    el.className = 'prefetch pf-';
+  });
 }
 
 document.addEventListener('input', (e) => {
@@ -1514,7 +1528,7 @@ async function save() {
     const res = await fetch('/api/links', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({shots})
+      body: JSON.stringify({shots, retry: true})  // klik Simpan = link yang gagal dicoba lagi
     });
     if (res.ok) {
       const data = await res.json();
@@ -1685,14 +1699,14 @@ def _detect_token(url: str) -> tuple[str, str]:
 PREFETCH_LABEL = {"antre": "antre", "download": "download…", "siap": "siap", "gagal": "gagal"}
 
 
-def _prefetch_badge(url: str, state: dict | None) -> str:
-    if not url:
-        return ""
-    st = (state or {}).get("state", "")
+def _prefetch_badge(idx: int, url: str, state: dict | None) -> str:
+    """Selalu ada (kosong kalau belum ada link), biar JS bisa nempelin URL baru habis autosave tanpa reload."""
+    st = (state or {}).get("state", "") if url else ""
     label = PREFETCH_LABEL.get(st, "")
     if st == "gagal" and (state or {}).get("message"):
         label += f": {state['message']}"
-    return (f'<span class="prefetch pf-{escape(st)}" data-prefetch-url="{escape(url, quote=True)}">{escape(label)}</span>')
+    return (f'<span class="prefetch pf-{escape(st)}" data-shot-badge="{idx}" data-prefetch-url="{escape(url, quote=True)}">'
+            f'{escape(label)}</span>')
 
 
 def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, voice_ok: bool = False,
@@ -1766,7 +1780,7 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
           {countdown_badge}
         </div>
         <div class="state {css}" data-state-badge="{s_idx}">{label} {message}</div>
-        {_prefetch_badge(entry.get("url", "") if isinstance(entry, dict) else "", (prefetch or {}).get(entry.get("url", "")) if isinstance(entry, dict) else None)}
+        {_prefetch_badge(s_idx, entry.get("url", "") if isinstance(entry, dict) else "", (prefetch or {}).get(entry.get("url", "")) if isinstance(entry, dict) else None)}
       </div>
 
       <div class="shot-script">
