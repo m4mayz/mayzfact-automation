@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Pipeline shorts: naskah ulang + TTS + klip stock"
 requires-python = ">=3.12"
 dependencies = [
+  "google-api-python-client>=2.201.0",
+  "google-auth-oauthlib>=1.5.0",
   "google-genai>=1.33",
   "httpx>=0.28",
   "numpy>=2.0",

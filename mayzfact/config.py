@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Mapping
 
@@ -39,6 +39,8 @@ class Settings:
     browser_headless: bool = False
     clip_source: str = "manual"  # "manual" | "auto"
     brief_port: int = 3100
+    youtube_client_secret_json: str = field(default="", repr=False)  # JSON OAuth client, jangan pernah di-print
+    youtube_token_json: str = field(default="", repr=False)
 
 
 def _key_list(raw: str) -> tuple[str, ...]:
@@ -86,6 +88,8 @@ ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
     "BROWSER_HEADLESS": ("browser_headless", _flag),
     "CLIP_SOURCE": ("clip_source", _clip_source),
     "BRIEF_PORT": ("brief_port", int),
+    "YOUTUBE_CLIENT_SECRET_JSON": ("youtube_client_secret_json", str),
+    "YOUTUBE_TOKEN_JSON": ("youtube_token_json", str),
 }
 
 
