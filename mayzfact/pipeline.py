@@ -11,17 +11,16 @@ import httpx
 
 from mayzfact.cache import SearchCache
 from mayzfact.config import CACHE_DIR, RUNS_DIR, Settings, missing_env
-from mayzfact.errors import PipelineError
+from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.net import make_client
 from mayzfact.providers.elevenlabs import ElevenLabsTTS
-from mayzfact.providers.gemini import GeminiScriptWriter
 from mayzfact.providers.pexels import Pexels
 from mayzfact.providers.pixabay import Pixabay
 from mayzfact.providers.stock import CombinedSearch, PlatformMediaSearch, StockSearch
 from mayzfact.scoring import ThumbScorer
 from mayzfact.steps.clips import MediaSearch, Scorer, run_clips
 from mayzfact.steps.render import run_render
-from mayzfact.steps.script import ScriptWriter, run_script
+from mayzfact.steps.script import AWAIT_SCRIPT_HINT, check_script_file, load_script
 from mayzfact.steps.source import parse_video_id, run_source, youtube_transcript
 from mayzfact.steps.timeline import run_timeline
 from mayzfact.steps.tts import TTSProvider, run_tts
@@ -29,26 +28,24 @@ from mayzfact.store import RunPaths, read_json, write_json_atomic
 from mayzfact.text import script_text, text_hash
 from mayzfact.thumbs import fetch_thumbnail
 
-STEPS = ["source", "script", "tts", "hook", "clips", "timeline", "render"]
-MANUAL_STEPS = ["source", "script", "tts", "plan", "fetch", "timeline", "render"]
+STEPS = ["source", "tts", "hook", "clips", "timeline", "render"]
+MANUAL_STEPS = ["source", "tts", "plan", "fetch", "timeline", "render"]
 ALL_STEPS = list(dict.fromkeys(STEPS + MANUAL_STEPS))
-VOICE_LOCKED = ("source", "script", "tts")
+VOICE_LOCKED = ("source", "tts")
 AFTER_VOICE = ("hook", "clips", "plan", "fetch", "timeline", "render")
 MIN_AUDIO_SECONDS = 30.0
 STEP_ENV = {
-    "script": ["GEMINI_API_KEYS"],
     "tts": ["ELEVENLABS_API_KEYS", "ELEVENLABS_VOICE_ID"],
     "clips": ["PEXELS_API_KEY", "PIXABAY_API_KEY"],
 }
 CLIP_MAX_SEARCHES = 40  # ±16 beat x 2 query; hasil per query di-cache, jadi video & foto cuma 1 search
-NEW_VOICE_HINT = "Pakai --new-voice kalau emang mau naskah + suara baru (pakai kredit ElevenLabs)."
+NEW_SCRIPT_HINT = "Hapus voice.mp3 + script.json kalau emang mau naskah + suara baru (pakai kredit ElevenLabs)."
 
 
 def step_outputs(step: str, paths: RunPaths) -> list[Path]:
     return {
         "source": [paths.source_json],
-        "script": [paths.script_json],
-        "tts": [paths.voice_mp3, paths.tts_json],
+        "tts": [paths.script_json, paths.voice_mp3, paths.tts_json],  # naskah dikunci bareng suaranya
         "hook": [paths.hook_json],
         "clips": [paths.clips_json],
         "plan": [paths.shots_plan_json],
@@ -62,23 +59,17 @@ def step_done(step: str, paths: RunPaths) -> bool:
     return all(path.exists() for path in step_outputs(step, paths))
 
 
-def plan_steps(
-    done: dict[str, bool], voice_exists: bool, from_step: str | None, new_voice: bool, steps: list[str] = STEPS
-) -> list[str]:
-    if new_voice and from_step:
-        raise PipelineError("cli", "--new-voice nggak bisa digabung sama --from.")
-    if new_voice:
-        return steps[1:] if done["source"] else list(steps)
+def plan_steps(done: dict[str, bool], voice_exists: bool, from_step: str | None, steps: list[str] = STEPS) -> list[str]:
     if voice_exists:
         broken = [step for step in VOICE_LOCKED if not done[step]]
         if broken:
-            raise PipelineError("cli", f"voice.mp3 ada tapi hasil step {', '.join(broken)} hilang. {NEW_VOICE_HINT}")
+            raise PipelineError("cli", f"voice.mp3 ada tapi hasil step {', '.join(broken)} hilang. {NEW_SCRIPT_HINT}")
     if from_step:
         if from_step not in steps:
             raise PipelineError("cli", f"Step {from_step} nggak dipakai di mode CLIP_SOURCE ini. Pilihan: {', '.join(steps)}.")
         if voice_exists and from_step in VOICE_LOCKED:
             raise PipelineError(
-                "cli", f"voice.mp3 udah ada, jadi naskah + suara dikunci. Pakai --from {steps[3]}. {NEW_VOICE_HINT}"
+                "cli", f"voice.mp3 udah ada, jadi naskah + suara dikunci. Pakai --from {steps[2]}. {NEW_SCRIPT_HINT}"
             )
         index = steps.index(from_step)
         missing = [step for step in steps[:index] if not done[step]]
@@ -97,11 +88,11 @@ def check_voice(paths: RunPaths) -> dict:
     script = read_json(paths.script_json)
     if text_hash(script_text(script["beats"])) != tts["text_sha256"]:
         raise PipelineError(
-            "tts", f"script.json beda sama naskah yang dipakai buat voice.mp3. Balikin script.json. {NEW_VOICE_HINT}"
+            "tts", f"script.json beda sama naskah yang dipakai buat voice.mp3. Balikin script.json. {NEW_SCRIPT_HINT}"
         )
     if tts["duration_s"] < MIN_AUDIO_SECONDS:
         raise PipelineError(
-            "tts", f"Audio cuma {tts['duration_s']:.1f} detik (minimal {MIN_AUDIO_SECONDS:.0f}). {NEW_VOICE_HINT}"
+            "tts", f"Audio cuma {tts['duration_s']:.1f} detik (minimal {MIN_AUDIO_SECONDS:.0f}). {NEW_SCRIPT_HINT}"
         )
     return tts
 
@@ -109,7 +100,6 @@ def check_voice(paths: RunPaths) -> dict:
 @dataclass
 class Deps:
     fetch_transcript: Callable[[str], list[dict]]
-    script_writer: Callable[[], ScriptWriter]
     tts: Callable[[], TTSProvider]
     search: Callable[[], MediaSearch]
     http: Callable[[], httpx.Client]
@@ -124,6 +114,7 @@ class Deps:
     audio: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # None = video tanpa BGM/SFX
     overlay: Callable[..., dict] | None = None  # (paths, log, point_beats) → deteksi subjek; None = tanpa panah/lingkaran
     marks: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # tanda beat: point + emoji (Fase 3C-2)
+    download_source: Callable[[str, Path], Path] | None = None  # download source.mp4 di step source; None = lewat
 
 
 def real_deps(settings: Settings) -> Deps:
@@ -185,17 +176,13 @@ def real_deps(settings: Settings) -> Deps:
         return CombinedSearch([search(), *(PlatformMediaSearch(p) for p in platforms)])
 
     def plan(paths: RunPaths, log: Callable[[str], None]) -> dict:
-        from mayzfact.hook_queries import describe_segments, translate_queries
         from mayzfact.steps.plan import run_plan
         from mayzfact.ytdlp import run_ytdlp, youtube_url
 
-        writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
         return run_plan(
             paths, read_json(paths.script_json), read_json(paths.tts_json), read_json(paths.source_json),
             max_shot_s=settings.max_shot_seconds, hook_seconds=settings.hook_seconds,
             download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
-            describe=lambda infos, frames: describe_segments(writer, infos, frames, log),
-            translate=lambda queries: translate_queries(writer, queries, log),
             log=log,
         )
 
@@ -215,12 +202,10 @@ def real_deps(settings: Settings) -> Deps:
     def audio(paths: RunPaths, log: Callable[[str], None]) -> dict:
         from mayzfact.audio import BGM_DIR, SFX_DIR, prepare_audio
 
-        writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
         # Client sendiri yang cepat nyerah: myinstants lambat jangan sampai nahan step timeline.
         client = httpx.Client(timeout=httpx.Timeout(10.0, connect=5.0), headers={"User-Agent": "mayzfact-automation/0.1"})
         closers.append(client.close)
-        return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=client,
-                             writer=writer, log=log)
+        return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=client, log=log)
 
     detectors: dict[str, object] = {}
 
@@ -237,16 +222,17 @@ def real_deps(settings: Settings) -> Deps:
         from mayzfact.emoji import EMOJI_DIR
         from mayzfact.marks import prepare_marks
 
-        writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
-        return prepare_marks(paths, read_json(paths.script_json), writer=writer, client=http(), emoji_dir=EMOJI_DIR, log=log)
+        return prepare_marks(paths, read_json(paths.script_json), client=http(), emoji_dir=EMOJI_DIR, log=log)
 
     def close() -> None:
         while closers:
             closers.pop()()
 
+    from mayzfact.ytdlp import run_ytdlp, youtube_url
+
     return Deps(
         fetch_transcript=youtube_transcript,
-        script_writer=lambda: GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model),
+        download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
         tts=lambda: ElevenLabsTTS(
             settings.elevenlabs_api_keys, settings.elevenlabs_voice_id, settings.elevenlabs_model, http()
         ),
@@ -270,7 +256,6 @@ def run_pipeline(
     *,
     settings: Settings,
     from_step: str | None = None,
-    new_voice: bool = False,
     no_render: bool = False,
     deps: Deps | None = None,
     runs_dir: Path = RUNS_DIR,
@@ -280,7 +265,7 @@ def run_pipeline(
     paths = RunPaths(runs_dir / video_id)
     mode_steps = MANUAL_STEPS if settings.clip_source == "manual" else STEPS
     done = {step: step_done(step, paths) for step in mode_steps}
-    steps = plan_steps(done, paths.voice_mp3.exists(), from_step, new_voice, mode_steps)
+    steps = plan_steps(done, paths.voice_mp3.exists(), from_step, mode_steps)
     if no_render:
         # Review lewat Remotion Studio dulu. final.mp4 lama jadi basi kalau step sebelumnya diulang.
         if any(step in steps for step in ("hook", "clips", "plan", "fetch", "timeline")):
@@ -305,6 +290,8 @@ def run_pipeline(
     voice_checked = False
     try:
         for step in steps:
+            if step == "tts":
+                _require_script(paths, settings)  # naskah dari agent: harus ada + lolos cek sebelum bayar TTS
             if step in AFTER_VOICE and not voice_checked:
                 check_voice(paths)
                 voice_checked = True
@@ -315,14 +302,22 @@ def run_pipeline(
     return paths
 
 
+def _require_script(paths: RunPaths, settings: Settings) -> None:
+    if not paths.script_json.exists():
+        raise AwaitingInput("script", AWAIT_SCRIPT_HINT)
+    from mayzfact.audio import BGM_DIR, list_bgm
+
+    load_script(paths)
+    problems = check_script_file(paths, read_json(paths.source_json), ratio=settings.target_duration_ratio,
+                                 minimum_s=settings.min_duration_seconds, bgm_choices=list_bgm(BGM_DIR))
+    if problems:
+        raise PipelineError("script", "Naskah belum lolos cek: " + " ".join(problems))
+
+
 def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: Callable[[str], None]) -> None:
     if step == "source":
-        run_source(paths.root.name, paths, fetch=deps.fetch_transcript)
-    elif step == "script":
-        run_script(
-            paths, read_json(paths.source_json), deps.script_writer(),
-            ratio=settings.target_duration_ratio, minimum_s=settings.min_duration_seconds, photo_ratio=settings.photo_ratio,
-        )
+        run_source(paths.root.name, paths, fetch=deps.fetch_transcript, download_source=deps.download_source,
+                   hook_seconds=settings.hook_seconds, log=log)
     elif step == "tts":
         run_tts(paths, read_json(paths.script_json), deps.tts(), log=log)
     elif step == "hook":

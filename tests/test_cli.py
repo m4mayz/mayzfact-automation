@@ -15,14 +15,14 @@ def test_cli_rejects_unknown_step():
 def test_cli_passes_flags_to_pipeline(monkeypatch, tmp_path, capsys):
     seen = {}
 
-    def fake_run(video, *, settings, from_step, new_voice, no_render):
-        seen.update(video=video, from_step=from_step, new_voice=new_voice, no_render=no_render)
+    def fake_run(video, *, settings, from_step, no_render):
+        seen.update(video=video, from_step=from_step, no_render=no_render)
         return RunPaths(tmp_path)
 
     monkeypatch.setattr(cli, "load_settings", lambda: Settings())
     monkeypatch.setattr(cli, "run_pipeline", fake_run)
-    assert cli.main(["run", "https://youtu.be/i2xag_1OJfM", "--new-voice"]) == 0
-    assert seen == {"video": "https://youtu.be/i2xag_1OJfM", "from_step": None, "new_voice": True, "no_render": False}
+    assert cli.main(["run", "https://youtu.be/i2xag_1OJfM"]) == 0
+    assert seen == {"video": "https://youtu.be/i2xag_1OJfM", "from_step": None, "no_render": False}
     assert "Selesai:" in capsys.readouterr().out
 
 
@@ -32,7 +32,7 @@ def test_cli_prints_pipeline_error(monkeypatch, capsys):
 
     monkeypatch.setattr(cli, "load_settings", lambda: Settings())
     monkeypatch.setattr(cli, "run_pipeline", boom)
-    assert cli.main(["run", "i2xag_1OJfM", "--from", "script"]) == 1
+    assert cli.main(["run", "i2xag_1OJfM", "--from", "tts"]) == 1
     assert "Error [cli] voice.mp3 udah ada" in capsys.readouterr().err
 
 
@@ -174,3 +174,38 @@ def test_upload_now_without_login_fails_cleanly(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
     assert cli.main(["upload", "NSua7RPoFJg", "--now"]) == 1
     assert "login youtube" in capsys.readouterr().err
+
+
+def test_check_script_reports_problems_and_exit_code(monkeypatch, tmp_path, capsys):
+    from mayzfact.store import write_json_atomic
+
+    paths = RunPaths(tmp_path / "abcdefghijk")
+    paths.root.mkdir()
+    write_json_atomic(paths.source_json, {"video_id": "abcdefghijk", "duration_s": 40.0,
+                                          "transcript": [{"text": "like and subscribe. " + "word " * 80, "start": 0.0, "duration": 40.0}]})
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
+    assert cli.main(["check-script", "abcdefghijk"]) == 1
+    assert "script.json" in capsys.readouterr().err  # belum ada
+    paths.script_json.write_text("{not json", encoding="utf-8")
+    assert cli.main(["check-script", "abcdefghijk"]) == 1
+    assert "JSON" in capsys.readouterr().err
+    write_json_atomic(paths.script_json, {"beats": [{"text": "Hello there.", "media": "video", "queries": ["q"]}], "fallback_query": "f"})
+    assert cli.main(["check-script", "abcdefghijk"]) == 1
+    out = capsys.readouterr().out
+    assert "subscribe" in out and "words" in out
+
+
+def test_check_script_passes_a_good_script(monkeypatch, tmp_path, capsys):
+    from mayzfact.store import write_json_atomic
+    from tests.factories import make_script
+
+    paths = RunPaths(tmp_path / "abcdefghijk")
+    paths.root.mkdir()
+    write_json_atomic(paths.source_json, {"video_id": "abcdefghijk", "duration_s": 52.9,
+                                          "transcript": [{"text": "unique source words only here", "start": 0.0, "duration": 52.9}]})
+    write_json_atomic(paths.script_json, make_script().model_dump())  # 110 kata = 0.8 * 52.9 * 2.6
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
+    assert cli.main(["check-script", "abcdefghijk"]) == 0
+    assert "OK" in capsys.readouterr().out

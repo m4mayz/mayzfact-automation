@@ -81,8 +81,8 @@ def test_retry_call_wraps_non_retryable_errors():
     def boom():
         raise ValueError("nope")
 
-    with pytest.raises(PipelineError, match=r"\[script\] Gemini gagal: nope"):
-        retry_call(boom, is_retryable=lambda e: False, step="script", what="Gemini", sleep=lambda s: None)
+    with pytest.raises(PipelineError, match=r"\[script\] ElevenLabs gagal: nope"):
+        retry_call(boom, is_retryable=lambda e: False, step="script", what="ElevenLabs", sleep=lambda s: None)
 
 
 def test_non_idempotent_request_is_not_retried_on_read_timeout():

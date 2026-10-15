@@ -15,17 +15,13 @@ from mayzfact.net import download
 EMOJI_DIR = PROJECT_ROOT / "assets" / "emoji"
 NOTO_LOTTIE = "https://fonts.gstatic.com/s/e/notoemoji/latest/{cp}/lottie.json"
 
-# Emoji yang boleh dipilih Gemini. Semua udah dicek ada versi animasinya di Noto (2026-10-14).
+# Emoji yang boleh dipakai agent di naskah. Semua udah dicek ada versi animasinya di Noto (2026-10-14).
 EMOJI = {
     "🧐": "1f9d0", "🤨": "1f928", "🤯": "1f92f", "🫢": "1fae2", "🍀": "1f340", "😱": "1f631", "😮": "1f62e",
     "👀": "1f440", "🔥": "1f525", "💀": "1f480", "🤔": "1f914", "😳": "1f633", "😲": "1f632", "🤩": "1f929",
     "😨": "1f628", "🥶": "1f976", "😂": "1f602", "💯": "1f4af", "👍": "1f44d", "🦖": "1f996", "🌊": "1f30a",
     "⚡": "26a1", "😴": "1f634", "🫣": "1fae3", "😬": "1f62c", "🤓": "1f913", "😎": "1f60e", "🥺": "1f97a",
 }
-
-
-def allowed_emoji_line() -> str:
-    return "Allowed emoji: " + " ".join(EMOJI)
 
 
 def ensure_emoji(emoji_dir: Path, client: httpx.Client, codepoints: list[str], log: Callable[[str], None],

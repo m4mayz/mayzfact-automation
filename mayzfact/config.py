@@ -20,8 +20,6 @@ MODELS_DIR = PROJECT_ROOT / "models"  # cache model ML (SigLIP, OWLv2), di-gitig
 
 @dataclass(frozen=True)
 class Settings:
-    gemini_api_keys: tuple[str, ...] = ()
-    gemini_model: str = "gemini-3.8-flash"
     elevenlabs_api_keys: tuple[str, ...] = ()
     elevenlabs_voice_id: str = ""
     elevenlabs_model: str = "eleven_v3"
@@ -69,8 +67,6 @@ def _clip_source(raw: str) -> str:
 
 
 ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
-    "GEMINI_API_KEYS": ("gemini_api_keys", _key_list),
-    "GEMINI_MODEL": ("gemini_model", str),
     "ELEVENLABS_API_KEYS": ("elevenlabs_api_keys", _key_list),
     "ELEVENLABS_VOICE_ID": ("elevenlabs_voice_id", str),
     "ELEVENLABS_MODEL": ("elevenlabs_model", str),

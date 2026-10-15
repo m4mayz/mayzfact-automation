@@ -6,14 +6,14 @@ import pytest
 
 import mayzfact.pipeline as pipeline_mod
 from mayzfact.config import Settings
-from mayzfact.errors import PipelineError
+from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.pipeline import STEPS, Deps, check_voice, plan_steps, run_pipeline
 from mayzfact.store import RunPaths, read_json, write_json_atomic
 from mayzfact.text import script_text, text_hash
 from tests.factories import cand, fake_alignment, make_script
 
 VIDEO_ID = "i2xag_1OJfM"
-KEYS = {"gemini_api_keys": ("g",), "elevenlabs_api_keys": ("e",), "elevenlabs_voice_id": "v", "pexels_api_key": "p", "pixabay_api_key": "x"}
+KEYS = {"elevenlabs_api_keys": ("e",), "elevenlabs_voice_id": "v", "pexels_api_key": "p", "pixabay_api_key": "x"}
 SETTINGS = Settings(**KEYS, max_shot_seconds=10.0, clip_source="auto", target_duration_ratio=0.6, min_duration_seconds=32.0)
 TRANSCRIPT = [{"text": "Five ancient creatures are still alive today", "start": 0.0, "duration": 53.3}]
 NONE_DONE = {step: False for step in STEPS}
@@ -28,44 +28,35 @@ def done_until(last: str) -> dict:
 # --- plan_steps -------------------------------------------------------------
 
 def test_fresh_run_runs_everything():
-    assert plan_steps(NONE_DONE, False, None, False) == STEPS
+    assert plan_steps(NONE_DONE, False, None) == STEPS
 
 
 def test_plain_run_resumes_from_first_missing_step():
-    assert plan_steps(done_until("script"), False, None, False) == ["tts", "hook", "clips", "timeline", "render"]
-    assert plan_steps(ALL_DONE, True, None, False) == []
+    assert plan_steps(done_until("source"), False, None) == ["tts", "hook", "clips", "timeline", "render"]
+    assert plan_steps(ALL_DONE, True, None) == []
 
 
 def test_from_clips_is_allowed_with_voice():
-    assert plan_steps(ALL_DONE, True, "clips", False) == ["clips", "timeline", "render"]
+    assert plan_steps(ALL_DONE, True, "clips") == ["clips", "timeline", "render"]
 
 
-@pytest.mark.parametrize("step", ["source", "script", "tts"])
+@pytest.mark.parametrize("step", ["source", "tts"])
 def test_from_locked_step_is_rejected_when_voice_exists(step):
     with pytest.raises(PipelineError, match="dikunci"):
-        plan_steps(ALL_DONE, True, step, False)
+        plan_steps(ALL_DONE, True, step)
 
-
-def test_from_script_is_allowed_before_voice_exists():
-    assert plan_steps(done_until("script"), False, "script", False) == STEPS[1:]
 
 
 def test_from_step_needs_previous_outputs():
     with pytest.raises(PipelineError, match="belum pernah selesai"):
-        plan_steps(done_until("tts"), True, "timeline", False)
+        plan_steps(done_until("tts"), True, "timeline")
 
 
-def test_new_voice_reruns_script_and_after():
-    assert plan_steps(ALL_DONE, True, None, True) == STEPS[1:]
-    assert plan_steps(NONE_DONE, False, None, True) == STEPS
-    with pytest.raises(PipelineError, match="nggak bisa digabung"):
-        plan_steps(ALL_DONE, True, "clips", True)
 
-
-def test_voice_without_metadata_needs_new_voice():
+def test_voice_without_metadata_needs_new_script():
     broken = {**ALL_DONE, "tts": False}
-    with pytest.raises(PipelineError, match="--new-voice"):
-        plan_steps(broken, True, None, False)
+    with pytest.raises(PipelineError, match="script.json"):
+        plan_steps(broken, True, None)
 
 
 # --- check_voice ------------------------------------------------------------
@@ -92,16 +83,11 @@ def test_check_voice_rejects_edited_script(tmp_path):
 def test_check_voice_rejects_short_audio(tmp_path):
     paths = RunPaths(tmp_path)
     write_voice_state(paths, ["Look at this."], 29.0)
-    with pytest.raises(PipelineError, match="--new-voice"):
+    with pytest.raises(PipelineError, match="script.json"):
         check_voice(paths)
 
 
 # --- run_pipeline dengan dependency palsu ----------------------------------
-
-class FakeWriter:
-    def write(self, system, user):
-        return make_script(n_beats=8, words_per_beat=10)
-
 
 class FakeTTS:
     voice_id = "v"
@@ -131,11 +117,7 @@ def build_world(tmp_path, audio_path, total_s, make_video, make_photo):
         lambda request: httpx.Response(200, content=video_bytes if request.url.path.endswith(".mp4") else photo_bytes)
     ))
     tts = FakeTTS(audio_path.read_bytes(), total_s)
-    world = SimpleNamespace(tts=tts, writer_calls=0, renders=0, runs=tmp_path / "runs")
-
-    def writer():
-        world.writer_calls += 1
-        return FakeWriter()
+    world = SimpleNamespace(tts=tts, renders=0, runs=tmp_path / "runs")
 
     def render(paths):
         world.renders += 1
@@ -144,7 +126,6 @@ def build_world(tmp_path, audio_path, total_s, make_video, make_photo):
 
     world.deps = Deps(
         fetch_transcript=lambda video_id: TRANSCRIPT,
-        script_writer=writer,
         tts=lambda: tts,
         search=FakeSearch,
         http=lambda: client,
@@ -163,41 +144,44 @@ def run(world, **kwargs):
     return run_pipeline(VIDEO_ID, settings=kwargs.pop("settings", SETTINGS), deps=world.deps, runs_dir=world.runs, **QUIET, **kwargs)
 
 
+def write_fake_script(paths):
+    write_json_atomic(paths.script_json, make_script(n_beats=8, words_per_beat=10).model_dump())
+
+
+def start(world, **kwargs):
+    """Run pertama cuma source, terus berhenti nunggu naskah. Di test, naskahnya ditulis langsung, terus lanjut."""
+    paths = RunPaths(world.runs / VIDEO_ID)
+    if not paths.script_json.exists():
+        with pytest.raises(AwaitingInput):
+            run(world, **{k: v for k, v in kwargs.items() if k == "settings"})
+        write_fake_script(paths)
+    return run(world, **kwargs)
+
+
 def test_full_run_then_rerun_from_clips_reuses_voice(world):
-    paths = run(world)
+    paths = start(world)
     assert paths.final_mp4.read_bytes() == b"fake-mp4"
-    assert (world.tts.calls, world.writer_calls, world.renders) == (1, 1, 1)
+    assert (world.tts.calls, world.renders) == (1, 1)
     timeline = read_json(paths.timeline_json)
     assert len(timeline["shots"]) == 8
     assert timeline["durationInFrames"] == math.ceil(read_json(paths.tts_json)["duration_s"] * 30 - 1e-6)
     voice_mtime = paths.voice_mp3.stat().st_mtime_ns
 
     run(world, from_step="clips")
-    assert (world.tts.calls, world.writer_calls, world.renders) == (1, 1, 2)
+    assert (world.tts.calls, world.renders) == (1, 2)
     assert paths.voice_mp3.stat().st_mtime_ns == voice_mtime
 
 
 def test_second_plain_run_does_nothing(world):
-    run(world)
+    start(world)
     run(world)
     assert (world.tts.calls, world.renders) == (1, 1)
 
 
-def test_from_script_is_rejected_after_voice(world):
-    run(world)
-    with pytest.raises(PipelineError, match="dikunci"):
-        run(world, from_step="script")
-    assert world.tts.calls == 1
-
-
-def test_new_voice_regenerates_script_and_voice(world):
-    run(world)
-    run(world, new_voice=True)
-    assert (world.tts.calls, world.writer_calls, world.renders) == (2, 2, 2)
 
 
 def test_edited_script_blocks_clips_without_calling_tts(world):
-    paths = run(world)
+    paths = start(world)
     script = read_json(paths.script_json)
     script["beats"][0]["text"] = "Diedit manual."
     write_json_atomic(paths.script_json, script)
@@ -208,27 +192,27 @@ def test_edited_script_blocks_clips_without_calling_tts(world):
 
 def test_short_audio_stops_before_clips(tmp_path, sine_mp3, make_video, make_photo):
     world = build_world(tmp_path, sine_mp3, 2.5, make_video, make_photo)
-    with pytest.raises(PipelineError, match="--new-voice"):
-        run(world)
+    with pytest.raises(PipelineError, match="script.json"):
+        start(world)
     paths = RunPaths(world.runs / VIDEO_ID)
     assert paths.voice_mp3.exists()
     assert not paths.clips_json.exists()
 
 
 def test_missing_keys_fail_before_any_step(world):
-    with pytest.raises(PipelineError, match="GEMINI_API_KEYS.*ELEVENLABS_API_KEYS.*ELEVENLABS_VOICE_ID.*PEXELS_API_KEY.*PIXABAY_API_KEY"):
+    with pytest.raises(PipelineError, match="ELEVENLABS_API_KEYS.*ELEVENLABS_VOICE_ID.*PEXELS_API_KEY.*PIXABAY_API_KEY"):
         run(world, settings=Settings(clip_source="auto"))
     assert not (world.runs / VIDEO_ID / "source.json").exists()
 
 
-def test_from_clips_does_not_need_gemini_or_elevenlabs_keys(world):
-    run(world)
+def test_from_clips_does_not_need_elevenlabs_keys(world):
+    start(world)
     run(world, from_step="clips", settings=Settings(pexels_api_key="p", pixabay_api_key="x", max_shot_seconds=10.0, clip_source="auto"))
     assert world.renders == 2
 
 
 def test_failed_render_is_retried_on_next_plain_run(world):
-    paths = run(world)
+    paths = start(world)
     original_render = world.deps.render
 
     def failing_render(p):
@@ -254,7 +238,7 @@ def test_missing_ffmpeg_fails_before_any_step(world, monkeypatch):
 
 
 def test_clips_are_unique_across_shots(world):
-    paths = run(world)
+    paths = start(world)
     ids = [(s["provider"], s["provider_id"]) for s in read_json(paths.clips_json)["shots"]]
     assert len(ids) == len(set(ids)) == 8
 
@@ -279,7 +263,7 @@ def test_hook_runs_before_clips_and_feeds_it(world, monkeypatch):
         return real_run_clips(*args, **kwargs)
 
     monkeypatch.setattr(pipeline_mod, "run_clips", spy)
-    run(world)
+    start(world)
     assert calls == [VIDEO_ID]
     assert seen["hook"] == EMPTY_HOOK
     assert seen["hook_seconds"] == 10.0
@@ -287,19 +271,19 @@ def test_hook_runs_before_clips_and_feeds_it(world, monkeypatch):
 
 
 def test_without_hook_runner_writes_empty_hook(world):
-    paths = run(world)
+    paths = start(world)
     assert read_json(paths.hook_json) == EMPTY_HOOK
 
 
 def test_from_hook_after_voice_does_not_call_tts(world):
-    run(world)
+    start(world)
     run(world, from_step="hook")
     assert world.tts.calls == 1
     assert world.renders == 2
 
 
 def test_old_run_without_hook_json_resumes_from_hook(world):
-    paths = run(world)
+    paths = start(world)
     paths.hook_json.unlink()
     run(world)
     assert paths.hook_json.exists()
@@ -316,9 +300,9 @@ def test_clips_use_clip_search_and_deps_are_closed(world):
 
     world.deps.clip_search = TaggingSearch
     world.deps.close = lambda: closed.append(1)
-    run(world)
+    start(world)  # 2 run: source (berhenti nunggu naskah) + lanjutan; deps ditutup tiap run
     assert used
-    assert closed == [1]
+    assert closed == [1, 1]
 
 
 def test_deps_are_closed_when_a_step_fails(world):
@@ -335,7 +319,7 @@ def test_deps_are_closed_when_a_step_fails(world):
 
 
 def test_no_render_stops_after_timeline(world):
-    paths = run(world, no_render=True)
+    paths = start(world, no_render=True)
     assert paths.timeline_json.exists()
     assert not paths.final_mp4.exists()
     assert world.renders == 0
@@ -362,13 +346,13 @@ def test_manual_mode_runs_plan_then_waits_for_links(world):
 
     world.deps.plan, world.deps.fetch = fake_plan, fake_fetch
     with pytest.raises(AwaitingInput):
-        run(world, settings=MANUAL, no_render=True)
+        start(world, settings=MANUAL, no_render=True)
     assert calls == ["plan", "fetch"]
     assert world.tts.calls == 1
 
 
 def test_manual_mode_rejects_auto_steps_and_auto_rejects_manual(world):
-    run(world)
+    start(world)
     with pytest.raises(PipelineError, match="hook"):
         run(world, settings=MANUAL, from_step="hook")
     with pytest.raises(PipelineError, match="fetch"):
@@ -387,12 +371,12 @@ def test_manual_fetch_success_continues_to_timeline(world):
         return clips
 
     world.deps.plan, world.deps.fetch = fake_plan, fake_fetch
-    paths = run(world, settings=MANUAL, no_render=True)
+    paths = start(world, settings=MANUAL, no_render=True)
     assert paths.timeline_json.exists() and world.renders == 0
 
 
 def test_timeline_gets_captions_from_script_and_alignment(world):
-    paths = run(world, no_render=True)
+    paths = start(world, no_render=True)
     timeline = read_json(paths.timeline_json)
     assert timeline["captions"] and timeline["captions"][0]["text"]
 
@@ -405,7 +389,7 @@ def test_timeline_step_uses_audio_deps(world):
         return {"bgm": "audio/bgm/mystery.mp3", "sfx": {"hook": "audio/sfx/h.mp3"}}
 
     world.deps.audio = fake_audio
-    paths = run(world, no_render=True)
+    paths = start(world, no_render=True)
     timeline = read_json(paths.timeline_json)
     assert seen == [VIDEO_ID]
     assert timeline["bgm"]["src"] == "audio/bgm/mystery.mp3" and timeline["sfx"][0]["from"] == 0
@@ -416,7 +400,7 @@ def test_audio_failure_never_breaks_timeline(world):
         raise RuntimeError("audio rusak")
 
     world.deps.audio = broken
-    paths = run(world, no_render=True)
+    paths = start(world, no_render=True)
     assert read_json(paths.timeline_json)["bgm"] is None
 
 
@@ -425,7 +409,7 @@ def test_timeline_step_uses_overlay_deps_and_survives_errors(world):
         return {"clips/shot_01.mp4": {"points": [{"t": 0.5, "x": 1, "y": 2, "w": 3, "h": 4}]}}
 
     world.deps.overlay = fake_overlay
-    paths = run(world, no_render=True)
+    paths = start(world, no_render=True)
     first_src = read_json(paths.timeline_json)["shots"][0]["src"]
     world.deps.overlay = lambda p, log, point_beats=None: {first_src: {"points": [{"t": 0.5, "x": 1, "y": 2, "w": 3, "h": 4}]}}
     paths = run(world, from_step="timeline", no_render=True)
@@ -454,14 +438,50 @@ def test_timeline_step_uses_beat_marks_for_emoji_and_arrows(world):
         return {}
 
     world.deps.marks, world.deps.overlay = fake_marks, fake_overlay
-    paths = run(world, no_render=True)
+    paths = start(world, no_render=True)
     timeline = read_json(paths.timeline_json)
     assert seen["point_beats"] == {0}
     assert timeline["emojis"][0]["src"] == "emoji/1f9d0.json"
 
     def broken(paths, log):
-        raise RuntimeError("gemini rusak")
+        raise RuntimeError("emoji rusak")
 
     world.deps.marks = broken
     paths = run(world, from_step="timeline", no_render=True)
     assert read_json(paths.timeline_json)["emojis"] == []
+
+
+def test_run_waits_for_script_when_only_source_exists(world):
+    paths = RunPaths(world.runs / VIDEO_ID)
+    with pytest.raises(AwaitingInput, match="check-script"):
+        run(world)
+    assert paths.source_json.exists() and not paths.script_json.exists()
+    with pytest.raises(AwaitingInput, match="check-script"):
+        run(world)
+    assert world.tts.calls == 0  # TTS nggak kepanggil tanpa naskah
+
+
+def test_run_continues_once_script_is_written(world):
+    paths = RunPaths(world.runs / VIDEO_ID)
+    with pytest.raises(AwaitingInput):
+        run(world)
+    write_fake_script(paths)
+    run(world)
+    assert paths.voice_mp3.exists() and world.tts.calls == 1
+
+
+def test_run_rejects_script_that_fails_checks_before_tts(world):
+    paths = RunPaths(world.runs / VIDEO_ID)
+    with pytest.raises(AwaitingInput):
+        run(world)
+    write_json_atomic(paths.script_json, {"beats": [{"text": "Too short.", "media": "video", "queries": ["q"]}], "fallback_query": "f"})
+    with pytest.raises(PipelineError, match="lolos cek"):
+        run(world)
+    assert world.tts.calls == 0
+
+
+def test_deleted_script_with_voice_present_is_a_clean_error(world):
+    paths = start(world)
+    paths.script_json.unlink()
+    with pytest.raises(PipelineError, match="script.json"):
+        run(world, from_step="clips")

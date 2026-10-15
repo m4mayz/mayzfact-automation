@@ -1,6 +1,5 @@
 from mayzfact.models import Beat, Script
 from mayzfact.steps.script import (
-    build_user_prompt,
     check_script,
     normalize_script,
     target_duration,
@@ -82,17 +81,6 @@ def test_normalize_script_cleans_text_and_forces_first_video():
     assert script.fallback_query == "ocean"
 
 
-def test_user_prompt_has_targets_transcript_and_feedback():
-    prompt = build_user_prompt(SOURCE, DURATION, 0.3)
-    assert "about 110 words in total (allowed: 94-126)" in prompt
-    assert "[2.5s] to this video" in prompt
-    assert "30%" in prompt
-    assert "rejected" not in prompt
-    retry = build_user_prompt(SOURCE, DURATION, 0.3, feedback=["Too short."], previous=make_script(n_beats=1))
-    assert "Your previous answer was rejected:" in retry
-    assert "- Too short." in retry
-    assert '"fallback_query":"ocean animals"' in retry
-
 
 def test_long_beat_is_reported():
     script = make_script()
@@ -126,3 +114,51 @@ def test_countdown_item_with_fewer_than_two_explanation_beats_is_reported():
     # Number four and Number one have 2 explanation beats, so they should not be reported
     assert not any("Number four" in p for p in problems)
     assert not any("Number one" in p for p in problems)
+
+
+def test_cta_words_from_source_must_survive():
+    script = make_script()
+    source = "Comment below, then like the video and subscribe. Number five, mantis shrimp."
+    problems, _ = check_script(script, source, DURATION)
+    assert any("subscribe" in p and "like" in p for p in problems)
+    script.beats[1] = script.beats[1].model_copy(update={"text": "Smash like, comment, and subscribe now!"})
+    problems, _ = check_script(script, source, DURATION)
+    assert not [p for p in problems if "subscribe" in p]
+
+
+def test_bgm_must_exist_when_choices_known():
+    script = make_script().model_copy(update={"bgm": "epic.mp3"})
+    problems, _ = check_script(script, SOURCE_TEXT, DURATION, bgm_choices=["mystery.mp3"])
+    assert any("epic.mp3" in p for p in problems)
+    assert not [p for p in check_script(script, SOURCE_TEXT, DURATION, bgm_choices=["epic.mp3"])[0] if "bgm" in p.lower()]
+    assert not [p for p in check_script(script, SOURCE_TEXT, DURATION)[0] if "bgm" in p.lower()]  # choices None = nggak dicek
+
+
+def test_script_accepts_new_optional_fields():
+    data = make_script().model_dump()
+    data["beats"][0]["queries_zh"] = ["螳螂虾"]
+    data["bgm"] = "mystery.mp3"
+    data["hook_queries"] = {"0": {"en": ["bird on tower"], "zh": ["鸟 塔"]}}
+    script = Script(**data)
+    assert script.hook_queries["0"].zh == ["鸟 塔"] and script.beats[0].queries_zh == ["螳螂虾"]
+    assert Script(**make_script().model_dump()).bgm == ""  # naskah lama tanpa field baru tetap kebaca
+
+
+def test_normalize_script_keeps_bgm_and_hook_queries():
+    script = Script(**{**make_script().model_dump(), "bgm": "epic.mp3", "hook_queries": {"0": {"en": ["x"], "zh": []}}})
+    out = normalize_script(script)
+    assert out.bgm == "epic.mp3" and out.hook_queries["0"].en == ["x"]
+
+
+def test_cta_check_uses_the_same_trigger_rules_as_the_timeline():
+    source = "Comment below, then like the video and subscribe. Number five, mantis shrimp."
+    script = make_script()
+    # "subscribed" mancing animasi di timeline, jadi harus lolos cek juga
+    script.beats[1] = script.beats[1].model_copy(update={"text": "Drop a comment, hit like, make sure you're subscribed!"})
+    assert not [p for p in check_script(script, source, DURATION)[0] if "subscribe" in p or "like" in p]
+    # "like" yang artinya mirip nggak mancing animasi, jadi cek harus nolak
+    script.beats[1] = script.beats[1].model_copy(update={"text": "Comment if creatures like this amaze you, subscribe!"})
+    assert any("like" in p for p in check_script(script, source, DURATION)[0])
+    # "like" yang ngajak lolos
+    script.beats[1] = script.beats[1].model_copy(update={"text": "Comment below, hit like and subscribe now!"})
+    assert not [p for p in check_script(script, source, DURATION)[0] if "like" in p or "subscribe" in p]

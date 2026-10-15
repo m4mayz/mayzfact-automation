@@ -13,7 +13,6 @@ import numpy as np
 from mayzfact.embed import Encoder, can_open_image, mean_unit
 from mayzfact.errors import PipelineError
 from mayzfact.ffmpeg import extract_frame, probe, sample_frames
-from mayzfact.hook_queries import describe_segments, transcript_near
 from mayzfact.matching import match_label, top_k
 from mayzfact.media import pick_rendition
 from mayzfact.net import download
@@ -21,6 +20,7 @@ from mayzfact.platforms.base import PlatformBlocked
 from mayzfact.providers.types import Candidate
 from mayzfact.scenes import detect_cuts, merge_cuts, segments
 from mayzfact.store import RunPaths, write_json_atomic
+from mayzfact.text import words
 
 FRAME_POSITIONS = (0.25, 0.5, 0.75)
 TOP_PER_SOURCE = 8
@@ -165,6 +165,22 @@ def _match_segment(info, seg_vec, queries, deps, skipped, used, paths, media_cac
     return record
 
 
+FALLBACK_WORDS = 8
+
+
+def fallback_queries(infos: list[dict]) -> dict[int, dict]:
+    """Keyword hook mode auto: 8 kata pertama transcript segmen (nggak ada LLM yang lihat frame-nya)."""
+    out: dict[int, dict] = {}
+    for info in infos:
+        snippet = " ".join(words(info["transcript"])[:FALLBACK_WORDS])
+        out[info["index"]] = {"en": [snippet] if snippet else [], "zh": []}
+    return out
+
+
+def transcript_near(transcript: list[dict], start_s: float, end_s: float) -> str:
+    return " ".join(s["text"] for s in transcript if s["start"] < end_s and s["start"] + s["duration"] > start_s)
+
+
 def prepare_source_segments(
     paths: RunPaths, source: dict, download_source: Callable[[str, Path], Path], hook_seconds: float,
     out_dir: Path, retry_step: str = "hook",
@@ -220,7 +236,6 @@ def run_hook(
 
 def real_hook_deps(settings: Any, client: Any, stock: Any, encoder: Encoder, fetch_thumb: Callable, log: Callable) -> HookDeps:
     from mayzfact.platforms import browser
-    from mayzfact.providers.gemini import GeminiScriptWriter
     from mayzfact.ytdlp import run_ytdlp, youtube_url
 
     shared = browser.SharedPlaywright()
@@ -228,7 +243,6 @@ def real_hook_deps(settings: Any, client: Any, stock: Any, encoder: Encoder, fet
         browser.BrowserPlatform(name, client=client, headless=settings.browser_headless, playwright=shared, log=log)
         for name in settings.hook_platforms
     ]
-    writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
 
     def close() -> None:
         for platform in browsers:
@@ -238,7 +252,7 @@ def real_hook_deps(settings: Any, client: Any, stock: Any, encoder: Encoder, fet
     return HookDeps(
         download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
         encoder=encoder,
-        describe=lambda infos, frames: describe_segments(writer, infos, frames, log),
+        describe=lambda infos, frames: fallback_queries(infos),
         searchers=[*browsers, StockSearcher(stock, client, settings.fg_min_height_ratio)],
         fetch_thumb=fetch_thumb,
         log=log,

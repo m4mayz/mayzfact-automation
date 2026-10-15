@@ -243,8 +243,7 @@
 
 - **BGM:**
   - File-nya di `assets/bgm/<mood>.mp3`. Daftar mood: mystery, suspense, dark, epic, space, tech, nature, playful, funny, inspiring, sad, energetic.
-  - Gemini milih mood sesuai naskah. Kalau cuma ada 1 file, langsung dipakai.
-  - Pilihannya disimpen di `runs/<id>/audio.json`. Kalau mau ganti, edit file itu terus jalanin `--from timeline`.
+  - (Diubah D-028:) mood dipilih agent pas nulis naskah, field `bgm` di `script.json`. Kalau mau ganti, edit field itu terus jalanin `--from timeline`. `runs/<id>/audio.json` cuma dipakai naskah lama yang belum punya field `bgm`.
   - Volume 0.12, fade out 1 detik di akhir.
 - **SFX:**
   - `assets/sfx/sfx.json` (pilihan Akmal dari myinstants): hook `awkward-moment.mp3`, number `quick-ting.mp3`, subject `pop_7e9Is8L.mp3`.
@@ -436,3 +435,30 @@
 ## Delivery
 
 - Next: `mayzfact login youtube`, terus upload NSua7RPoFJg lewat skill `bikin-short` langkah 6–8.
+
+---
+
+# Handoff — Naskah ditulis agent, Gemini dicabut
+
+- **Updated:** 2026-10-15, Claude Code (Fable 5.1)
+- **Goal & scope:** D-028, [spec](superpowers/specs/2026-10-15-agent-script-design.md), [plan](superpowers/plans/2026-10-15-agent-script.md).
+
+## Selesai
+
+- Step `script` dihapus. `run` berhenti exit 3 "Naskah belum ada" sampai agent nulis `runs/<id>/script.json`; sebelum TTS naskahnya dicek (ada, valid, lolos aturan).
+- `mayzfact check-script <id>`: aturan lama (kata, foto, countdown, overlap, emoji) + cek CTA (kata like/subscribe/comment dari source harus ada) + cek `bgm`.
+- `script.json` nambah `bgm`, `hook_queries`, `queries_zh`. Step `plan` dan `audio` baca dari situ. Naskah lama tanpa field itu tetap jalan (tanpa BGM, keyword hook fallback transcript).
+- Step `source` sekalian download `source.mp4` + frame hook ke `plan/`, biar agent bisa lihat pas nulis.
+- Gemini dicabut: provider, 5 prompt, `hook_queries.py`, `annotations.json`, `google-genai`, env `GEMINI_*`. Mode auto keyword hook pakai transcript.
+- Skill `bikin-short` langkah 1–4: source → tulis naskah (aturan lengkap + contoh) → review Akmal → suara.
+- 399 test lolos, 1 skip (POSIX).
+
+## Masalah terbuka
+
+1. Belum dites beneran: agent nulis naskah end-to-end buat 1 video. Kandidat pertama: `4735ZE89GXQ` (naskah lama Gemini masih ada, suaranya udah dibikin; kalau mau ulang, hapus `script.json` + `voice.mp3`, dan itu makan kredit ElevenLabs lagi).
+2. Spec brief (`2026-10-15-brief-revisi-design.md`) belum dikerjain: audio naskah di tombol shot, download duluan pas Simpan, frame referensi wajib tiap shot.
+3. Ada stash `wip ngrok allowlist from other harness` (perubahan `brief/server.py` dari harness lain) yang belum di-review.
+
+## Delivery
+
+- Next: plan + kerjain spec brief, terus tes 1 video baru dari awal pakai skill `bikin-short`.

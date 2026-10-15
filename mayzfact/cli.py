@@ -1,4 +1,4 @@
-"""Entry point: `uv run mayzfact run <video> [--from STEP] [--new-voice]` dan `uv run mayzfact voices`."""
+"""Entry point: `uv run mayzfact run <video> [--from STEP]`, `check-script`, `brief`, `upload`, dll."""
 
 from __future__ import annotations
 
@@ -20,9 +20,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="Bikin video dari 1 YouTube Shorts source")
     run.add_argument("video", help="Video ID atau URL YouTube")
-    run.add_argument("--from", dest="from_step", choices=ALL_STEPS, help="Ulang dari step ini (script/tts dikunci kalau voice.mp3 udah ada)")
-    run.add_argument("--new-voice", action="store_true", help="Bikin naskah + suara baru (pakai kredit ElevenLabs)")
+    run.add_argument("--from", dest="from_step", choices=ALL_STEPS, help="Ulang dari step ini (source/tts dikunci kalau voice.mp3 udah ada)")
     run.add_argument("--no-render", action="store_true", help="Berhenti setelah timeline.json, buat review di Remotion Studio")
+    check = sub.add_parser("check-script", help="Cek runs/<id>/script.json yang ditulis agent")
+    check.add_argument("video", help="Video ID atau URL YouTube source")
     sub.add_parser("voices", help="List voice ElevenLabs di akun lu")
     login = sub.add_parser("login", help="Login ke platform hook (TikTok/Douyin/Pinterest) atau YouTube buat upload")
     login.add_argument("platform", nargs="?", choices=sorted([*PLATFORMS, "youtube"]))
@@ -46,6 +47,8 @@ def main(argv: list[str] | None = None) -> int:
         settings = load_settings()
         if args.command == "voices":
             return _print_voices(settings)
+        if args.command == "check-script":
+            return _check_script(args, settings)
         if args.command == "login":
             return _login(args, settings)
         if args.command == "brief":
@@ -55,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "upload":
             return _upload(args, settings)
         paths = run_pipeline(
-            args.video, settings=settings, from_step=args.from_step, new_voice=args.new_voice, no_render=args.no_render
+            args.video, settings=settings, from_step=args.from_step, no_render=args.no_render
         )
         if args.no_render:
             print(
@@ -71,6 +74,29 @@ def main(argv: list[str] | None = None) -> int:
     except PipelineError as exc:
         print(f"Error {exc}", file=sys.stderr)
         return 1
+
+
+def _check_script(args: argparse.Namespace, settings: Settings) -> int:
+    from mayzfact.audio import BGM_DIR, list_bgm
+    from mayzfact.steps.script import check_script_file, target_duration, word_range
+    from mayzfact.steps.source import parse_video_id
+    from mayzfact.store import RunPaths, read_json
+    from mayzfact.text import words
+
+    paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
+    if not paths.source_json.exists():
+        raise PipelineError("check-script", f"{paths.source_json} belum ada. Jalanin dulu: mayzfact run {paths.root.name}")
+    source = read_json(paths.source_json)
+    problems = check_script_file(paths, source, ratio=settings.target_duration_ratio, minimum_s=settings.min_duration_seconds,
+                                 bgm_choices=list_bgm(BGM_DIR))
+    if problems:
+        print("\n".join(f"- {p}" for p in problems))
+        return 1
+    script = read_json(paths.script_json)
+    count = len(words(" ".join(b["text"] for b in script["beats"])))
+    target, _, _ = word_range(target_duration(source["duration_s"], settings.target_duration_ratio, settings.min_duration_seconds))
+    print(f"OK: naskah lolos cek ({count} kata, target {target})")
+    return 0
 
 
 def _print_voices(settings: Settings) -> int:

@@ -17,13 +17,11 @@ TTS = {"duration_s": 3.0, "alignment": fake_alignment("Look at this. Number five
 SOURCE = {"video_id": "abc", "duration_s": 2.0, "transcript": [{"text": "five ancient creatures", "start": 0.0, "duration": 2.0}]}
 
 
-def plan_with(tmp_path, cut_video, hook_seconds, source=SOURCE):
+def plan_with(tmp_path, cut_video, hook_seconds, source=SOURCE, script=SCRIPT):
     paths = RunPaths(tmp_path / "run")
     data = run_plan(
-        paths, SCRIPT, TTS, source, max_shot_s=2.5, hook_seconds=hook_seconds,
+        paths, script, TTS, source, max_shot_s=2.5, hook_seconds=hook_seconds,
         download_source=lambda vid, dest: shutil.copyfile(cut_video, dest) or dest,
-        describe=lambda infos, frames: {0: {"en": ["horseshoe crab beach"], "zh": ["鲎 海滩"]}},
-        translate=lambda queries: {"fossil": "化石", "crab": "螃蟹"},
         log=lambda m: None,
     )
     return paths, data
@@ -34,10 +32,10 @@ def test_plan_marks_hook_shots_with_reference_frames(tmp_path, cut_video):
     assert read_json(paths.shots_plan_json) == data
     first, second = data["shots"]
     assert first["hook_segment"] == 0
-    assert first["keywords"] == {"en": ["horseshoe crab beach"], "zh": ["鲎 海滩"]}
+    assert first["keywords"] == {"en": ["five ancient creatures"], "zh": []}  # tanpa hook_queries: fallback transcript
     assert len(first["ref_frames"]) == 3 and (paths.root / first["ref_frames"][0]).exists()
     assert second["hook_segment"] is None and second["ref_frames"] == []
-    assert second["keywords"] == {"en": ["fossil", "crab"], "zh": ["化石", "螃蟹"]}
+    assert second["keywords"] == {"en": ["fossil", "crab"], "zh": []}
     assert second["subject"] == "horseshoe crab"
     assert (second["start_s"], second["end_s"], second["text"]) == (first["end_s"], 3.0, "Number five, horseshoe crab.")
     assert data["segments"][0]["frames"][0] == "plan/seg_01_0.jpg"
@@ -52,8 +50,8 @@ def test_plan_groups_shots_by_context(tmp_path, cut_video):
     _, data = plan_with(tmp_path, cut_video, hook_seconds=1.5)
     assert [s["group"] for s in data["shots"]] == ["hook", "horseshoe-crab"]
     assert data["groups"] == [
-        {"id": "hook", "label": "HOOK", "shots": [0], "keywords": {"en": ["horseshoe crab beach"], "zh": ["鲎 海滩"]}, "ref_frames": []},
-        {"id": "horseshoe-crab", "label": "horseshoe crab", "shots": [1], "keywords": {"en": ["fossil", "crab"], "zh": ["化石", "螃蟹"]}, "ref_frames": []},
+        {"id": "hook", "label": "HOOK", "shots": [0], "keywords": {"en": ["five ancient creatures"], "zh": []}, "ref_frames": []},
+        {"id": "horseshoe-crab", "label": "horseshoe crab", "shots": [1], "keywords": {"en": ["fossil", "crab"], "zh": []}, "ref_frames": []},
     ]
     _, data = plan_with(tmp_path / "b", cut_video, hook_seconds=0.0)
     assert [s["group"] for s in data["shots"]] == ["beat-1", "horseshoe-crab"]
@@ -101,7 +99,7 @@ def test_teaser_about_number_one_does_not_hide_other_source_frames(tmp_path, cut
     data = run_plan(
         RunPaths(tmp_path / "run"), script, {"duration_s": 3.0, "alignment": fake_alignment(text, 2.9)}, source,
         max_shot_s=2.5, hook_seconds=0.0, download_source=lambda vid, dest: shutil.copyfile(cut_video, dest) or dest,
-        describe=lambda infos, frames: {}, translate=lambda queries: {}, log=lambda m: None,
+        log=lambda m: None,
     )
     frames = {group["id"]: group["ref_frames"] for group in data["groups"]}
     assert list(frames) == ["kestrel", "shrike"]
@@ -133,3 +131,17 @@ def test_group_of_reserves_hook_and_ignores_blank_subject():
 def test_plan_marks_countdown_shots(tmp_path, cut_video):
     _, data = plan_with(tmp_path, cut_video, hook_seconds=0.0)
     assert [s["countdown"] for s in data["shots"]] == [None, 5]
+
+
+def test_plan_takes_hook_and_zh_queries_from_script(tmp_path, cut_video):
+    script = {**SCRIPT, "hook_queries": {"0": {"en": ["giant bird on tower"], "zh": ["巨鸟 铁塔"]}}}
+    script["beats"] = [SCRIPT["beats"][0], {**SCRIPT["beats"][1], "queries_zh": ["化石", "螃蟹"]}]
+    paths, data = plan_with(tmp_path, cut_video, hook_seconds=1.5, script=script)
+    assert data["shots"][0]["keywords"] == {"en": ["giant bird on tower"], "zh": ["巨鸟 铁塔"]}
+    assert data["shots"][1]["keywords"] == {"en": ["fossil", "crab"], "zh": ["化石", "螃蟹"]}
+
+
+def test_plan_falls_back_to_transcript_for_hook_without_queries(tmp_path, cut_video):
+    _, data = plan_with(tmp_path, cut_video, hook_seconds=1.5)  # SCRIPT lama tanpa hook_queries/queries_zh
+    assert data["shots"][0]["keywords"]["en"] == ["five ancient creatures"] and data["shots"][0]["keywords"]["zh"] == []
+    assert data["shots"][1]["keywords"] == {"en": ["fossil", "crab"], "zh": []}

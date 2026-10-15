@@ -1,8 +1,9 @@
-"""Step source: ambil transcript English dari YouTube Shorts source."""
+"""Step source: transcript English dari YouTube Shorts source, plus video + frame hook buat bahan naskah."""
 
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Callable
 
 from youtube_transcript_api import CouldNotRetrieveTranscript, YouTubeTranscriptApi
@@ -54,8 +55,21 @@ def build_source(video_id: str, snippets: list[dict]) -> dict:
 
 
 def run_source(
-    video_id: str, paths: RunPaths, fetch: Callable[[str], list[dict]] = youtube_transcript
+    video_id: str, paths: RunPaths, fetch: Callable[[str], list[dict]] = youtube_transcript, *,
+    download_source: Callable[[str, Path], Path] | None = None, hook_seconds: float = 0.0,
+    log: Callable[[str], None] = print,
 ) -> dict:
     data = build_source(video_id, fetch(video_id))
+    data["hook_segments"] = []
+    if download_source is not None and hook_seconds > 0:
+        from mayzfact.steps.hook import prepare_source_segments
+
+        # Frame hook dibikin di sini biar udah ada pas agent nulis naskah (keyword hook butuh lihat frame-nya).
+        try:
+            segs = prepare_source_segments(paths, data, download_source, hook_seconds, paths.plan_dir, retry_step="source")
+            data["hook_segments"] = [{"index": s["index"], "start_s": s["start_s"], "end_s": s["end_s"],
+                                      "frames": [f.relative_to(paths.root).as_posix() for f in s["frames"]]} for s in segs]
+        except PipelineError as exc:  # video gagal di-download: naskah tetap bisa ditulis, frame nyusul di --from plan
+            log(f"[source] video/frame hook dilewat: {exc.message.splitlines()[0]}")
     write_json_atomic(paths.source_json, data)
     return data
