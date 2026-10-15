@@ -44,7 +44,7 @@ def test_page_lists_groups_and_escapes_text(server):
     assert "Look &lt;b&gt;at&lt;/b&gt; this." in html and "Old rock." in html
     assert "鲎" in html and "HOOK" in html and "/files/plan/seg_01_0.jpg" in html
     assert "0/2 kelompok" in html
-    assert "/files/plan/fossil_0.jpg" in html
+    assert html.count('class="refs"') >= 1  # frame per shot, bukan strip per kelompok
     assert "CARD #2" in html
     assert 'data-shot="0"' in html and 'data-shot="1"' in html and 'data-shot="2"' in html
     write_json_atomic(paths.links_json, {"groups": {"fossil": [{"url": "https://a.b/c", "pick": 2}, {"file": "manual/fossil_1.mp4"}]}})

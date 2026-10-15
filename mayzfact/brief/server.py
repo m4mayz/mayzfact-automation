@@ -26,6 +26,12 @@ MAX_UPLOAD = 500 * 1024 * 1024
 PORT_TRIES = 10
 
 
+def missing_frames(paths: RunPaths, plan: dict) -> list[int]:
+    """Shot yang belum punya frame referensi (atau file-nya hilang). Brief nolak jalan kalau ada."""
+    return [s["index"] for s in plan.get("shots", [])
+            if not s.get("ref_frames") or not all((paths.root / f).exists() for f in s["ref_frames"])]
+
+
 def link_urls(links: dict) -> list[str]:
     """Semua URL di links.json (per shot atau per kelompok), urut, tanpa dobel. Upload file nggak ikut."""
     entries: list = []

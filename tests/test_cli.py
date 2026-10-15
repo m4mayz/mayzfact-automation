@@ -209,3 +209,18 @@ def test_check_script_passes_a_good_script(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
     assert cli.main(["check-script", "abcdefghijk"]) == 0
     assert "OK" in capsys.readouterr().out
+
+
+def test_brief_refuses_shots_without_reference_frames(monkeypatch, tmp_path, capsys):
+    from mayzfact.store import write_json_atomic
+    from tests.test_brief_server import PLAN
+
+    paths = RunPaths(tmp_path / "i2xag_1OJfM")
+    (paths.root / "plan").mkdir(parents=True)
+    (paths.root / "plan" / "seg_01_0.jpg").write_bytes(b"jpg")
+    write_json_atomic(paths.shots_plan_json, PLAN)  # shot 2 dan 3 ref_frames kosong
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
+    assert cli.main(["brief", "i2xag_1OJfM"]) == 1
+    err = capsys.readouterr().err
+    assert "Shot 2, 3" in err and "--from plan" in err

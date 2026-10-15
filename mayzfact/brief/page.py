@@ -1810,7 +1810,6 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
 def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: bool = False,
           prefetch: dict | None = None) -> str:
     is_hook = group["id"] == "hook"
-    refs = "".join(f'<img src="/files/{escape(f)}" onclick="openLightbox(this.src)" loading="lazy">' for f in group.get("ref_frames", []))
 
     shot_rows = []
     for shot in shots:
@@ -1840,13 +1839,6 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: b
       <span class="group-tag {'hook' if is_hook else ''}">Kelompok · {len(shots)} Shot</span>
     </div>
   </div>
-  {f'''<div class="refs-strip-wrap">
-    <div class="refs-strip-header">
-      <span>Frame Referensi Source</span>
-      <span>Klik gambar untuk perbesar</span>
-    </div>
-    <div class="refs">{refs}</div>
-  </div>''' if refs else ''}
   <div class="shots">{''.join(shot_rows)}</div>
 </section>"""
 

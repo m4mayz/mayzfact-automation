@@ -168,17 +168,21 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
     import httpx
 
     from mayzfact.brief.prefetch import Prefetcher
-    from mayzfact.brief.server import link_urls, make_server
+    from mayzfact.brief.server import link_urls, make_server, missing_frames
     from mayzfact.config import CACHE_DIR
     from mayzfact.manual.links import load_links
     from mayzfact.manual.obtain import Obtainer
     from mayzfact.manual.og import DESKTOP_UA
     from mayzfact.steps.source import parse_video_id
-    from mayzfact.store import RunPaths
+    from mayzfact.store import RunPaths, read_json
 
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
     if not paths.shots_plan_json.exists():
         raise PipelineError("brief", f"Plan belum ada. Jalanin dulu: mayzfact run {paths.root.name} --no-render")
+    missing = missing_frames(paths, read_json(paths.shots_plan_json))
+    if missing:
+        raise PipelineError("brief", f"Shot {', '.join(str(i + 1) for i in missing)} belum punya frame referensi. "
+                            f"Jalanin: mayzfact run {paths.root.name} --from plan")
     # Link yang disimpan langsung di-download di background (cache sama kayak fetch), biar fetch tinggal motong.
     client = httpx.Client(headers={"User-Agent": DESKTOP_UA}, timeout=httpx.Timeout(120.0, connect=15.0), follow_redirects=True)
     prefetcher = Prefetcher(paths, Obtainer(CACHE_DIR / "manual", client, log=print).obtain, log=print)
