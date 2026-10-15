@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Callable
 
 from mayzfact.countdown import Countdown, parse_countdown
+from mayzfact.errors import PipelineError
 from mayzfact.ffmpeg import extract_frame, probe
 from mayzfact.matching import hook_slot_map
 from mayzfact.steps.clips import beat_subjects, split_shots
@@ -79,38 +80,39 @@ def _groups(shots: list[dict]) -> list[dict]:
         group["shots"].append(shot["index"])
         for lang in ("en", "zh"):
             group["keywords"][lang] += [k for k in shot["keywords"][lang] if k not in group["keywords"][lang]]
-    for group in groups.values():
-        group["ref_frames"] = []
     return list(groups.values())
 
 
-def _source_frames(paths: RunPaths, source: dict, groups: list[dict], shots: list[dict],
-                   download_source: Callable[[str, Path], Path]) -> None:
-    """Frame source buat kelompok isi, dari rentang waktu subjeknya disebut di transcript. Buat referensi nyari klip."""
-
-    def anchor(group: dict) -> int:
-        # Urut card countdown: beat pembuka bisa nyebut subjek nomor 1 duluan, padahal di source dibahas paling akhir.
-        return next((i for i in group["shots"] if shots[i].get("countdown")), group["shots"][0])
-
-    subjects = {g["id"]: shots[g["shots"][0]]["subject"] for g in sorted(groups, key=anchor) if g["id"] != "hook"}
-    if not any(subjects.values()):
+def _shot_frames(paths: RunPaths, source: dict, shots: list[dict], voice_total_s: float,
+                 download_source: Callable[[str, Path], Path], log: Callable[[str], None] = print) -> None:
+    """3 frame source per shot buat referensi nyari klip: rentang subjeknya di transcript, atau posisi proporsional."""
+    todo = [s for s in shots if not s["ref_frames"]]
+    if not todo:
         return
     src = paths.source_mp4
     paths.plan_dir.mkdir(parents=True, exist_ok=True)
     if not src.exists():
         download_source(source["video_id"], src)
     total = probe(src, "plan")["duration_s"] or source.get("duration_s") or 0.0
-    ranges = subject_ranges(source["transcript"], [s for s in subjects.values() if s], total)
-    for group in groups:
-        span = ranges.get(subjects.get(group["id"]) or "")
-        if not span:
-            continue
+    # Urut card countdown: beat pembuka bisa nyebut subjek nomor 1 duluan, padahal di source dibahas paling akhir.
+    names = {s["subject"] for s in shots if s.get("subject")}
+    order = sorted(names, key=lambda name: next((s["index"] for s in shots if s.get("subject") == name and s.get("countdown")),
+                                                 next(s["index"] for s in shots if s.get("subject") == name)))
+    ranges = subject_ranges(source["transcript"], order, total)
+    for shot in todo:
+        span = ranges.get(shot.get("subject") or "")
+        if span is None:  # CTA/intro/subjek nggak ketemu: posisi beat di naskah dipetain ke durasi source
+            scale = total / voice_total_s if voice_total_s else 0.0
+            span = (shot["start_s"] * scale, shot["end_s"] * scale)
         start, end = span
-        group["ref_frames"] = [
-            extract_frame(src, min(start + (end - start) * pos, total - 0.05), paths.plan_dir / f"{group['id']}_{k}.jpg")
-            .relative_to(paths.root).as_posix()
-            for k, pos in enumerate(SOURCE_FRAMES)
-        ]
+        try:
+            shot["ref_frames"] = [
+                extract_frame(src, max(0.0, min(start + (end - start) * pos, total - 0.05)),
+                              paths.plan_dir / f"shot_{shot['index'] + 1:02d}_{k}.jpg").relative_to(paths.root).as_posix()
+                for k, pos in enumerate(SOURCE_FRAMES)
+            ]
+        except PipelineError as exc:  # 1 shot gagal jangan bikin plan gagal; brief yang nolak nanti
+            log(f"[plan] frame shot {shot['index'] + 1} gagal: {exc.message.splitlines()[0][:120]}")
 
 
 def run_plan(
@@ -155,8 +157,8 @@ def run_plan(
             "ref_frames": ref_frames, "keywords": keywords,
             "countdown": (parse_countdown(beat["text"]) or _NO_COUNTDOWN).number,
         })
+    _shot_frames(paths, source, shots, tts["duration_s"], download_source, log)
     groups = _groups(shots)
-    _source_frames(paths, source, groups, shots, download_source)
     data = {
         "hook_seconds": hook_seconds,
         "segments": [{"index": s["index"], "start_s": s["start_s"], "end_s": s["end_s"], "frames": [rel(f) for f in s["frames"]]} for s in segs],

@@ -34,7 +34,7 @@ def test_plan_marks_hook_shots_with_reference_frames(tmp_path, cut_video):
     assert first["hook_segment"] == 0
     assert first["keywords"] == {"en": ["five ancient creatures"], "zh": []}  # tanpa hook_queries: fallback transcript
     assert len(first["ref_frames"]) == 3 and (paths.root / first["ref_frames"][0]).exists()
-    assert second["hook_segment"] is None and second["ref_frames"] == []
+    assert second["hook_segment"] is None and len(second["ref_frames"]) == 3
     assert second["keywords"] == {"en": ["fossil", "crab"], "zh": []}
     assert second["subject"] == "horseshoe crab"
     assert (second["start_s"], second["end_s"], second["text"]) == (first["end_s"], 3.0, "Number five, horseshoe crab.")
@@ -50,8 +50,8 @@ def test_plan_groups_shots_by_context(tmp_path, cut_video):
     _, data = plan_with(tmp_path, cut_video, hook_seconds=1.5)
     assert [s["group"] for s in data["shots"]] == ["hook", "horseshoe-crab"]
     assert data["groups"] == [
-        {"id": "hook", "label": "HOOK", "shots": [0], "keywords": {"en": ["five ancient creatures"], "zh": []}, "ref_frames": []},
-        {"id": "horseshoe-crab", "label": "horseshoe crab", "shots": [1], "keywords": {"en": ["fossil", "crab"], "zh": []}, "ref_frames": []},
+        {"id": "hook", "label": "HOOK", "shots": [0], "keywords": {"en": ["five ancient creatures"], "zh": []}},
+        {"id": "horseshoe-crab", "label": "horseshoe crab", "shots": [1], "keywords": {"en": ["fossil", "crab"], "zh": []}},
     ]
     _, data = plan_with(tmp_path / "b", cut_video, hook_seconds=0.0)
     assert [s["group"] for s in data["shots"]] == ["beat-1", "horseshoe-crab"]
@@ -76,14 +76,27 @@ def test_subject_ranges_run_from_mention_to_next_subject():
     assert "tardigrade" not in ranges
 
 
-def test_plan_gives_source_frames_to_content_groups(tmp_path, cut_video):
+def test_every_shot_gets_three_reference_frames(tmp_path, cut_video):
     source = {**SOURCE, "transcript": [{"text": "intro words", "start": 0.0, "duration": 0.8},
                                        {"text": "Number five, horseshoe crab.", "start": 0.8, "duration": 1.0}]}
     paths, data = plan_with(tmp_path, cut_video, hook_seconds=1.5, source=source)
-    crab = data["groups"][1]
-    assert crab["ref_frames"] == ["plan/horseshoe-crab_0.jpg", "plan/horseshoe-crab_1.jpg", "plan/horseshoe-crab_2.jpg"]
-    assert all((paths.root / f).exists() for f in crab["ref_frames"])
-    assert data["groups"][0]["ref_frames"] == []
+    for shot in data["shots"]:
+        assert len(shot["ref_frames"]) == 3 and all((paths.root / f).exists() for f in shot["ref_frames"])
+    assert data["shots"][0]["ref_frames"][0].startswith("plan/seg_")  # hook: dari segmen
+    assert data["shots"][1]["ref_frames"] == ["plan/shot_02_0.jpg", "plan/shot_02_1.jpg", "plan/shot_02_2.jpg"]
+    assert "ref_frames" not in data["groups"][0]
+
+
+def test_shot_without_subject_match_gets_proportional_frames(tmp_path, cut_video):
+    script = {"beats": [{"text": "Smash like and subscribe!", "media": "video", "queries": ["phone"], "subject": ""},
+                        {"text": "Number five, horseshoe crab.", "media": "photo", "queries": ["crab"]}], "fallback_query": "x"}
+    source = {**SOURCE, "transcript": [{"text": "unrelated opening", "start": 0.0, "duration": 2.0}]}  # subjek nggak ketemu
+    tts = {"duration_s": 3.0, "alignment": fake_alignment("Smash like and subscribe! Number five, horseshoe crab.", 2.4)}
+    paths = RunPaths(tmp_path / "run")
+    data = run_plan(paths, script, tts, source, max_shot_s=2.5, hook_seconds=0.0,
+                    download_source=lambda vid, dest: shutil.copyfile(cut_video, dest) or dest, log=lambda m: None)
+    for shot in data["shots"]:
+        assert len(shot["ref_frames"]) == 3 and all((paths.root / f).exists() for f in shot["ref_frames"])
 
 
 def test_teaser_about_number_one_does_not_hide_other_source_frames(tmp_path, cut_video):
@@ -101,9 +114,9 @@ def test_teaser_about_number_one_does_not_hide_other_source_frames(tmp_path, cut
         max_shot_s=2.5, hook_seconds=0.0, download_source=lambda vid, dest: shutil.copyfile(cut_video, dest) or dest,
         log=lambda m: None,
     )
-    frames = {group["id"]: group["ref_frames"] for group in data["groups"]}
+    frames = {group["id"]: [data["shots"][i]["ref_frames"] for i in group["shots"]] for group in data["groups"]}
     assert list(frames) == ["kestrel", "shrike"]
-    assert frames["shrike"] and frames["kestrel"]
+    assert all(len(f) == 3 for f in frames["shrike"]) and all(len(f) == 3 for f in frames["kestrel"])
 
 
 def test_subject_ranges_skip_intro_lists_and_partial_words():
