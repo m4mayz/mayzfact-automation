@@ -91,14 +91,15 @@ Agent nulis `runs/<id>/upload.json` dari `script.json` dan `clips.json`:
 
 ## 7. Checkpoint: konfirmasi jadwal
 
-Jalanin `uv run mayzfact next-slot`. Tunjukin ke Akmal judul + jam usulan (WIB), terus tanya: jadwalin jam segitu atau jam lain? Tunggu jawabannya. Jangan upload sebelum Akmal konfirmasi.
+Jalanin `uv run mayzfact next-slot`. Tunjukin ke Akmal judul + jam usulan (WIB), terus tanya: jadwalin jam segitu atau jam lain? Tunggu jawabannya. Jangan upload sebelum Akmal konfirmasi. Kalau Akmal minta langsung public tanpa jadwal, pakai `--now` di langkah 8.
 
 ## 8. Upload
 
 Jalanin di background:
 
 ```bash
-uv run mayzfact upload <id> --at "<YYYY-MM-DD HH:MM>"
+uv run mayzfact upload <id> --at "<YYYY-MM-DD HH:MM>"   # terjadwal
+uv run mayzfact upload <id> --now                         # langsung public, cuma kalau Akmal minta
 ```
 
 - Kalau error "Belum login YouTube" atau "Token YouTube ditolak": minta Akmal jalanin `uv run mayzfact login youtube` (browser kebuka buat izin akun), terus ulang.

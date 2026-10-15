@@ -312,4 +312,5 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   2. Agent nulis metadata ke `runs/<id>/upload.json`: judul bahasa Inggris ≤ 100 karakter + `#Shorts`, deskripsi (ringkasan + hashtag, tanpa daftar credit klip: Akmal minta dihapus setelah upload pertama), 5–10 tag, kategori sesuai isi, bahasa `en`, made for kids `false`.
   3. Agent ngusulin slot kosong berikutnya (04.00/21.00 WIB) lewat `mayzfact next-slot`. Upload cuma jalan setelah Akmal konfirmasi jamnya.
   4. Video di-upload sebagai private + `publishAt`, jadi YouTube yang bikin public di jamnya. Hasilnya di `runs/<id>/youtube.json`, dan run yang sama nggak bisa ke-upload 2 kali.
+  5. Kalau Akmal minta langsung tayang, `mayzfact upload <id> --now` upload sebagai public tanpa `publishAt`.
 - **Authority:** Akmal (chat 2026-10-15).

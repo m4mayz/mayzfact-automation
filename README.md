@@ -72,6 +72,7 @@ Butuh `YOUTUBE_CLIENT_SECRET_JSON` di `.env` (JSON OAuth client dari Google Clou
 uv run mayzfact login youtube                          # sekali: browser kebuka, token disimpan ke YOUTUBE_TOKEN_JSON di .env
 uv run mayzfact next-slot                              # slot tayang kosong berikutnya (04.00/21.00 WIB)
 uv run mayzfact upload <id> --at "2026-10-15 21:00"   # upload terjadwal (jam WIB)
+uv run mayzfact upload <id> --now                      # langsung public, tanpa jadwal
 ```
 
 Metadata-nya dibaca dari `runs/<id>/upload.json` (`title`, `description`, `tags`, `category_id`, `language`). Video di-upload sebagai private dengan `publishAt`, jadi YouTube yang bikin public di jamnya. Hasilnya (link video + Studio) disimpan di `runs/<id>/youtube.json`, dan run yang sama nggak bisa ke-upload 2 kali.

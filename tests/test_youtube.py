@@ -252,3 +252,16 @@ def test_set_env_value_keeps_env_owner_only(tmp_path):
     env.chmod(0o644)
     youtube.set_env_value(env, "YOUTUBE_TOKEN_JSON", TOKEN)
     assert env.stat().st_mode & 0o777 == 0o600
+
+
+def test_video_body_without_schedule_is_public_now():
+    body = youtube.video_body(youtube.UploadMeta(**META), None)
+    assert body["status"] == {"privacyStatus": "public", "selfDeclaredMadeForKids": False}
+
+
+def test_upload_now_records_publish_time_as_upload_time(tmp_path):
+    paths = ready_run(tmp_path)
+    fake = FakeService(FakeRequest())
+    data = youtube.upload_video(paths, youtube.UploadMeta(**META), None, lambda: fake, print)
+    assert fake.inserted[0][1]["status"]["privacyStatus"] == "public"
+    assert data["publish_at"] == data["uploaded_at"]

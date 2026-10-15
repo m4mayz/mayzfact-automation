@@ -170,17 +170,22 @@ def parse_publish_at(text: str, now: datetime) -> datetime:
     return when
 
 
-def video_body(meta: UploadMeta, publish_at: datetime) -> dict:
+def video_body(meta: UploadMeta, publish_at: datetime | None) -> dict:
+    """publish_at None = langsung public sekarang, tanpa jadwal."""
+    if publish_at is None:
+        status = {"privacyStatus": "public", "selfDeclaredMadeForKids": False}
+    else:
+        status = {
+            "privacyStatus": "private",  # private + publishAt = terjadwal; YouTube yang bikin public di jamnya
+            "publishAt": publish_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "selfDeclaredMadeForKids": False,
+        }
     return {
         "snippet": {
             "title": meta.title, "description": meta.description, "tags": meta.tags, "categoryId": meta.category_id,
             "defaultLanguage": meta.language, "defaultAudioLanguage": meta.language,
         },
-        "status": {
-            "privacyStatus": "private",  # private + publishAt = terjadwal; YouTube yang bikin public di jamnya
-            "publishAt": publish_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "selfDeclaredMadeForKids": False,
-        },
+        "status": status,
     }
 
 
@@ -209,7 +214,7 @@ def service(token_json: str) -> Any:
     return build("youtube", "v3", credentials=creds, cache_discovery=False)
 
 
-def upload_video(paths: RunPaths, meta: UploadMeta, publish_at: datetime, make_service: Callable[[], Any],
+def upload_video(paths: RunPaths, meta: UploadMeta, publish_at: datetime | None, make_service: Callable[[], Any],
                  log: Callable[[str], None]) -> dict:
     """Upload final.mp4 sebagai video terjadwal. Semua cek lokal dulu, baru nyentuh YouTube."""
     from google.auth.exceptions import GoogleAuthError
@@ -239,12 +244,13 @@ def upload_video(paths: RunPaths, meta: UploadMeta, publish_at: datetime, make_s
         raise PipelineError("upload", f"Koneksi ke YouTube putus pas upload ({type(exc).__name__}). Cek YouTube Studio "
                             "dulu sebelum upload ulang, bisa jadi videonya udah masuk.") from exc
     video_id = response["id"]
+    uploaded = datetime.now(WIB)
     data = {
         "video_id": video_id,
         "url": f"https://youtube.com/shorts/{video_id}",
         "studio_url": f"https://studio.youtube.com/video/{video_id}/edit",
-        "publish_at": publish_at.astimezone(WIB).isoformat(),
-        "uploaded_at": datetime.now(WIB).isoformat(timespec="seconds"),
+        "publish_at": (publish_at or uploaded).astimezone(WIB).isoformat(timespec="seconds"),
+        "uploaded_at": uploaded.isoformat(timespec="seconds"),
     }
     write_json_atomic(out, data)
     return data

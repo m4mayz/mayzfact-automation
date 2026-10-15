@@ -154,3 +154,23 @@ def test_upload_without_login_fails_cleanly(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
     assert cli.main(["upload", "NSua7RPoFJg", "--at", "2099-01-01 21:00"]) == 1
     assert "login youtube" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("flags", [[], ["--now", "--at", "2099-01-01 21:00"]])
+def test_upload_needs_exactly_one_of_at_or_now(flags):
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["upload", "NSua7RPoFJg", *flags])
+    assert exc.value.code == 2
+
+
+def test_upload_now_without_login_fails_cleanly(monkeypatch, tmp_path, capsys):
+    from mayzfact.store import write_json_atomic
+
+    paths = RunPaths(tmp_path / "NSua7RPoFJg")
+    paths.root.mkdir()
+    paths.final_mp4.write_bytes(b"mp4")
+    write_json_atomic(paths.root / "upload.json", {"title": "T #Shorts", "description": "d", "tags": [], "category_id": "15"})
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
+    assert cli.main(["upload", "NSua7RPoFJg", "--now"]) == 1
+    assert "login youtube" in capsys.readouterr().err

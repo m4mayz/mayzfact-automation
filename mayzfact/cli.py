@@ -30,7 +30,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (04.00/21.00 WIB)")
     upload = sub.add_parser("upload", help="Upload final.mp4 ke YouTube sebagai video terjadwal")
     upload.add_argument("video", help="Video ID atau URL YouTube source")
-    upload.add_argument("--at", required=True, help='Jam tayang WIB, format "YYYY-MM-DD HH:MM"')
+    when = upload.add_mutually_exclusive_group(required=True)
+    when.add_argument("--at", help='Jam tayang WIB, format "YYYY-MM-DD HH:MM"')
+    when.add_argument("--now", action="store_true", help="Langsung public sekarang, tanpa jadwal")
     brief = sub.add_parser("brief", help="Buka halaman brief buat ngisi link klip (mode manual)")
     brief.add_argument("video", help="Video ID atau URL YouTube")
     brief.add_argument("--port", type=int, default=None, help="Port lokal (default BRIEF_PORT)")
@@ -129,9 +131,10 @@ def _upload(args: argparse.Namespace, settings: Settings) -> int:
 
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
     meta = youtube.load_meta(paths)
-    publish_at = youtube.parse_publish_at(args.at, datetime.now(youtube.WIB))
+    publish_at = None if args.now else youtube.parse_publish_at(args.at, datetime.now(youtube.WIB))
     data = youtube.upload_video(paths, meta, publish_at, lambda: youtube.service(settings.youtube_token_json), print)
-    print(f"Ke-upload, tayang {args.at} WIB\n  Video : {data['url']}\n  Studio: {data['studio_url']}")
+    when = "langsung public" if args.now else f"tayang {args.at} WIB"
+    print(f"Ke-upload, {when}\n  Video : {data['url']}\n  Studio: {data['studio_url']}")
     return 0
 
 
