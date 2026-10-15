@@ -126,3 +126,31 @@ def test_countdown_item_with_fewer_than_two_explanation_beats_is_reported():
     # Number four and Number one have 2 explanation beats, so they should not be reported
     assert not any("Number four" in p for p in problems)
     assert not any("Number one" in p for p in problems)
+
+
+def test_cta_words_from_source_must_survive():
+    script = make_script()
+    source = "Comment below, then like the video and subscribe. Number five, mantis shrimp."
+    problems, _ = check_script(script, source, DURATION)
+    assert any("subscribe" in p and "like" in p for p in problems)
+    script.beats[1] = script.beats[1].model_copy(update={"text": "Smash like, comment, and subscribe now!"})
+    problems, _ = check_script(script, source, DURATION)
+    assert not [p for p in problems if "subscribe" in p]
+
+
+def test_bgm_must_exist_when_choices_known():
+    script = make_script().model_copy(update={"bgm": "epic.mp3"})
+    problems, _ = check_script(script, SOURCE_TEXT, DURATION, bgm_choices=["mystery.mp3"])
+    assert any("epic.mp3" in p for p in problems)
+    assert not [p for p in check_script(script, SOURCE_TEXT, DURATION, bgm_choices=["epic.mp3"])[0] if "bgm" in p.lower()]
+    assert not [p for p in check_script(script, SOURCE_TEXT, DURATION)[0] if "bgm" in p.lower()]  # choices None = nggak dicek
+
+
+def test_script_accepts_new_optional_fields():
+    data = make_script().model_dump()
+    data["beats"][0]["queries_zh"] = ["螳螂虾"]
+    data["bgm"] = "mystery.mp3"
+    data["hook_queries"] = {"0": {"en": ["bird on tower"], "zh": ["鸟 塔"]}}
+    script = Script(**data)
+    assert script.hook_queries["0"].zh == ["鸟 塔"] and script.beats[0].queries_zh == ["螳螂虾"]
+    assert Script(**make_script().model_dump()).bgm == ""  # naskah lama tanpa field baru tetap kebaca

@@ -18,6 +18,7 @@ WORD_TOLERANCE = 0.15
 PHOTO_SHARE_RANGE = (0.15, 0.45)
 MAX_NGRAM_OVERLAP = 0.15
 MAX_BEAT_WORDS = 10  # ±3.5 detik dengan 2.6 kata/detik
+CTA_WORDS = ("like", "subscribe", "comment")  # kata pemicu animasi CTA; kalau source nyebut, naskah juga harus
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "rewrite.md"
 
 
@@ -44,8 +45,9 @@ def normalize_script(script: Script) -> Script:
     return Script(beats=beats, fallback_query=" ".join(script.fallback_query.split()))
 
 
-def check_script(script: Script, source_text: str, duration_s: float) -> tuple[list[str], float]:
-    """Balikin (daftar masalah, overlap). Pesan masalah pakai English karena dikirim balik ke Gemini."""
+def check_script(script: Script, source_text: str, duration_s: float,
+                 bgm_choices: list[str] | None = None) -> tuple[list[str], float]:
+    """Balikin (daftar masalah, overlap). Pesan pakai English biar bisa ditempel balik ke agent mana pun."""
     if not script.beats:
         return ["The script has no beats."], 0.0
     problems: list[str] = []
@@ -89,6 +91,14 @@ def check_script(script: Script, source_text: str, duration_s: float) -> tuple[l
             )
     if not script.fallback_query:
         problems.append("fallback_query is empty.")
+    source_words = set(words(source_text))
+    script_words = set(words(full_text))
+    missing_cta = [w for w in CTA_WORDS if w in source_words and w not in script_words]
+    if missing_cta:
+        problems.append("The source asks viewers to " + " and ".join(missing_cta)
+                        + f"; the script must use the exact word(s) {', '.join(missing_cta)} too (they trigger the on-screen CTA).")
+    if bgm_choices is not None and script.bgm and script.bgm not in bgm_choices:
+        problems.append(f"bgm {script.bgm!r} is not in assets/bgm. Choose one of: {', '.join(bgm_choices) or '(none)'}.")
     overlap = ngram_overlap(full_text, source_text)
     if overlap > MAX_NGRAM_OVERLAP:
         problems.append(

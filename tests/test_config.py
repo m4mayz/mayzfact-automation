@@ -74,3 +74,7 @@ def test_clip_source_and_brief_port():
     assert (settings.clip_source, settings.brief_port) == ("auto", 3200)
     with pytest.raises(PipelineError, match="CLIP_SOURCE"):
         settings_from_env({"CLIP_SOURCE": "kadang"})
+
+
+def test_default_ratio_is_80_percent():
+    assert Settings().target_duration_ratio == 0.8
