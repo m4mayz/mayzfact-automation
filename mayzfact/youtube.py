@@ -6,17 +6,19 @@ import json
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any, Callable
 
 from pydantic import BaseModel, ValidationError, field_validator
 
 from mayzfact.errors import PipelineError
-from mayzfact.store import RunPaths, read_json
+from mayzfact.store import RunPaths, read_json, write_json_atomic
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 WIB = timezone(timedelta(hours=7))  # WIB nggak pakai DST, jadi cukup offset tetap
 LOGIN_HINT = "Jalanin: uv run mayzfact login youtube"
 SLOT_HOURS = (4, 21)
 MIN_LEAD = timedelta(minutes=15)
+CHUNK = 8 * 1024 * 1024
 
 
 def parse_json_env(name: str, raw: str) -> dict:
@@ -156,3 +158,58 @@ def video_body(meta: UploadMeta, publish_at: datetime) -> dict:
             "selfDeclaredMadeForKids": False,
         },
     }
+
+
+def service(token_json: str) -> Any:
+    """Client YouTube Data API. Access token di-refresh otomatis; refresh token-nya tetap, jadi .env nggak ditulis ulang."""
+    from google.auth.exceptions import RefreshError
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from googleapiclient.discovery import build
+
+    if not token_json.strip():
+        raise PipelineError("youtube", f"Belum login YouTube. {LOGIN_HINT}")
+    creds = Credentials.from_authorized_user_info(parse_json_env("YOUTUBE_TOKEN_JSON", token_json), SCOPES)
+    if not creds.valid:
+        try:
+            creds.refresh(Request())
+        except RefreshError:
+            raise PipelineError("youtube", f"Token YouTube ditolak (dicabut atau expired). Login ulang. {LOGIN_HINT}") from None
+    return build("youtube", "v3", credentials=creds, cache_discovery=False)
+
+
+def upload_video(paths: RunPaths, meta: UploadMeta, publish_at: datetime, make_service: Callable[[], Any],
+                 log: Callable[[str], None]) -> dict:
+    """Upload final.mp4 sebagai video terjadwal. Semua cek lokal dulu, baru nyentuh YouTube."""
+    from googleapiclient.errors import HttpError
+    from googleapiclient.http import MediaFileUpload
+
+    out = paths.root / "youtube.json"
+    if out.exists():
+        old = read_json(out).get("url", "?")
+        raise PipelineError("upload", f"Video ini udah pernah di-upload: {old}. Mau upload ulang? Hapus {out} dulu.")
+    if not paths.final_mp4.exists():
+        raise PipelineError("upload", f"{paths.final_mp4} belum ada. Render dulu.")
+    media = MediaFileUpload(str(paths.final_mp4), mimetype="video/mp4", chunksize=CHUNK, resumable=True)
+    request = make_service().videos().insert(part="snippet,status", body=video_body(meta, publish_at), media_body=media)
+    response = None
+    try:
+        while response is None:
+            status, response = request.next_chunk(num_retries=3)
+            if status:
+                log(f"[upload] {int(status.progress() * 100)}%")
+    except HttpError as exc:
+        reason = getattr(exc, "reason", "") or ""
+        raise PipelineError("upload", f"YouTube nolak upload ({getattr(exc, 'status_code', '?')}): {reason}") from exc
+    except OSError as exc:
+        raise PipelineError("upload", f"Koneksi putus pas upload: {exc}. Aman dicoba lagi.") from exc
+    video_id = response["id"]
+    data = {
+        "video_id": video_id,
+        "url": f"https://youtube.com/shorts/{video_id}",
+        "studio_url": f"https://studio.youtube.com/video/{video_id}/edit",
+        "publish_at": publish_at.astimezone(WIB).isoformat(),
+        "uploaded_at": datetime.now(WIB).isoformat(timespec="seconds"),
+    }
+    write_json_atomic(out, data)
+    return data

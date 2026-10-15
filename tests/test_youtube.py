@@ -1,11 +1,13 @@
 from datetime import datetime
 
+import httplib2
 import pytest
+from googleapiclient.errors import HttpError
 
 from mayzfact import youtube
 from mayzfact.config import load_settings
 from mayzfact.errors import PipelineError
-from mayzfact.store import RunPaths, write_json_atomic
+from mayzfact.store import RunPaths, read_json, write_json_atomic
 
 TOKEN = '{"token": "a", "refresh_token": "r", "client_id": "c", "client_secret": "s"}'
 META = {"title": "5 Birds With Real Superpowers #Shorts", "description": "Birds that break the rules.\n#birds",
@@ -112,3 +114,77 @@ def test_video_body_schedules_private_video():
                               "selfDeclaredMadeForKids": False}
     assert body["snippet"] == {"title": META["title"], "description": META["description"], "tags": META["tags"],
                                "categoryId": "15", "defaultLanguage": "en", "defaultAudioLanguage": "en"}
+
+
+class FakeRequest:
+    def __init__(self, error=None):
+        self.error, self.calls = error, 0
+
+    def next_chunk(self, num_retries=0):
+        self.calls += 1
+        if self.error:
+            raise self.error
+        if self.calls == 1:
+            return type("Status", (), {"progress": lambda self: 0.5})(), None
+        return None, {"id": "abc123"}
+
+
+class FakeService:
+    def __init__(self, request):
+        self.request, self.inserted = request, []
+
+    def videos(self):
+        return self
+
+    def insert(self, part, body, media_body):
+        self.inserted.append((part, body))
+        return self.request
+
+
+def ready_run(tmp_path):
+    paths = RunPaths(tmp_path / "vid")
+    paths.root.mkdir()
+    paths.final_mp4.write_bytes(b"mp4")
+    return paths
+
+
+def test_upload_writes_result_and_logs_progress(tmp_path):
+    paths, logs = ready_run(tmp_path), []
+    fake = FakeService(FakeRequest())
+    data = youtube.upload_video(paths, youtube.UploadMeta(**META), wib("2026-10-15 21:00"), lambda: fake, logs.append)
+    assert data["video_id"] == "abc123" and data["url"] == "https://youtube.com/shorts/abc123"
+    assert data["studio_url"] == "https://studio.youtube.com/video/abc123/edit"
+    assert data["publish_at"] == "2026-10-15T21:00:00+07:00"
+    assert read_json(paths.root / "youtube.json") == data
+    assert fake.inserted[0][0] == "snippet,status" and fake.inserted[0][1]["status"]["privacyStatus"] == "private"
+    assert any("50%" in line for line in logs)
+
+
+def test_upload_refuses_second_upload_without_calling_youtube(tmp_path):
+    paths = ready_run(tmp_path)
+    write_json_atomic(paths.root / "youtube.json", {"url": "https://youtube.com/shorts/old"})
+    called = []
+    with pytest.raises(PipelineError, match="shorts/old"):
+        youtube.upload_video(paths, youtube.UploadMeta(**META), wib("2026-10-15 21:00"), lambda: called.append(1), print)
+    assert called == []
+
+
+def test_upload_needs_final_mp4(tmp_path):
+    paths = RunPaths(tmp_path / "vid")
+    paths.root.mkdir()
+    with pytest.raises(PipelineError, match="final.mp4"):
+        youtube.upload_video(paths, youtube.UploadMeta(**META), wib("2026-10-15 21:00"), lambda: None, print)
+
+
+def test_youtube_error_leaves_no_result(tmp_path):
+    paths = ready_run(tmp_path)
+    error = HttpError(httplib2.Response({"status": 403}), b'{"error": {"message": "quotaExceeded"}}')
+    with pytest.raises(PipelineError, match="403"):
+        youtube.upload_video(paths, youtube.UploadMeta(**META), wib("2026-10-15 21:00"),
+                             lambda: FakeService(FakeRequest(error)), print)
+    assert not (paths.root / "youtube.json").exists()
+
+
+def test_service_needs_login():
+    with pytest.raises(PipelineError, match="login youtube"):
+        youtube.service("")
