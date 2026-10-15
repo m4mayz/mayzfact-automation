@@ -425,6 +425,8 @@
 - CLI: `mayzfact login youtube`, `mayzfact next-slot`, `mayzfact upload <id> --at "YYYY-MM-DD HH:MM"`.
 - Skill `bikin-short` langkah 6–8: metadata → konfirmasi jam ke Akmal → upload. `AGENTS.md` sama README ikut diupdate.
 - Test pakai fake service, tanpa API beneran.
+- Review Opus + security: 4 temuan di-fix (`7cbaef8`). 409 test lolos.
+- **Workspace:** `master` (merge `e95dea9`). Belum di-push.
 
 ## Masalah terbuka
 
