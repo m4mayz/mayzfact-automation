@@ -40,7 +40,7 @@ File penting di `runs/<id>/`:
 - `script.json`: naskah per beat, termasuk tanda `point`/`emoji`/`emoji_word`.
 - `voice.mp3` + `tts.json`: suara. **Dibikin pakai kredit ElevenLabs, jangan dihapus.**
 - `links.json`: link klip per shot dari halaman brief (plus start/end detik kalau diisi).
-- `clips.json`: klip per shot, termasuk `provider`, `page_url`, `author` buat credit.
+- `clips.json`: klip per shot, termasuk sumbernya (`provider`, `page_url`, `author`).
 - `timeline.json`: props buat Remotion.
 - `annotations.json`, `overlays.json`: cache tanda beat dan deteksi subjek.
 - `final.mp4`: hasil render.

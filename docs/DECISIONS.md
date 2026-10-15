@@ -309,7 +309,7 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Konteks:** Akmal mau agent sekalian upload dan jadwalin video setelah `final.mp4` oke. Project Google Cloud-nya udah lolos audit YouTube API, jadi video yang di-upload lewat API nggak kekunci private.
 - **Keputusan:**
   1. Login OAuth sekali lewat `mayzfact login youtube` (scope `youtube.upload`). Token ditulis ke baris `YOUTUBE_TOKEN_JSON` di `.env`, sama kayak `YOUTUBE_CLIENT_SECRET_JSON`.
-  2. Agent nulis metadata ke `runs/<id>/upload.json`: judul bahasa Inggris ≤ 100 karakter + `#Shorts`, deskripsi + credit klip, 5–10 tag, kategori sesuai isi, bahasa `en`, made for kids `false`.
+  2. Agent nulis metadata ke `runs/<id>/upload.json`: judul bahasa Inggris ≤ 100 karakter + `#Shorts`, deskripsi (ringkasan + hashtag, tanpa daftar credit klip: Akmal minta dihapus setelah upload pertama), 5–10 tag, kategori sesuai isi, bahasa `en`, made for kids `false`.
   3. Agent ngusulin slot kosong berikutnya (04.00/21.00 WIB) lewat `mayzfact next-slot`. Upload cuma jalan setelah Akmal konfirmasi jamnya.
   4. Video di-upload sebagai private + `publishAt`, jadi YouTube yang bikin public di jamnya. Hasilnya di `runs/<id>/youtube.json`, dan run yang sama nggak bisa ke-upload 2 kali.
 - **Authority:** Akmal (chat 2026-10-15).

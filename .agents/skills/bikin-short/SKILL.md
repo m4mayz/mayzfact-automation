@@ -85,7 +85,7 @@ Agent nulis `runs/<id>/upload.json` dari `script.json` dan `clips.json`:
 ```
 
 - **title:** bahasa Inggris, maksimal 100 karakter, ada `#Shorts`, tanpa `<` `>`. Jangan clickbait yang nggak ada di video.
-- **description:** 1–2 kalimat ringkasan, hashtag, terus credit: satu baris per sumber klip yang beda dari `clips.json` (`provider` + `page_url`, + `author` kalau ada; lewati `upload` tanpa `page_url`). Maksimal 5000 byte, tanpa `<` `>`.
+- **description:** 1–2 kalimat ringkasan, terus hashtag. Jangan masukin daftar credit/link klip (Akmal nggak mau). Maksimal 5000 byte, tanpa `<` `>`.
 - **tags:** 5–10 tag topik, total maksimal 500 karakter.
 - **category_id:** pilih sesuai isi, misal `15` Pets & Animals, `27` Education, `28` Science & Technology, `24` Entertainment.
 
