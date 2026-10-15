@@ -663,6 +663,20 @@ body {
   cursor: not-allowed;
 }
 
+.prefetch {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--border-subtle);
+  color: var(--text-secondary);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.prefetch:empty { display: none; }
+.pf-download { background: #dbeafe; color: #1e40af; }
+.pf-siap { background: #dcfce7; color: #166534; }
+.pf-gagal { background: #fee2e2; color: #991b1b; }
+
 .z-badge {
   font-size: 11px;
   font-weight: 700;
@@ -1588,9 +1602,22 @@ function renderProgressUI(p) {
 }
 
 let lastState = null;
+const PREFETCH_LABEL = {antre: 'antre', download: 'download…', siap: 'siap', gagal: 'gagal'};
+function renderPrefetch(states) {
+  for (const [url, st] of Object.entries(states)) {
+    document.querySelectorAll('.prefetch').forEach(el => {
+      if (el.dataset.prefetchUrl !== url) return;
+      let label = PREFETCH_LABEL[st.state] || '';
+      if (st.state === 'gagal' && st.message) label += ': ' + st.message;
+      el.textContent = label;
+      el.className = 'prefetch pf-' + st.state;
+    });
+  }
+}
 async function pollProgress() {
   try {
     const p = await (await fetch('/api/progress')).json();
+    if (p.prefetch) renderPrefetch(p.prefetch);
     if (p.state) {
       renderProgressUI(p);
       if (lastState === 'running' && p.state !== 'running') location.reload();
@@ -1655,7 +1682,21 @@ def _detect_token(url: str) -> tuple[str, str]:
     return "/web-url", ""
 
 
-def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, voice_ok: bool = False) -> str:
+PREFETCH_LABEL = {"antre": "antre", "download": "download…", "siap": "siap", "gagal": "gagal"}
+
+
+def _prefetch_badge(url: str, state: dict | None) -> str:
+    if not url:
+        return ""
+    st = (state or {}).get("state", "")
+    label = PREFETCH_LABEL.get(st, "")
+    if st == "gagal" and (state or {}).get("message"):
+        label += f": {state['message']}"
+    return (f'<span class="prefetch pf-{escape(st)}" data-prefetch-url="{escape(url, quote=True)}">{escape(label)}</span>')
+
+
+def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, voice_ok: bool = False,
+              prefetch: dict | None = None) -> str:
     s_idx = shot["index"]
     pill_attr = (f'onclick="playBeat(this, {shot["start_s"]:.1f}, {shot["end_s"]:.1f})"' if voice_ok
                  else 'disabled title="suara belum ada"')
@@ -1725,6 +1766,7 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
           {countdown_badge}
         </div>
         <div class="state {css}" data-state-badge="{s_idx}">{label} {message}</div>
+        {_prefetch_badge(entry.get("url", "") if isinstance(entry, dict) else "", (prefetch or {}).get(entry.get("url", "")) if isinstance(entry, dict) else None)}
       </div>
 
       <div class="shot-script">
@@ -1765,7 +1807,8 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
     </div>"""
 
 
-def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: bool = False) -> str:
+def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: bool = False,
+          prefetch: dict | None = None) -> str:
     is_hook = group["id"] == "hook"
     refs = "".join(f'<img src="/files/{escape(f)}" onclick="openLightbox(this.src)" loading="lazy">' for f in group.get("ref_frames", []))
 
@@ -1787,7 +1830,7 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: b
         elif "groups" in status and group["id"] in status["groups"]:
             st = status["groups"][group["id"]]
 
-        shot_rows.append(_shot_row(shot, group, entry, st, voice_ok))
+        shot_rows.append(_shot_row(shot, group, entry, st, voice_ok, prefetch))
 
     return f"""
 <section class="card-group card" data-group="{escape(group['id'], quote=True)}">
@@ -1809,7 +1852,7 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: b
 
 
 def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str | None = None,
-                voice: str | None = None) -> str:
+                voice: str | None = None, prefetch: dict | None = None) -> str:
     shots = {shot["index"]: shot for shot in plan["shots"]}
     groups = plan["groups"]
 
@@ -1869,7 +1912,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
         </div>""")
 
     cards = "".join(
-        _card(group, [shots[i] for i in group["shots"]], links, status, voice is not None)
+        _card(group, [shots[i] for i in group["shots"]], links, status, voice is not None, prefetch)
         for group in groups
     )
 

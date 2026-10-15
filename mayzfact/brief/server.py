@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 from urllib.parse import parse_qs, unquote, urlparse
 
 from mayzfact.brief.page import render_page
+from mayzfact.brief.prefetch import Prefetcher
 from mayzfact.manual.links import (
     IMAGE_EXTS,
     VIDEO_EXTS,
@@ -25,7 +26,19 @@ MAX_UPLOAD = 500 * 1024 * 1024
 PORT_TRIES = 10
 
 
-def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_upload: int = MAX_UPLOAD) -> ThreadingHTTPServer:
+def link_urls(links: dict) -> list[str]:
+    """Semua URL di links.json (per shot atau per kelompok), urut, tanpa dobel. Upload file nggak ikut."""
+    entries: list = []
+    if "shots" in links:
+        entries = list(links["shots"].values())
+    else:
+        for group in links.get("groups", {}).values():
+            entries.extend(group)
+    return list(dict.fromkeys(e["url"] for e in entries if isinstance(e, dict) and e.get("url")))
+
+
+def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_upload: int = MAX_UPLOAD,
+                prefetcher: Prefetcher | None = None) -> ThreadingHTTPServer:
     root = paths.root.resolve()
 
     def plan() -> dict:
@@ -113,11 +126,15 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             if url.path == "/":
                 source = paths.source_mp4.name if paths.source_mp4.exists() else None
                 voice = paths.voice_mp3.name if paths.voice_mp3.exists() else None
-                html = render_page(paths.root.name, plan(), load_links(paths.links_json), status(), source=source, voice=voice)
+                html = render_page(paths.root.name, plan(), load_links(paths.links_json), status(), source=source, voice=voice,
+                                   prefetch=prefetcher.snapshot() if prefetcher else {})
                 return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
             if url.path == "/api/progress":
                 progress = paths.fetch_progress_json
-                return self._json(200, read_json(progress) if progress.exists() else {})
+                payload = read_json(progress) if progress.exists() else {}
+                if prefetcher:
+                    payload["prefetch"] = prefetcher.snapshot()
+                return self._json(200, payload)
             if url.path == "/api/state":
                 return self._json(200, {"plan": plan(), "links": load_links(paths.links_json), "status": status()})
             if url.path.startswith("/files/"):
@@ -154,6 +171,8 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 except (ValueError, TypeError, AttributeError) as exc:
                     return self._json(400, {"error": str(exc)})
                 save_links(paths.links_json, data)
+                if prefetcher:  # download langsung, nggak nunggu agent jalanin fetch
+                    prefetcher.enqueue(link_urls(data))
                 missing = missing_shots(plan(), data) if "shots" in data else missing_groups(plan(), data)
                 return self._json(200, {"ok": True, "missing": missing})
             if url.path == "/api/upload":

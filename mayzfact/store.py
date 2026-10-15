@@ -82,6 +82,10 @@ class RunPaths:
     def fetch_progress_json(self) -> Path:
         return self.root / "fetch_progress.json"
 
+    @property
+    def prefetch_json(self) -> Path:
+        return self.root / "prefetch.json"
+
 
 def tmp_path_for(path: Path) -> Path:
     """File sementara di folder yang sama. Ekstensinya tetap karena ffmpeg butuh ekstensi."""

@@ -165,14 +165,27 @@ def _upload(args: argparse.Namespace, settings: Settings) -> int:
 
 
 def _brief(args: argparse.Namespace, settings: Settings) -> int:
-    from mayzfact.brief.server import make_server
+    import httpx
+
+    from mayzfact.brief.prefetch import Prefetcher
+    from mayzfact.brief.server import link_urls, make_server
+    from mayzfact.config import CACHE_DIR
+    from mayzfact.manual.links import load_links
+    from mayzfact.manual.obtain import Obtainer
+    from mayzfact.manual.og import DESKTOP_UA
     from mayzfact.steps.source import parse_video_id
     from mayzfact.store import RunPaths
 
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
     if not paths.shots_plan_json.exists():
         raise PipelineError("brief", f"Plan belum ada. Jalanin dulu: mayzfact run {paths.root.name} --no-render")
-    server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0")
+    # Link yang disimpan langsung di-download di background (cache sama kayak fetch), biar fetch tinggal motong.
+    client = httpx.Client(headers={"User-Agent": DESKTOP_UA}, timeout=httpx.Timeout(120.0, connect=15.0), follow_redirects=True)
+    prefetcher = Prefetcher(paths, Obtainer(CACHE_DIR / "manual", client, log=print).obtain, log=print)
+    prefetcher.start()
+    done = {u for u, st in prefetcher.snapshot().items() if st.get("state") == "siap"}
+    prefetcher.enqueue([u for u in link_urls(load_links(paths.links_json)) if u not in done])  # link lama yang belum siap
+    server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0", prefetcher=prefetcher)
     port = server.server_address[1]
     lan_ip = _lan_ip()
     print(f"Brief {paths.root.name} (akses LAN/HP aktif):")
@@ -185,6 +198,8 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
         pass
     finally:
         server.server_close()
+        prefetcher.stop()
+        client.close()
     return 0
 
 

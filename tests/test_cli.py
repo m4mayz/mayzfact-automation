@@ -103,7 +103,7 @@ def test_brief_needs_plan_first(monkeypatch, tmp_path, capsys):
 
 @pytest.mark.parametrize("flags", [[], ["--lan"]])
 def test_brief_opens_lan_by_default(monkeypatch, tmp_path, capsys, flags):
-    from unittest.mock import Mock
+    from unittest.mock import ANY, Mock
 
     from mayzfact.brief import server
 
@@ -118,7 +118,7 @@ def test_brief_opens_lan_by_default(monkeypatch, tmp_path, capsys, flags):
     monkeypatch.setattr(server, "make_server", make_server)
 
     assert cli.main(["brief", "i2xag_1OJfM", *flags]) == 0
-    make_server.assert_called_once_with(paths, 3100, host="0.0.0.0")
+    make_server.assert_called_once_with(paths, 3100, host="0.0.0.0", prefetcher=ANY)
     out = capsys.readouterr().out
     assert "http://192.168.1.20:3100" in out
     assert "http://127.0.0.1:3100" in out
