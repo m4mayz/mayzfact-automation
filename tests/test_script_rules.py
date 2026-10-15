@@ -148,3 +148,17 @@ def test_normalize_script_keeps_bgm_and_hook_queries():
     script = Script(**{**make_script().model_dump(), "bgm": "epic.mp3", "hook_queries": {"0": {"en": ["x"], "zh": []}}})
     out = normalize_script(script)
     assert out.bgm == "epic.mp3" and out.hook_queries["0"].en == ["x"]
+
+
+def test_cta_check_uses_the_same_trigger_rules_as_the_timeline():
+    source = "Comment below, then like the video and subscribe. Number five, mantis shrimp."
+    script = make_script()
+    # "subscribed" mancing animasi di timeline, jadi harus lolos cek juga
+    script.beats[1] = script.beats[1].model_copy(update={"text": "Drop a comment, hit like, make sure you're subscribed!"})
+    assert not [p for p in check_script(script, source, DURATION)[0] if "subscribe" in p or "like" in p]
+    # "like" yang artinya mirip nggak mancing animasi, jadi cek harus nolak
+    script.beats[1] = script.beats[1].model_copy(update={"text": "Comment if creatures like this amaze you, subscribe!"})
+    assert any("like" in p for p in check_script(script, source, DURATION)[0])
+    # "like" yang ngajak lolos
+    script.beats[1] = script.beats[1].model_copy(update={"text": "Comment below, hit like and subscribe now!"})
+    assert not [p for p in check_script(script, source, DURATION)[0] if "like" in p or "subscribe" in p]

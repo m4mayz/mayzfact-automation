@@ -7,6 +7,8 @@ import re
 from typing import Any, Callable
 
 from mayzfact.countdown import parse_countdown
+from mayzfact.cta import _EDGE_PUNCT, SUBSCRIBE, is_like_cta
+from mayzfact.cta import clean as _clean
 from mayzfact.errors import PipelineError
 from mayzfact.media import FRAME_H, FRAME_W, PHOTO_ZOOM, fg_height, layout_for
 from mayzfact.store import RunPaths, write_json_atomic
@@ -37,14 +39,10 @@ EMOJI_FIT_FRAMES = 30  # kata pemicu mepet card/CTA: mulainya dimajuin sampai em
 # CTA ngikutin source i2xag frame per frame: like 16 frame (klik di frame 3), subscribe 27 frame (klik di frame 13).
 CTA_FRAMES = {"like": 16, "subscribe": 27}
 CTA_CLICK = {"like": 4, "subscribe": 14}
-CTA_SUBSCRIBE = {"subscribe", "subscribed", "subscribing"}  # bukan "subscribers"/"subscription"
-CTA_LIKE_BEFORE = {"hit", "smash", "tap", "press", "drop", "leave", "give", "a"}  # "hit like", "drop a like"
-CTA_LIKE_AFTER = {"and", "&", "or", "comment", "share", "button"} | CTA_SUBSCRIBE  # "like and subscribe"
 CLICK_LEAD_FRAMES = 3  # puncak bunyi mouse-click di ±0.1 detik
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
-_EDGE_PUNCT = re.compile(r"^[^\w']+|[^\w']+$")
 
 
 def to_frame(seconds: float, fps: int = FPS) -> int:
@@ -229,27 +227,15 @@ def _beat_of(words: list[dict], beats: list[dict]) -> list[int]:
     return out
 
 
-def _clean(word: str) -> str:
-    return _EDGE_PUNCT.sub("", word).lower()
-
-
-def _like_cta(words: list[dict], j: int) -> bool:
-    """"like" yang ngajak (hit like, like and subscribe), bukan yang artinya "mirip" (creatures like this)."""
-    before = _clean(words[j - 1]["text"]) if j else ""
-    after = words[j + 1]["text"].strip() if j + 1 < len(words) else ""
-    return _clean(words[j]["text"]) == "like" and (
-        words[j]["text"].rstrip().endswith(",") or before in CTA_LIKE_BEFORE or (_clean(after) or after) in CTA_LIKE_AFTER)
-
-
 def _cta(words: list[dict], beat_of: list[int], total: int) -> list[dict]:
     """Like/subscribe pas narasinya ngajak. Subscribe nunggu like selesai, dan dua-duanya muat sebelum video habis."""
     out: list[dict] = []
     used: set[int] = set()
     for k, word in enumerate(words):
         start = to_frame(word["start_s"])
-        if _clean(word["text"]) not in CTA_SUBSCRIBE or (out and start < out[-1]["from"] + out[-1]["durationInFrames"]):
+        if _clean(word["text"]) not in SUBSCRIBE or (out and start < out[-1]["from"] + out[-1]["durationInFrames"]):
             continue
-        likes = [j for j in range(k) if beat_of[j] == beat_of[k] and j not in used and _like_cta(words, j)]
+        likes = [j for j in range(k) if beat_of[j] == beat_of[k] and j not in used and is_like_cta([w["text"] for w in words], j)]
         like_from = to_frame(words[likes[-1]]["start_s"]) if likes else None
         sub_from = start if like_from is None else max(start, like_from + CTA_FRAMES["like"])
         sub_from = min(sub_from, total - CTA_FRAMES["subscribe"])  # flip terakhirnya jangan kepotong akhir video

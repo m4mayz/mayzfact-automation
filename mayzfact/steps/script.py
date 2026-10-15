@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 
 from mayzfact.countdown import parse_countdown
+from mayzfact.cta import cta_kinds
 from mayzfact.errors import PipelineError
 from mayzfact.models import Script
 from mayzfact.store import RunPaths, read_json
@@ -15,7 +16,6 @@ WORD_TOLERANCE = 0.15
 PHOTO_SHARE_RANGE = (0.15, 0.45)
 MAX_NGRAM_OVERLAP = 0.15
 MAX_BEAT_WORDS = 10  # ±3.5 detik dengan 2.6 kata/detik
-CTA_WORDS = ("like", "subscribe", "comment")  # kata pemicu animasi CTA; kalau source nyebut, naskah juga harus
 
 
 def target_duration(source_duration_s: float, ratio: float, minimum_s: float) -> float:
@@ -87,12 +87,12 @@ def check_script(script: Script, source_text: str, duration_s: float,
             )
     if not script.fallback_query:
         problems.append("fallback_query is empty.")
-    source_words = set(words(source_text))
-    script_words = set(words(full_text))
-    missing_cta = [w for w in CTA_WORDS if w in source_words and w not in script_words]
+    # Aturan pemicunya sama persis dengan animasi CTA di timeline (mayzfact.cta), biar yang lolos cek beneran kepicu.
+    missing_cta = sorted(cta_kinds(source_text) - cta_kinds(full_text))
     if missing_cta:
-        problems.append("The source asks viewers to " + " and ".join(missing_cta)
-                        + f"; the script must use the exact word(s) {', '.join(missing_cta)} too (they trigger the on-screen CTA).")
+        hint = {"like": 'an inviting "like" (hit like / like and subscribe)', "subscribe": '"subscribe"', "comment": '"comment"'}
+        problems.append("The source asks viewers to " + " and ".join(missing_cta) + "; the script must say "
+                        + ", ".join(hint[w] for w in missing_cta) + " too (that is what triggers the on-screen CTA).")
     if bgm_choices is not None and script.bgm and script.bgm not in bgm_choices:
         problems.append(f"bgm {script.bgm!r} is not in assets/bgm. Choose one of: {', '.join(bgm_choices) or '(none)'}.")
     overlap = ngram_overlap(full_text, source_text)

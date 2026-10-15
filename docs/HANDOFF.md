@@ -243,8 +243,7 @@
 
 - **BGM:**
   - File-nya di `assets/bgm/<mood>.mp3`. Daftar mood: mystery, suspense, dark, epic, space, tech, nature, playful, funny, inspiring, sad, energetic.
-  - Gemini milih mood sesuai naskah. Kalau cuma ada 1 file, langsung dipakai.
-  - Pilihannya disimpen di `runs/<id>/audio.json`. Kalau mau ganti, edit file itu terus jalanin `--from timeline`.
+  - (Diubah D-028:) mood dipilih agent pas nulis naskah, field `bgm` di `script.json`. Kalau mau ganti, edit field itu terus jalanin `--from timeline`. `runs/<id>/audio.json` cuma dipakai naskah lama yang belum punya field `bgm`.
   - Volume 0.12, fade out 1 detik di akhir.
 - **SFX:**
   - `assets/sfx/sfx.json` (pilihan Akmal dari myinstants): hook `awkward-moment.mp3`, number `quick-ting.mp3`, subject `pop_7e9Is8L.mp3`.
