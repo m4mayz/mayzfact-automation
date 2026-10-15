@@ -13,7 +13,7 @@ import httpx
 from mayzfact.config import PROJECT_ROOT
 from mayzfact.errors import PipelineError
 from mayzfact.net import download
-from mayzfact.store import RunPaths, write_json_atomic
+from mayzfact.store import RunPaths, read_json, write_json_atomic
 
 BGM_DIR = PROJECT_ROOT / "assets" / "bgm"
 SFX_DIR = PROJECT_ROOT / "assets" / "sfx"
@@ -75,11 +75,15 @@ def prepare_audio(
 ) -> dict:
     """BGM dari naskah, siapin SFX, copy ke runs/<id>/audio/ buat Remotion."""
     choices = list_bgm(bgm_dir)
-    bgm = script.get("bgm") or None  # dipilih agent pas nulis naskah
+    saved = paths.root / "audio.json"
+    if "bgm" in script:
+        bgm = script.get("bgm") or None  # dipilih agent pas nulis naskah
+    else:  # naskah lama (sebelum agent nulis bgm): pakai pilihan yang udah disetujui di run sebelumnya
+        bgm = read_json(saved).get("bgm") if saved.exists() else None
     if bgm and bgm not in choices:
-        log(f"[timeline] BGM {bgm!r} dari naskah nggak ada di assets/bgm, video tanpa BGM")
+        log(f"[timeline] BGM {bgm!r} nggak ada di assets/bgm, video tanpa BGM")
         bgm = None
-    write_json_atomic(paths.root / "audio.json", {"bgm": bgm})
+    write_json_atomic(saved, {"bgm": bgm})
     out: dict[str, Any] = {"bgm": None, "sfx": {}}
     if bgm:
         out["bgm"] = _copy(bgm_dir / bgm, paths.root / "audio" / "bgm", paths)

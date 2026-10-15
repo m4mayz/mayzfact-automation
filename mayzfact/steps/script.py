@@ -38,7 +38,7 @@ def normalize_script(script: Script) -> Script:
     ]
     if beats:
         beats[0] = beats[0].model_copy(update={"media": "video"})
-    return Script(beats=beats, fallback_query=" ".join(script.fallback_query.split()))
+    return script.model_copy(update={"beats": beats, "fallback_query": " ".join(script.fallback_query.split())})
 
 
 def check_script(script: Script, source_text: str, duration_s: float,

@@ -478,3 +478,10 @@ def test_run_rejects_script_that_fails_checks_before_tts(world):
     with pytest.raises(PipelineError, match="lolos cek"):
         run(world)
     assert world.tts.calls == 0
+
+
+def test_deleted_script_with_voice_present_is_a_clean_error(world):
+    paths = start(world)
+    paths.script_json.unlink()
+    with pytest.raises(PipelineError, match="script.json"):
+        run(world, from_step="clips")

@@ -9,7 +9,7 @@ from mayzfact.audio import (
     load_sfx_map,
     prepare_audio,
 )
-from mayzfact.store import RunPaths, read_json
+from mayzfact.store import RunPaths, read_json, write_json_atomic
 
 SCRIPT = {"beats": [{"text": "Five ancient creatures still alive."}, {"text": "Number five, horseshoe crab."}]}
 
@@ -105,3 +105,15 @@ def test_bgm_comes_from_script(tmp_path):
     assert out["bgm"] is None and any("epic.mp3" in m for m in logs)
     out = prepare_audio(paths, {"beats": []}, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, log=logs.append)
     assert out["bgm"] is None  # naskah lama tanpa field bgm: tanpa BGM, nggak error
+
+
+def test_old_script_without_bgm_keeps_previous_choice(tmp_path):
+    bgm_dir, sfx_dir = tmp_path / "bgm", tmp_path / "sfx"
+    bgm_dir.mkdir()
+    (bgm_dir / "mystery.mp3").write_bytes(b"m")
+    client, _ = serving({name: b"sfx" for name in SFX_DEFAULTS.values()})
+    paths = RunPaths(tmp_path / "run")
+    write_json_atomic(paths.root / "audio.json", {"bgm": "mystery.mp3"})  # pilihan lama dari run sebelum naskah bawa bgm
+    out = prepare_audio(paths, {"beats": []}, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, log=lambda m: None)
+    assert out["bgm"] == "audio/bgm/mystery.mp3"
+    assert read_json(paths.root / "audio.json") == {"bgm": "mystery.mp3"}

@@ -45,7 +45,7 @@ NEW_SCRIPT_HINT = "Hapus voice.mp3 + script.json kalau emang mau naskah + suara 
 def step_outputs(step: str, paths: RunPaths) -> list[Path]:
     return {
         "source": [paths.source_json],
-        "tts": [paths.voice_mp3, paths.tts_json],
+        "tts": [paths.script_json, paths.voice_mp3, paths.tts_json],  # naskah dikunci bareng suaranya
         "hook": [paths.hook_json],
         "clips": [paths.clips_json],
         "plan": [paths.shots_plan_json],

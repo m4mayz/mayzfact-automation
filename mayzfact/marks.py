@@ -1,6 +1,6 @@
 """Tanda per beat: point (panah/lingkaran), emoji + kata pemicunya (spec Fase 3C-2 bagian 2).
 
-Tandanya ditulis agent langsung di script.json. Naskah lama tanpa field itu = tanpa panah/emoji.
+Tandanya ditulis agent langsung di script.json. Naskah lama tanpa field itu pakai annotations.json kalau ada.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import httpx
 
 from mayzfact.countdown import parse_countdown
 from mayzfact.emoji import EMOJI, ensure_emoji
-from mayzfact.store import RunPaths
+from mayzfact.store import RunPaths, read_json
 
 _WORD = re.compile(r"[\w']+")
 
@@ -44,7 +44,12 @@ def prepare_marks(
     paths: RunPaths, script: dict, *, client: httpx.Client, emoji_dir: Path, log: Callable[[str], None],
 ) -> dict:
     """{"beats": [tanda per beat], "emoji": {emoji: "emoji/<cp>.json"}}. Lottie yang kepakai di-copy ke folder run."""
-    marks = normalize_marks(script["beats"], script["beats"])
+    beats = script["beats"]
+    raw = beats
+    if beats and not all("point" in b for b in beats):  # naskah lama: tandanya dari annotations.json (hasil run sebelumnya)
+        cached = paths.root / "annotations.json"
+        raw = read_json(cached).get("beats", []) if cached.exists() else []
+    marks = normalize_marks(beats, raw)
     wanted = sorted({m["emoji"] for m in marks if m["emoji"]})
     files = ensure_emoji(emoji_dir, client, [EMOJI[e] for e in wanted], log)
     out: dict[str, str] = {}

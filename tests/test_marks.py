@@ -2,7 +2,7 @@ import httpx
 
 from mayzfact.emoji import EMOJI, ensure_emoji
 from mayzfact.marks import normalize_marks, prepare_marks
-from mayzfact.store import RunPaths
+from mayzfact.store import RunPaths, write_json_atomic
 
 OLD = {"beats": [{"text": "Check out five ancient beasts!"}, {"text": "Number five, horseshoe crab."},
                  {"text": "Tap like for amazing luck!"}]}
@@ -81,3 +81,11 @@ def test_old_script_without_marks_gets_none(tmp_path):
     out = prepare_marks(paths, OLD, client=lottie_client()[0], emoji_dir=tmp_path / "assets", **QUIET)
     assert out == {"beats": [NONE] * 3, "emoji": {}}
     assert not (paths.root / "annotations.json").exists()
+
+
+def test_old_script_without_mark_keys_reads_annotations(tmp_path):
+    paths = RunPaths(tmp_path / "run")
+    marks = [{"point": True, "emoji": "", "emoji_word": ""}, NONE, {"point": False, "emoji": "🍀", "emoji_word": "luck"}]
+    write_json_atomic(paths.root / "annotations.json", {"key": "whatever", "beats": marks})
+    out = prepare_marks(paths, OLD, client=lottie_client(EMOJI["🍀"])[0], emoji_dir=tmp_path / "assets", **QUIET)
+    assert out["beats"] == marks and out["emoji"] == {"🍀": "emoji/1f340.json"}

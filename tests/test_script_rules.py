@@ -142,3 +142,9 @@ def test_script_accepts_new_optional_fields():
     script = Script(**data)
     assert script.hook_queries["0"].zh == ["鸟 塔"] and script.beats[0].queries_zh == ["螳螂虾"]
     assert Script(**make_script().model_dump()).bgm == ""  # naskah lama tanpa field baru tetap kebaca
+
+
+def test_normalize_script_keeps_bgm_and_hook_queries():
+    script = Script(**{**make_script().model_dump(), "bgm": "epic.mp3", "hook_queries": {"0": {"en": ["x"], "zh": []}}})
+    out = normalize_script(script)
+    assert out.bgm == "epic.mp3" and out.hook_queries["0"].en == ["x"]
