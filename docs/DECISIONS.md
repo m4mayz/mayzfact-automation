@@ -328,3 +328,13 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   6. Review di chat per beat (teks baru | sumber | keyword). Suara setelah Akmal oke.
   7. Gemini dicabut total: naskah, keyword klip (EN + ZH), tanda emoji/panah, BGM, keyword hook semua ditulis agent di `script.json`. `run` berhenti exit 3 sampai naskah ada; frame hook dibikin di step `source` biar agent bisa lihat.
 - **Authority:** Akmal (chat 2026-10-15).
+
+## D-029 — 2026-10-15 — Brief: audio naskah, download duluan, frame per shot wajib
+
+- **Status:** accepted, diimplementasi.
+- **Konteks:** Revisi brief dari Akmal setelah ngisi link video pertama lewat harness.
+- **Keputusan:**
+  1. Tombol waktu di tiap shot muter `voice.mp3` dari `start_s` sampai `end_s` (waktu itu milik suara kita, bukan source). Video source tetap ada dengan kontrol bawaan.
+  2. Link yang disimpan langsung di-download worker di server brief, pakai `Obtainer` + cache yang sama dengan fetch. Status per URL di `runs/<id>/prefetch.json`, kelihatan di halaman. Link gagal nggak diulang otomatis; simpan ulang = coba lagi.
+  3. Tiap shot punya 3 frame referensi dari source: hook dari segmen hook, shot subjek dari rentang subjeknya di transcript, sisanya (CTA/intro) dari posisi proporsional. `mayzfact brief` nolak jalan kalau ada shot tanpa frame. Frame per kelompok dihapus.
+- **Authority:** Akmal (chat 2026-10-15).

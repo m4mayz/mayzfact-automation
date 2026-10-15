@@ -46,6 +46,7 @@ File penting di `runs/<id>/`:
 - `final.mp4`: hasil render.
 - `upload.json`: metadata YouTube yang ditulis agent.
 - `youtube.json`: hasil upload (video ID, link, jadwal). Jangan dihapus tanpa izin Akmal.
+- `prefetch.json`: status download link dari halaman brief (`antre`/`download`/`siap`/`gagal` per URL).
 
 ## Perintah
 
@@ -53,7 +54,7 @@ File penting di `runs/<id>/`:
 uv sync                                               # setup Python
 uv run mayzfact run <url|id> --no-render              # lanjut dari step yang belum ada; exit 3 = nunggu naskah / nunggu link
 uv run mayzfact check-script <id>                     # cek script.json yang ditulis agent
-uv run mayzfact brief <id>                            # halaman isi link, port 3100, kebuka ke LAN (jalan terus)
+uv run mayzfact brief <id>                            # halaman isi link, port 3100, kebuka ke LAN; link di-download di background selama server hidup
 uv run mayzfact run <id> --from fetch --no-render     # download + potong klip, terus timeline
 uv run mayzfact run <id> --from timeline --no-render  # bikin ulang timeline aja
 uv run mayzfact run <id> --from render                # render final.mp4 (5–8 menit)

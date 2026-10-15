@@ -456,9 +456,33 @@
 ## Masalah terbuka
 
 1. Belum dites beneran: agent nulis naskah end-to-end buat 1 video. Kandidat pertama: `4735ZE89GXQ` (naskah lama Gemini masih ada, suaranya udah dibikin; kalau mau ulang, hapus `script.json` + `voice.mp3`, dan itu makan kredit ElevenLabs lagi).
-2. Spec brief (`2026-10-15-brief-revisi-design.md`) belum dikerjain: audio naskah di tombol shot, download duluan pas Simpan, frame referensi wajib tiap shot.
+2. *(Udah dikerjain, lihat Handoff D-029.)*
 3. Ada stash `wip ngrok allowlist from other harness` (perubahan `brief/server.py` dari harness lain) yang belum di-review.
 
 ## Delivery
 
 - Next: plan + kerjain spec brief, terus tes 1 video baru dari awal pakai skill `bikin-short`.
+
+---
+
+# Handoff — Revisi brief (D-029)
+
+- **Updated:** 2026-10-15, Claude Code (Fable 5.1)
+- **Goal & scope:** D-029, [spec](superpowers/specs/2026-10-15-brief-revisi-design.md), [plan](superpowers/plans/2026-10-15-brief-revisi.md).
+
+## Selesai
+
+- Tombol waktu per shot muter `voice.mp3` (play/stop, berhenti di `end_s`). Disabled kalau suara belum ada.
+- `mayzfact/brief/prefetch.py`: worker download di server brief, `prefetch.json`, badge status per shot yang di-poll bareng `/api/progress`. Pas server start, link yang belum `siap` di-enqueue ulang.
+- `steps/plan.py`: `ref_frames` per shot (`plan/shot_NN_K.jpg`), fallback posisi proporsional. `group.ref_frames` dihapus.
+- `mayzfact brief` nolak jalan kalau ada shot tanpa frame, pesannya nyebut shot + `--from plan`.
+- 411 test lolos.
+
+## Masalah terbuka
+
+1. Belum dites beneran di browser: audio beat dan badge prefetch (dicek lewat HTML + test server aja).
+2. Brief kebuka ke LAN tanpa login (D-026 #3) dan sekarang sekalian download apa pun yang diisi. Tetap jangan di WiFi publik.
+
+## Delivery
+
+- Next: lanjutin 4735ZE89GXQ (fetch → Studio → render → upload).
