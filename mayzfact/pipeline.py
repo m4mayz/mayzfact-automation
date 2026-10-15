@@ -14,7 +14,6 @@ from mayzfact.config import CACHE_DIR, RUNS_DIR, Settings, missing_env
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.net import make_client
 from mayzfact.providers.elevenlabs import ElevenLabsTTS
-from mayzfact.providers.gemini import GeminiScriptWriter
 from mayzfact.providers.pexels import Pexels
 from mayzfact.providers.pixabay import Pixabay
 from mayzfact.providers.stock import CombinedSearch, PlatformMediaSearch, StockSearch
@@ -203,12 +202,10 @@ def real_deps(settings: Settings) -> Deps:
     def audio(paths: RunPaths, log: Callable[[str], None]) -> dict:
         from mayzfact.audio import BGM_DIR, SFX_DIR, prepare_audio
 
-        writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
         # Client sendiri yang cepat nyerah: myinstants lambat jangan sampai nahan step timeline.
         client = httpx.Client(timeout=httpx.Timeout(10.0, connect=5.0), headers={"User-Agent": "mayzfact-automation/0.1"})
         closers.append(client.close)
-        return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=client,
-                             writer=writer, log=log)
+        return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=client, log=log)
 
     detectors: dict[str, object] = {}
 
@@ -225,8 +222,7 @@ def real_deps(settings: Settings) -> Deps:
         from mayzfact.emoji import EMOJI_DIR
         from mayzfact.marks import prepare_marks
 
-        writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
-        return prepare_marks(paths, read_json(paths.script_json), writer=writer, client=http(), emoji_dir=EMOJI_DIR, log=log)
+        return prepare_marks(paths, read_json(paths.script_json), client=http(), emoji_dir=EMOJI_DIR, log=log)
 
     def close() -> None:
         while closers:

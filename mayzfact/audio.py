@@ -1,4 +1,4 @@
-"""BGM sesuai konteks (assets/bgm, dipilih Gemini) + SFX dari myinstants (spec Fase 3B)."""
+"""BGM dari naskah (dipilih agent, field `bgm` di script.json) + SFX dari myinstants (spec Fase 3B)."""
 
 from __future__ import annotations
 
@@ -13,8 +13,7 @@ import httpx
 from mayzfact.config import PROJECT_ROOT
 from mayzfact.errors import PipelineError
 from mayzfact.net import download
-from mayzfact.store import RunPaths, read_json, write_json_atomic
-from mayzfact.text import script_text
+from mayzfact.store import RunPaths, write_json_atomic
 
 BGM_DIR = PROJECT_ROOT / "assets" / "bgm"
 SFX_DIR = PROJECT_ROOT / "assets" / "sfx"
@@ -26,7 +25,6 @@ SFX_DEFAULTS = {
     "cut": "fast-whoosh.mp3",
 }
 AUDIO_EXTS = {".mp3", ".m4a", ".wav", ".ogg"}
-PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "pick_bgm.md"
 
 
 def load_sfx_map(sfx_dir: Path, log: Callable[[str], None] = print) -> dict[str, str]:
@@ -71,47 +69,17 @@ def list_bgm(bgm_dir: Path) -> list[str]:
     return sorted(p.name for p in bgm_dir.iterdir() if p.suffix.lower() in AUDIO_EXTS)
 
 
-def pick_bgm(choices: list[str], script: dict, writer: Any, log: Callable[[str], None]) -> str | None:
-    if not choices:
-        log("[timeline] assets/bgm kosong, video tanpa BGM")
-        return None
-    if len(choices) == 1:
-        return choices[0]
-    if writer is None:
-        log("[timeline] Gemini nggak ada, BGM nggak dipilih")
-        return None
-    from mayzfact.models import BgmChoice
-
-    contents = json.dumps({"files": choices, "script": script_text(script["beats"])}, ensure_ascii=False)
-    try:
-        result = writer.generate(PROMPT_PATH.read_text(encoding="utf-8"), contents, BgmChoice, step="timeline")
-    except PipelineError as exc:
-        log(f"[timeline] Gemini gagal milih BGM, video tanpa BGM: {exc.message[:120]}")
-        return None
-    if result.file not in choices:
-        log(f"[timeline] Gemini milih BGM yang nggak ada ({result.file}), video tanpa BGM")
-        return None
-    return result.file
-
-
 def prepare_audio(
-    paths: RunPaths, script: dict, *, bgm_dir: Path, sfx_dir: Path, client: httpx.Client, writer: Any,
+    paths: RunPaths, script: dict, *, bgm_dir: Path, sfx_dir: Path, client: httpx.Client,
     log: Callable[[str], None],
 ) -> dict:
-    """Pilih BGM (pakai audio.json kalau masih valid), siapin SFX, copy ke runs/<id>/audio/ buat Remotion."""
+    """BGM dari naskah, siapin SFX, copy ke runs/<id>/audio/ buat Remotion."""
     choices = list_bgm(bgm_dir)
-    saved = paths.root / "audio.json"
-    bgm = None
-    if saved.exists():
-        try:
-            bgm = read_json(saved).get("bgm")
-        except (ValueError, AttributeError) as exc:
-            log(f"[timeline] audio.json rusak ({exc}), BGM dipilih ulang")
-    if bgm not in choices:
-        if bgm:
-            log(f"[timeline] audio.json nunjuk {bgm!r} yang nggak ada di assets/bgm, BGM dipilih ulang")
-        bgm = pick_bgm(choices, script, writer, log)
-        write_json_atomic(saved, {"bgm": bgm})
+    bgm = script.get("bgm") or None  # dipilih agent pas nulis naskah
+    if bgm and bgm not in choices:
+        log(f"[timeline] BGM {bgm!r} dari naskah nggak ada di assets/bgm, video tanpa BGM")
+        bgm = None
+    write_json_atomic(paths.root / "audio.json", {"bgm": bgm})
     out: dict[str, Any] = {"bgm": None, "sfx": {}}
     if bgm:
         out["bgm"] = _copy(bgm_dir / bgm, paths.root / "audio" / "bgm", paths)
