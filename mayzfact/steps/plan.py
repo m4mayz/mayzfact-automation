@@ -12,7 +12,7 @@ from mayzfact.matching import hook_slot_map
 from mayzfact.steps.clips import beat_subjects, split_shots
 from mayzfact.steps.hook import prepare_source_segments
 from mayzfact.store import RunPaths, write_json_atomic
-from mayzfact.text import beat_texts
+from mayzfact.text import beat_texts, words
 from mayzfact.timing import beat_timings
 
 SOURCE_FRAMES = (0.25, 0.5, 0.75)
@@ -122,8 +122,6 @@ def run_plan(
     max_shot_s: float,
     hook_seconds: float,
     download_source: Callable[[str, Path], Path],
-    describe: Callable[[list[dict], list[Path]], dict[int, dict]],
-    translate: Callable[[list[str]], dict[str, str]],
     log: Callable[[str], None] = print,
 ) -> dict:
     beats = script["beats"]
@@ -131,9 +129,7 @@ def run_plan(
     subjects = beat_subjects(beats)
     segs = prepare_source_segments(paths, source, download_source, hook_seconds, paths.plan_dir, retry_step="plan") if hook_seconds > 0 else []
     mapping = hook_slot_map(slots, len(segs), hook_seconds)
-    infos = [{k: s[k] for k in ("index", "start_s", "end_s", "transcript")} for s in segs]
-    hook_keywords = describe(infos, [s["frames"][1] for s in segs]) if mapping else {}
-    zh = translate(sorted({q for beat in beats for q in beat["queries"]}))
+    hook_queries = script.get("hook_queries", {})  # ditulis agent sambil lihat frame plan/seg_*.jpg
 
     def rel(path: Path) -> str:
         return path.relative_to(paths.root).as_posix()
@@ -143,10 +139,15 @@ def run_plan(
         beat = beats[slot.beat]
         segment = mapping.get(slot.index)
         if segment is not None:
-            keywords = hook_keywords.get(segment, {"en": [], "zh": []})
+            given = hook_queries.get(str(segment))
+            if given and (given.get("en") or given.get("zh")):
+                keywords = {"en": list(given.get("en", [])), "zh": list(given.get("zh", []))}
+            else:  # agent nggak ngisi: 8 kata pertama transcript segmen itu
+                snippet = " ".join(words(segs[segment]["transcript"])[:8])
+                keywords = {"en": [snippet] if snippet else [], "zh": []}
             ref_frames = [rel(f) for f in segs[segment]["frames"]]
         else:
-            keywords = {"en": list(beat["queries"]), "zh": [zh[q] for q in beat["queries"] if zh.get(q)]}
+            keywords = {"en": list(beat["queries"]), "zh": list(beat.get("queries_zh", []))}
             ref_frames = []
         shots.append({
             "index": slot.index, "beat": slot.beat, "start_s": slot.start_s, "end_s": slot.end_s, "media": slot.media,

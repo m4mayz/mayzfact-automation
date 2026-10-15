@@ -177,17 +177,13 @@ def real_deps(settings: Settings) -> Deps:
         return CombinedSearch([search(), *(PlatformMediaSearch(p) for p in platforms)])
 
     def plan(paths: RunPaths, log: Callable[[str], None]) -> dict:
-        from mayzfact.hook_queries import describe_segments, translate_queries
         from mayzfact.steps.plan import run_plan
         from mayzfact.ytdlp import run_ytdlp, youtube_url
 
-        writer = GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model) if settings.gemini_api_keys else None
         return run_plan(
             paths, read_json(paths.script_json), read_json(paths.tts_json), read_json(paths.source_json),
             max_shot_s=settings.max_shot_seconds, hook_seconds=settings.hook_seconds,
             download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
-            describe=lambda infos, frames: describe_segments(writer, infos, frames, log),
-            translate=lambda queries: translate_queries(writer, queries, log),
             log=log,
         )
 
