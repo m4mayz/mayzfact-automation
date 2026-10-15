@@ -1,8 +1,15 @@
+import shutil
+
 import pytest
 from youtube_transcript_api import TranscriptsDisabled
 
 from mayzfact.errors import PipelineError
-from mayzfact.steps.source import build_source, parse_video_id, run_source, youtube_transcript
+from mayzfact.steps.source import (
+    build_source,
+    parse_video_id,
+    run_source,
+    youtube_transcript,
+)
 from mayzfact.store import RunPaths, read_json
 
 SNIPPETS = [
@@ -57,3 +64,27 @@ def test_missing_transcript_becomes_pipeline_error(monkeypatch):
     monkeypatch.setattr("mayzfact.steps.source.YouTubeTranscriptApi", FakeApi)
     with pytest.raises(PipelineError, match="Transcript English"):
         youtube_transcript("i2xag_1OJfM")
+
+
+def test_source_downloads_video_and_hook_frames(tmp_path, cut_video):
+    paths = RunPaths(tmp_path / "abc")
+    transcript = [{"text": "five birds with superpowers", "start": 0.0, "duration": 2.0}]
+    data = run_source("abc", paths, fetch=lambda vid: transcript,
+                      download_source=lambda vid, dest: shutil.copyfile(cut_video, dest) or dest, hook_seconds=1.5,
+                      log=lambda m: None)
+    assert paths.source_mp4.exists()
+    assert data["hook_segments"] and (paths.root / data["hook_segments"][0]["frames"][0]).exists()
+    assert read_json(paths.source_json)["hook_segments"] == data["hook_segments"]
+
+
+def test_source_keeps_json_when_download_fails(tmp_path):
+    paths = RunPaths(tmp_path / "abc")
+    transcript = [{"text": "x", "start": 0.0, "duration": 1.0}]
+
+    def offline(vid, dest):
+        raise PipelineError("source", "offline")
+
+    logs = []
+    data = run_source("abc", paths, fetch=lambda vid: transcript, download_source=offline, hook_seconds=1.5, log=logs.append)
+    assert paths.source_json.exists() and data["hook_segments"] == []
+    assert any("offline" in m for m in logs)

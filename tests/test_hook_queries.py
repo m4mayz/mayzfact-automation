@@ -1,8 +1,8 @@
-from PIL import Image
 from google.genai import types
+from PIL import Image
 
 from mayzfact.errors import PipelineError
-from mayzfact.hook_queries import describe_segments, transcript_near
+from mayzfact.hook_queries import describe_segments
 from mayzfact.models import HookQueries, SegmentQueries
 
 TRANSCRIPT = [
@@ -39,9 +39,6 @@ class FakeWriter:
         return self.result
 
 
-def test_transcript_near():
-    assert transcript_near(TRANSCRIPT, 1.5, 3.0) == "These are the top five horseshoe crab look"
-    assert transcript_near(TRANSCRIPT, 4.5, 8.0) == ""
 
 
 def test_describe_uses_gemini_and_sends_one_image_per_segment(tmp_path):

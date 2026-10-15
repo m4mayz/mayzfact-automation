@@ -21,10 +21,6 @@ class HookQueryWriter(Protocol):
     def generate(self, system: str, contents: Any, schema: type, step: str = "script") -> Any: ...
 
 
-def transcript_near(transcript: list[dict], start_s: float, end_s: float) -> str:
-    return " ".join(s["text"] for s in transcript if s["start"] < end_s and s["start"] + s["duration"] > start_s)
-
-
 def fallback_queries(infos: list[dict]) -> dict[int, dict]:
     out: dict[int, dict] = {}
     for info in infos:

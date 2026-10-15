@@ -13,7 +13,7 @@ import numpy as np
 from mayzfact.embed import Encoder, can_open_image, mean_unit
 from mayzfact.errors import PipelineError
 from mayzfact.ffmpeg import extract_frame, probe, sample_frames
-from mayzfact.hook_queries import describe_segments, transcript_near
+from mayzfact.hook_queries import describe_segments
 from mayzfact.matching import match_label, top_k
 from mayzfact.media import pick_rendition
 from mayzfact.net import download
@@ -163,6 +163,10 @@ def _match_segment(info, seg_vec, queries, deps, skipped, used, paths, media_cac
     }
     deps.log(f"[hook] segmen {info['index'] + 1}: {searcher.name} {candidate.id} skor {score:.3f} ({record['winner']['label']})")
     return record
+
+
+def transcript_near(transcript: list[dict], start_s: float, end_s: float) -> str:
+    return " ".join(s["text"] for s in transcript if s["start"] < end_s and s["start"] + s["duration"] > start_s)
 
 
 def prepare_source_segments(

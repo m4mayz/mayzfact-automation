@@ -124,6 +124,7 @@ class Deps:
     audio: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # None = video tanpa BGM/SFX
     overlay: Callable[..., dict] | None = None  # (paths, log, point_beats) → deteksi subjek; None = tanpa panah/lingkaran
     marks: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # tanda beat: point + emoji (Fase 3C-2)
+    download_source: Callable[[str, Path], Path] | None = None  # download source.mp4 di step source; None = lewat
 
 
 def real_deps(settings: Settings) -> Deps:
@@ -244,8 +245,11 @@ def real_deps(settings: Settings) -> Deps:
         while closers:
             closers.pop()()
 
+    from mayzfact.ytdlp import run_ytdlp, youtube_url
+
     return Deps(
         fetch_transcript=youtube_transcript,
+        download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
         script_writer=lambda: GeminiScriptWriter(settings.gemini_api_keys, settings.gemini_model),
         tts=lambda: ElevenLabsTTS(
             settings.elevenlabs_api_keys, settings.elevenlabs_voice_id, settings.elevenlabs_model, http()
@@ -317,7 +321,8 @@ def run_pipeline(
 
 def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: Callable[[str], None]) -> None:
     if step == "source":
-        run_source(paths.root.name, paths, fetch=deps.fetch_transcript)
+        run_source(paths.root.name, paths, fetch=deps.fetch_transcript, download_source=deps.download_source,
+                   hook_seconds=settings.hook_seconds, log=log)
     elif step == "script":
         run_script(
             paths, read_json(paths.source_json), deps.script_writer(),
