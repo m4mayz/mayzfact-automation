@@ -29,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     brief = sub.add_parser("brief", help="Buka halaman brief buat ngisi link klip (mode manual)")
     brief.add_argument("video", help="Video ID atau URL YouTube")
     brief.add_argument("--port", type=int, default=None, help="Port lokal (default BRIEF_PORT)")
-    brief.add_argument("--lan", action="store_true", help="Buka akses di jaringan lokal/WiFi (bisa diakses lewat HP)")
+    brief.add_argument("--lan", action="store_true", help=argparse.SUPPRESS)
     return parser
 
 
@@ -108,16 +108,12 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
     if not paths.shots_plan_json.exists():
         raise PipelineError("brief", f"Plan belum ada. Jalanin dulu: mayzfact run {paths.root.name} --no-render")
-    bind_host = "0.0.0.0" if args.lan else "127.0.0.1"
-    server = make_server(paths, args.port or settings.brief_port, host=bind_host)
+    server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0")
     port = server.server_address[1]
-    if args.lan:
-        lan_ip = _lan_ip()
-        print(f"Brief {paths.root.name} (akses LAN/HP aktif):")
-        print(f"  HP / LAN : http://{lan_ip}:{port}")
-        print(f"  Lokal PC : http://127.0.0.1:{port}")
-    else:
-        print(f"Brief {paths.root.name}: http://127.0.0.1:{port}  (tambah --lan buat akses lewat HP)")
+    lan_ip = _lan_ip()
+    print(f"Brief {paths.root.name} (akses LAN/HP aktif):")
+    print(f"  HP / LAN : http://{lan_ip}:{port}")
+    print(f"  Lokal PC : http://127.0.0.1:{port}")
     print("  (Ctrl+C buat stop)")
     try:
         server.serve_forever()

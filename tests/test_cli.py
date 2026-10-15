@@ -99,3 +99,27 @@ def test_brief_needs_plan_first(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
     assert cli.main(["brief", "i2xag_1OJfM"]) == 1
     assert "--no-render" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("flags", [[], ["--lan"]])
+def test_brief_opens_lan_by_default(monkeypatch, tmp_path, capsys, flags):
+    from unittest.mock import Mock
+
+    from mayzfact.brief import server
+
+    paths = RunPaths(tmp_path / "i2xag_1OJfM")
+    paths.root.mkdir()
+    paths.shots_plan_json.write_text("{}")
+    brief_server = Mock(server_address=("0.0.0.0", 3100))
+    make_server = Mock(return_value=brief_server)
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
+    monkeypatch.setattr(cli, "_lan_ip", lambda: "192.168.1.20")
+    monkeypatch.setattr(server, "make_server", make_server)
+
+    assert cli.main(["brief", "i2xag_1OJfM", *flags]) == 0
+    make_server.assert_called_once_with(paths, 3100, host="0.0.0.0")
+    out = capsys.readouterr().out
+    assert "http://192.168.1.20:3100" in out
+    assert "http://127.0.0.1:3100" in out
+    brief_server.server_close.assert_called_once()

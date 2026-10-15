@@ -1,4 +1,4 @@
-"""HTML halaman brief: layout rapi, clean container, responsif mobile/desktop, gaya Zentra Studio tanpa overlapping."""
+"""HTML halaman brief: layout rapi, clean container, responsif mobile dan desktop."""
 
 from __future__ import annotations
 
@@ -11,13 +11,13 @@ _CSS = """
   --bg-card: #ffffff;
   --bg-subtle: #f8fafc;
   --bg-well: #eff6ff;
-  --border-card: #e4e4e7;
-  --border-subtle: #e2e8f0;
-  --border-well: #bfdbfe;
+  --border-card: #d4d4d8;
+  --border-subtle: #cbd5e1;
+  --border-well: #93c5fd;
 
   --text-primary: #09090b;
-  --text-secondary: #475569;
-  --text-muted: #71717a;
+  --text-secondary: #334155;
+  --text-muted: #52525b;
 
   --brand-orange: #ff7a00;
   --brand-orange-soft: #fff0db;
@@ -987,24 +987,159 @@ body {
 
 @media (max-width: 640px) {
   body {
-    padding-bottom: 75px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+  html {
+    scroll-padding-top: 112px;
+    scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
   .top-nav {
-    padding: 8px 12px;
+    padding: 6px 10px;
   }
   .top-nav-inner {
-    gap: 8px;
+    gap: 4px;
   }
   .nav-pills {
     order: 3;
     width: 100%;
-    justify-content: space-around;
+    min-width: 0;
+    gap: 2px;
+    padding: 2px;
+  }
+  .nav-pill {
+    flex: 1 0 auto;
+    justify-content: center;
+    min-height: 44px;
+    padding: 4px 6px;
+    gap: 4px;
+    font-size: 12px;
+  }
+  .sync-status {
+    max-width: 170px;
+    padding: 4px 8px;
   }
   .nav-right .btn-primary-dark {
     display: none;
   }
+  .app-container {
+    margin-top: 10px;
+    padding: 0 10px;
+  }
+  .page-header {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
   .page-title {
     font-size: 20px;
+    overflow-wrap: anywhere;
+  }
+  .header-badges {
+    gap: 4px;
+  }
+  .header-badge {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+  .timeline-card, .z-card, .card-group, #progress {
+    padding: 10px;
+    border-radius: 12px;
+  }
+  .timeline-card {
+    margin-bottom: 10px;
+  }
+  .timeline-header {
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    margin-bottom: 6px;
+  }
+  .timeline-track {
+    gap: 6px;
+    padding-bottom: 2px;
+  }
+  .timeline-shot-chip {
+    min-width: 64px;
+    padding: 5px 8px;
+    gap: 2px;
+  }
+  .workspace-layout, .sidebar-sticky, .cards-stack {
+    gap: 10px;
+  }
+  .z-card-header, .group-header {
+    margin-bottom: 8px;
+  }
+  .video-frame video {
+    max-height: 140px;
+  }
+  .readiness-pct {
+    font-size: 24px;
+    margin: 0 0 6px;
+    flex-wrap: wrap;
+  }
+  .striped-metric-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 10px;
+  }
+  .striped-metric-top {
+    gap: 4px;
+  }
+  .striped-metric-top span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .group-title-wrap {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    min-width: 0;
+  }
+  .group-title, .state, .shot-script, .kw-chip {
+    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+  .group-title {
+    font-size: 15px;
+  }
+  .refs-strip-wrap {
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+  .refs-strip-header {
+    flex-wrap: wrap;
+    gap: 2px 8px;
+  }
+  .refs img {
+    height: 56px;
+    min-width: 78px;
+  }
+  .shots {
+    gap: 8px;
+  }
+  .shot-box {
+    min-width: 0;
+    padding: 10px;
+    gap: 8px;
+  }
+  .shot-top-bar, .shot-meta-left {
+    gap: 4px 6px;
+  }
+  .shot-script {
+    padding: 6px 8px;
+  }
+  .kw-chip, .time-seek-pill {
+    min-height: 44px;
+  }
+  .kw-row {
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 2px 0;
+  }
+  .kw-row-label, .kw-chip {
+    flex-shrink: 0;
+  }
+  .zentra-prompt-well {
+    min-width: 0;
+    padding: 8px;
+    gap: 6px;
   }
   .well-header {
     flex-direction: column;
@@ -1012,21 +1147,54 @@ body {
   }
   .well-trim-group {
     width: 100%;
-    justify-content: space-between;
+  }
+  .trim-pill {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+  }
+  .trim-pill input[type="number"] {
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    font-size: 16px;
+  }
+  .trim-pill:focus-within {
+    outline: 2px solid var(--blue-main);
+    outline-offset: 2px;
   }
   .well-input-bar {
-    flex-wrap: wrap;
-    padding: 6px 8px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px 6px;
+    padding: 4px 6px;
   }
   .well-input-bar input[type="text"] {
     width: 100%;
-    font-size: 15px;
+    height: 44px;
+    font-size: 16px;
   }
   .well-actions {
+    grid-column: 1 / -1;
     width: 100%;
-    justify-content: flex-end;
+    gap: 6px;
     border-top: 1px solid #f1f5f9;
     padding-top: 4px;
+  }
+  .btn-well-ghost, .btn-well-upload {
+    flex: 1;
+    height: 44px;
+    justify-content: center;
+  }
+  .btn-well-upload:focus-within {
+    outline: 2px solid var(--blue-main);
+    outline-offset: 2px;
+  }
+  .toast-pill {
+    max-width: calc(100% - 20px);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    bottom: calc(80px + env(safe-area-inset-bottom));
   }
   .mobile-dock {
     position: fixed;
@@ -1035,7 +1203,7 @@ body {
     right: 0;
     background: rgba(9, 9, 11, 0.95);
     backdrop-filter: blur(10px);
-    padding: 10px 16px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1044,7 +1212,8 @@ body {
     border-top: 1px solid rgba(255,255,255,0.1);
   }
   .mobile-dock-btn {
-    flex: 1;
+    flex: 0 0 auto;
+    min-height: 44px;
     background: #fff;
     color: #09090b;
     border: none;

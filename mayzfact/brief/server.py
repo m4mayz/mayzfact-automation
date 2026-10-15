@@ -1,4 +1,4 @@
-"""Server lokal halaman brief: 127.0.0.1 doang, baca/tulis links.json, terima upload (spec metode manual bagian 4)."""
+"""Server halaman brief: akses lokal/LAN, baca/tulis links.json dan terima upload."""
 
 from __future__ import annotations
 
