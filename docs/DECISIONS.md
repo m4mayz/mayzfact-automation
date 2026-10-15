@@ -291,3 +291,14 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   4. Akmal upload sendiri di YouTube Studio. Upload lewat YouTube Data API ditunda: project Google Cloud yang belum lolos audit bakal ngunci video upload-annya jadi private.
   5. Milih source otomatis jadi opsional. Akmal tetap ngasih URL, atau agent nyariin kandidat.
 - **Authority:** Akmal (chat 2026-10-14).
+
+## D-026 — 2026-10-14 — Link klip diisi per shot, brief kebuka ke LAN
+
+- **Status:** accepted. Ngubah cara isi link di D-020 (kelompok konteks tetap ada buat ngelompokin tampilan dan frame source).
+- **Konteks:** Akmal ngisi link dari HP, dan pengen milih klip yang pas buat tiap shot, termasuk bagian detik tertentu.
+- **Keputusan:**
+  1. Link diisi per shot: 1 shot = 1 link atau 1 file upload, plus Mulai/Selesai (detik) opsional. Disimpan di `links.json` bagian `shots`.
+  2. Shot berurutan yang pakai link sama, videonya nyambung (nggak loncat ke awal klip).
+  3. Server brief selalu bind `0.0.0.0` biar bisa dibuka dari HP. Host cuma boleh localhost atau IP privat, POST tetap dicek Origin. Nggak ada login, jadi jangan dijalanin di WiFi publik.
+  4. Naskah: tiap item countdown minimal punya 2 beat penjelasan.
+- **Authority:** Akmal (chat dengan harness lain, 2026-10-14).

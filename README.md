@@ -30,11 +30,13 @@ Klip dicari sendiri, terus pipeline yang download + milih bagian terbaik.
 
 ```bash
 uv run mayzfact run <id> --no-render        # sampai plan, terus berhenti (exit 3): nunggu link
-uv run mayzfact brief <id>                  # buka http://127.0.0.1:3100, isi link/upload per kelompok, Simpan
-uv run mayzfact run <id> --from fetch --no-render   # download + potong; kelompok gagal muncul lagi di brief
+uv run mayzfact brief <id>                  # buka alamat yang di-print (PC atau HP), isi link/upload per shot, Simpan
+uv run mayzfact run <id> --from fetch --no-render   # download + potong; shot gagal muncul lagi di brief
 ```
 
-Link diisi per kelompok konteks (semua shot hook = 1 kelompok, sisanya per subjek). 1 baris = 1 link, boleh banyak; pipeline yang ngebagi potongan ke tiap shot tanpa tumpang tindih. Link boleh teks share Douyin apa adanya. Link RedNote ditolak (butuh login), save file-nya dari app terus upload. Tambahin ` #3` buat cuma pakai foto ke-3 dari post foto ganda. Mode lama: `CLIP_SOURCE=auto`.
+Shot dikelompokin per konteks (semua shot hook = 1 kelompok, sisanya per subjek), tapi link diisi per shot: 1 shot = 1 link, plus kolom Mulai/Selesai (detik) kalau mau potongan tertentu. Shot berurutan yang pakai link sama videonya nyambung. Link boleh teks share Douyin apa adanya. Video source ikut tampil di halaman.
+
+Server brief kebuka ke LAN biar bisa diisi dari HP (alamatnya di-print pas start). Nggak ada login, jadi jangan jalanin di WiFi publik. Link RedNote ditolak (butuh login), save file-nya dari app terus upload. Tambahin ` #3` buat cuma pakai foto ke-3 dari post foto ganda. Mode lama: `CLIP_SOURCE=auto`.
 
 ## Review di Remotion Studio
 

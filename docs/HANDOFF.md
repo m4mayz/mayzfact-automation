@@ -385,3 +385,29 @@
 ## Delivery
 
 - Next: bikin 1 video baru pakai skill `bikin-short`.
+
+---
+
+# Handoff — Brief per shot + video NSua7RPoFJg
+
+- **Updated:** 2026-10-15, Claude Code (Opus 5.5)
+- **Goal & scope:** D-026. Dikerjain sebagian lewat harness lain (14 Okt sore–malam), dicatat di sini.
+
+## Selesai
+
+- **Brief:** video source tampil dan bisa di-seek (`f34ef9c`), input link per shot (`340ec66`), Mulai/Selesai detik (`1812d15`, `a650369`), UI baru gaya bento + layout HP (`3d15904`, `ea854a2`, `e20c6ec`, `9bc3cf2`), kebuka ke LAN (`21937fe`, `9bc3cf2`), fallback copy di HP non-HTTPS (`8655d35`).
+- **Plan:** frame source per kelompok dicari urut card countdown (`a6a3b52`). Sebelumnya teaser "Number one…" bikin kelompok lain nggak dapat frame.
+- **Fetch:** shot berurutan dengan link sama videonya nyambung (`c471b0d`).
+- **Naskah:** minimal 2 beat penjelasan per item countdown (`ecf54d5`).
+- **Windows:** log `hook_queries` tanpa karakter non-ASCII (`c68af19`).
+- **Video NSua7RPoFJg:** jalur naskah baru jalan beneran (tanda `point`/`emoji` dari prompt rewrite kebaca). Udah sampai `final.mp4` (render 14 Okt 21:36).
+- 378 test lolos.
+
+## Masalah terbuka
+
+1. NSua7RPoFJg belum punya `upload.md` (langkah 6 skill `bikin-short`), dan belum jelas Akmal udah oke final-nya atau belum.
+2. Brief kebuka ke LAN tanpa login (lihat D-026 #3).
+
+## Delivery
+
+- Next: cek final NSua7RPoFJg sama Akmal, terus bikin `upload.md`.

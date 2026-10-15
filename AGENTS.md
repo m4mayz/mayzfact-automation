@@ -39,7 +39,7 @@ File penting di `runs/<id>/`:
 
 - `script.json`: naskah per beat, termasuk tanda `point`/`emoji`/`emoji_word`.
 - `voice.mp3` + `tts.json`: suara. **Dibikin pakai kredit ElevenLabs, jangan dihapus.**
-- `links.json`: link klip dari halaman brief.
+- `links.json`: link klip per shot dari halaman brief (plus start/end detik kalau diisi).
 - `clips.json`: klip per shot, termasuk `provider`, `page_url`, `author` buat credit.
 - `timeline.json`: props buat Remotion.
 - `annotations.json`, `overlays.json`: cache tanda beat dan deteksi subjek.
@@ -50,7 +50,7 @@ File penting di `runs/<id>/`:
 ```bash
 uv sync                                               # setup Python
 uv run mayzfact run <url|id> --no-render              # lanjut dari step yang belum ada; exit 3 = nunggu link
-uv run mayzfact brief <id>                            # halaman isi link http://127.0.0.1:3100 (jalan terus)
+uv run mayzfact brief <id>                            # halaman isi link, port 3100, kebuka ke LAN (jalan terus)
 uv run mayzfact run <id> --from fetch --no-render     # download + potong klip, terus timeline
 uv run mayzfact run <id> --from timeline --no-render  # bikin ulang timeline aja
 uv run mayzfact run <id> --from render                # render final.mp4 (5–8 menit)
@@ -81,6 +81,7 @@ cd remotion && npx tsc --noEmit -p .
 - Kalau platform minta captcha atau login ulang, berhenti. Minta Akmal jalanin `uv run mayzfact login <platform>`.
 - Challenge yang diselesaiin browser biasa tanpa manusia (WAF proof-of-work Douyin) boleh (D-018).
 - Jangan ubah atau hapus `flow.svg` dan `sources/`.
+- Halaman brief selalu kebuka ke LAN (biar bisa diisi dari HP) dan nggak ada login. Server cuma nerima Host localhost atau IP privat, tapi siapa aja di WiFi yang sama bisa buka dan upload. Jangan jalanin brief di WiFi publik, matiin kalau udah selesai.
 - Jangan commit file audio, emoji, atau model: `assets/bgm/*`, `assets/sfx/*` (kecuali `sfx.json`), `assets/emoji/`, `models/`. Semuanya udah di-gitignore, jangan dipaksa masuk.
 
 ### Biaya
