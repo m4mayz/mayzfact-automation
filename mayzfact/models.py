@@ -26,37 +26,3 @@ class Script(BaseModel):
     fallback_query: str
     bgm: str = ""  # nama file di assets/bgm, dipilih agent; "" = tanpa BGM
     hook_queries: dict[str, HookQuery] = {}  # per index segmen hook (plan/seg_XX), ditulis agent
-
-
-class SegmentQueries(BaseModel):
-    index: int
-    en: list[str]
-    zh: list[str]
-
-
-class HookQueries(BaseModel):
-    segments: list[SegmentQueries]
-
-
-class Translation(BaseModel):
-    en: str
-    zh: str
-
-
-class Translations(BaseModel):
-    items: list[Translation]
-
-
-class BgmChoice(BaseModel):
-    file: str
-
-
-class BeatMark(BaseModel):
-    index: int
-    point: bool
-    emoji: str
-    emoji_word: str
-
-
-class BeatMarks(BaseModel):
-    items: list[BeatMark]

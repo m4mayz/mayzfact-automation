@@ -1,6 +1,12 @@
 import pytest
 
-from mayzfact.config import Settings, load_settings, missing_env, settings_from_env
+from mayzfact.config import (
+    ENV_FIELDS,
+    Settings,
+    load_settings,
+    missing_env,
+    settings_from_env,
+)
 from mayzfact.errors import PipelineError
 
 
@@ -9,19 +15,19 @@ def test_defaults_when_env_empty():
     assert settings == Settings()
     assert settings.max_shot_seconds == 4.0
     assert settings.fg_min_height_ratio == 0.5
-    assert settings.gemini_model == "gemini-3.8-flash"
+    assert settings.elevenlabs_model == "eleven_v3"
 
 
 def test_reads_and_casts_values():
-    settings = settings_from_env({"GEMINI_API_KEYS": " abc,def ", "MAX_SHOT_SECONDS": "2.0", "PHOTO_RATIO": "0.25"})
-    assert settings.gemini_api_keys == ("abc", "def")
+    settings = settings_from_env({"ELEVENLABS_API_KEYS": " abc,def ", "MAX_SHOT_SECONDS": "2.0", "PHOTO_RATIO": "0.25"})
+    assert settings.elevenlabs_api_keys == ("abc", "def")
     assert settings.max_shot_seconds == 2.0
     assert settings.photo_ratio == 0.25
 
 
 def test_blank_value_keeps_default():
-    settings = settings_from_env({"GEMINI_MODEL": "   ", "PEXELS_API_KEY": None})
-    assert settings.gemini_model == "gemini-3.8-flash"
+    settings = settings_from_env({"ELEVENLABS_MODEL": "   ", "PEXELS_API_KEY": None})
+    assert settings.elevenlabs_model == "eleven_v3"
     assert settings.pexels_api_key == ""
 
 
@@ -31,17 +37,17 @@ def test_invalid_number_names_the_variable():
 
 
 def test_missing_env_lists_empty_keys_once():
-    settings = settings_from_env({"GEMINI_API_KEYS": "x"})
-    assert missing_env(settings, ["GEMINI_API_KEYS", "PEXELS_API_KEY", "PEXELS_API_KEY"]) == ["PEXELS_API_KEY"]
+    settings = settings_from_env({"ELEVENLABS_API_KEYS": "x"})
+    assert missing_env(settings, ["ELEVENLABS_API_KEYS", "PEXELS_API_KEY", "PEXELS_API_KEY"]) == ["PEXELS_API_KEY"]
 
 
 def test_environment_overrides_dotenv(tmp_path, monkeypatch):
     env_file = tmp_path / ".env"
-    env_file.write_text("GEMINI_API_KEYS=from-file\nPEXELS_API_KEY=file-key\n", encoding="utf-8")
-    monkeypatch.delenv("GEMINI_API_KEYS", raising=False)
+    env_file.write_text("ELEVENLABS_API_KEYS=from-file\nPEXELS_API_KEY=file-key\n", encoding="utf-8")
+    monkeypatch.delenv("ELEVENLABS_API_KEYS", raising=False)
     monkeypatch.setenv("PEXELS_API_KEY", "")
     settings = load_settings(env_file)
-    assert settings.gemini_api_keys == ("from-file",)
+    assert settings.elevenlabs_api_keys == ("from-file",)
     assert settings.pexels_api_key == ""
 
 
@@ -78,3 +84,8 @@ def test_clip_source_and_brief_port():
 
 def test_default_ratio_is_80_percent():
     assert Settings().target_duration_ratio == 0.8
+
+
+def test_gemini_settings_are_gone():
+    assert not hasattr(Settings(), "gemini_api_keys")
+    assert "GEMINI_API_KEYS" not in ENV_FIELDS

@@ -444,7 +444,7 @@ def test_timeline_step_uses_beat_marks_for_emoji_and_arrows(world):
     assert timeline["emojis"][0]["src"] == "emoji/1f9d0.json"
 
     def broken(paths, log):
-        raise RuntimeError("gemini rusak")
+        raise RuntimeError("emoji rusak")
 
     world.deps.marks = broken
     paths = run(world, from_step="timeline", no_render=True)
