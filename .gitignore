@@ -14,3 +14,4 @@ assets/sfx/*
 !assets/sfx/sfx.json
 models/
 assets/emoji/
+.env*.tmp

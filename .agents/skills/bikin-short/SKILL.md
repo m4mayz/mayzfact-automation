@@ -1,13 +1,13 @@
 ---
 name: bikin-short
-description: Bikin 1 video YouTube Shorts dari video source (URL/ID YouTube) pakai pipeline mayzfact, dari naskah sampai final.mp4 dan metadata upload, dengan checkpoint buat Akmal (isi link klip, review di Remotion Studio, oke render). Pakai kalau Akmal minta bikin video baru, lanjutin video yang setengah jadi, atau revisi video (make a short, new video, render).
+description: Bikin 1 video YouTube Shorts dari video source (URL/ID YouTube) pakai pipeline mayzfact, dari naskah sampai final.mp4 dan upload terjadwal ke YouTube, dengan checkpoint buat Akmal (isi link klip, review di Remotion Studio, oke render, konfirmasi jam tayang). Pakai kalau Akmal minta bikin video baru, lanjutin video yang setengah jadi, atau revisi video (make a short, new video, render).
 ---
 
 # Bikin short
 
 Alurnya:
 
-source → naskah → suara → plan → **[Akmal isi link]** → fetch → timeline → **[Akmal review di Studio]** → render → **[Akmal cek final]** → metadata upload → **[Akmal upload]**
+source → naskah → suara → plan → **[Akmal isi link]** → fetch → timeline → **[Akmal review di Studio]** → render → **[Akmal cek final]** → metadata → **[Akmal konfirmasi jam]** → upload
 
 Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal persis apa yang harus dia lakuin. Aturan umum ada di `AGENTS.md`, terutama bagian Keamanan, Biaya, dan Review video.
 
@@ -76,15 +76,31 @@ uv run mayzfact run <id> --from render
 
 Cek pakai `ffprobe`: resolusinya 1080×1920 dan durasinya masuk akal. Terus minta Akmal nonton `runs/<id>/final.mp4`.
 
-## 6. Metadata upload
+## 6. Metadata YouTube
 
-Agent yang nulis `runs/<id>/upload.md`, berdasarkan `script.json` dan `clips.json`:
+Agent nulis `runs/<id>/upload.json` dari `script.json` dan `clips.json`:
 
-- **Judul:** bahasa Inggris, maksimal 70 karakter, sesuai isi naskah. Jangan clickbait yang nggak ada di video.
-- **Deskripsi:** 1–2 kalimat ringkasan, terus `#shorts` plus 3–5 hashtag topik.
-- **Credit:** satu baris per sumber klip yang beda dari `clips.json`: `provider` + `page_url` (+ `author` kalau ada). Lewati shot yang `provider`-nya `upload` dan nggak punya `page_url`.
-- **Jadwal:** slot berikutnya yang masih kosong, jam 21.00 atau 04.00 WIB.
+```json
+{"title": "...", "description": "...", "tags": ["..."], "category_id": "15", "language": "en"}
+```
 
-## 7. Checkpoint: Akmal upload
+- **title:** bahasa Inggris, maksimal 100 karakter, ada `#Shorts`, tanpa `<` `>`. Jangan clickbait yang nggak ada di video.
+- **description:** 1–2 kalimat ringkasan, hashtag, terus credit: satu baris per sumber klip yang beda dari `clips.json` (`provider` + `page_url`, + `author` kalau ada; lewati `upload` tanpa `page_url`). Maksimal 5000 byte, tanpa `<` `>`.
+- **tags:** 5–10 tag topik, total maksimal 500 karakter.
+- **category_id:** pilih sesuai isi, misal `15` Pets & Animals, `27` Education, `28` Science & Technology, `24` Entertainment.
 
-Akmal yang upload dan jadwalin sendiri di YouTube Studio pakai isi `upload.md`. Agent nggak upload sendiri, dan nggak ngakses akun YouTube Akmal.
+## 7. Checkpoint: konfirmasi jadwal
+
+Jalanin `uv run mayzfact next-slot`. Tunjukin ke Akmal judul + jam usulan (WIB), terus tanya: jadwalin jam segitu atau jam lain? Tunggu jawabannya. Jangan upload sebelum Akmal konfirmasi.
+
+## 8. Upload
+
+Jalanin di background:
+
+```bash
+uv run mayzfact upload <id> --at "<YYYY-MM-DD HH:MM>"
+```
+
+- Kalau error "Belum login YouTube" atau "Token YouTube ditolak": minta Akmal jalanin `uv run mayzfact login youtube` (browser kebuka buat izin akun), terus ulang.
+- Kalau error "udah pernah di-upload": jangan hapus `youtube.json` sendiri, tanya Akmal.
+- Sukses: kasih Akmal link video dan link YouTube Studio dari output-nya.

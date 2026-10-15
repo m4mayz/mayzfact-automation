@@ -64,6 +64,18 @@ Aturan main buat agent ada di [`AGENTS.md`](AGENTS.md). Alur bikin 1 video ada d
 
 Contoh: buka agent di folder ini, terus bilang `bikin short dari https://youtu.be/<id>`.
 
+## Upload ke YouTube
+
+Butuh `YOUTUBE_CLIENT_SECRET_JSON` di `.env` (JSON OAuth client dari Google Cloud, project yang udah lolos audit YouTube API).
+
+```bash
+uv run mayzfact login youtube                          # sekali: browser kebuka, token disimpan ke YOUTUBE_TOKEN_JSON di .env
+uv run mayzfact next-slot                              # slot tayang kosong berikutnya (04.00/21.00 WIB)
+uv run mayzfact upload <id> --at "2026-10-15 21:00"   # upload terjadwal (jam WIB)
+```
+
+Metadata-nya dibaca dari `runs/<id>/upload.json` (`title`, `description`, `tags`, `category_id`, `language`). Video di-upload sebagai private dengan `publishAt`, jadi YouTube yang bikin public di jamnya. Hasilnya (link video + Studio) disimpan di `runs/<id>/youtube.json`, dan run yang sama nggak bisa ke-upload 2 kali.
+
 ## Hook (Fase 2)
 
 Login sekali per platform. Sesinya disimpan di `browser-profiles/`, jangan di-share.

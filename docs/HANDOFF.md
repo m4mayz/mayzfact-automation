@@ -411,3 +411,26 @@
 ## Delivery
 
 - Next: cek final NSua7RPoFJg sama Akmal, terus bikin `upload.md`.
+
+---
+
+# Handoff — Upload terjadwal ke YouTube
+
+- **Updated:** 2026-10-15, Claude Code (Opus 5.5)
+- **Goal & scope:** D-027, [spec](superpowers/specs/2026-10-15-youtube-upload-design.md), [plan](superpowers/plans/2026-10-15-youtube-upload.md).
+
+## Selesai
+
+- `mayzfact/youtube.py`: login OAuth (token ke `.env`), validasi `upload.json`, hitung slot 04.00/21.00 WIB, upload resumable sebagai private + `publishAt`, `youtube.json` sebagai penanda udah ke-upload.
+- CLI: `mayzfact login youtube`, `mayzfact next-slot`, `mayzfact upload <id> --at "YYYY-MM-DD HH:MM"`.
+- Skill `bikin-short` langkah 6–8: metadata → konfirmasi jam ke Akmal → upload. `AGENTS.md` sama README ikut diupdate.
+- Test pakai fake service, tanpa API beneran.
+
+## Masalah terbuka
+
+1. Belum dites beneran: login Google dan upload ke YouTube. Upload pertama Akmal jadi tesnya, cek di YouTube Studio videonya *Scheduled* di jam yang bener.
+2. Slot yang dianggap kepake cuma dari `runs/*/youtube.json`. Video yang dijadwalin manual di YouTube Studio nggak keitung.
+
+## Delivery
+
+- Next: `mayzfact login youtube`, terus upload NSua7RPoFJg lewat skill `bikin-short` langkah 6–8.

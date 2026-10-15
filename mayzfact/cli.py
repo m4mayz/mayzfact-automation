@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import argparse
 import sys
+from datetime import datetime
 
-from mayzfact.config import RUNS_DIR, Settings, load_settings, missing_env
+from mayzfact.config import PROJECT_ROOT, RUNS_DIR, Settings, load_settings, missing_env
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.net import make_client
 from mayzfact.pipeline import ALL_STEPS, run_pipeline
@@ -23,9 +24,13 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--new-voice", action="store_true", help="Bikin naskah + suara baru (pakai kredit ElevenLabs)")
     run.add_argument("--no-render", action="store_true", help="Berhenti setelah timeline.json, buat review di Remotion Studio")
     sub.add_parser("voices", help="List voice ElevenLabs di akun lu")
-    login = sub.add_parser("login", help="Login ke platform buat hook (TikTok/Douyin/RedNote/Pinterest)")
-    login.add_argument("platform", nargs="?", choices=sorted(PLATFORMS))
+    login = sub.add_parser("login", help="Login ke platform hook (TikTok/Douyin/Pinterest) atau YouTube buat upload")
+    login.add_argument("platform", nargs="?", choices=sorted([*PLATFORMS, "youtube"]))
     login.add_argument("--check", action="store_true", help="Cek status login semua platform di HOOK_PLATFORMS")
+    sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (04.00/21.00 WIB)")
+    upload = sub.add_parser("upload", help="Upload final.mp4 ke YouTube sebagai video terjadwal")
+    upload.add_argument("video", help="Video ID atau URL YouTube source")
+    upload.add_argument("--at", required=True, help='Jam tayang WIB, format "YYYY-MM-DD HH:MM"')
     brief = sub.add_parser("brief", help="Buka halaman brief buat ngisi link klip (mode manual)")
     brief.add_argument("video", help="Video ID atau URL YouTube")
     brief.add_argument("--port", type=int, default=None, help="Port lokal (default BRIEF_PORT)")
@@ -43,6 +48,10 @@ def main(argv: list[str] | None = None) -> int:
             return _login(args, settings)
         if args.command == "brief":
             return _brief(args, settings)
+        if args.command == "next-slot":
+            return _next_slot()
+        if args.command == "upload":
+            return _upload(args, settings)
         paths = run_pipeline(
             args.video, settings=settings, from_step=args.from_step, new_voice=args.new_voice, no_render=args.no_render
         )
@@ -80,6 +89,12 @@ def _login(args: argparse.Namespace, settings: Settings) -> int:
             all_ok = all_ok and ok
             print(f"{name}: login" if ok else f"{name}: belum login (jalanin: mayzfact login {name})")
         return 0 if all_ok else 1
+    if args.platform == "youtube":
+        from mayzfact import youtube
+
+        youtube.login(settings.youtube_client_secret_json, PROJECT_ROOT / ".env")
+        print("YouTube: login berhasil, token disimpan di .env")
+        return 0
     if not args.platform:
         raise PipelineError("login", "Sebutin platform-nya, misal: mayzfact login tiktok. Atau pakai --check.")
     browser.open_login_browser(args.platform)
@@ -98,6 +113,26 @@ def _lan_ip() -> str:
         return ip
     except Exception:
         return "127.0.0.1"
+
+
+def _next_slot() -> int:
+    from mayzfact import youtube
+
+    print(youtube.next_slot(youtube.taken_slots(RUNS_DIR), datetime.now(youtube.WIB)).strftime("%Y-%m-%d %H:%M"))
+    return 0
+
+
+def _upload(args: argparse.Namespace, settings: Settings) -> int:
+    from mayzfact import youtube
+    from mayzfact.steps.source import parse_video_id
+    from mayzfact.store import RunPaths
+
+    paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
+    meta = youtube.load_meta(paths)
+    publish_at = youtube.parse_publish_at(args.at, datetime.now(youtube.WIB))
+    data = youtube.upload_video(paths, meta, publish_at, lambda: youtube.service(settings.youtube_token_json), print)
+    print(f"Ke-upload, tayang {args.at} WIB\n  Video : {data['url']}\n  Studio: {data['studio_url']}")
+    return 0
 
 
 def _brief(args: argparse.Namespace, settings: Settings) -> int:

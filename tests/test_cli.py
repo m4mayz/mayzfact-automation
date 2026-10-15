@@ -123,3 +123,34 @@ def test_brief_opens_lan_by_default(monkeypatch, tmp_path, capsys, flags):
     assert "http://192.168.1.20:3100" in out
     assert "http://127.0.0.1:3100" in out
     brief_server.server_close.assert_called_once()
+
+
+def test_login_youtube_writes_into_project_env(monkeypatch):
+    from mayzfact import youtube
+
+    seen = {}
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings(youtube_client_secret_json='{"installed": {}}'))
+    monkeypatch.setattr(youtube, "login", lambda secret, env: seen.update(secret=secret, env=env))
+    assert cli.main(["login", "youtube"]) == 0
+    assert seen["secret"] == '{"installed": {}}' and seen["env"].name == ".env"
+
+
+def test_next_slot_prints_wib_time(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
+    assert cli.main(["next-slot"]) == 0
+    out = capsys.readouterr().out.strip()
+    assert out.endswith(("04:00", "21:00")) and len(out) == len("2026-10-15 21:00")
+
+
+def test_upload_without_login_fails_cleanly(monkeypatch, tmp_path, capsys):
+    from mayzfact.store import write_json_atomic
+
+    paths = RunPaths(tmp_path / "NSua7RPoFJg")
+    paths.root.mkdir()
+    paths.final_mp4.write_bytes(b"mp4")
+    write_json_atomic(paths.root / "upload.json", {"title": "T #Shorts", "description": "d", "tags": [], "category_id": "15"})
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
+    assert cli.main(["upload", "NSua7RPoFJg", "--at", "2099-01-01 21:00"]) == 1
+    assert "login youtube" in capsys.readouterr().err
