@@ -139,7 +139,11 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 progress = paths.fetch_progress_json
                 payload = read_json(progress) if progress.exists() else {}
                 if prefetcher:
-                    payload["prefetch"] = prefetcher.snapshot()
+                    # Download link udah pindah ke brief, jadi angka "Links Downloaded" diambil dari sini, bukan dari fetch.
+                    snap = prefetcher.snapshot()
+                    payload["prefetch"] = snap
+                    payload["links_total"] = len(snap)
+                    payload["links_done"] = sum(1 for st in snap.values() if st.get("state") == "siap")
                 return self._json(200, payload)
             if url.path == "/api/state":
                 return self._json(200, {"plan": plan(), "links": load_links(paths.links_json), "status": status()})

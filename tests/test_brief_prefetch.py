@@ -87,3 +87,28 @@ def test_saving_links_queues_downloads_and_progress_shows_them(tmp_path):
         srv.shutdown()
         srv.server_close()
         pf.stop()
+
+
+def test_links_downloaded_bar_counts_prefetch_not_fetch(tmp_path):
+    """Bar 'Links Downloaded' di panel progress ngambil dari status prefetch (siap/total), bukan dari fetch."""
+    paths = RunPaths(tmp_path / "abc")
+    (paths.root / "plan").mkdir(parents=True)
+    write_json_atomic(paths.shots_plan_json, PLAN)
+    write_json_atomic(paths.fetch_progress_json, {"state": "running", "links_done": 0, "links_total": 2, "shots_done": 1, "shots_total": 3, "log": []})
+    pf = Prefetcher(paths, lambda entry, root: [Path("x_0.mp4")], log=lambda m: None)
+    pf.start()
+    srv = make_server(paths, 0, prefetcher=pf)
+    thread = threading.Thread(target=srv.serve_forever, daemon=True)
+    thread.start()
+    base = f"http://127.0.0.1:{srv.server_address[1]}"
+    try:
+        httpx.post(base + "/api/links", json={"shots": {"0": "https://vt.tiktok.com/ZS1/", "1": "https://vt.tiktok.com/ZS2/"}})
+        assert wait_until(lambda: all(s["state"] == "siap" for s in pf.snapshot().values()) and len(pf.snapshot()) == 2)
+        p = httpx.get(base + "/api/progress").json()
+        assert (p["links_done"], p["links_total"]) == (2, 2)  # dari prefetch, bukan angka 0 dari fetch
+        html = httpx.get(base + "/").text
+        assert "renderPrefetch" in html and "links_done" in html
+    finally:
+        srv.shutdown()
+        srv.server_close()
+        pf.stop()
