@@ -3,15 +3,25 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import tempfile
+import time
 from datetime import datetime, timedelta, timezone
+from http.client import HTTPException
 from pathlib import Path
 from typing import Any, Callable
 
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, field_validator
 
 from mayzfact.errors import PipelineError
-from mayzfact.store import RunPaths, read_json, write_json_atomic
+from mayzfact.store import (
+    REPLACE_TRIES,
+    REPLACE_WAIT_S,
+    RunPaths,
+    read_json,
+    write_json_atomic,
+)
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 WIB = timezone(timedelta(hours=7))  # WIB nggak pakai DST, jadi cukup offset tetap
@@ -40,9 +50,23 @@ def set_env_value(env_file: Path, name: str, value: str) -> None:
     out = [line for line in lines if not pattern.match(line)]
     at = next((i for i, line in enumerate(lines) if pattern.match(line)), None)
     out.insert(len(out) if at is None else at, f"{name}='{value}'")
-    tmp = env_file.with_name(env_file.name + ".tmp")
-    tmp.write_text("\n".join(out) + "\n", encoding="utf-8")
-    tmp.replace(env_file)
+    # mkstemp: nama unik + permission owner-only (0600), soalnya isinya semua secret di .env
+    fd, tmp = tempfile.mkstemp(dir=env_file.parent, prefix=".env.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(out) + "\n")
+        for attempt in range(REPLACE_TRIES):
+            try:
+                os.replace(tmp, env_file)
+                return
+            except PermissionError:  # Windows: .env lagi dibuka proses lain
+                if attempt == REPLACE_TRIES - 1:
+                    raise PipelineError("youtube", f"{env_file.name} lagi dikunci proses lain, {name} nggak kesimpen. "
+                                        "Tutup yang lagi buka file itu, terus login ulang.") from None
+                time.sleep(REPLACE_WAIT_S)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
 
 def _flow_class():
@@ -108,7 +132,7 @@ def load_meta(paths: RunPaths) -> UploadMeta:
         raise PipelineError("upload", f"{path} belum ada. Agent harus nulis metadata-nya dulu.")
     try:
         return UploadMeta(**read_json(path))
-    except (ValidationError, TypeError) as exc:
+    except (ValueError, TypeError) as exc:
         raise PipelineError("upload", f"upload.json nggak valid: {exc}") from exc
 
 
@@ -162,27 +186,36 @@ def video_body(meta: UploadMeta, publish_at: datetime) -> dict:
 
 def service(token_json: str) -> Any:
     """Client YouTube Data API. Access token di-refresh otomatis; refresh token-nya tetap, jadi .env nggak ditulis ulang."""
-    from google.auth.exceptions import RefreshError
+    from google.auth.exceptions import GoogleAuthError, RefreshError
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
 
     if not token_json.strip():
         raise PipelineError("youtube", f"Belum login YouTube. {LOGIN_HINT}")
-    creds = Credentials.from_authorized_user_info(parse_json_env("YOUTUBE_TOKEN_JSON", token_json), SCOPES)
+    info = parse_json_env("YOUTUBE_TOKEN_JSON", token_json)
+    try:
+        creds = Credentials.from_authorized_user_info(info, SCOPES)
+    except ValueError:
+        raise PipelineError("youtube", f"YOUTUBE_TOKEN_JSON nggak lengkap. Login ulang. {LOGIN_HINT}") from None
     if not creds.valid:
         try:
             creds.refresh(Request())
         except RefreshError:
             raise PipelineError("youtube", f"Token YouTube ditolak (dicabut atau expired). Login ulang. {LOGIN_HINT}") from None
+        except GoogleAuthError as exc:  # TransportError: offline / DNS putus
+            raise PipelineError("youtube", f"Nggak bisa nyambung ke Google buat refresh token ({type(exc).__name__}). "
+                                "Cek koneksi internet, terus coba lagi.") from None
     return build("youtube", "v3", credentials=creds, cache_discovery=False)
 
 
 def upload_video(paths: RunPaths, meta: UploadMeta, publish_at: datetime, make_service: Callable[[], Any],
                  log: Callable[[str], None]) -> dict:
     """Upload final.mp4 sebagai video terjadwal. Semua cek lokal dulu, baru nyentuh YouTube."""
+    from google.auth.exceptions import GoogleAuthError
     from googleapiclient.errors import HttpError
     from googleapiclient.http import MediaFileUpload
+    from httplib2 import HttpLib2Error
 
     out = paths.root / "youtube.json"
     if out.exists():
@@ -201,8 +234,10 @@ def upload_video(paths: RunPaths, meta: UploadMeta, publish_at: datetime, make_s
     except HttpError as exc:
         reason = getattr(exc, "reason", "") or ""
         raise PipelineError("upload", f"YouTube nolak upload ({getattr(exc, 'status_code', '?')}): {reason}") from exc
-    except OSError as exc:
-        raise PipelineError("upload", f"Koneksi putus pas upload: {exc}. Aman dicoba lagi.") from exc
+    except (OSError, HTTPException, HttpLib2Error, GoogleAuthError) as exc:
+        # Kalau putusnya pas chunk terakhir, videonya bisa udah masuk walau response-nya ilang.
+        raise PipelineError("upload", f"Koneksi ke YouTube putus pas upload ({type(exc).__name__}). Cek YouTube Studio "
+                            "dulu sebelum upload ulang, bisa jadi videonya udah masuk.") from exc
     video_id = response["id"]
     data = {
         "video_id": video_id,

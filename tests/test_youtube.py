@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 import httplib2
@@ -188,3 +189,66 @@ def test_youtube_error_leaves_no_result(tmp_path):
 def test_service_needs_login():
     with pytest.raises(PipelineError, match="login youtube"):
         youtube.service("")
+
+
+def test_service_turns_offline_refresh_into_clean_error(monkeypatch):
+    from google.auth.exceptions import TransportError
+    from google.oauth2.credentials import Credentials
+
+    def offline(self, request):
+        raise TransportError("offline")
+
+    monkeypatch.setattr(Credentials, "refresh", offline)
+    no_access_token = '{"refresh_token": "r", "client_id": "c", "client_secret": "s"}'  # token kosong → harus refresh
+    with pytest.raises(PipelineError, match="koneksi"):
+        youtube.service(no_access_token)
+
+
+def test_service_asks_relogin_for_incomplete_token():
+    with pytest.raises(PipelineError, match="login youtube"):
+        youtube.service('{"token": "a"}')
+
+
+@pytest.mark.parametrize("error", ["dns", "incomplete", "auth", "reset"])
+def test_connection_errors_tell_to_check_studio_first(tmp_path, error):
+    import http.client
+
+    from google.auth.exceptions import TransportError
+
+    exc = {"dns": httplib2.error.ServerNotFoundError("dns"), "incomplete": http.client.IncompleteRead(b""),
+           "auth": TransportError("offline"), "reset": ConnectionResetError("reset")}[error]
+    paths = ready_run(tmp_path)
+    with pytest.raises(PipelineError, match="YouTube Studio"):
+        youtube.upload_video(paths, youtube.UploadMeta(**META), wib("2026-10-15 21:00"),
+                             lambda: FakeService(FakeRequest(exc)), print)
+    assert not (paths.root / "youtube.json").exists()
+
+
+def test_load_meta_reports_broken_json(tmp_path):
+    paths = RunPaths(tmp_path)
+    (paths.root / "upload.json").write_text('{"title": "a', encoding="utf-8")
+    with pytest.raises(PipelineError, match="upload.json"):
+        youtube.load_meta(paths)
+
+
+def test_set_env_value_cleans_up_when_env_is_locked(monkeypatch, tmp_path):
+    env = tmp_path / ".env"
+    env.write_text("GEMINI_MODEL=x\n", encoding="utf-8")
+
+    def locked(src, dst):
+        raise PermissionError("dikunci proses lain")
+
+    monkeypatch.setattr(os, "replace", locked)
+    with pytest.raises(PipelineError, match="login ulang"):
+        youtube.set_env_value(env, "YOUTUBE_TOKEN_JSON", TOKEN)
+    assert [p.name for p in tmp_path.iterdir()] == [".env"]  # file sementara (isinya secret) nggak ketinggalan
+    assert env.read_text(encoding="utf-8") == "GEMINI_MODEL=x\n"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="permission POSIX; di Windows ngikut ACL folder")
+def test_set_env_value_keeps_env_owner_only(tmp_path):
+    env = tmp_path / ".env"
+    env.write_text("GEMINI_MODEL=x\n", encoding="utf-8")
+    env.chmod(0o644)
+    youtube.set_env_value(env, "YOUTUBE_TOKEN_JSON", TOKEN)
+    assert env.stat().st_mode & 0o777 == 0o600
