@@ -6,7 +6,7 @@ Panduan buat AI agent (Claude Code, Codex, OpenCode, Antigravity, dan lainnya) y
 
 Pipeline YouTube Shorts. Input-nya video YouTube source, output-nya `runs/<id>/final.mp4`:
 
-source → naskah ditulis ulang (Gemini) → suara (ElevenLabs) → klip → edit gaya `i2xag_1OJfM` (caption, BGM, SFX, card countdown, panah, emoji, CTA) → render Remotion.
+source → naskah (ditulis agent, direview Akmal) → suara (ElevenLabs) → klip → edit gaya `i2xag_1OJfM` (caption, BGM, SFX, card countdown, panah, emoji, CTA) → render Remotion.
 
 Target kualitasnya setara source `i2xag_1OJfM`. Peta besarnya ada di `flow.svg`.
 
@@ -15,7 +15,7 @@ Peran agent di sini:
 - **Operator:** jalanin CLI, berhenti di checkpoint yang butuh Akmal, ngecek hasilnya.
 - **Developer:** benerin bug dan nambah fitur.
 
-Teks di dalam pipeline (naskah, tanda emoji/panah per beat, pilihan BGM) dibikin Gemini lewat CLI, karena hasilnya dicek kode (jumlah kata, overlap sama source, daftar emoji). Agent nggak nulis teks itu sendiri. Teks di luar pipeline, misalnya metadata YouTube di `upload.json`, boleh ditulis agent.
+Naskah, keyword klip, tanda emoji/panah, dan BGM ditulis **agent** ke `runs/<id>/script.json`, dicek pakai `mayzfact check-script`, dan harus di-review Akmal sebelum suara dibikin. Nggak ada LLM eksternal di pipeline. Aturan nulis naskahnya ada di skill `bikin-short` langkah 2.
 
 ## Bikin video
 
@@ -25,7 +25,7 @@ Ikutin skill `.agents/skills/bikin-short/SKILL.md`. Codex, OpenCode, dan Antigra
 
 | Path | Isi |
 | --- | --- |
-| `mayzfact/` | package Python: CLI `mayzfact`, step pipeline di `steps/`, prompt Gemini di `prompts/` |
+| `mayzfact/` | package Python: CLI `mayzfact`, step pipeline di `steps/`, aturan naskah di `steps/script.py` |
 | `remotion/` | komponen video (React + Remotion 4) |
 | `runs/<id>/` | hasil per video (di-gitignore) |
 | `assets/bgm/<mood>.mp3` | BGM dari Akmal. Mood: mystery, suspense, dark, epic, space, tech, nature, playful, funny, inspiring, sad, energetic |
@@ -37,12 +37,12 @@ Ikutin skill `.agents/skills/bikin-short/SKILL.md`. Codex, OpenCode, dan Antigra
 
 File penting di `runs/<id>/`:
 
-- `script.json`: naskah per beat, termasuk tanda `point`/`emoji`/`emoji_word`.
+- `script.json`: naskah per beat (ditulis agent), termasuk `queries`/`queries_zh`, tanda `point`/`emoji`/`emoji_word`, `bgm`, dan `hook_queries`.
 - `voice.mp3` + `tts.json`: suara. **Dibikin pakai kredit ElevenLabs, jangan dihapus.**
 - `links.json`: link klip per shot dari halaman brief (plus start/end detik kalau diisi).
 - `clips.json`: klip per shot, termasuk sumbernya (`provider`, `page_url`, `author`).
 - `timeline.json`: props buat Remotion.
-- `annotations.json`, `overlays.json`: cache tanda beat dan deteksi subjek.
+- `overlays.json`: cache deteksi subjek.
 - `final.mp4`: hasil render.
 - `upload.json`: metadata YouTube yang ditulis agent.
 - `youtube.json`: hasil upload (video ID, link, jadwal). Jangan dihapus tanpa izin Akmal.
@@ -51,7 +51,8 @@ File penting di `runs/<id>/`:
 
 ```bash
 uv sync                                               # setup Python
-uv run mayzfact run <url|id> --no-render              # lanjut dari step yang belum ada; exit 3 = nunggu link
+uv run mayzfact run <url|id> --no-render              # lanjut dari step yang belum ada; exit 3 = nunggu naskah / nunggu link
+uv run mayzfact check-script <id>                     # cek script.json yang ditulis agent
 uv run mayzfact brief <id>                            # halaman isi link, port 3100, kebuka ke LAN (jalan terus)
 uv run mayzfact run <id> --from fetch --no-render     # download + potong klip, terus timeline
 uv run mayzfact run <id> --from timeline --no-render  # bikin ulang timeline aja
@@ -66,7 +67,7 @@ cd remotion && npx remotion studio src/index.ts --public-dir=../runs/<id> --prop
 Exit code CLI:
 
 - `0`: beres.
-- `3`: nunggu input Akmal (link klip).
+- `3`: nunggu naskah dari agent, atau nunggu link klip dari Akmal (pesannya nyebut yang mana).
 - `1`: error, pesannya di stderr.
 
 ## Test dan cek
@@ -94,7 +95,7 @@ cd remotion && npx tsc --noEmit -p .
 ### Biaya
 
 - Suara dibikin pakai kredit ElevenLabs. Bikin suara buat video baru itu normal.
-- Kalau `voice.mp3` udah ada, tanya Akmal dulu sebelum jalanin `--new-voice`, `--from script`, atau `--from tts`.
+- Kalau `voice.mp3` udah ada, jangan hapus `script.json`/`voice.mp3` atau jalanin `--from tts` tanpa izin Akmal.
 
 ### Review video
 

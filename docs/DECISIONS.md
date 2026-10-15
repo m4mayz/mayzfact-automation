@@ -25,7 +25,7 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 
 ## D-003 — 2026-09-30 — LLM pakai Gemini API
 
-- **Status:** accepted
+- **Status:** diganti D-028 (Gemini dicabut)
 - **Keputusan:** rewrite naskah + keyword klip pakai Gemini (SDK `google-genai`, structured output). Model diatur lewat `GEMINI_MODEL`.
 - **Konsekuensi:** vision buat Fase 2 juga bisa pakai Gemini.
 - **Authority:** pilihan Akmal (chat 2026-09-30).
@@ -89,7 +89,7 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 
 ## D-010 — 2026-10-01 — Gemini juga pakai banyak API key
 
-- **Status:** accepted
+- **Status:** diganti D-028 (Gemini dicabut)
 - **Konteks:** Akmal ngisi 3 key Gemini dipisah koma. Ketiganya udah dicek valid, dan `gemini-3.8-flash` tersedia di semua key.
 - **Keputusan:**
   - Variabelnya `GEMINI_API_KEYS`. Nama variabel di `.env` di-rename dari `GEMINI_API_KEY`, isinya nggak disentuh.
@@ -313,4 +313,18 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   3. Agent ngusulin slot kosong berikutnya (04.00/21.00 WIB) lewat `mayzfact next-slot`. Upload cuma jalan setelah Akmal konfirmasi jamnya.
   4. Video di-upload sebagai private + `publishAt`, jadi YouTube yang bikin public di jamnya. Hasilnya di `runs/<id>/youtube.json`, dan run yang sama nggak bisa ke-upload 2 kali.
   5. Kalau Akmal minta langsung tayang, `mayzfact upload <id> --now` upload sebagai public tanpa `publishAt`.
+- **Authority:** Akmal (chat 2026-10-15).
+
+## D-028 — 2026-10-15 — Naskah ditulis agent, Gemini dicabut
+
+- **Status:** accepted. Ngegantiin D-003 dan D-010.
+- **Konteks:** Naskah dari Gemini kaku dan humornya hilang (run `4735ZE89GXQ`). Akmal mau naskah jadi tanggung jawab harness agent dan dia review dulu sebelum suara dibikin.
+- **Keputusan (dari interview):**
+  1. Naskah = nulis ulang source: fakta, urutan, dan momen tetap, kata-katanya baru. Nggak nambah fakta dari luar source.
+  2. Nada persis source, termasuk "bro" dan celetukan penutup tiap item.
+  3. Panjang ±80% durasi source, intro dipadetin.
+  4. CTA dipadetin ke comment + like + subscribe (1–2 beat), harus pakai kata "like"/"subscribe" beneran. `check-script` nolak kalau kata CTA source hilang.
+  5. Panah/ajakan lihat: agent yang nentuin, nggak ada kuota.
+  6. Review di chat per beat (teks baru | sumber | keyword). Suara setelah Akmal oke.
+  7. Gemini dicabut total: naskah, keyword klip (EN + ZH), tanda emoji/panah, BGM, keyword hook semua ditulis agent di `script.json`. `run` berhenti exit 3 sampai naskah ada; frame hook dibikin di step `source` biar agent bisa lihat.
 - **Authority:** Akmal (chat 2026-10-15).
