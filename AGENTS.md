@@ -15,7 +15,7 @@ Peran agent di sini:
 - **Operator:** jalanin CLI, berhenti di checkpoint yang butuh Akmal, ngecek hasilnya.
 - **Developer:** benerin bug dan nambah fitur.
 
-Teks di dalam pipeline (naskah, tanda emoji/panah per beat, pilihan BGM) dibikin Gemini lewat CLI, karena hasilnya dicek kode (jumlah kata, overlap sama source, daftar emoji). Agent nggak nulis teks itu sendiri. Teks di luar pipeline, misalnya metadata upload, boleh ditulis agent.
+Teks di dalam pipeline (naskah, tanda emoji/panah per beat, pilihan BGM) dibikin Gemini lewat CLI, karena hasilnya dicek kode (jumlah kata, overlap sama source, daftar emoji). Agent nggak nulis teks itu sendiri. Teks di luar pipeline, misalnya metadata YouTube di `upload.json`, boleh ditulis agent.
 
 ## Bikin video
 
@@ -44,6 +44,8 @@ File penting di `runs/<id>/`:
 - `timeline.json`: props buat Remotion.
 - `annotations.json`, `overlays.json`: cache tanda beat dan deteksi subjek.
 - `final.mp4`: hasil render.
+- `upload.json`: metadata YouTube yang ditulis agent.
+- `youtube.json`: hasil upload (video ID, link, jadwal). Jangan dihapus tanpa izin Akmal.
 
 ## Perintah
 
@@ -54,6 +56,9 @@ uv run mayzfact brief <id>                            # halaman isi link, port 3
 uv run mayzfact run <id> --from fetch --no-render     # download + potong klip, terus timeline
 uv run mayzfact run <id> --from timeline --no-render  # bikin ulang timeline aja
 uv run mayzfact run <id> --from render                # render final.mp4 (5–8 menit)
+uv run mayzfact login youtube                         # login Google sekali, token masuk .env
+uv run mayzfact next-slot                             # slot tayang kosong berikutnya (04.00/21.00 WIB)
+uv run mayzfact upload <id> --at "YYYY-MM-DD HH:MM"  # upload terjadwal, jam WIB
 cd remotion && npx remotion studio src/index.ts --public-dir=../runs/<id> --props=../runs/<id>/timeline.json --port=3000 --no-open
 ```
 
@@ -76,7 +81,8 @@ cd remotion && npx tsc --noEmit -p .
 
 ### Keamanan (wajib)
 
-- Jangan print, log, atau commit isi `.env` (API key), cookie, atau apa pun di `browser-profiles/`.
+- Jangan print, log, atau commit isi `.env` (API key, termasuk `YOUTUBE_CLIENT_SECRET_JSON` dan `YOUTUBE_TOKEN_JSON`), cookie, atau apa pun di `browser-profiles/`.
+- Upload ke YouTube itu aksi keluar yang nggak bisa ditarik. Jalanin `mayzfact upload` cuma setelah Akmal konfirmasi jam tayangnya.
 - Jangan solve captcha yang butuh manusia. Jangan rotasi proxy/IP. Jangan spoof fingerprint, termasuk impersonation `curl_cffi` di yt-dlp.
 - Kalau platform minta captcha atau login ulang, berhenti. Minta Akmal jalanin `uv run mayzfact login <platform>`.
 - Challenge yang diselesaiin browser biasa tanpa manusia (WAF proof-of-work Douyin) boleh (D-018).

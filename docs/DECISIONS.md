@@ -282,7 +282,7 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 
 ## D-025 — 2026-10-14 — Fase 4 jadi versi harness: project dijalanin lewat AI agent
 
-- **Status:** accepted. Ngegantiin D-001 poin 4.
+- **Status:** accepted. Ngegantiin D-001 poin 4. Poin 4 di bawah diganti D-027.
 - **Konteks:** Alur sekarang tetap butuh Akmal di tiap video: isi link klip, review di Studio, oke-in render. Jadi pipeline yang jalan sendiri pakai cron udah nggak relevan. Akmal mau project ini dipakai lewat harness AI agent: Claude Code, Codex, OpenCode, Antigravity.
 - **Keputusan:**
   1. Aturan main agent ada di `AGENTS.md`. `CLAUDE.md` cukup import `AGENTS.md`, karena Claude Code bacanya `CLAUDE.md`.
@@ -302,3 +302,14 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   3. Server brief selalu bind `0.0.0.0` biar bisa dibuka dari HP. Host cuma boleh localhost atau IP privat, POST tetap dicek Origin. Nggak ada login, jadi jangan dijalanin di WiFi publik.
   4. Naskah: tiap item countdown minimal punya 2 beat penjelasan.
 - **Authority:** Akmal (chat dengan harness lain, 2026-10-14).
+
+## D-027 — 2026-10-15 — Upload terjadwal lewat YouTube Data API
+
+- **Status:** accepted. Ngegantiin D-025 poin 4.
+- **Konteks:** Akmal mau agent sekalian upload dan jadwalin video setelah `final.mp4` oke. Project Google Cloud-nya udah lolos audit YouTube API, jadi video yang di-upload lewat API nggak kekunci private.
+- **Keputusan:**
+  1. Login OAuth sekali lewat `mayzfact login youtube` (scope `youtube.upload`). Token ditulis ke baris `YOUTUBE_TOKEN_JSON` di `.env`, sama kayak `YOUTUBE_CLIENT_SECRET_JSON`.
+  2. Agent nulis metadata ke `runs/<id>/upload.json`: judul bahasa Inggris ≤ 100 karakter + `#Shorts`, deskripsi + credit klip, 5–10 tag, kategori sesuai isi, bahasa `en`, made for kids `false`.
+  3. Agent ngusulin slot kosong berikutnya (04.00/21.00 WIB) lewat `mayzfact next-slot`. Upload cuma jalan setelah Akmal konfirmasi jamnya.
+  4. Video di-upload sebagai private + `publishAt`, jadi YouTube yang bikin public di jamnya. Hasilnya di `runs/<id>/youtube.json`, dan run yang sama nggak bisa ke-upload 2 kali.
+- **Authority:** Akmal (chat 2026-10-15).
