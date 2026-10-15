@@ -179,3 +179,14 @@ def test_lan_server_allows_private_ip_and_blocks_evil_domain(tmp_path):
         srv.shutdown()
         srv.server_close()
 
+
+
+def test_shot_time_buttons_play_the_narration_not_the_source(server):
+    paths, base = server
+    html = httpx.get(base + "/").text
+    assert "seekSourceVideo" not in html
+    assert 'class="time-seek-pill" disabled' in html  # voice.mp3 belum ada
+    paths.voice_mp3.write_bytes(b"mp3")
+    html = httpx.get(base + "/").text
+    assert '<audio id="voice" src="/files/voice.mp3" preload="metadata">' in html
+    assert 'onclick="playBeat(this, 2.0, 4.0)"' in html and "disabled" not in html.split("time-seek-pill")[2][:40]

@@ -652,6 +652,17 @@ body {
   color: var(--blue-main);
 }
 
+.time-seek-pill.is-playing {
+  background: var(--blue-main);
+  border-color: var(--blue-main);
+  color: #fff;
+}
+
+.time-seek-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .z-badge {
   font-size: 11px;
   font-weight: 700;
@@ -1355,13 +1366,28 @@ function filterShots(mode, btn) {
   });
 }
 
-function seekSourceVideo(seconds) {
-  const v = document.getElementById('source-video');
-  if (v) {
-    v.currentTime = seconds;
-    v.play().catch(() => {});
-    showToast(`Detik ${seconds.toFixed(1)}s`);
-  }
+// Tombol waktu di tiap shot muter suara naskah beat itu (start_s/end_s itu waktu di voice.mp3, bukan di source).
+let beatStop = null;
+function clearPlaying() {
+  document.querySelectorAll('.time-seek-pill.is-playing').forEach(b => b.classList.remove('is-playing'));
+}
+function playBeat(btn, start, end) {
+  const a = document.getElementById('voice');
+  if (!a) return;
+  const active = document.querySelector('.time-seek-pill.is-playing');
+  clearPlaying();
+  if (active === btn) { a.pause(); beatStop = null; return; }
+  a.currentTime = start;
+  beatStop = end;
+  btn.classList.add('is-playing');
+  a.play().catch(() => {});
+}
+const voiceEl = document.getElementById('voice');
+if (voiceEl) {
+  voiceEl.addEventListener('timeupdate', () => {
+    if (beatStop !== null && voiceEl.currentTime >= beatStop) { voiceEl.pause(); beatStop = null; clearPlaying(); }
+  });
+  voiceEl.addEventListener('ended', clearPlaying);
 }
 
 const sourceVideoEl = document.getElementById('source-video');
@@ -1629,8 +1655,10 @@ def _detect_token(url: str) -> tuple[str, str]:
     return "/web-url", ""
 
 
-def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict) -> str:
+def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, voice_ok: bool = False) -> str:
     s_idx = shot["index"]
+    pill_attr = (f'onclick="playBeat(this, {shot["start_s"]:.1f}, {shot["end_s"]:.1f})"' if voice_ok
+                 else 'disabled title="suara belum ada"')
     refs = "".join(f'<img src="/files/{escape(f)}" onclick="openLightbox(this.src)" loading="lazy">' for f in shot.get("ref_frames", []))
 
     kw_list = []
@@ -1689,7 +1717,7 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict) ->
       <div class="shot-top-bar">
         <div class="shot-meta-left">
           <span class="shot-num">Shot {s_idx + 1:02d}</span>
-          <button type="button" class="time-seek-pill" onclick="seekSourceVideo({shot['start_s']:.1f})">
+          <button type="button" class="time-seek-pill" {pill_attr}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             {shot['start_s']:.1f}s – {shot['end_s']:.1f}s
           </button>
@@ -1737,7 +1765,7 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict) ->
     </div>"""
 
 
-def _card(group: dict, shots: list[dict], links: dict, status: dict) -> str:
+def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: bool = False) -> str:
     is_hook = group["id"] == "hook"
     refs = "".join(f'<img src="/files/{escape(f)}" onclick="openLightbox(this.src)" loading="lazy">' for f in group.get("ref_frames", []))
 
@@ -1759,7 +1787,7 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict) -> str:
         elif "groups" in status and group["id"] in status["groups"]:
             st = status["groups"][group["id"]]
 
-        shot_rows.append(_shot_row(shot, group, entry, st))
+        shot_rows.append(_shot_row(shot, group, entry, st, voice_ok))
 
     return f"""
 <section class="card-group card" data-group="{escape(group['id'], quote=True)}">
@@ -1780,7 +1808,8 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict) -> str:
 </section>"""
 
 
-def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str | None = None) -> str:
+def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str | None = None,
+                voice: str | None = None) -> str:
     shots = {shot["index"]: shot for shot in plan["shots"]}
     groups = plan["groups"]
 
@@ -1840,7 +1869,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
         </div>""")
 
     cards = "".join(
-        _card(group, [shots[i] for i in group["shots"]], links, status)
+        _card(group, [shots[i] for i in group["shots"]], links, status, voice is not None)
         for group in groups
     )
 
@@ -1886,7 +1915,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
   <style>{_CSS}</style>
 </head>
 <body>
-
+{f'<audio id="voice" src="/files/{escape(voice, quote=True)}" preload="metadata"></audio>' if voice else ''}
 <header class="top-nav">
   <div class="top-nav-inner">
     <a href="#" class="brand" onclick="return false;">

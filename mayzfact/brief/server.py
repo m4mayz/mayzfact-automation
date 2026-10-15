@@ -112,7 +112,8 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             url = urlparse(self.path)
             if url.path == "/":
                 source = paths.source_mp4.name if paths.source_mp4.exists() else None
-                html = render_page(paths.root.name, plan(), load_links(paths.links_json), status(), source=source)
+                voice = paths.voice_mp3.name if paths.voice_mp3.exists() else None
+                html = render_page(paths.root.name, plan(), load_links(paths.links_json), status(), source=source, voice=voice)
                 return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
             if url.path == "/api/progress":
                 progress = paths.fetch_progress_json
