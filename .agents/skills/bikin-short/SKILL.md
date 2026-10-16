@@ -25,9 +25,17 @@ Agent nulis `runs/<id>/script.json`. Ini tanggung jawab agent, nggak ada LLM lai
 
 **Isi.** Nulis ulang source: fakta, urutan item, dan momen-momennya tetap, kata-katanya baru. Jangan nambah fakta dari luar source. Pertahankan kata pembatas source ("some species", "one of the"); jangan dilebih-lebihin. Kalau source ngitung ("Number five…"), urutan dan jumlah item sama, tiap item diumumin "Number N, [subject]." dan dapat minimal 2 beat penjelasan.
 
+Tiap beat harus bisa ditunjuk kalimat source-nya (kolom "dasar dari source" di langkah 3). Beat yang nggak punya dasar itu rekaan, hapus. Pengecualiannya cuma beat CTA. Kesalahan yang sering kejadian:
+
+- Intro/teaser rekaan. Kalau source langsung masuk item pertama, naskah juga langsung masuk. Jangan nambahin "Five crazy facts you never knew" atau "Wait until you see number five".
+- Ganti kata yang ngubah arti. "Strong enough to sit on" ≠ "buoyant enough to sit on" (kuat ≠ ngapung). Kalau ragu, pakai kata kerja/sifat yang sama kayak source.
+- Nambah perbandingan atau angka. "Easily digested" ≠ "digests faster". Jangan bikin "faster/bigger/most" kalau source nggak bilang.
+- Ngerasin klaim. "Can die if kept underwater" ≠ "will suffocate when trapped". "Can/may/some" di source tetap "can/may/some". Jangan pakai "zero", "always", "never", "will" kalau source nggak bilang.
+- Detail source yang dibuang. Kalau source bilang "sit on it and even walk on it", dua-duanya masuk.
+
 **Nada.** Persis source. Kalau source santai dan pakai "bro", naskah juga. Tiap item ditutup celetukan atau perbandingan sehari-hari kayak source ("Bro, that's basically a living underwater punch machine"). Hindari kata bombastis (terrifyingly, blazing, lightning-fast). Kalau mau beda dari source, ubah struktur kalimat dan sudut pandangnya, jangan cuma ganti sinonim.
 
-**Panjang.** ±80% durasi source (2.6 kata/detik). Intro dipadetin. CTA source dipadetin ke comment + like + subscribe dalam 1–2 beat, dan **harus pakai kata "like" dan "subscribe" beneran** (itu pemicu animasi CTA). Teaser nomor 1 di hook dipertahankan kalau source punya.
+**Panjang.** ±80% durasi source. `check-script` ngasih target kata; tulis **di bawah atau pas target**, jangan di atas, walaupun toleransinya ±15%. ElevenLabs v3 ngomong cuma ±2.4 kata/detik (lebih pelan dari 2.6 yang dipakai `check-script`), jadi naskah yang pas di atas target hasilnya 90%+ durasi source. Pendekin dengan buang kata hiasan ("actually", "just like", "way", "amazing", "for more"), bukan dengan buang fakta. Intro dipadetin. CTA source dipadetin ke comment + like + subscribe dalam 1–2 beat, dan **harus pakai kata "like" dan "subscribe" beneran** (itu pemicu animasi CTA). Teaser nomor 1 di hook dipertahankan kalau source punya.
 
 **Format.** Tiap beat ≤ 10 kata, 1 ide visual:
 
@@ -44,7 +52,7 @@ Agent nulis `runs/<id>/script.json`. Ini tanggung jawab agent, nggak ada LLM lai
 ```
 
 - `queries`: 2–3 keyword Inggris yang ngegambarin **yang kelihatan pas beat itu**, nyambung sama teksnya: subjek + aksi + tempat. Beat CTA/intro pakai visual yang cocok sama kalimatnya ("hand tapping phone like button"). `queries_zh`: versi Mandarin, cara orang nyari di Douyin.
-- `media`: "photo" buat 15–45% beat (close-up subjek), beat pertama selalu "video". `subject`: 1–3 kata, "" buat intro/CTA.
+- `media`: "photo" buat 15–45% beat (close-up subjek), beat pertama selalu "video". `subject`: 1–3 kata benda yang **kelihatan di gambar**, dipakai deteksi subjek buat posisi panah (misal "goat", bukan "goat milk"; "turtle", bukan "drowning reptiles"). "" buat intro/CTA.
 - `point`: true kalau beat ngajak lihat sesuatu atau subjeknya baru muncul di layar; agent yang nentuin, nggak ada kuota. Jangan di beat countdown/teaser.
 - `emoji`: dari daftar di `mayzfact/emoji.py` (`EMOJI`), kira-kira 1 dari 3 beat, nggak 2 beat berturut-turut, nggak di beat countdown. `emoji_word`: kata di beat itu tempat emoji muncul.
 - `bgm`: nama file di `assets/bgm/` yang mood-nya cocok (lihat `ls assets/bgm`). "" kalau nggak ada yang cocok.
@@ -61,6 +69,8 @@ uv run mayzfact check-script <id>
 ```
 
 Perbaiki sampai keluar `OK`. Kalau cek jumlah kata gagal, tambah/kurangi beat, jangan nambah kata ke beat yang ada.
+
+`OK` cuma berarti format dan jumlah kata lolos. Sebelum nunjukin ke Akmal, cek sendiri tiap beat terhadap aturan **Isi** di atas: ada dasar kalimat source-nya, artinya sama, nggak ada perbandingan/angka/klaim yang lebih keras.
 
 ## 3. Checkpoint: Akmal review naskah
 
