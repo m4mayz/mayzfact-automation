@@ -45,6 +45,7 @@ File penting di `runs/<id>/`:
 - `overlays.json`: cache deteksi subjek.
 - `final.mp4`: hasil render.
 - `upload.json`: metadata YouTube yang ditulis agent.
+- `tiktok.json`: caption + cover + label AI buat TikTok. Akmal upload ke TikTok manual.
 - `youtube.json`: hasil upload (video ID, link, jadwal). Jangan dihapus tanpa izin Akmal.
 - `prefetch.json`: status download link dari halaman brief (`antre`/`download`/`siap`/`gagal` per URL).
 

@@ -7,7 +7,7 @@ description: Bikin 1 video YouTube Shorts dari video source (URL/ID YouTube) pak
 
 Alurnya:
 
-source → **[agent tulis naskah]** → **[Akmal review naskah]** → suara → plan → **[Akmal isi link]** → fetch → timeline → **[Akmal review di Studio]** → render → **[Akmal cek final]** → metadata → **[Akmal konfirmasi jam]** → upload
+source → **[agent tulis naskah]** → **[Akmal review naskah]** → suara → plan → **[Akmal isi link]** → fetch → timeline → **[Akmal review di Studio]** → render → **[Akmal cek final]** → metadata → **[Akmal konfirmasi jam]** → upload YouTube → metadata TikTok (Akmal upload manual)
 
 Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal persis apa yang harus dia lakuin. Aturan umum ada di `AGENTS.md`, terutama bagian Keamanan, Biaya, dan Review video.
 
@@ -158,3 +158,22 @@ uv run mayzfact upload <id> --now                         # langsung public, cum
 - Kalau error "Belum login YouTube" atau "Token YouTube ditolak": minta Akmal jalanin `uv run mayzfact login youtube` (browser kebuka buat izin akun), terus ulang.
 - Kalau error "udah pernah di-upload": jangan hapus `youtube.json` sendiri, tanya Akmal.
 - Sukses: kasih Akmal link video dan link YouTube Studio dari output-nya.
+
+## 12. Metadata TikTok
+
+Akmal upload ke TikTok sendiri (manual). Begitu Akmal oke upload YouTube di langkah 10, agent sekalian nulis `runs/<id>/tiktok.json`:
+
+```json
+{"caption": "...", "cover_s": 1.0, "cover_text": "...", "ai_label": true}
+```
+
+- **caption:** bahasa Inggris, 1 kalimat hook + 1 pertanyaan buat komentar, terus 3–5 hashtag topik (tanpa `#fyp`/`#viral`). Maksimal 300 karakter biar kebaca tanpa "more".
+- **cover_s:** detik di `final.mp4` buat cover (frame yang subjeknya paling jelas, biasanya di hook). **cover_text:** teks cover maksimal 40 karakter, boleh sama kayak judul YouTube tanpa `#Shorts`.
+- **ai_label:** `true` (suara narasi dari ElevenLabs, dan TikTok minta label buat audio/visual AI yang realistis).
+
+Habis upload YouTube sukses, tunjukin isi `tiktok.json` di chat biar Akmal tinggal copy, plus setting tetap ini:
+
+- Who can watch: Everyone. Allow comments, Duet, Stitch: on.
+- Disclose post content: off (bukan konten berbayar).
+- AI-generated content: on.
+- Jadwal: TikTok Studio desktop bisa jadwalin sampai 10 hari ke depan. Usulin jam yang sama kayak YouTube, Akmal yang mutusin.
