@@ -116,13 +116,69 @@ def test_brief_opens_lan_by_default(monkeypatch, tmp_path, capsys, flags):
     monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
     monkeypatch.setattr(cli, "_lan_ip", lambda: "192.168.1.20")
     monkeypatch.setattr(server, "make_server", make_server)
+    link = Mock(url="https://abc.ngrok-free.dev")
+    start_tunnel = Mock(return_value=link)
+    monkeypatch.setattr(cli.tunnel_mod, "start_tunnel", start_tunnel)
 
     assert cli.main(["brief", "i2xag_1OJfM", *flags]) == 0
     make_server.assert_called_once_with(paths, 3100, host="0.0.0.0", prefetcher=ANY)
     out = capsys.readouterr().out
     assert "http://192.168.1.20:3100" in out
     assert "http://127.0.0.1:3100" in out
+    assert "https://abc.ngrok-free.dev" in out  # ngrok nyala default
+    start_tunnel.assert_called_once_with(3100, "")
     brief_server.server_close.assert_called_once()
+    link.stop.assert_called_once()  # ngrok ikut mati bareng brief
+
+
+def test_brief_keeps_running_locally_when_ngrok_fails(monkeypatch, tmp_path, capsys):
+    from unittest.mock import Mock
+
+    from mayzfact.brief import server
+
+    paths = RunPaths(tmp_path / "i2xag_1OJfM")
+    paths.root.mkdir()
+    paths.shots_plan_json.write_text("{}")
+    brief_server = Mock(server_address=("0.0.0.0", 3100))
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
+    monkeypatch.setattr(cli, "_lan_ip", lambda: "192.168.1.20")
+    monkeypatch.setattr(server, "make_server", Mock(return_value=brief_server))
+    monkeypatch.setattr(cli.tunnel_mod, "start_tunnel", Mock(side_effect=PipelineError("ngrok", "Isi NGROK_BASIC_AUTH di .env")))
+    assert cli.main(["brief", "i2xag_1OJfM"]) == 0
+    out = capsys.readouterr().out
+    assert "ngrok gagal: Isi NGROK_BASIC_AUTH" in out and "http://127.0.0.1:3100" in out
+
+
+def test_brief_no_ngrok_flag_skips_tunnel(monkeypatch, tmp_path):
+    from unittest.mock import Mock
+
+    from mayzfact.brief import server
+
+    paths = RunPaths(tmp_path / "i2xag_1OJfM")
+    paths.root.mkdir()
+    paths.shots_plan_json.write_text("{}")
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
+    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
+    monkeypatch.setattr(cli, "_lan_ip", lambda: "192.168.1.20")
+    monkeypatch.setattr(server, "make_server", Mock(return_value=Mock(server_address=("0.0.0.0", 3100))))
+    start_tunnel = Mock()
+    monkeypatch.setattr(cli.tunnel_mod, "start_tunnel", start_tunnel)
+    assert cli.main(["brief", "i2xag_1OJfM", "--no-ngrok"]) == 0
+    start_tunnel.assert_not_called()
+
+
+def test_tunnel_command_prints_url_and_stops(monkeypatch, capsys):
+    from unittest.mock import Mock
+
+    link = Mock(url="https://abc.ngrok-free.dev")
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings(ngrok_basic_auth="akmal:akmalganteng"))
+    start_tunnel = Mock(return_value=link)
+    monkeypatch.setattr(cli.tunnel_mod, "start_tunnel", start_tunnel)
+    assert cli.main(["tunnel", "3000"]) == 0
+    start_tunnel.assert_called_once_with(3000, "akmal:akmalganteng")
+    assert "https://abc.ngrok-free.dev" in capsys.readouterr().out
+    link.stop.assert_called_once()
 
 
 def test_login_youtube_writes_into_project_env(monkeypatch):

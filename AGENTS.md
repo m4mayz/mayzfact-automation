@@ -55,7 +55,8 @@ File penting di `runs/<id>/`:
 uv sync                                               # setup Python
 uv run mayzfact run <url|id> --no-render              # lanjut dari step yang belum ada; exit 3 = nunggu naskah / nunggu link
 uv run mayzfact check-script <id>                     # cek script.json yang ditulis agent
-uv run mayzfact brief <id>                            # halaman isi link, port 3100, kebuka ke LAN; link di-download di background selama server hidup
+uv run mayzfact brief <id>                            # halaman isi link, port 3100, kebuka ke LAN + ngrok ber-password; link di-download di background
+uv run mayzfact tunnel 3000                           # tunnel ngrok ber-password ke Studio (atau port lain)
 uv run mayzfact run <id> --from fetch --no-render     # download + potong klip, terus timeline
 uv run mayzfact run <id> --from timeline --no-render  # bikin ulang timeline aja
 uv run mayzfact run <id> --from render                # render final.mp4 (5–8 menit)
@@ -91,7 +92,7 @@ cd remotion && npx tsc --noEmit -p .
 - Kalau platform minta captcha atau login ulang, berhenti. Minta Akmal jalanin `uv run mayzfact login <platform>`.
 - Challenge yang diselesaiin browser biasa tanpa manusia (WAF proof-of-work Douyin) boleh (D-018).
 - Jangan ubah atau hapus `flow.svg` dan `sources/`.
-- Halaman brief selalu kebuka ke LAN (biar bisa diisi dari HP) dan nggak ada login. Server cuma nerima Host localhost atau IP privat, tapi siapa aja di WiFi yang sama bisa buka dan upload. Jangan jalanin brief di WiFi publik, matiin kalau udah selesai.
+- Halaman brief selalu kebuka ke LAN dan ke internet lewat ngrok (biar bisa diisi dari HP). Brief sendiri nggak punya login; yang ngunci cuma basic-auth ngrok dari `NGROK_BASIC_AUTH`. Jangan pernah buka ngrok tanpa basic-auth, jangan print isi `NGROK_BASIC_AUTH`, dan matiin brief + tunnel kalau udah selesai. Siapa aja di WiFi yang sama tetap bisa buka alamat LAN, jadi jangan jalanin brief di WiFi publik.
 - Jangan commit file audio, emoji, atau model: `assets/bgm/*`, `assets/sfx/*` (kecuali `sfx.json`), `assets/emoji/`, `models/`. Semuanya udah di-gitignore, jangan dipaksa masuk.
 
 ### Biaya

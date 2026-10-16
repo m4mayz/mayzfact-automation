@@ -39,6 +39,7 @@ class Settings:
     brief_port: int = 3100
     youtube_client_secret_json: str = field(default="", repr=False)  # JSON OAuth client, jangan pernah di-print
     youtube_token_json: str = field(default="", repr=False)
+    ngrok_basic_auth: str = field(default="", repr=False)  # user:password buat tunnel ngrok, jangan di-print
 
 
 def _key_list(raw: str) -> tuple[str, ...]:
@@ -86,6 +87,7 @@ ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
     "BRIEF_PORT": ("brief_port", int),
     "YOUTUBE_CLIENT_SECRET_JSON": ("youtube_client_secret_json", str),
     "YOUTUBE_TOKEN_JSON": ("youtube_token_json", str),
+    "NGROK_BASIC_AUTH": ("ngrok_basic_auth", str),
 }
 
 

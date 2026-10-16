@@ -6,6 +6,7 @@ import argparse
 import sys
 from datetime import datetime
 
+from mayzfact import tunnel as tunnel_mod
 from mayzfact.config import PROJECT_ROOT, RUNS_DIR, Settings, load_settings, missing_env
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.net import make_client
@@ -38,6 +39,9 @@ def build_parser() -> argparse.ArgumentParser:
     brief.add_argument("video", help="Video ID atau URL YouTube")
     brief.add_argument("--port", type=int, default=None, help="Port lokal (default BRIEF_PORT)")
     brief.add_argument("--lan", action="store_true", help=argparse.SUPPRESS)
+    brief.add_argument("--no-ngrok", action="store_true", help="Jangan buka tunnel ngrok (cuma lokal/LAN)")
+    tunnel = sub.add_parser("tunnel", help="Buka tunnel ngrok ber-password ke port lokal, misal 3000 buat Studio")
+    tunnel.add_argument("port", type=int)
     return parser
 
 
@@ -53,6 +57,8 @@ def main(argv: list[str] | None = None) -> int:
             return _login(args, settings)
         if args.command == "brief":
             return _brief(args, settings)
+        if args.command == "tunnel":
+            return _tunnel(args, settings)
         if args.command == "next-slot":
             return _next_slot()
         if args.command == "upload":
@@ -191,7 +197,15 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
     prefetcher.enqueue(link_urls(load_links(paths.links_json)), retry_failed=True)  # link lama yang belum siap, termasuk yang gagal
     port = server.server_address[1]
     lan_ip = _lan_ip()
+    link = None
+    if not args.no_ngrok:
+        try:
+            link = tunnel_mod.start_tunnel(port, settings.ngrok_basic_auth)
+        except PipelineError as exc:  # brief tetap jalan lokal/LAN, tapi kasih tau kenapa ngrok nggak kebuka
+            print(f"  ngrok gagal: {exc.message}")
     print(f"Brief {paths.root.name} (akses LAN/HP aktif):")
+    if link:
+        print(f"  Internet : {link.url} (login pakai NGROK_BASIC_AUTH)")
     print(f"  HP / LAN : http://{lan_ip}:{port}")
     print(f"  Lokal PC : http://127.0.0.1:{port}")
     print("  (Ctrl+C buat stop)")
@@ -201,8 +215,23 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
         pass
     finally:
         server.server_close()
+        if link:
+            link.stop()
         prefetcher.stop()
         client.close()
+    return 0
+
+
+def _tunnel(args: argparse.Namespace, settings: Settings) -> int:
+    link = tunnel_mod.start_tunnel(args.port, settings.ngrok_basic_auth)
+    print(f"Port {args.port} kebuka di: {link.url} (login pakai NGROK_BASIC_AUTH)")
+    print("  (Ctrl+C buat stop)")
+    try:
+        link.proc.wait()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        link.stop()
     return 0
 
 

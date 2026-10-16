@@ -338,3 +338,10 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   2. Link yang disimpan langsung di-download worker di server brief, pakai `Obtainer` + cache yang sama dengan fetch. Status per URL di `runs/<id>/prefetch.json`, kelihatan di halaman. Link gagal nggak diulang sama autosave (biar link captcha nggak dihajar tiap ketik); klik Simpan atau start server lagi = coba lagi. Link `siap` nggak diulang sama sekali.
   3. Tiap shot punya 3 frame referensi dari source: hook dari segmen hook, shot subjek dari rentang subjeknya di transcript, sisanya (CTA/intro) dari posisi proporsional. `mayzfact brief` nolak jalan kalau ada shot tanpa frame. Frame per kelompok dihapus.
 - **Authority:** Akmal (chat 2026-10-15).
+
+## D-030 — 2026-10-16 — ngrok default buat brief dan Studio
+
+- **Status:** accepted, diimplementasi.
+- **Konteks:** WiFi yang dipakai Akmal ngeblok akses HP ke laptop (client isolation), jadi alamat LAN brief nggak kepake.
+- **Keputusan:** `mayzfact brief` otomatis buka `ngrok http <port>` dengan `--basic-auth` dari `NGROK_BASIC_AUTH` (`.env`), dan ngrok ikut mati bareng brief (`taskkill /T`, karena ngrok scoop jalan lewat shim). `--no-ngrok` buat skip. `mayzfact tunnel <port>` buat Studio (3000). Tanpa `NGROK_BASIC_AUTH` yang valid (password ≥ 8 karakter), ngrok nggak dinyalain sama sekali. Server brief nerima Host `*.ngrok-free.app`/`.dev`/`.io` (commit `8ee0f39`).
+- **Authority:** Akmal (chat 2026-10-16).

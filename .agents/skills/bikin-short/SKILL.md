@@ -82,9 +82,9 @@ Jalanin di background (servernya jalan terus):
 uv run mayzfact brief <id>
 ```
 
-CLI nge-print 2 alamat: `Lokal PC` (http://127.0.0.1:3100) dan `HP / LAN` (IP WiFi). Bilang ke Akmal:
+Jalanin pakai `PYTHONUNBUFFERED=1` biar alamatnya langsung kebaca di log. Brief otomatis buka tunnel ngrok ber-password (`NGROK_BASIC_AUTH` di `.env`). CLI nge-print 3 alamat: `Internet` (URL ngrok, buat HP di jaringan mana aja), `HP / LAN` (IP WiFi), dan `Lokal PC` (http://127.0.0.1:3100). Kalau ada baris `ngrok gagal: ...`, brief tetap jalan lokal; kasih tau Akmal pesannya. Bilang ke Akmal:
 
-1. Buka salah satu alamat itu. Video source ada di halaman, bisa diputer sambil ngisi. Tombol waktu di tiap shot muter suara naskah beat itu.
+1. Buka salah satu alamat itu (URL `Internet` minta login: user + password dari `NGROK_BASIC_AUTH`, Akmal udah tau). Video source ada di halaman, bisa diputer sambil ngisi. Tombol waktu di tiap shot muter suara naskah beat itu.
 2. Isi 1 link per shot (Douyin/TikTok/Pinterest/YouTube), atau upload file. Kolom Mulai/Selesai (detik) opsional, buat milih potongan tertentu dari klip. Tiap shot punya 3 frame source sebagai referensi.
 3. Klik Simpan. Link langsung di-download di background; status per shot kelihatan (`antre` / `download…` / `siap` / `gagal`). Kalau ada yang `gagal`, ganti link-nya, atau klik Simpan lagi buat coba ulang (autosave nggak ngulang yang gagal).
 4. Kalau semua `siap`, kabarin.
@@ -99,7 +99,7 @@ uv run mayzfact run <id> --from fetch --no-render
 
 - Link yang udah `siap` di brief nggak di-download lagi (cache sama), jadi fetch tinggal motong + nilai klip.
 - Kalau ada shot yang gagal, run berhenti dengan exit 3 dan shot itu muncul lagi di brief. Kasih tau Akmal shot mana dan pesan error-nya, minta link lain atau upload, terus ulang langkah 6.
-- Kalau udah nggak butuh isi link lagi, matiin server brief (dia kebuka ke LAN).
+- Kalau udah nggak butuh isi link lagi, matiin server brief (dia kebuka ke LAN dan internet). Kalau brief dimatiin paksa (TaskStop), ngrok-nya bisa nyangkut: jalanin `Stop-Process -Name ngrok` di PowerShell.
 - Deteksi subjek (OWLv2) makan ±3 menit kalau belum ke-cache, jadi jalanin di background.
 - Kalau log nyebut BGM/SFX/emoji/panah dilewat, video tetap jadi. Sebutin ke Akmal apa yang dilewat.
 
@@ -112,12 +112,19 @@ uv run mayzfact run <id> --from fetch --no-render
    cd remotion && npx remotion studio src/index.ts --public-dir=../runs/<id> --props=../runs/<id>/timeline.json --port=3000 --no-open
    ```
 
-3. Kasih Akmal tabel frame penting dari `timeline.json`: `countdown` (card), `emojis`, `cta`, `overlays` (panah). Tulis frame + detiknya (frame / 30).
-4. Kalau Akmal minta revisi, ikutin aturan "Laporan bug visual" di `AGENTS.md`. Habis ngubah:
+3. Buka tunnel di background, terus kasih Akmal URL dari baris "kebuka di":
+
+   ```bash
+   PYTHONUNBUFFERED=1 uv run mayzfact tunnel 3000
+   ```
+
+   Akun ngrok gratis cuma boleh 1 sesi, jadi pastiin brief + ngrok-nya udah mati dulu (langkah 6). Habis review selesai, matiin tunnel-nya (`Stop-Process -Name ngrok` kalau dimatiin paksa).
+4. Kasih Akmal tabel frame penting dari `timeline.json`: `countdown` (card), `emojis`, `cta`, `overlays` (panah). Tulis frame + detiknya (frame / 30).
+5. Kalau Akmal minta revisi, ikutin aturan "Laporan bug visual" di `AGENTS.md`. Habis ngubah:
    - Kalau timeline berubah, jalanin `--from timeline --no-render` terus restart Studio.
    - Kalau cuma komponen Remotion yang berubah, Studio reload sendiri.
    - Minta Akmal review lagi.
-5. Setelah Akmal oke, cek `git diff remotion/src`, karena Studio bisa nulis ke situ.
+6. Setelah Akmal oke, cek `git diff remotion/src`, karena Studio bisa nulis ke situ.
 
 ## 8. Render
 
