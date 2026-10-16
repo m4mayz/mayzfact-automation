@@ -112,6 +112,9 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 return False
             if hostname in {"127.0.0.1", "localhost"}:
                 return True
+            # ngrok tunnel: *.ngrok-free.app, *.ngrok-free.dev, atau *.ngrok.io
+            if hostname.endswith(".ngrok-free.app") or hostname.endswith(".ngrok-free.dev") or hostname.endswith(".ngrok.io"):
+                return True
             if host == "0.0.0.0":
                 parts = hostname.split(".")
                 if len(parts) == 4 and all(p.isdigit() for p in parts):
@@ -173,8 +176,16 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             if not self._host_ok():
                 return self._reject(403, "host nggak dikenal", length)
             origin = self.headers.get("Origin")
-            if origin and origin != f"http://{self.headers.get('Host')}":  # tolak POST dari web lain (CSRF)
-                return self._reject(403, "request dari luar halaman brief ditolak", length)
+            if origin:
+                host_header = self.headers.get("Host", "")
+                hostname = host_header.split(":")[0].lower()
+                is_ngrok = hostname.endswith(".ngrok-free.app") or hostname.endswith(".ngrok-free.dev") or hostname.endswith(".ngrok.io")
+                origin_ok = origin == f"http://{host_header}"
+                if is_ngrok:
+                    # ngrok proxy: origin https, host tanpa port
+                    origin_ok = origin_ok or origin == f"https://{hostname}"
+                if not origin_ok:  # tolak POST dari web lain (CSRF)
+                    return self._reject(403, "request dari luar halaman brief ditolak", length)
             url = urlparse(self.path)
             if url.path == "/api/links":
                 try:

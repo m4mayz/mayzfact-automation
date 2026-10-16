@@ -180,6 +180,18 @@ def test_lan_server_allows_private_ip_and_blocks_evil_domain(tmp_path):
         srv.server_close()
 
 
+def test_ngrok_tunnel_host_and_https_origin_are_allowed(server):
+    """ngrok nerusin Host *.ngrok-free.app dan Origin https; domain lain yang mirip tetap ditolak."""
+    paths, base = server
+    ngrok = {"Host": "abc-123.ngrok-free.app", "Origin": "https://abc-123.ngrok-free.app"}
+    assert httpx.get(base + "/api/state", headers={"Host": "abc-123.ngrok-free.app"}).status_code == 200
+    assert httpx.post(base + "/api/links", json={"groups": {}}, headers=ngrok).status_code == 200
+    other_origin = {"Host": "abc-123.ngrok-free.app", "Origin": "https://evil.ngrok-free.app"}
+    assert httpx.post(base + "/api/links", json={"groups": {}}, headers=other_origin).status_code == 403
+    fake = {"Host": "ngrok-free.app.evil.example"}
+    assert httpx.get(base + "/api/state", headers=fake).status_code == 403
+
+
 
 def test_shot_time_buttons_play_the_narration_not_the_source(server):
     paths, base = server
