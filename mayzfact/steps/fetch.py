@@ -52,6 +52,13 @@ def _target(shot: dict, paths: RunPaths, encoder: Encoder) -> tuple[np.ndarray, 
     return encoder.texts([text])[0], LOW_TEXT_SCORE
 
 
+def _same_clip(a: dict, b: dict) -> bool:
+    """Link + pilihan item sama; detik mulai/selesai nggak dihitung."""
+    def strip(e: dict) -> dict:
+        return {k: v for k, v in e.items() if k not in ("start_s", "end_s")}
+    return strip(a) == strip(b)
+
+
 def _window_start(center: float, duration: float, total: float) -> float:
     """Sama persis dengan aturan clamp di normalize_local."""
     return min(max(0.0, center - duration / 2), total - duration - TAIL_S)
@@ -330,7 +337,9 @@ def run_fetch(
                             clamped = min(max(0.0, c_start), max(0.0, v_source.total_s - duration - TAIL_S))
                             chosen = (v_source, 1.0, clamped)
                         # Jika shot ini pakai entry video yang persis sama dengan shot sebelumnya di grup ini
-                        elif prev_entry == entry and prev_source and prev_source.kind == "video":
+                        # Link sama kayak shot sebelumnya (detik mulai cuma di shot pertama): lanjut nyambung
+                        elif (prev_entry and entry.get("url") and _same_clip(prev_entry, entry) and prev_source
+                              and prev_source.kind == "video"):
                             cont_start = prev_end_time
                             cont_end = cont_start + duration + TAIL_S
                             if cont_end <= prev_source.total_s + 1e-4:
