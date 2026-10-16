@@ -308,6 +308,24 @@ def test_same_link_continues_after_shot_with_start_time(tmp_path, cut_video):
     assert abs(s3["source_s"] - 0.9) < 1e-3
 
 
+def test_same_link_continues_across_groups(tmp_path, cut_video):
+    """Shot terakhir hook dan shot pertama kelompok berikutnya pakai link sama: tetap nyambung, nggak direset per kelompok."""
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = [{"id": "a", "label": "a", "shots": [2]}, {"id": "b", "label": "b", "shots": [3]}]
+    plan["shots"] = [
+        {**plan["shots"][2], "start_s": 0.0, "end_s": 0.4, "media": "video", "group": "a"},
+        {**plan["shots"][3], "start_s": 0.4, "end_s": 0.8, "media": "video", "group": "b"},
+    ]
+    save_links(paths.links_json, {"shots": {
+        "2": {"url": "https://a.b/video", "start_s": 0.5},
+        "3": {"url": "https://a.b/video"},
+    }})
+    data = run_fetch(paths, plan, obtain=lambda e, r: [cut_video], encoder=FakeEncoder(), **QUIET)
+    s2, s3 = data["shots"]
+    assert abs(s3["source_s"] - (s2["source_s"] + 0.4)) < 1e-3
+
+
 def test_fetch_with_custom_timestamp_override(tmp_path, cut_video):
     paths = RunPaths(tmp_path / "run")
     plan = make_plan(paths)

@@ -279,6 +279,10 @@ def run_fetch(
             return obtain_cache[key]
 
         try:
+            # Lanjutan klip nyambung lintas kelompok: shot terakhir hook dan shot pertama kelompok berikutnya bisa link yang sama.
+            prev_entry = None
+            prev_source = None
+            prev_end_time = 0.0
             for group in plan["groups"]:
                 gid = group["id"]
                 g_shots = [shots[i] for i in group["shots"]]
@@ -288,6 +292,7 @@ def run_fetch(
                         shot_status[str(s["index"])] = {"state": "missing", "message": "belum diisi"}
                         problems.append(f"shot {s['index'] + 1}")
                     group_status[gid] = {"state": "missing", "message": f"{len(g_missing)} shot belum diisi"}
+                    prev_entry = prev_source = None  # ada shot yang bolong, jangan nyambung lewat celah
                     continue
 
                 if gid == "hook" and len(g_shots) > 1:
@@ -310,9 +315,6 @@ def run_fetch(
 
                 group_failed = False
                 group_warnings = []
-                prev_entry = None
-                prev_source = None
-                prev_end_time = 0.0
 
                 for s in g_shots:
                     s_idx = s["index"]
