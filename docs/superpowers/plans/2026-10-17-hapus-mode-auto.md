@@ -82,7 +82,7 @@ def test_cli_rejects_removed_steps(step, capsys):
 ### Task 3: Config, CLI, dan helper
 
 **Files:**
-- Modify: `mayzfact/config.py` (hapus field + `ENV_FIELDS`: `clip_source`, `pexels_api_key`, `pixabay_api_key`, `hook_platforms`, `clip_platforms`, `browser_headless`, `hook_exact_threshold`, `photo_ratio`; hapus `_clip_source`, `_flag`, `BROWSER_PROFILES_DIR`)
+- Modify: `mayzfact/config.py` (hapus field `clip_source`, `pexels_api_key`, `pixabay_api_key`, `hook_platforms`, `clip_platforms`, `browser_headless`, `hook_exact_threshold`, `photo_ratio`; hapus `_clip_source`, `_flag`, `BROWSER_PROFILES_DIR`; `ENV_FIELDS` tinggal 4 rahasia; default baru sesuai tabel spec bagian 3: `elevenlabs_voice_id="TX3LPaxmHKxFdv7VOQHJ"`, `min_duration_seconds=32.0`, sisanya sama)
 - Modify: `mayzfact/cli.py` (hapus import `platforms.*`; `login` cuma `youtube`: `login.add_argument("platform", choices=["youtube"])`, tanpa `--check`; deskripsi parser tanpa "klip stock")
 - Modify: `mayzfact/ytdlp.py` (hapus param `cookies`, `max_seconds`; default `step` jadi `"source"`; docstring)
 - Modify: `mayzfact/store.py` (hapus `hook_dir`, `hook_json`)
@@ -91,16 +91,21 @@ def test_cli_rejects_removed_steps(step, capsys):
 - Modify tests: `test_config.py`, `test_cli.py` (hapus 3 test login platform), `test_ytdlp.py`, `test_store.py`, `test_matching.py`, `test_media.py`, `tests/factories.py` (`cand()`), plus test lain yang pakai env auto/`GEMINI_MODEL` sebagai dummy (`test_tts_step.py`, `test_plan.py`, `test_script_rules.py`, `test_youtube.py`): ganti ke env yang masih ada.
 
 **Interfaces:**
-- Produces: `Settings` tanpa field auto; `ENV_FIELDS` keys = `ELEVENLABS_API_KEYS, ELEVENLABS_VOICE_ID, ELEVENLABS_MODEL, TARGET_DURATION_RATIO, MIN_DURATION_SECONDS, MAX_SHOT_SECONDS, FG_MIN_HEIGHT_RATIO, HOOK_SECONDS, BRIEF_PORT, YOUTUBE_CLIENT_SECRET_JSON, YOUTUBE_TOKEN_JSON, NGROK_BASIC_AUTH`.
+- Produces: `Settings` tanpa field auto; `ENV_FIELDS` keys = `ELEVENLABS_API_KEYS, YOUTUBE_CLIENT_SECRET_JSON, YOUTUBE_TOKEN_JSON, NGROK_BASIC_AUTH`. Setting lain cuma lewat default di kode.
 
 - [ ] **Step 1: Test baru**
 
 ```python
 # tests/test_config.py
-def test_env_fields_are_manual_only():
-    assert set(ENV_FIELDS) == {"ELEVENLABS_API_KEYS", "ELEVENLABS_VOICE_ID", "ELEVENLABS_MODEL", "TARGET_DURATION_RATIO",
-                               "MIN_DURATION_SECONDS", "MAX_SHOT_SECONDS", "FG_MIN_HEIGHT_RATIO", "HOOK_SECONDS",
-                               "BRIEF_PORT", "YOUTUBE_CLIENT_SECRET_JSON", "YOUTUBE_TOKEN_JSON", "NGROK_BASIC_AUTH"}
+def test_env_holds_only_secrets():
+    assert set(ENV_FIELDS) == {"ELEVENLABS_API_KEYS", "YOUTUBE_CLIENT_SECRET_JSON", "YOUTUBE_TOKEN_JSON", "NGROK_BASIC_AUTH"}
+
+def test_non_secret_settings_live_in_code(monkeypatch):
+    monkeypatch.setenv("TARGET_DURATION_RATIO", "0.5")  # env nggak ngubah setting non-rahasia lagi
+    s = settings_from_env({"TARGET_DURATION_RATIO": "0.5"})
+    assert (s.elevenlabs_voice_id, s.elevenlabs_model, s.target_duration_ratio, s.min_duration_seconds,
+            s.max_shot_seconds, s.fg_min_height_ratio, s.hook_seconds, s.brief_port) == (
+        "TX3LPaxmHKxFdv7VOQHJ", "eleven_v3", 0.8, 32.0, 4.0, 0.5, 10.0, 3100)
 
 # tests/test_cli.py
 def test_login_only_accepts_youtube():
@@ -115,7 +120,7 @@ def test_cli_import_does_not_load_playwright():
     assert out.stdout.strip() == "False"
 ```
 
-- [ ] **Step 2:** `uv run pytest tests/test_config.py tests/test_cli.py -q -k "manual_only or only_accepts_youtube or playwright"` → FAIL.
+- [ ] **Step 2:** `uv run pytest tests/test_config.py tests/test_cli.py -q -k "only_secrets or live_in_code or only_accepts_youtube or playwright"` → FAIL.
 - [ ] **Step 3:** Implement perubahan di atas, `uv lock`, `uv sync`.
 - [ ] **Step 4:** `uv run pytest -q` → lolos. `uv run python -c "import playwright"` → `ModuleNotFoundError`.
 - [ ] **Step 5:** `git commit -m "refactor: remove auto-only settings, login platforms, and playwright"`
@@ -151,12 +156,11 @@ def test_script_without_fallback_query_is_valid():
 ### Task 5: Docs, `.env`, verifikasi akhir
 
 **Files:**
-- Script sekali pakai di scratchpad (bukan file repo): `drop_env_vars(path: Path, names: set[str]) -> list[str]` yang hapus baris `^NAME=` (boleh diawali spasi), sisanya byte-identik, balikin daftar nama yang dihapus (bukan nilainya).
-- Modify: `.env.example` (hapus `CLIP_SOURCE`, `PEXELS_API_KEY`, `PIXABAY_API_KEY`, `HOOK_PLATFORMS`, `CLIP_PLATFORMS`, `BROWSER_HEADLESS`, `HOOK_EXACT_THRESHOLD`, `PHOTO_RATIO`)
-- Modify: `.env` (nama yang sama + `GEMINI_API_KEYS`, `GEMINI_MODEL`)
+- Script sekali pakai di scratchpad (bukan file repo): `keep_env_vars(path: Path, keep: set[str]) -> list[str]` yang hapus tiap baris `^NAME=` dengan `NAME` di luar `keep` (boleh diawali spasi), komentar/baris kosong/baris yang dipertahanin byte-identik, balikin daftar nama yang dihapus (bukan nilainya).
+- Modify: `.env.example` dan `.env`: sisain cuma `ELEVENLABS_API_KEYS`, `YOUTUBE_CLIENT_SECRET_JSON`, `YOUTUBE_TOKEN_JSON`, `NGROK_BASIC_AUTH` (plus komentar penjelasnya di `.env.example`); semua variabel lain dihapus, termasuk `GEMINI_*`
 - Modify: `README.md`, `AGENTS.md`, `docs/HANDOFF.md`, `docs/DECISIONS.md` (D-031) sesuai spec bagian 3 + 7
 
-- [ ] **Step 1:** Tulis `drop_env_vars` + self-check `assert` di script yang sama: `.env` palsu berisi komentar, baris kosong, nilai `'...'` ber-kutip, dan `PEXELS_API_KEY=x` → cuma baris Pexels yang hilang, sisanya sama persis.
+- [ ] **Step 1:** Tulis `drop_env_vars` + self-check `assert` di script yang sama: `.env` palsu berisi komentar, baris kosong, nilai `'...'` ber-kutip, `NGROK_BASIC_AUTH='a:b'`, dan `PEXELS_API_KEY=x` → cuma baris Pexels yang hilang, sisanya sama persis.
 - [ ] **Step 2:** Jalanin self-check → lolos. Jalanin ke `.env.example` dan `.env`. Print cuma daftar nama yang dihapus.
 - [ ] **Step 3:** Update docs:
   - `README.md`: hapus contoh `--from clips`, "Mode lama: `CLIP_SOURCE=auto`", dan bagian "Hook (Fase 2)".
@@ -166,7 +170,7 @@ def test_script_without_fallback_query_is_valid():
 - [ ] **Step 4: Verifikasi**
   - `uv run pytest -q` → lolos.
   - `rg -i "clip_source|pexels|pixabay|playwright|hook_platforms|clip_platforms|browser_headless|fallback_query|GEMINI" mayzfact tests .env.example README.md AGENTS.md .agents` → kosong.
-  - `grep -oE '^[A-Za-z_]+=' .env | sort` → cuma nama di daftar `ENV_FIELDS` Task 3.
+  - `grep -oE '^[A-Za-z_]+=' .env | sort` dan `.env.example` → cuma 4 nama rahasia.
   - `uv run mayzfact run --help` → nggak ada `hook`/`clips`.
   - Salinan run: copy `runs/ydA5gOdKvfc` dan `runs/i2xag_1OJfM` ke scratchpad, jalanin `run_pipeline(<id>, settings=load_settings(), from_step="timeline", no_render=True, runs_dir=<scratchpad>)`, bandingin `timeline.json` ke aslinya (`json.load` sama, kecuali field yang emang dihitung ulang identik). Folder asli di `runs/` nggak disentuh.
   - Hitung ukuran `browser-profiles/`, `cache/search`, `cache/thumbs`, `cache/media` buat dilaporin ke Akmal.

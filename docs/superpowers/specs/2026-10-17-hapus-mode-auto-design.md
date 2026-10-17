@@ -57,7 +57,20 @@ Dihapus dari `Settings`, `ENV_FIELDS`, `.env.example`, dan `.env`:
 
 Tambahan dari Akmal: `GEMINI_API_KEYS` dan `GEMINI_MODEL` di `.env` (sisa sebelum D-028, udah nggak dibaca kode).
 
-Yang tetap: `ELEVENLABS_*`, `TARGET_DURATION_RATIO`, `MIN_DURATION_SECONDS`, `MAX_SHOT_SECONDS`, `FG_MIN_HEIGHT_RATIO`, `HOOK_SECONDS`, `BRIEF_PORT`, `YOUTUBE_CLIENT_SECRET_JSON`, `YOUTUBE_TOKEN_JSON`, `NGROK_BASIC_AUTH`.
+**`.env` cuma buat rahasia** (tambahan Akmal 2026-10-17): `.env` dan `ENV_FIELDS` tinggal 4 variabel: `ELEVENLABS_API_KEYS`, `YOUTUBE_CLIENT_SECRET_JSON`, `YOUTUBE_TOKEN_JSON`, `NGROK_BASIC_AUTH`. Setting lain jadi nilai default di `Settings` (`mayzfact/config.py`), biar harness bisa langsung ngubah di kode. Nilainya diambil dari `.env` Akmal sekarang, jadi perilaku nggak berubah:
+
+| Field | Default baru |
+| --- | --- |
+| `elevenlabs_voice_id` | `"TX3LPaxmHKxFdv7VOQHJ"` |
+| `elevenlabs_model` | `"eleven_v3"` |
+| `target_duration_ratio` | `0.8` |
+| `min_duration_seconds` | `32.0` (sebelumnya `42.0` di kode, `.env` yang dipakai) |
+| `max_shot_seconds` | `4.0` |
+| `fg_min_height_ratio` | `0.5` |
+| `hook_seconds` | `10.0` |
+| `brief_port` | `3100` |
+
+Variabel lain di `.env` (`ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL`, `TARGET_DURATION_RATIO`, `MIN_DURATION_SECONDS`, `MAX_SHOT_SECONDS`, `FG_MIN_HEIGHT_RATIO`, dll.) ikut dihapus dari `.env`. Override lewat environment variable buat setting non-rahasia hilang; ganti nilainya di kode.
 
 **Cara bersihin `.env`:** hapus baris variabelnya pakai script yang cuma nyocokin nama variabel di awal baris. Isi nilainya nggak pernah di-print. Nilai API key Pexels/Pixabay/Gemini ikut hilang (nggak bisa dibalikin dari repo); Akmal udah setuju hapus semua.
 
@@ -118,7 +131,7 @@ Mode auto dihapus; pipeline cuma mode manual. Alasan: nggak kepake sejak D-019/D
 - `rg -i "clip_source|pexels|pixabay|playwright|hook_platforms|clip_platforms|browser_headless|fallback_query|GEMINI" mayzfact tests .env.example README.md AGENTS.md .agents` nggak nemu apa-apa (kecuali D-031/HANDOFF yang sengaja nyebut).
 - `uv run mayzfact run <id> --help` nggak nawarin `hook`/`clips`. `uv run mayzfact login youtube --help` jalan.
 - Run lama dicek tanpa kredit, **di salinan**: copy `runs/ydA5gOdKvfc` ke folder sementara (scratchpad), jalanin timeline di salinan itu (`run_pipeline(..., runs_dir=<sementara>, from_step="timeline", no_render=True)`), terus bandingin `timeline.json`-nya sama yang asli (kecuali urutan key). Jangan jalanin langsung di `runs/ydA5gOdKvfc`: `--from timeline` ngehapus `final.mp4`, dan video ini udah ke-upload *(keputusan agent)*.
-- Nama variabel di `.env` dicek (tanpa nilai): cuma yang ada di daftar "tetap".
+- Nama variabel di `.env` dan `.env.example` dicek (tanpa nilai): cuma 4 variabel rahasia di atas.
 
 ## 9. Diserahin ke builder
 
