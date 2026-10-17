@@ -18,7 +18,7 @@ def make_script(n_beats: int = 11, photo_every: int = 3, words_per_beat: int = 1
         )
         for i in range(n_beats)
     ]
-    return Script(beats=beats, fallback_query="ocean animals")
+    return Script(beats=beats)
 
 
 def fake_alignment(text: str, total_s: float) -> dict:

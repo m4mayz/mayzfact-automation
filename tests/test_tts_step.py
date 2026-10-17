@@ -8,7 +8,6 @@ SCRIPT = {
         {"text": "Look at this.", "media": "video", "queries": ["crab"]},
         {"text": "It is old.", "media": "photo", "queries": ["fossil"]},
     ],
-    "fallback_query": "animals",
 }
 
 

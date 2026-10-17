@@ -23,6 +23,5 @@ class HookQuery(BaseModel):
 
 class Script(BaseModel):
     beats: list[Beat]
-    fallback_query: str
     bgm: str = ""  # nama file di assets/bgm, dipilih agent; "" = tanpa BGM
     hook_queries: dict[str, HookQuery] = {}  # per index segmen hook (plan/seg_XX), ditulis agent

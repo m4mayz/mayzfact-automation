@@ -45,7 +45,6 @@ Tiap beat harus bisa ditunjuk kalimat source-nya (kolom "dasar dari source" di l
     {"text": "Number five, mantis shrimp.", "media": "video", "queries": ["mantis shrimp close up underwater"],
      "queries_zh": ["螳螂虾 特写"], "subject": "mantis shrimp", "point": false, "emoji": "", "emoji_word": ""}
   ],
-  "fallback_query": "ocean animals",
   "bgm": "mystery.mp3",
   "hook_queries": {"0": {"en": ["giant bird on radio tower"], "zh": ["巨鸟 铁塔"]}}
 }

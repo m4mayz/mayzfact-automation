@@ -38,7 +38,7 @@ def normalize_script(script: Script) -> Script:
     ]
     if beats:
         beats[0] = beats[0].model_copy(update={"media": "video"})
-    return script.model_copy(update={"beats": beats, "fallback_query": " ".join(script.fallback_query.split())})
+    return script.model_copy(update={"beats": beats})
 
 
 def check_script(script: Script, source_text: str, duration_s: float,
@@ -85,8 +85,6 @@ def check_script(script: Script, source_text: str, duration_s: float,
                 f"Countdown item '{script.beats[beat_idx].text.strip()}' has only {explanation_count} explanation beat(s); "
                 f"each item must have at least 2 beats describing it."
             )
-    if not script.fallback_query:
-        problems.append("fallback_query is empty.")
     # Aturan pemicunya sama persis dengan animasi CTA di timeline (mayzfact.cta), biar yang lolos cek beneran kepicu.
     missing_cta = sorted(cta_kinds(source_text) - cta_kinds(full_text))
     if missing_cta:

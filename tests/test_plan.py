@@ -11,7 +11,6 @@ SCRIPT = {
         {"text": "Look at this.", "media": "video", "queries": ["crab"], "subject": ""},
         {"text": "Number five, horseshoe crab.", "media": "photo", "queries": ["fossil", "crab"]},
     ],
-    "fallback_query": "animals",
 }
 TTS = {"duration_s": 3.0, "alignment": fake_alignment("Look at this. Number five, horseshoe crab.", 2.4)}
 SOURCE = {"video_id": "abc", "duration_s": 2.0, "transcript": [{"text": "five ancient creatures", "start": 0.0, "duration": 2.0}]}
@@ -89,7 +88,7 @@ def test_every_shot_gets_three_reference_frames(tmp_path, cut_video):
 
 def test_shot_without_subject_match_gets_proportional_frames(tmp_path, cut_video):
     script = {"beats": [{"text": "Smash like and subscribe!", "media": "video", "queries": ["phone"], "subject": ""},
-                        {"text": "Number five, horseshoe crab.", "media": "photo", "queries": ["crab"]}], "fallback_query": "x"}
+                        {"text": "Number five, horseshoe crab.", "media": "photo", "queries": ["crab"]}]}
     source = {**SOURCE, "transcript": [{"text": "unrelated opening", "start": 0.0, "duration": 2.0}]}  # subjek nggak ketemu
     tts = {"duration_s": 3.0, "alignment": fake_alignment("Smash like and subscribe! Number five, horseshoe crab.", 2.4)}
     paths = RunPaths(tmp_path / "run")
@@ -105,8 +104,7 @@ def test_teaser_about_number_one_does_not_hide_other_source_frames(tmp_path, cut
     text = "Number one is wild. Number two, shrike. Number one, kestrel."
     script = {"beats": [{"text": "Number one is wild.", "media": "video", "queries": ["kestrel"], "subject": "kestrel"},
                         {"text": "Number two, shrike.", "media": "video", "queries": ["shrike"], "subject": "shrike"},
-                        {"text": "Number one, kestrel.", "media": "video", "queries": ["kestrel"], "subject": "kestrel"}],
-              "fallback_query": "birds"}
+                        {"text": "Number one, kestrel.", "media": "video", "queries": ["kestrel"], "subject": "kestrel"}]}
     source = {**SOURCE, "transcript": [{"text": "Number two, shrike.", "start": 0.2, "duration": 0.6},
                                        {"text": "Number one, kestrel.", "start": 1.2, "duration": 0.6}]}
     data = run_plan(

@@ -31,6 +31,19 @@ def test_good_script_has_no_problems():
     assert overlap == 0.0
 
 
+def test_old_script_with_fallback_query_still_loads_and_passes():
+    raw = {**make_script().model_dump(), "fallback_query": "animals"}  # naskah lama sebelum field ini dicabut
+    script = Script.model_validate(raw)
+    assert not hasattr(script, "fallback_query")
+    assert check_script(script, SOURCE_TEXT, DURATION)[0] == []
+
+
+def test_script_without_fallback_query_is_valid():
+    raw = make_script().model_dump()
+    raw.pop("fallback_query", None)
+    assert check_script(Script.model_validate(raw), SOURCE_TEXT, DURATION)[0] == []
+
+
 def test_word_count_outside_range_is_reported():
     problems, _ = check_script(make_script(words_per_beat=5), SOURCE_TEXT, DURATION)
     assert any("words" in p for p in problems)
@@ -44,7 +57,6 @@ def test_photo_share_outside_range_is_reported():
 def test_copied_phrases_are_reported():
     copied = Script(
         beats=[Beat(text=SOURCE_TEXT, media="video", queries=["crab"])] * 10,
-        fallback_query="animals",
     )
     problems, overlap = check_script(copied, SOURCE_TEXT, DURATION)
     # Nggak persis 1.0: kalimat yang diulang bikin 4-gram lintas kalimat yang nggak ada di source.
@@ -52,17 +64,15 @@ def test_copied_phrases_are_reported():
     assert any("copied" in p for p in problems)
 
 
-def test_empty_queries_and_fallback_are_reported():
+def test_empty_queries_are_reported():
     script = make_script()
     script = script.model_copy(
         update={
             "beats": [script.beats[0].model_copy(update={"queries": []}), *script.beats[1:]],
-            "fallback_query": "",
         }
     )
     problems, _ = check_script(script, SOURCE_TEXT, DURATION)
     assert "Beat 1 has no search queries." in problems
-    assert "fallback_query is empty." in problems
 
 
 def test_normalize_script_cleans_text_and_forces_first_video():
@@ -71,14 +81,12 @@ def test_normalize_script_cleans_text_and_forces_first_video():
             Beat(text="It’s  here —now", media="photo", queries=[" crab ", " "]),
             Beat(text="Second", media="photo", queries=["fossil"]),
         ],
-        fallback_query="  ocean  ",
     )
     script = normalize_script(raw)
     assert script.beats[0].text == "It's here, now"
     assert script.beats[0].media == "video"
     assert script.beats[0].queries == ["crab"]
     assert script.beats[1].media == "photo"
-    assert script.fallback_query == "ocean"
 
 
 
@@ -91,7 +99,7 @@ def test_long_beat_is_reported():
 
 
 def test_normalize_script_keeps_subject_trimmed():
-    raw = Script(beats=[Beat(text="Number five, horseshoe crab.", media="video", queries=["crab"], subject="  horseshoe crab ")], fallback_query="ocean")
+    raw = Script(beats=[Beat(text="Number five, horseshoe crab.", media="video", queries=["crab"], subject="  horseshoe crab ")])
     assert normalize_script(raw).beats[0].subject == "horseshoe crab"
     assert Beat(text="x", media="video", queries=["q"]).subject == ""
 
@@ -108,7 +116,7 @@ def test_countdown_item_with_fewer_than_two_explanation_beats_is_reported():
         Beat(text="It hovers motionless in the wind.", media="video", queries=["kestrel hover"]),
         Beat(text="Its eyes track tiny mice below.", media="video", queries=["kestrel hunting"]),
     ]
-    script = Script(beats=beats, fallback_query="ancient creatures")
+    script = Script(beats=beats)
     problems, _ = check_script(script, SOURCE_TEXT, DURATION)
     assert any("Number five" in p and "explanation beat" in p for p in problems)
     # Number four and Number one have 2 explanation beats, so they should not be reported

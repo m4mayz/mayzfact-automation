@@ -80,7 +80,7 @@ def test_voice_without_metadata_needs_new_script():
 # --- check_voice ------------------------------------------------------------
 
 def write_voice_state(paths, text_beats, duration_s, sha=None):
-    script = {"beats": [{"text": t, "media": "video", "queries": ["q"]} for t in text_beats], "fallback_query": "f"}
+    script = {"beats": [{"text": t, "media": "video", "queries": ["q"]} for t in text_beats]}
     write_json_atomic(paths.script_json, script)
     write_json_atomic(paths.tts_json, {"text_sha256": sha or text_hash(script_text(script["beats"])), "duration_s": duration_s})
 
@@ -445,7 +445,7 @@ def test_run_rejects_script_that_fails_checks_before_tts(world):
     paths = RunPaths(world.runs / VIDEO_ID)
     with pytest.raises(AwaitingInput):
         run(world)
-    write_json_atomic(paths.script_json, {"beats": [{"text": "Too short.", "media": "video", "queries": ["q"]}], "fallback_query": "f"})
+    write_json_atomic(paths.script_json, {"beats": [{"text": "Too short.", "media": "video", "queries": ["q"]}]})
     with pytest.raises(PipelineError, match="lolos cek"):
         run(world)
     assert world.tts.calls == 0

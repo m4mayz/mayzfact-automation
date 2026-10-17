@@ -240,7 +240,7 @@ def test_check_script_reports_problems_and_exit_code(monkeypatch, tmp_path, caps
     paths.script_json.write_text("{not json", encoding="utf-8")
     assert cli.main(["check-script", "abcdefghijk"]) == 1
     assert "JSON" in capsys.readouterr().err
-    write_json_atomic(paths.script_json, {"beats": [{"text": "Hello there.", "media": "video", "queries": ["q"]}], "fallback_query": "f"})
+    write_json_atomic(paths.script_json, {"beats": [{"text": "Hello there.", "media": "video", "queries": ["q"]}]})
     assert cli.main(["check-script", "abcdefghijk"]) == 1
     out = capsys.readouterr().out
     assert "subscribe" in out and "words" in out
