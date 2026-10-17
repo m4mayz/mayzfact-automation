@@ -166,11 +166,11 @@ def test_tunnel_command_prints_url_and_stops(monkeypatch, capsys):
     from unittest.mock import Mock
 
     link = Mock(url="https://abc.ngrok-free.dev")
-    monkeypatch.setattr(cli, "load_settings", lambda: Settings(ngrok_basic_auth="akmal:akmalganteng"))
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings(ngrok_basic_auth="user:dummy-pass-123"))
     start_tunnel = Mock(return_value=link)
     monkeypatch.setattr(cli.tunnel_mod, "start_tunnel", start_tunnel)
     assert cli.main(["tunnel", "3000"]) == 0
-    start_tunnel.assert_called_once_with(3000, "akmal:akmalganteng")
+    start_tunnel.assert_called_once_with(3000, "user:dummy-pass-123")
     assert "https://abc.ngrok-free.dev" in capsys.readouterr().out
     link.stop.assert_called_once()
 

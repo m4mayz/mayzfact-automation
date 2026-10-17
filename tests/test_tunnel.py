@@ -37,10 +37,10 @@ def fake_popen(proc, calls):
 def test_tunnel_returns_public_url_and_uses_basic_auth():
     calls = []
     proc = FakeProc([NOISE, STARTED])
-    tunnel = start_tunnel(3100, "akmal:akmalganteng", popen=fake_popen(proc, calls), which=lambda name: "ngrok")
+    tunnel = start_tunnel(3100, "user:dummy-pass-123", popen=fake_popen(proc, calls), which=lambda name: "ngrok")
     assert tunnel.url == "https://abc.ngrok-free.dev"
     assert calls[0][:3] == ["ngrok", "http", "3100"]
-    assert calls[0][calls[0].index("--basic-auth") + 1] == "akmal:akmalganteng"
+    assert calls[0][calls[0].index("--basic-auth") + 1] == "user:dummy-pass-123"
     tunnel.stop(windows=False)
     assert proc.terminated
 
@@ -56,7 +56,7 @@ def test_tunnel_refuses_without_valid_basic_auth(auth):
 def test_tunnel_reports_why_ngrok_died():
     died = json.dumps({"lvl": "crit", "msg": "command failed", "err": "Your account is limited to 1 simultaneous ngrok agent sessions."})
     with pytest.raises(PipelineError, match="1 simultaneous"):
-        start_tunnel(3000, "akmal:akmalganteng", popen=fake_popen(FakeProc([NOISE, died], exit_code=1), []),
+        start_tunnel(3000, "user:dummy-pass-123", popen=fake_popen(FakeProc([NOISE, died], exit_code=1), []),
                      which=lambda name: "ngrok", timeout_s=1)
 
 
@@ -65,7 +65,7 @@ def test_stop_kills_whole_process_tree_on_windows():
     proc = FakeProc([STARTED])
     proc.pid = 4242
     ran = []
-    tunnel = start_tunnel(3100, "akmal:akmalganteng", popen=fake_popen(proc, []), which=lambda name: "ngrok")
+    tunnel = start_tunnel(3100, "user:dummy-pass-123", popen=fake_popen(proc, []), which=lambda name: "ngrok")
     tunnel.stop(windows=True, run=lambda cmd, **kw: ran.append(cmd))
     assert ran == [["taskkill", "/PID", "4242", "/T", "/F"]]
     assert not proc.terminated
@@ -73,4 +73,4 @@ def test_stop_kills_whole_process_tree_on_windows():
 
 def test_tunnel_needs_ngrok_installed():
     with pytest.raises(PipelineError, match="ngrok belum ke-install"):
-        start_tunnel(3000, "akmal:akmalganteng", popen=fake_popen(FakeProc([]), []), which=lambda name: None)
+        start_tunnel(3000, "user:dummy-pass-123", popen=fake_popen(FakeProc([]), []), which=lambda name: None)
