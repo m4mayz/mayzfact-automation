@@ -62,7 +62,7 @@ def run_source(
     data = build_source(video_id, fetch(video_id))
     data["hook_segments"] = []
     if download_source is not None and hook_seconds > 0:
-        from mayzfact.steps.hook import prepare_source_segments
+        from mayzfact.source_frames import prepare_source_segments
 
         # Frame hook dibikin di sini biar udah ada pas agent nulis naskah (keyword hook butuh lihat frame-nya).
         try:

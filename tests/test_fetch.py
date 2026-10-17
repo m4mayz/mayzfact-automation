@@ -392,4 +392,15 @@ def test_target_uses_reference_frames_only_for_hook_shots(tmp_path):
     assert len(encoder.encoded_images) == 3 and low == LOW_IMAGE_SCORE
 
 
+def test_normalize_local_clamps_offset_and_rejects_short_video(tmp_path, make_video):
+    import pytest
 
+    from mayzfact.errors import PipelineError
+    from mayzfact.steps.fetch import normalize_local
+
+    paths = RunPaths(tmp_path / "run")
+    out = normalize_local(2, 4.0, 6.0, make_video(1080, 1920, 5.0), "video", 4.9, paths, 0.5)
+    assert out["file"] == "clips/shot_03.mp4" and out["kind"] == "video"
+    assert abs(probe(paths.root / out["file"], "clips")["duration_s"] - 2.2) < 0.1
+    with pytest.raises(PipelineError, match="cuma"):
+        normalize_local(0, 0.0, 3.0, make_video(1080, 1920, 1.0), "video", 0.0, paths, 0.5)

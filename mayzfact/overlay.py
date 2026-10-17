@@ -8,7 +8,7 @@ from typing import Any, Callable
 from mayzfact.countdown import parse_countdown
 from mayzfact.ffmpeg import extract_frame
 from mayzfact.media import FRAME_H, FRAME_W, fg_height, layout_for
-from mayzfact.steps.clips import beat_subjects
+from mayzfact.shots import beat_subjects
 from mayzfact.steps.timeline import (
     FPS,
     OVERLAY_DELAY_FRAMES,

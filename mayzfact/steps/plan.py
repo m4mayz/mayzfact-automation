@@ -10,8 +10,8 @@ from mayzfact.countdown import Countdown, parse_countdown
 from mayzfact.errors import PipelineError
 from mayzfact.ffmpeg import extract_frame, probe
 from mayzfact.matching import hook_slot_map
-from mayzfact.steps.clips import beat_subjects, split_shots
-from mayzfact.steps.hook import prepare_source_segments
+from mayzfact.shots import beat_subjects, split_shots
+from mayzfact.source_frames import prepare_source_segments
 from mayzfact.store import RunPaths, write_json_atomic
 from mayzfact.text import beat_texts, words
 from mayzfact.timing import beat_timings

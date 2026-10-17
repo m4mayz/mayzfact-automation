@@ -10,10 +10,11 @@ import numpy as np
 
 from mayzfact.embed import Encoder, mean_unit
 from mayzfact.errors import AwaitingInput, PipelineError
-from mayzfact.ffmpeg import probe, sample_frames
+from mayzfact.ffmpeg import normalize_video, probe, sample_frames
 from mayzfact.manual.links import link_kind, load_links, missing_groups, missing_shots
 from mayzfact.manual.obtain import cache_key, media_kind
-from mayzfact.steps.clips import normalize_local
+from mayzfact.media import downscale_factor
+from mayzfact.photo import normalize_photo
 from mayzfact.store import RunPaths, write_json_atomic
 
 LOW_TEXT_SCORE = 0.10
@@ -38,6 +39,31 @@ class Source:
 
 def _message(exc: Exception) -> str:
     return exc.message if isinstance(exc, PipelineError) else f"{type(exc).__name__}: {exc}"
+
+
+def normalize_local(
+    index: int, start_s: float, end_s: float, raw: Path, kind: str, offset_s: float, paths: RunPaths, fg_min_ratio: float
+) -> dict:
+    """File lokal → clips/shot_XX. Video dipotong di sekitar offset_s, dibatasi biar nggak lewat ujung file."""
+    duration_s = end_s - start_s
+    try:
+        if kind == "video":
+            info = probe(raw, "clips")
+            total = info["duration_s"] or 0.0
+            if total < duration_s + 0.2:
+                raise PipelineError("clips", f"video cuma {total:.1f} detik, shot butuh {duration_s:.1f}")
+            start = min(max(0.0, offset_s - duration_s / 2), total - duration_s - 0.2)
+            dest = paths.clips_dir / f"shot_{index + 1:02d}.mp4"
+            normalize_video(raw, dest, start_s=start, duration_s=duration_s + 0.2,
+                            scale=downscale_factor(info["width"], info["height"], fg_min_ratio))
+            out = probe(dest, "clips")
+            width, height = out["width"], out["height"]
+        else:
+            dest = paths.clips_dir / f"shot_{index + 1:02d}.jpg"
+            width, height = normalize_photo(raw, dest, fg_min_ratio=fg_min_ratio)
+    except (OSError, ValueError, KeyError) as exc:
+        raise PipelineError("clips", f"{raw.name} gagal diproses: {exc}") from exc
+    return {"kind": kind, "file": f"clips/{dest.name}", "width": width, "height": height}
 
 
 def _target(shot: dict, paths: RunPaths, encoder: Encoder) -> tuple[np.ndarray, float]:

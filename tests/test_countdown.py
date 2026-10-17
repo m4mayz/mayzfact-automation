@@ -1,5 +1,5 @@
 from mayzfact.countdown import Countdown, parse_countdown
-from mayzfact.steps.clips import beat_subjects, split_shots
+from mayzfact.shots import beat_subjects, split_shots
 
 
 def test_parse_countdown_words_digits_and_the():

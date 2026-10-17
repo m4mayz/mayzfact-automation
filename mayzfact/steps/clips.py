@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import math
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Protocol
 from urllib.parse import urlparse
 
 import httpx
 
-from mayzfact.countdown import parse_countdown
 from mayzfact.errors import PipelineError
 from mayzfact.ffmpeg import normalize_video, probe
 from mayzfact.matching import hook_slot_map, rerank_key
@@ -18,6 +15,8 @@ from mayzfact.media import downscale_factor, pick_rendition, tier
 from mayzfact.net import download
 from mayzfact.photo import normalize_photo
 from mayzfact.providers.types import Candidate
+from mayzfact.shots import ShotSlot, beat_subjects, split_shots  # noqa: F401
+from mayzfact.steps.fetch import normalize_local  # noqa: F401
 from mayzfact.store import RunPaths, write_json_atomic
 from mayzfact.text import beat_texts
 from mayzfact.timing import beat_timings
@@ -28,18 +27,6 @@ MAX_PICK_ATTEMPTS = 3
 # ponytail: batas dari 1 run i2xag (foto nyambung 0.094-0.163, video meleset 0.003-0.093); kalibrasi ulang kalau model ganti
 RELEVANCE_MIN = 0.10
 # "Number five, horseshoe crab." / "Number 3: the platypus!" → subjek yang lagi dibahas
-@dataclass(frozen=True)
-class ShotSlot:
-    index: int
-    beat: int
-    start_s: float
-    end_s: float
-    media: str
-    part: int = 0  # urutan shot di dalam beat-nya (0 = shot pertama)
-
-    @property
-    def duration_s(self) -> float:
-        return self.end_s - self.start_s
 
 
 class MediaSearch(Protocol):
@@ -58,17 +45,6 @@ def _usable(candidates: list[Candidate], used: set[tuple[str, str]], min_duratio
     ]
 
 
-def split_shots(timings: list[dict], beats: list[dict], max_shot_s: float) -> list[ShotSlot]:
-    slots: list[ShotSlot] = []
-    for beat_index, (timing, beat) in enumerate(zip(timings, beats, strict=True)):
-        start, end = timing["start_s"], timing["end_s"]
-        count = 1 if parse_countdown(beat.get("text", "")) else max(1, math.ceil((end - start) / max_shot_s - 1e-9))
-        step = (end - start) / count
-        for k in range(count):
-            shot_start = start + k * step
-            shot_end = end if k == count - 1 else start + (k + 1) * step
-            slots.append(ShotSlot(len(slots), beat_index, round(shot_start, 3), round(shot_end, 3), beat["media"], k))
-    return slots
 
 
 def choose_candidate(
@@ -80,18 +56,6 @@ def choose_candidate(
     return min(usable, key=lambda c: (tier(c, fg_min_ratio), c.rank, PROVIDER_ORDER.get(c.provider, 9)))
 
 
-def beat_subjects(beats: list[dict]) -> list[str | None]:
-    """Hewan/objek yang lagi dibahas tiap beat: field `subject`, atau dari beat countdown, terus dibawa ke beat berikutnya."""
-    current: str | None = None
-    out: list[str | None] = []
-    for beat in beats:
-        countdown = parse_countdown(beat.get("text", ""))
-        if beat.get("subject"):
-            current = beat["subject"].strip()
-        elif countdown:
-            current = countdown.subject.lower()
-        out.append(current)
-    return out
 
 
 def _best_scored(
@@ -211,29 +175,6 @@ def materialize(
     }
 
 
-def normalize_local(
-    index: int, start_s: float, end_s: float, raw: Path, kind: str, offset_s: float, paths: RunPaths, fg_min_ratio: float
-) -> dict:
-    """File lokal → clips/shot_XX. Video dipotong di sekitar offset_s, dibatasi biar nggak lewat ujung file."""
-    duration_s = end_s - start_s
-    try:
-        if kind == "video":
-            info = probe(raw, "clips")
-            total = info["duration_s"] or 0.0
-            if total < duration_s + 0.2:
-                raise PipelineError("clips", f"video cuma {total:.1f} detik, shot butuh {duration_s:.1f}")
-            start = min(max(0.0, offset_s - duration_s / 2), total - duration_s - 0.2)
-            dest = paths.clips_dir / f"shot_{index + 1:02d}.mp4"
-            normalize_video(raw, dest, start_s=start, duration_s=duration_s + 0.2,
-                            scale=downscale_factor(info["width"], info["height"], fg_min_ratio))
-            out = probe(dest, "clips")
-            width, height = out["width"], out["height"]
-        else:
-            dest = paths.clips_dir / f"shot_{index + 1:02d}.jpg"
-            width, height = normalize_photo(raw, dest, fg_min_ratio=fg_min_ratio)
-    except (OSError, ValueError, KeyError) as exc:
-        raise PipelineError("clips", f"{raw.name} gagal diproses: {exc}") from exc
-    return {"kind": kind, "file": f"clips/{dest.name}", "width": width, "height": height}
 
 
 def _hook_entry(slot: ShotSlot, segment: dict, paths: RunPaths, fg_min_ratio: float, log: Callable[[str], None]) -> dict | None:
