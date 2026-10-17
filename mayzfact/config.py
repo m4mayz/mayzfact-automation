@@ -1,4 +1,4 @@
-"""Config dari .env + environment variable."""
+"""Config: setting biasa di kode, rahasia dari .env + environment variable."""
 
 from __future__ import annotations
 
@@ -14,32 +14,25 @@ from mayzfact.errors import PipelineError
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RUNS_DIR = PROJECT_ROOT / "runs"
 CACHE_DIR = PROJECT_ROOT / "cache"
-BROWSER_PROFILES_DIR = PROJECT_ROOT / "browser-profiles"
 MODELS_DIR = PROJECT_ROOT / "models"  # cache model ML (SigLIP, OWLv2), di-gitignore
 
 
 @dataclass(frozen=True)
 class Settings:
-    elevenlabs_api_keys: tuple[str, ...] = ()
-    elevenlabs_voice_id: str = ""
+    # Setting biasa: ubah langsung di sini (bukan lewat .env), biar harness mana pun bisa ngeditnya.
+    elevenlabs_voice_id: str = "TX3LPaxmHKxFdv7VOQHJ"
     elevenlabs_model: str = "eleven_v3"
-    pexels_api_key: str = ""
-    pixabay_api_key: str = ""
     target_duration_ratio: float = 0.8
-    min_duration_seconds: float = 42.0
+    min_duration_seconds: float = 32.0
     max_shot_seconds: float = 4.0
-    photo_ratio: float = 0.3
     fg_min_height_ratio: float = 0.5
     hook_seconds: float = 10.0
-    hook_exact_threshold: float = 0.85
-    hook_platforms: tuple[str, ...] = ("tiktok", "pinterest")
-    clip_platforms: tuple[str, ...] = ("pinterest",)
-    browser_headless: bool = False
-    clip_source: str = "manual"  # "manual" | "auto"
     brief_port: int = 3100
-    youtube_client_secret_json: str = field(default="", repr=False)  # JSON OAuth client, jangan pernah di-print
+    # Rahasia: cuma dari .env, jangan pernah di-print.
+    elevenlabs_api_keys: tuple[str, ...] = field(default=(), repr=False)
+    youtube_client_secret_json: str = field(default="", repr=False)  # JSON OAuth client
     youtube_token_json: str = field(default="", repr=False)
-    ngrok_basic_auth: str = field(default="", repr=False)  # user:password buat tunnel ngrok, jangan di-print
+    ngrok_basic_auth: str = field(default="", repr=False)  # user:password buat tunnel ngrok
 
 
 def _key_list(raw: str) -> tuple[str, ...]:
@@ -47,44 +40,9 @@ def _key_list(raw: str) -> tuple[str, ...]:
     return tuple(key.strip() for key in raw.split(",") if key.strip())
 
 
-_TRUE = {"1", "true", "yes", "on"}
-_FALSE = {"0", "false", "no", "off"}
-
-
-def _flag(raw: str) -> bool:
-    value = raw.lower()
-    if value in _TRUE:
-        return True
-    if value in _FALSE:
-        return False
-    raise ValueError(raw)
-
-
-def _clip_source(raw: str) -> str:
-    value = raw.lower()
-    if value not in {"manual", "auto"}:
-        raise ValueError(raw)
-    return value
-
-
+# .env cuma buat rahasia. Setting lain ada di default Settings di atas.
 ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
     "ELEVENLABS_API_KEYS": ("elevenlabs_api_keys", _key_list),
-    "ELEVENLABS_VOICE_ID": ("elevenlabs_voice_id", str),
-    "ELEVENLABS_MODEL": ("elevenlabs_model", str),
-    "PEXELS_API_KEY": ("pexels_api_key", str),
-    "PIXABAY_API_KEY": ("pixabay_api_key", str),
-    "TARGET_DURATION_RATIO": ("target_duration_ratio", float),
-    "MIN_DURATION_SECONDS": ("min_duration_seconds", float),
-    "MAX_SHOT_SECONDS": ("max_shot_seconds", float),
-    "PHOTO_RATIO": ("photo_ratio", float),
-    "FG_MIN_HEIGHT_RATIO": ("fg_min_height_ratio", float),
-    "HOOK_SECONDS": ("hook_seconds", float),
-    "HOOK_EXACT_THRESHOLD": ("hook_exact_threshold", float),
-    "HOOK_PLATFORMS": ("hook_platforms", _key_list),
-    "CLIP_PLATFORMS": ("clip_platforms", _key_list),
-    "BROWSER_HEADLESS": ("browser_headless", _flag),
-    "CLIP_SOURCE": ("clip_source", _clip_source),
-    "BRIEF_PORT": ("brief_port", int),
     "YOUTUBE_CLIENT_SECRET_JSON": ("youtube_client_secret_json", str),
     "YOUTUBE_TOKEN_JSON": ("youtube_token_json", str),
     "NGROK_BASIC_AUTH": ("ngrok_basic_auth", str),

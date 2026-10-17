@@ -57,12 +57,12 @@ def test_download_writes_file_and_skips_when_cached(tmp_path):
         return httpx.Response(200, content=b"video-bytes")
 
     client = client_with(handler)
-    dest = tmp_path / "media" / "pexels_video_1.mp4"
+    dest = tmp_path / "media" / "clip_1.mp4"
     download(client, "https://cdn.test/a.mp4", dest, step="clips")
     download(client, "https://cdn.test/a.mp4", dest, step="clips")
     assert dest.read_bytes() == b"video-bytes"
     assert len(calls) == 1
-    assert sorted(p.name for p in dest.parent.iterdir()) == ["pexels_video_1.mp4"]
+    assert sorted(p.name for p in dest.parent.iterdir()) == ["clip_1.mp4"]
 
 
 def test_download_retries_server_errors(tmp_path):

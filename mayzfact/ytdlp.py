@@ -1,4 +1,4 @@
-"""Download video pakai yt-dlp: video source YouTube dan klip platform login."""
+"""Download video pakai yt-dlp: video source YouTube dan link klip manual."""
 
 from __future__ import annotations
 
@@ -17,16 +17,11 @@ def youtube_url(video_id: str) -> str:
     return f"https://www.youtube.com/watch?v={video_id}"
 
 
-def ytdlp_command(url: str, dest: Path, cookies: Path | None = None, max_seconds: int | None = None) -> list[str]:
-    cmd = [
+def ytdlp_command(url: str, dest: Path) -> list[str]:
+    return [
         sys.executable, "-m", "yt_dlp", "--no-playlist", "--quiet", "--no-warnings", "--no-progress",
-        "-f", FORMAT, "--merge-output-format", "mp4", "-o", str(dest),
+        "-f", FORMAT, "--merge-output-format", "mp4", "-o", str(dest), url,
     ]
-    if max_seconds is not None:
-        cmd += ["--download-sections", f"*0-{max_seconds}"]
-    if cookies is not None:
-        cmd += ["--cookies", str(cookies)]
-    return cmd + [url]
 
 
 def _cleanup(tmp: Path) -> None:
@@ -39,9 +34,7 @@ def run_ytdlp(
     url: str,
     dest: Path,
     *,
-    cookies: Path | None = None,
-    step: str = "hook",
-    max_seconds: int | None = None,
+    step: str = "source",
     timeout_s: float = TIMEOUT_S,
 ) -> Path:
     if dest.exists():
@@ -50,7 +43,7 @@ def run_ytdlp(
     tmp = tmp_path_for(dest)
     try:
         result = subprocess.run(
-            ytdlp_command(url, tmp, cookies, max_seconds),
+            ytdlp_command(url, tmp),
             capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout_s,
         )
     except subprocess.TimeoutExpired as exc:

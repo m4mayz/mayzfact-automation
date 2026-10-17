@@ -51,14 +51,6 @@ class RunPaths:
         return self.root / "source.mp4"
 
     @property
-    def hook_dir(self) -> Path:
-        return self.root / "hook"
-
-    @property
-    def hook_json(self) -> Path:
-        return self.root / "hook.json"
-
-    @property
     def shots_plan_json(self) -> Path:
         return self.root / "shots_plan.json"
 

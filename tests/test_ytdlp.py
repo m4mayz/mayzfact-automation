@@ -6,13 +6,15 @@ from mayzfact.errors import PipelineError
 from mayzfact.ytdlp import run_ytdlp, youtube_url, ytdlp_command
 
 
-def test_ytdlp_command_with_and_without_cookies(tmp_path):
-    cmd = ytdlp_command("https://www.tiktok.com/@a/video/1", tmp_path / "x.mp4", tmp_path / "c.txt")
+def test_ytdlp_command_without_cookies_or_sections(tmp_path):
+    import inspect
+
+    cmd = ytdlp_command("https://www.tiktok.com/@a/video/1", tmp_path / "x.mp4")
     assert cmd[1:3] == ["-m", "yt_dlp"]
     assert cmd[-1] == "https://www.tiktok.com/@a/video/1"
-    assert cmd[cmd.index("--cookies") + 1] == str(tmp_path / "c.txt")
     assert cmd[cmd.index("-o") + 1] == str(tmp_path / "x.mp4")
-    assert "--cookies" not in ytdlp_command("u", tmp_path / "y.mp4")
+    assert "--cookies" not in cmd and "--download-sections" not in cmd
+    assert list(inspect.signature(ytdlp_command).parameters) == ["url", "dest"]  # cookie/section cuma buat Playwright, udah dicabut
     assert youtube_url("i2xag_1OJfM") == "https://www.youtube.com/watch?v=i2xag_1OJfM"
 
 
@@ -32,12 +34,6 @@ def test_run_ytdlp_failure_cleans_tmp(tmp_path, monkeypatch):
     with pytest.raises(PipelineError, match="Unsupported URL"):
         run_ytdlp("u", tmp_path / "z.mp4")
     assert list(tmp_path.iterdir()) == []
-
-
-def test_ytdlp_command_limits_sections(tmp_path):
-    cmd = ytdlp_command("u", tmp_path / "x.mp4", max_seconds=31)
-    assert cmd[cmd.index("--download-sections") + 1] == "*0-31"
-    assert "--download-sections" not in ytdlp_command("u", tmp_path / "x.mp4")
 
 
 def test_run_ytdlp_timeout_cleans_partial_files(tmp_path, monkeypatch):

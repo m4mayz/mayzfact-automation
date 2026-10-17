@@ -15,7 +15,7 @@ from mayzfact.providers.elevenlabs import list_voices
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="mayzfact", description="Pipeline shorts: naskah ulang + TTS + klip stock")
+    parser = argparse.ArgumentParser(prog="mayzfact", description="Pipeline shorts: naskah ulang + TTS + klip manual")
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="Bikin video dari 1 YouTube Shorts source")
     run.add_argument("video", help="Video ID atau URL YouTube")

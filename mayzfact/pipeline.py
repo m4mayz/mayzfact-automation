@@ -27,7 +27,7 @@ VOICE_LOCKED = ("source", "tts")
 AFTER_VOICE = ("plan", "fetch", "timeline", "render")
 MIN_AUDIO_SECONDS = 30.0
 STEP_ENV = {
-    "tts": ["ELEVENLABS_API_KEYS", "ELEVENLABS_VOICE_ID"],
+    "tts": ["ELEVENLABS_API_KEYS"],
 }
 NEW_SCRIPT_HINT = "Hapus voice.mp3 + script.json kalau emang mau naskah + suara baru (pakai kredit ElevenLabs)."
 

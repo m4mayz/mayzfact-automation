@@ -7,48 +7,23 @@ from mayzfact.config import (
     missing_env,
     settings_from_env,
 )
-from mayzfact.errors import PipelineError
 
 
-def test_defaults_when_env_empty():
-    settings = settings_from_env({})
-    assert settings == Settings()
-    assert settings.max_shot_seconds == 4.0
-    assert settings.fg_min_height_ratio == 0.5
-    assert settings.elevenlabs_model == "eleven_v3"
+def test_env_holds_only_secrets():
+    assert set(ENV_FIELDS) == {"ELEVENLABS_API_KEYS", "YOUTUBE_CLIENT_SECRET_JSON", "YOUTUBE_TOKEN_JSON", "NGROK_BASIC_AUTH"}
 
 
-def test_reads_and_casts_values():
-    settings = settings_from_env({"ELEVENLABS_API_KEYS": " abc,def ", "MAX_SHOT_SECONDS": "2.0", "PHOTO_RATIO": "0.25"})
-    assert settings.elevenlabs_api_keys == ("abc", "def")
-    assert settings.max_shot_seconds == 2.0
-    assert settings.photo_ratio == 0.25
+def test_non_secret_settings_live_in_code():
+    s = settings_from_env({"TARGET_DURATION_RATIO": "0.5", "MAX_SHOT_SECONDS": "2", "ELEVENLABS_VOICE_ID": "lain"})
+    assert (s.elevenlabs_voice_id, s.elevenlabs_model, s.target_duration_ratio, s.min_duration_seconds,
+            s.max_shot_seconds, s.fg_min_height_ratio, s.hook_seconds, s.brief_port) == (
+        "TX3LPaxmHKxFdv7VOQHJ", "eleven_v3", 0.8, 32.0, 4.0, 0.5, 10.0, 3100)
 
 
-def test_blank_value_keeps_default():
-    settings = settings_from_env({"ELEVENLABS_MODEL": "   ", "PEXELS_API_KEY": None})
-    assert settings.elevenlabs_model == "eleven_v3"
-    assert settings.pexels_api_key == ""
-
-
-def test_invalid_number_names_the_variable():
-    with pytest.raises(PipelineError, match="MAX_SHOT_SECONDS"):
-        settings_from_env({"MAX_SHOT_SECONDS": "dua"})
-
-
-def test_missing_env_lists_empty_keys_once():
-    settings = settings_from_env({"ELEVENLABS_API_KEYS": "x"})
-    assert missing_env(settings, ["ELEVENLABS_API_KEYS", "PEXELS_API_KEY", "PEXELS_API_KEY"]) == ["PEXELS_API_KEY"]
-
-
-def test_environment_overrides_dotenv(tmp_path, monkeypatch):
-    env_file = tmp_path / ".env"
-    env_file.write_text("ELEVENLABS_API_KEYS=from-file\nPEXELS_API_KEY=file-key\n", encoding="utf-8")
-    monkeypatch.delenv("ELEVENLABS_API_KEYS", raising=False)
-    monkeypatch.setenv("PEXELS_API_KEY", "")
-    settings = load_settings(env_file)
-    assert settings.elevenlabs_api_keys == ("from-file",)
-    assert settings.pexels_api_key == ""
+@pytest.mark.parametrize("name", ["clip_source", "pexels_api_key", "pixabay_api_key", "hook_platforms", "clip_platforms",
+                                  "browser_headless", "hook_exact_threshold", "photo_ratio", "gemini_api_keys"])
+def test_auto_and_gemini_settings_are_gone(name):
+    assert not hasattr(Settings(), name)
 
 
 def test_elevenlabs_keys_are_split_by_comma():
@@ -57,35 +32,26 @@ def test_elevenlabs_keys_are_split_by_comma():
     assert missing_env(settings_from_env({}), ["ELEVENLABS_API_KEYS"]) == ["ELEVENLABS_API_KEYS"]
 
 
-def test_hook_settings_defaults_and_parsing():
-    settings = settings_from_env({})
-    assert (settings.hook_seconds, settings.hook_exact_threshold, settings.browser_headless) == (10.0, 0.85, False)
-    assert settings.hook_platforms == ("tiktok", "pinterest")
-    assert settings.clip_platforms == ("pinterest",)
-    assert settings.max_shot_seconds == 4.0
-    settings = settings_from_env({"HOOK_SECONDS": "8", "HOOK_PLATFORMS": "tiktok,pinterest", "BROWSER_HEADLESS": "TRUE"})
-    assert (settings.hook_seconds, settings.hook_platforms, settings.browser_headless) == (8.0, ("tiktok", "pinterest"), True)
-    assert settings_from_env({"BROWSER_HEADLESS": "off"}).browser_headless is False
+def test_blank_value_keeps_default():
+    assert settings_from_env({"ELEVENLABS_API_KEYS": "   ", "NGROK_BASIC_AUTH": None}) == Settings()
 
 
-def test_invalid_flag_names_the_variable():
-    with pytest.raises(PipelineError, match="BROWSER_HEADLESS"):
-        settings_from_env({"BROWSER_HEADLESS": "kadang"})
+def test_missing_env_lists_empty_keys_once():
+    settings = settings_from_env({"ELEVENLABS_API_KEYS": "x"})
+    assert missing_env(settings, ["ELEVENLABS_API_KEYS", "NGROK_BASIC_AUTH", "NGROK_BASIC_AUTH"]) == ["NGROK_BASIC_AUTH"]
 
 
-def test_clip_source_and_brief_port():
-    settings = settings_from_env({})
-    assert (settings.clip_source, settings.brief_port) == ("manual", 3100)
-    settings = settings_from_env({"CLIP_SOURCE": "AUTO", "BRIEF_PORT": "3200"})
-    assert (settings.clip_source, settings.brief_port) == ("auto", 3200)
-    with pytest.raises(PipelineError, match="CLIP_SOURCE"):
-        settings_from_env({"CLIP_SOURCE": "kadang"})
+def test_environment_overrides_dotenv(tmp_path, monkeypatch):
+    env_file = tmp_path / ".env"
+    env_file.write_text("ELEVENLABS_API_KEYS=from-file\nNGROK_BASIC_AUTH=a:file-pass\n", encoding="utf-8")
+    monkeypatch.delenv("ELEVENLABS_API_KEYS", raising=False)
+    monkeypatch.setenv("NGROK_BASIC_AUTH", "")
+    settings = load_settings(env_file)
+    assert settings.elevenlabs_api_keys == ("from-file",)
+    assert settings.ngrok_basic_auth == ""
 
 
-def test_default_ratio_is_80_percent():
-    assert Settings().target_duration_ratio == 0.8
-
-
-def test_gemini_settings_are_gone():
-    assert not hasattr(Settings(), "gemini_api_keys")
-    assert "GEMINI_API_KEYS" not in ENV_FIELDS
+def test_secrets_are_hidden_from_repr():
+    text = repr(Settings(elevenlabs_api_keys=("KEYVAL",), youtube_token_json="TOKVAL", youtube_client_secret_json="SECVAL",
+                         ngrok_basic_auth="NGROKVAL"))
+    assert not any(v in text for v in ("KEYVAL", "TOKVAL", "SECVAL", "NGROKVAL"))

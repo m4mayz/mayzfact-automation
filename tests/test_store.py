@@ -23,11 +23,10 @@ def test_run_paths_layout(tmp_path):
     assert paths.final_mp4.name == "final.mp4"
 
 
-def test_run_paths_hook_files(tmp_path):
+def test_run_paths_source_mp4_and_no_hook_files(tmp_path):
     paths = RunPaths(tmp_path)
     assert paths.source_mp4 == tmp_path / "source.mp4"
-    assert paths.hook_dir == tmp_path / "hook"
-    assert paths.hook_json == tmp_path / "hook.json"
+    assert not hasattr(paths, "hook_dir") and not hasattr(paths, "hook_json")
 
 
 def test_run_paths_manual_files(tmp_path):

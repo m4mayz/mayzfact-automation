@@ -1,7 +1,7 @@
 [project]
 name = "mayzfact"
 version = "0.1.0"
-description = "Pipeline shorts: naskah ulang + TTS + klip stock"
+description = "Pipeline shorts: naskah ulang + TTS + klip manual"
 requires-python = ">=3.12"
 dependencies = [
   "google-api-python-client>=2.201.0",
@@ -10,7 +10,6 @@ dependencies = [
   "numpy>=2.0",
   "open-clip-torch>=3.0",
   "pillow>=11",
-  "playwright>=1.55",
   "pydantic>=2.9",
   "python-dotenv>=1.0",
   "torch>=2.9",

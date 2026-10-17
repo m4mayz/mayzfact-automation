@@ -21,16 +21,16 @@ def wib(text):
 
 def test_set_env_value_replaces_only_that_line(tmp_path):
     env = tmp_path / ".env"
-    env.write_bytes(b"# komentar\r\nGEMINI_MODEL=x\r\n\r\nYOUTUBE_TOKEN_JSON=\r\nBRIEF_PORT=3100\r\n")
+    env.write_bytes(b"# komentar\r\nHOOK_NOTE=x\r\n\r\nYOUTUBE_TOKEN_JSON=\r\nBRIEF_PORT=3100\r\n")
     youtube.set_env_value(env, "YOUTUBE_TOKEN_JSON", TOKEN)
     lines = env.read_text(encoding="utf-8").splitlines()
-    assert lines == ["# komentar", "GEMINI_MODEL=x", "", f"YOUTUBE_TOKEN_JSON='{TOKEN}'", "BRIEF_PORT=3100"]
+    assert lines == ["# komentar", "HOOK_NOTE=x", "", f"YOUTUBE_TOKEN_JSON='{TOKEN}'", "BRIEF_PORT=3100"]
     assert load_settings(env).youtube_token_json == TOKEN  # python-dotenv bisa baca balik
 
 
 def test_set_env_value_appends_when_missing(tmp_path):
     env = tmp_path / ".env"
-    env.write_text("GEMINI_MODEL=x\n", encoding="utf-8")
+    env.write_text("HOOK_NOTE=x\n", encoding="utf-8")
     youtube.set_env_value(env, "YOUTUBE_TOKEN_JSON", TOKEN)
     assert env.read_text(encoding="utf-8").splitlines()[-1] == f"YOUTUBE_TOKEN_JSON='{TOKEN}'"
 
@@ -233,7 +233,7 @@ def test_load_meta_reports_broken_json(tmp_path):
 
 def test_set_env_value_cleans_up_when_env_is_locked(monkeypatch, tmp_path):
     env = tmp_path / ".env"
-    env.write_text("GEMINI_MODEL=x\n", encoding="utf-8")
+    env.write_text("HOOK_NOTE=x\n", encoding="utf-8")
 
     def locked(src, dst):
         raise PermissionError("dikunci proses lain")
@@ -242,13 +242,13 @@ def test_set_env_value_cleans_up_when_env_is_locked(monkeypatch, tmp_path):
     with pytest.raises(PipelineError, match="login ulang"):
         youtube.set_env_value(env, "YOUTUBE_TOKEN_JSON", TOKEN)
     assert [p.name for p in tmp_path.iterdir()] == [".env"]  # file sementara (isinya secret) nggak ketinggalan
-    assert env.read_text(encoding="utf-8") == "GEMINI_MODEL=x\n"
+    assert env.read_text(encoding="utf-8") == "HOOK_NOTE=x\n"
 
 
 @pytest.mark.skipif(os.name == "nt", reason="permission POSIX; di Windows ngikut ACL folder")
 def test_set_env_value_keeps_env_owner_only(tmp_path):
     env = tmp_path / ".env"
-    env.write_text("GEMINI_MODEL=x\n", encoding="utf-8")
+    env.write_text("HOOK_NOTE=x\n", encoding="utf-8")
     env.chmod(0o644)
     youtube.set_env_value(env, "YOUTUBE_TOKEN_JSON", TOKEN)
     assert env.stat().st_mode & 0o777 == 0o600
