@@ -107,7 +107,7 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
         clip_frames = shot["durationInFrames"] + TAIL_FRAMES
         if card_from - shot["from"] + (card_end - card_from) > clip_frames:  # run lama: beat countdown kepotong 2 shot
             log(f"[timeline] klip card #{countdown.number} lebih pendek dari card-nya; "
-                "beat countdown ini masih kepotong. Ulang pakai --from plan (manual) atau --from clips (auto).")
+                "beat countdown ini masih kepotong. Ulang pakai --from plan.")
         cards.append({
             "number": countdown.number, "label": countdown.subject.upper(),
             "numberFrom": number_from, "numberAt": number_at, "numberDuration": max(1, card_from - number_from),

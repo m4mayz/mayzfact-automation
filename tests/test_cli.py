@@ -42,30 +42,24 @@ def test_cli_voices_needs_key(monkeypatch, capsys):
     assert "ELEVENLABS_API_KEYS" in capsys.readouterr().err
 
 
-def test_login_check_reports_each_platform(monkeypatch, capsys):
-    monkeypatch.setattr(cli, "load_settings", lambda: Settings(hook_platforms=("tiktok", "pinterest")))
-    cookies = {"tiktok": [{"name": "sessionid", "value": "x", "domain": ".tiktok.com"}], "pinterest": []}
-    monkeypatch.setattr(cli.browser, "read_profile_cookies", lambda name: cookies[name])
-    assert cli.main(["login", "--check"]) == 1
-    out = capsys.readouterr().out
-    assert "tiktok: login" in out
-    assert "pinterest: belum login (jalanin: mayzfact login pinterest)" in out
+def test_login_only_accepts_youtube():
+    for argv in (["login", "tiktok"], ["login", "--check"], ["login"]):
+        with pytest.raises(SystemExit) as exc:
+            cli.main(argv)
+        assert exc.value.code == 2
 
 
-def test_login_opens_browser_then_checks(monkeypatch, capsys):
-    opened = []
-    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
-    monkeypatch.setattr(cli.browser, "open_login_browser", lambda name: opened.append(name))
-    monkeypatch.setattr(cli.browser, "read_profile_cookies", lambda name: [{"name": "sessionid", "value": "x", "domain": ".douyin.com"}])
-    assert cli.main(["login", "douyin"]) == 0
-    assert opened == ["douyin"]
-    assert "douyin: login" in capsys.readouterr().out
+def test_cli_import_does_not_load_playwright():
+    import subprocess
+    import sys
+
+    out = subprocess.run([sys.executable, "-c", "import sys, mayzfact.cli; print('playwright' in sys.modules)"],
+                         capture_output=True, text=True, check=True)
+    assert out.stdout.strip() == "False"
 
 
-def test_login_needs_platform_or_check(monkeypatch, capsys):
-    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
-    assert cli.main(["login"]) == 1
-    assert "mayzfact login tiktok" in capsys.readouterr().err
+
+
 
 
 def test_cli_no_render_flag(monkeypatch, tmp_path, capsys):
@@ -77,7 +71,7 @@ def test_cli_no_render_flag(monkeypatch, tmp_path, capsys):
 
     monkeypatch.setattr(cli, "load_settings", lambda: Settings())
     monkeypatch.setattr(cli, "run_pipeline", fake_run)
-    assert cli.main(["run", "i2xag_1OJfM", "--from", "clips", "--no-render"]) == 0
+    assert cli.main(["run", "i2xag_1OJfM", "--from", "fetch", "--no-render"]) == 0
     assert seen["no_render"] is True
     assert "remotion studio" in capsys.readouterr().out
 

@@ -1,16 +1,6 @@
 from types import SimpleNamespace
 
-from mayzfact.matching import hook_slot_map, match_label, rerank_key, top_k
-
-
-def test_top_k_is_stable():
-    assert top_k([0.2, 0.9, 0.9, 0.1], 3) == [1, 2, 0]
-    assert top_k([], 3) == []
-
-
-def test_match_label():
-    assert match_label(0.85, 0.85) == "exact"
-    assert match_label(0.849, 0.85) == "similar"
+from mayzfact.matching import hook_slot_map
 
 
 def test_hook_slot_map():
@@ -21,9 +11,6 @@ def test_hook_slot_map():
     assert hook_slot_map(slots, 0, 10.0) == {}
 
 
-def test_rerank_key_prefers_score_but_puts_tier3_last():
-    items = {"blurry_best": (0.30, 3, 0), "good": (0.25, 1, 1), "better": (0.28, 2, 0)}
-    assert sorted(items, key=lambda name: rerank_key(*items[name])) == ["better", "good", "blurry_best"]
 
 
 def test_hook_slot_map_skips_shot_that_runs_past_hook_area():

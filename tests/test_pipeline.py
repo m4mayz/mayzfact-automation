@@ -4,17 +4,24 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-import mayzfact.pipeline as pipeline_mod
+from mayzfact import cli
 from mayzfact.config import Settings
 from mayzfact.errors import AwaitingInput, PipelineError
-from mayzfact.pipeline import STEPS, Deps, check_voice, plan_steps, run_pipeline
+from mayzfact.pipeline import (
+    ALL_STEPS,
+    STEPS,
+    Deps,
+    check_voice,
+    plan_steps,
+    run_pipeline,
+)
 from mayzfact.store import RunPaths, read_json, write_json_atomic
 from mayzfact.text import script_text, text_hash
-from tests.factories import cand, fake_alignment, make_script
+from tests.factories import fake_alignment, make_script
 
 VIDEO_ID = "i2xag_1OJfM"
-KEYS = {"elevenlabs_api_keys": ("e",), "elevenlabs_voice_id": "v", "pexels_api_key": "p", "pixabay_api_key": "x"}
-SETTINGS = Settings(**KEYS, max_shot_seconds=10.0, clip_source="auto", target_duration_ratio=0.6, min_duration_seconds=32.0)
+KEYS = {"elevenlabs_api_keys": ("e",), "elevenlabs_voice_id": "v"}
+SETTINGS = Settings(**KEYS, max_shot_seconds=10.0, target_duration_ratio=0.6, min_duration_seconds=32.0)
 TRANSCRIPT = [{"text": "Five ancient creatures are still alive today", "start": 0.0, "duration": 53.3}]
 NONE_DONE = {step: False for step in STEPS}
 ALL_DONE = {step: True for step in STEPS}
@@ -27,17 +34,28 @@ def done_until(last: str) -> dict:
 
 # --- plan_steps -------------------------------------------------------------
 
+def test_only_manual_steps_exist():
+    assert ALL_STEPS == STEPS == ["source", "tts", "plan", "fetch", "timeline", "render"]
+
+
+@pytest.mark.parametrize("step", ["hook", "clips"])
+def test_cli_rejects_removed_steps(step):
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["run", VIDEO_ID, "--from", step])
+    assert exc.value.code == 2
+
+
 def test_fresh_run_runs_everything():
     assert plan_steps(NONE_DONE, False, None) == STEPS
 
 
 def test_plain_run_resumes_from_first_missing_step():
-    assert plan_steps(done_until("source"), False, None) == ["tts", "hook", "clips", "timeline", "render"]
+    assert plan_steps(done_until("source"), False, None) == ["tts", "plan", "fetch", "timeline", "render"]
     assert plan_steps(ALL_DONE, True, None) == []
 
 
-def test_from_clips_is_allowed_with_voice():
-    assert plan_steps(ALL_DONE, True, "clips") == ["clips", "timeline", "render"]
+def test_from_fetch_is_allowed_with_voice():
+    assert plan_steps(ALL_DONE, True, "fetch") == ["fetch", "timeline", "render"]
 
 
 @pytest.mark.parametrize("step", ["source", "tts"])
@@ -103,19 +121,28 @@ class FakeTTS:
         return self.audio, fake_alignment(text, self.total_s)
 
 
-class FakeSearch:
-    def candidates(self, kind, query):
-        if kind == "video":
-            return [cand("pexels", f"v{i}", "video", 1080, 1920, duration_s=30.0, rank=i, url=f"https://cdn.test/v{i}.mp4") for i in range(10)]
-        return [cand("pexels", f"p{i}", "photo", 1600, 1000, rank=i, url=f"https://cdn.test/p{i}.jpg") for i in range(10)]
+
+
+def fake_plan(paths, log):
+    beats = read_json(paths.script_json)["beats"]
+    plan = {"groups": [], "shots": [{"index": i, "beat": i} for i in range(len(beats))]}
+    write_json_atomic(paths.shots_plan_json, plan)
+    return plan
+
+
+def fake_fetch(paths, log):
+    """1 foto per beat, rata sepanjang suara: cukup buat timeline tanpa download beneran."""
+    n = len(read_json(paths.script_json)["beats"])
+    step = read_json(paths.tts_json)["duration_s"] / n
+    clips = {"shots": [{"index": i, "beat": i, "start_s": round(i * step, 3), "end_s": round((i + 1) * step, 3),
+                        "kind": "photo", "file": f"clips/shot_{i + 1:02d}.jpg", "width": 1080, "height": 1920,
+                        "provider": "manual", "provider_id": f"s{i}"} for i in range(n)]}
+    write_json_atomic(paths.clips_json, clips)
+    return clips
 
 
 def build_world(tmp_path, audio_path, total_s, make_video, make_photo):
-    video_bytes = make_video(1080, 1920, 5.0).read_bytes()
-    photo_bytes = make_photo(1600, 1000).read_bytes()
-    client = httpx.Client(transport=httpx.MockTransport(
-        lambda request: httpx.Response(200, content=video_bytes if request.url.path.endswith(".mp4") else photo_bytes)
-    ))
+    client = httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(404)))
     tts = FakeTTS(audio_path.read_bytes(), total_s)
     world = SimpleNamespace(tts=tts, renders=0, runs=tmp_path / "runs")
 
@@ -127,10 +154,10 @@ def build_world(tmp_path, audio_path, total_s, make_video, make_photo):
     world.deps = Deps(
         fetch_transcript=lambda video_id: TRANSCRIPT,
         tts=lambda: tts,
-        search=FakeSearch,
         http=lambda: client,
         render=render,
-        media_cache=tmp_path / "media",
+        plan=fake_plan,
+        fetch=fake_fetch,
     )
     return world
 
@@ -158,7 +185,7 @@ def start(world, **kwargs):
     return run(world, **kwargs)
 
 
-def test_full_run_then_rerun_from_clips_reuses_voice(world):
+def test_full_run_then_rerun_from_fetch_reuses_voice(world):
     paths = start(world)
     assert paths.final_mp4.read_bytes() == b"fake-mp4"
     assert (world.tts.calls, world.renders) == (1, 1)
@@ -167,7 +194,7 @@ def test_full_run_then_rerun_from_clips_reuses_voice(world):
     assert timeline["durationInFrames"] == math.ceil(read_json(paths.tts_json)["duration_s"] * 30 - 1e-6)
     voice_mtime = paths.voice_mp3.stat().st_mtime_ns
 
-    run(world, from_step="clips")
+    run(world, from_step="fetch")
     assert (world.tts.calls, world.renders) == (1, 2)
     assert paths.voice_mp3.stat().st_mtime_ns == voice_mtime
 
@@ -180,17 +207,17 @@ def test_second_plain_run_does_nothing(world):
 
 
 
-def test_edited_script_blocks_clips_without_calling_tts(world):
+def test_edited_script_blocks_fetch_without_calling_tts(world):
     paths = start(world)
     script = read_json(paths.script_json)
     script["beats"][0]["text"] = "Diedit manual."
     write_json_atomic(paths.script_json, script)
     with pytest.raises(PipelineError, match="beda"):
-        run(world, from_step="clips")
+        run(world, from_step="fetch")
     assert world.tts.calls == 1
 
 
-def test_short_audio_stops_before_clips(tmp_path, sine_mp3, make_video, make_photo):
+def test_short_audio_stops_before_plan(tmp_path, sine_mp3, make_video, make_photo):
     world = build_world(tmp_path, sine_mp3, 2.5, make_video, make_photo)
     with pytest.raises(PipelineError, match="script.json"):
         start(world)
@@ -200,14 +227,14 @@ def test_short_audio_stops_before_clips(tmp_path, sine_mp3, make_video, make_pho
 
 
 def test_missing_keys_fail_before_any_step(world):
-    with pytest.raises(PipelineError, match="ELEVENLABS_API_KEYS.*ELEVENLABS_VOICE_ID.*PEXELS_API_KEY.*PIXABAY_API_KEY"):
-        run(world, settings=Settings(clip_source="auto"))
+    with pytest.raises(PipelineError, match="ELEVENLABS_API_KEYS"):
+        run(world, settings=Settings(elevenlabs_api_keys=()))
     assert not (world.runs / VIDEO_ID / "source.json").exists()
 
 
-def test_from_clips_does_not_need_elevenlabs_keys(world):
+def test_from_fetch_does_not_need_elevenlabs_keys(world):
     start(world)
-    run(world, from_step="clips", settings=Settings(pexels_api_key="p", pixabay_api_key="x", max_shot_seconds=10.0, clip_source="auto"))
+    run(world, from_step="fetch", settings=Settings(max_shot_seconds=10.0))
     assert world.renders == 2
 
 
@@ -220,7 +247,7 @@ def test_failed_render_is_retried_on_next_plain_run(world):
 
     world.deps.render = failing_render
     with pytest.raises(PipelineError):
-        run(world, from_step="clips")
+        run(world, from_step="fetch")
     assert not paths.final_mp4.exists()
 
     world.deps.render = original_render
@@ -237,71 +264,22 @@ def test_missing_ffmpeg_fails_before_any_step(world, monkeypatch):
     assert not (world.runs / VIDEO_ID / "source.json").exists()
 
 
-def test_clips_are_unique_across_shots(world):
-    paths = start(world)
-    ids = [(s["provider"], s["provider_id"]) for s in read_json(paths.clips_json)["shots"]]
-    assert len(ids) == len(set(ids)) == 8
 
 
-EMPTY_HOOK = {"hook_seconds": 10.0, "skipped_platforms": [], "segments": []}
 
 
-def test_hook_runs_before_clips_and_feeds_it(world, monkeypatch):
-    calls = []
-
-    def fake_hook(paths, log):
-        calls.append(paths.root.name)
-        write_json_atomic(paths.hook_json, EMPTY_HOOK)
-        return EMPTY_HOOK
-
-    world.deps.hook = fake_hook
-    seen = {}
-    real_run_clips = pipeline_mod.run_clips
-
-    def spy(*args, **kwargs):
-        seen.update(kwargs)
-        return real_run_clips(*args, **kwargs)
-
-    monkeypatch.setattr(pipeline_mod, "run_clips", spy)
-    start(world)
-    assert calls == [VIDEO_ID]
-    assert seen["hook"] == EMPTY_HOOK
-    assert seen["hook_seconds"] == 10.0
-    assert seen["scorer"] is None
 
 
-def test_without_hook_runner_writes_empty_hook(world):
-    paths = start(world)
-    assert read_json(paths.hook_json) == EMPTY_HOOK
 
 
-def test_from_hook_after_voice_does_not_call_tts(world):
-    start(world)
-    run(world, from_step="hook")
-    assert world.tts.calls == 1
-    assert world.renders == 2
 
 
-def test_old_run_without_hook_json_resumes_from_hook(world):
-    paths = start(world)
-    paths.hook_json.unlink()
-    run(world)
-    assert paths.hook_json.exists()
-    assert (world.tts.calls, world.renders) == (1, 2)
 
 
-def test_clips_use_clip_search_and_deps_are_closed(world):
-    used, closed = [], []
-
-    class TaggingSearch(FakeSearch):
-        def candidates(self, kind, query):
-            used.append(kind)
-            return super().candidates(kind, query)
-
-    world.deps.clip_search = TaggingSearch
+def test_deps_are_closed_after_each_run(world):
+    closed = []
     world.deps.close = lambda: closed.append(1)
     start(world)  # 2 run: source (berhenti nunggu naskah) + lanjutan; deps ditutup tiap run
-    assert used
     assert closed == [1, 1]
 
 
@@ -323,11 +301,10 @@ def test_no_render_stops_after_timeline(world):
     assert paths.timeline_json.exists()
     assert not paths.final_mp4.exists()
     assert world.renders == 0
-    run(world, from_step="clips", no_render=True)
+    run(world, from_step="fetch", no_render=True)
     assert world.renders == 0
 
 
-MANUAL = Settings(**KEYS, max_shot_seconds=10.0, clip_source="manual", target_duration_ratio=0.6, min_duration_seconds=32.0)
 
 
 def test_manual_mode_runs_plan_then_waits_for_links(world):
@@ -346,17 +323,11 @@ def test_manual_mode_runs_plan_then_waits_for_links(world):
 
     world.deps.plan, world.deps.fetch = fake_plan, fake_fetch
     with pytest.raises(AwaitingInput):
-        start(world, settings=MANUAL, no_render=True)
+        start(world, no_render=True)
     assert calls == ["plan", "fetch"]
     assert world.tts.calls == 1
 
 
-def test_manual_mode_rejects_auto_steps_and_auto_rejects_manual(world):
-    start(world)
-    with pytest.raises(PipelineError, match="hook"):
-        run(world, settings=MANUAL, from_step="hook")
-    with pytest.raises(PipelineError, match="fetch"):
-        run(world, from_step="fetch")
 
 
 def test_manual_fetch_success_continues_to_timeline(world):
@@ -371,7 +342,7 @@ def test_manual_fetch_success_continues_to_timeline(world):
         return clips
 
     world.deps.plan, world.deps.fetch = fake_plan, fake_fetch
-    paths = start(world, settings=MANUAL, no_render=True)
+    paths = start(world, no_render=True)
     assert paths.timeline_json.exists() and world.renders == 0
 
 
@@ -484,4 +455,4 @@ def test_deleted_script_with_voice_present_is_a_clean_error(world):
     paths = start(world)
     paths.script_json.unlink()
     with pytest.raises(PipelineError, match="script.json"):
-        run(world, from_step="clips")
+        run(world, from_step="fetch")

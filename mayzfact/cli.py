@@ -11,8 +11,6 @@ from mayzfact.config import PROJECT_ROOT, RUNS_DIR, Settings, load_settings, mis
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.net import make_client
 from mayzfact.pipeline import ALL_STEPS, run_pipeline
-from mayzfact.platforms import browser
-from mayzfact.platforms.base import PLATFORMS, is_logged_in, platform_info
 from mayzfact.providers.elevenlabs import list_voices
 
 
@@ -26,9 +24,8 @@ def build_parser() -> argparse.ArgumentParser:
     check = sub.add_parser("check-script", help="Cek runs/<id>/script.json yang ditulis agent")
     check.add_argument("video", help="Video ID atau URL YouTube source")
     sub.add_parser("voices", help="List voice ElevenLabs di akun lu")
-    login = sub.add_parser("login", help="Login ke platform hook (TikTok/Douyin/Pinterest) atau YouTube buat upload")
-    login.add_argument("platform", nargs="?", choices=sorted([*PLATFORMS, "youtube"]))
-    login.add_argument("--check", action="store_true", help="Cek status login semua platform di HOOK_PLATFORMS")
+    login = sub.add_parser("login", help="Login YouTube buat upload (token disimpan di .env)")
+    login.add_argument("platform", choices=["youtube"])
     sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (04.00/21.00 WIB)")
     upload = sub.add_parser("upload", help="Upload final.mp4 ke YouTube sebagai video terjadwal")
     upload.add_argument("video", help="Video ID atau URL YouTube source")
@@ -116,25 +113,11 @@ def _print_voices(settings: Settings) -> int:
 
 
 def _login(args: argparse.Namespace, settings: Settings) -> int:
-    if args.check:
-        all_ok = True
-        for name in settings.hook_platforms:
-            ok = is_logged_in(platform_info(name), browser.read_profile_cookies(name))
-            all_ok = all_ok and ok
-            print(f"{name}: login" if ok else f"{name}: belum login (jalanin: mayzfact login {name})")
-        return 0 if all_ok else 1
-    if args.platform == "youtube":
-        from mayzfact import youtube
+    from mayzfact import youtube
 
-        youtube.login(settings.youtube_client_secret_json, PROJECT_ROOT / ".env")
-        print("YouTube: login berhasil, token disimpan di .env")
-        return 0
-    if not args.platform:
-        raise PipelineError("login", "Sebutin platform-nya, misal: mayzfact login tiktok. Atau pakai --check.")
-    browser.open_login_browser(args.platform)
-    ok = is_logged_in(platform_info(args.platform), browser.read_profile_cookies(args.platform))
-    print(f"{args.platform}: login" if ok else f"{args.platform}: belum login, coba lagi")
-    return 0 if ok else 1
+    youtube.login(settings.youtube_client_secret_json, PROJECT_ROOT / ".env")
+    print("YouTube: login berhasil, token disimpan di .env")
+    return 0
 
 
 def _lan_ip() -> str:
