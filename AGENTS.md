@@ -94,7 +94,7 @@ cd remotion && npx tsc --noEmit -p .
 - Challenge yang diselesaiin browser biasa tanpa manusia (WAF proof-of-work Douyin) boleh (D-018).
 - Jangan ubah atau hapus `flow.svg` dan `sources/`.
 - Halaman brief selalu kebuka ke LAN dan ke internet lewat ngrok (biar bisa diisi dari HP). Brief sendiri nggak punya login; yang ngunci cuma basic-auth ngrok dari `NGROK_BASIC_AUTH`. Jangan pernah buka ngrok tanpa basic-auth, jangan print isi `NGROK_BASIC_AUTH`, dan matiin brief + tunnel kalau udah selesai. Siapa aja di WiFi yang sama tetap bisa buka alamat LAN, jadi jangan jalanin brief di WiFi publik.
-- Jangan commit file audio, emoji, atau model: `assets/bgm/*`, `assets/sfx/*` (kecuali `sfx.json`), `assets/emoji/`, `models/`. Semuanya udah di-gitignore, jangan dipaksa masuk.
+- `assets/bgm/`, `assets/sfx/`, `assets/emoji/`, dan `runs/*/youtube.json` ikut di-commit biar project bisa dipindah pakai `git clone` (Akmal, 2026-10-17). `models/`, `cache/`, dan isi `runs/` lainnya tetap di-gitignore.
 
 ### Biaya
 

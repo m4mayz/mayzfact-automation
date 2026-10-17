@@ -27,13 +27,11 @@ Model SigLIP + OWLv2 (±1,4 GB), emoji Lottie, dan SFX ke-download otomatis pas 
 
 ### Pindah komputer
 
-Yang nggak ada di git, jadi harus dibawa manual dari komputer lama:
+`git clone` repo ini, terus ikutin Setup di atas. BGM, SFX, emoji, dan `runs/*/youtube.json` (jadwal tayang buat `next-slot`) udah ikut di git.
 
-- `.env`: 4 rahasia (ElevenLabs, YouTube, ngrok). Pindahin lewat flashdisk atau password manager, jangan lewat chat/email.
-- `runs/<id>/youtube.json` buat video yang **belum tayang** aja. `next-slot` ngecek jadwal dari file ini; kalau ketinggalan, slot yang udah kepake bisa diusulin lagi. Sisa `runs/` nggak perlu (kecuali mau revisi video yang belum final).
-- `assets/bgm/*.mp3`: BGM dari Akmal, nggak bisa di-download ulang.
+Yang nggak ada di git, jadi dibawa manual: `.env` (4 rahasia). Pindahin lewat flashdisk atau password manager, jangan lewat chat/email.
 
-Yang nggak perlu dibawa (ke-download ulang): `models/`, `assets/emoji/`, `assets/sfx/*.mp3`, `cache/`, `remotion/node_modules/`.
+Yang nggak perlu dibawa (ke-download/dibikin ulang): `models/`, `cache/`, `remotion/node_modules/`, sisa isi `runs/` (kecuali mau revisi video yang belum final).
 
 Token YouTube di `.env` tetap jalan di komputer baru. Kalau ditolak, jalanin `uv run mayzfact login youtube` lagi.
 
