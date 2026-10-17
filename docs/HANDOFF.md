@@ -504,3 +504,4 @@
 ## Masalah terbuka
 
 1. Sisa auto di disk tinggal `runs/i2xag_1OJfM/hook/` (11 MB) + `hook.json`; nggak dibaca kode lagi. `browser-profiles/` dan `cache/search|thumbs|media` udah nggak ada. Akmal yang mutusin hapus.
+2. Sebelum 2026-12-31 voice Liam dimatiin ElevenLabs (D-009): ganti `elevenlabs_voice_id` di `mayzfact/config.py`, bukan di `.env`.
