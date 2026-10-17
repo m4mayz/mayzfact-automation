@@ -345,3 +345,14 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Konteks:** WiFi yang dipakai Akmal ngeblok akses HP ke laptop (client isolation), jadi alamat LAN brief nggak kepake.
 - **Keputusan:** `mayzfact brief` otomatis buka `ngrok http <port>` dengan `--basic-auth` dari `NGROK_BASIC_AUTH` (`.env`), dan ngrok ikut mati bareng brief (`taskkill /T`, karena ngrok scoop jalan lewat shim). `--no-ngrok` buat skip. `mayzfact tunnel <port>` buat Studio (3000). Tanpa `NGROK_BASIC_AUTH` yang valid (password ≥ 8 karakter), ngrok nggak dinyalain sama sekali. Server brief nerima Host `*.ngrok-free.app`/`.dev`/`.io` (commit `8ee0f39`).
 - **Authority:** Akmal (chat 2026-10-16).
+
+## D-031 — 2026-10-17 — Mode auto dihapus, `.env` cuma rahasia
+
+- **Status:** accepted, diimplementasi.
+- **Konteks:** Semua video lewat jalur manual sejak D-019/D-028. Mode auto (`CLIP_SOURCE=auto`: step `hook` + `clips`, Pexels/Pixabay, scraping TikTok/Douyin/Pinterest pakai Playwright) nggak kepake.
+- **Keputusan:**
+  1. Pipeline cuma `source → tts → plan → fetch → timeline → render`. Kode, test, env, dan dependency `playwright` khusus auto dihapus. `mayzfact login` tinggal `youtube`. Field naskah `fallback_query` dicabut (naskah lama yang masih punya field ini tetap kebaca).
+  2. `.env` cuma 4 rahasia: `ELEVENLABS_API_KEYS`, `YOUTUBE_CLIENT_SECRET_JSON`, `YOUTUBE_TOKEN_JSON`, `NGROK_BASIC_AUTH`. Setting lain jadi default di `Settings` (`mayzfact/config.py`), biar harness bisa langsung ngubah di kode.
+  3. Keputusan lama (D-002, D-011–D-017, D-019) nggak diedit, cuma digantiin di sini.
+- **Nanti, kalau auto balik:** yang otomatis cuma nyari klip, pakai browser Akmal sendiri yang udah login TikTok. Kode Playwright lama nggak dipakai ulang, ditulis dari nol.
+- **Authority:** Akmal (chat 2026-10-17).

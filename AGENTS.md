@@ -86,10 +86,11 @@ cd remotion && npx tsc --noEmit -p .
 
 ### Keamanan (wajib)
 
-- Jangan print, log, atau commit isi `.env` (API key, termasuk `YOUTUBE_CLIENT_SECRET_JSON` dan `YOUTUBE_TOKEN_JSON`), cookie, atau apa pun di `browser-profiles/`.
+- Jangan print, log, atau commit isi `.env` (`ELEVENLABS_API_KEYS`, `YOUTUBE_CLIENT_SECRET_JSON`, `YOUTUBE_TOKEN_JSON`, `NGROK_BASIC_AUTH`), cookie, atau apa pun di `browser-profiles/` (sisa mode auto, isinya cookie session).
+- `.env` cuma buat rahasia. Setting lain ada di `Settings` (`mayzfact/config.py`); ubah di situ, jangan nambah variabel ke `.env`.
 - Upload ke YouTube itu aksi keluar yang nggak bisa ditarik. Jalanin `mayzfact upload` cuma setelah Akmal konfirmasi jam tayangnya.
 - Jangan solve captcha yang butuh manusia. Jangan rotasi proxy/IP. Jangan spoof fingerprint, termasuk impersonation `curl_cffi` di yt-dlp.
-- Kalau platform minta captcha atau login ulang, berhenti. Minta Akmal jalanin `uv run mayzfact login <platform>`.
+- Kalau link klip minta captcha atau login, jangan diakalin. Kasih tau Akmal shot mana, minta link lain atau upload file.
 - Challenge yang diselesaiin browser biasa tanpa manusia (WAF proof-of-work Douyin) boleh (D-018).
 - Jangan ubah atau hapus `flow.svg` dan `sources/`.
 - Halaman brief selalu kebuka ke LAN dan ke internet lewat ngrok (biar bisa diisi dari HP). Brief sendiri nggak punya login; yang ngunci cuma basic-auth ngrok dari `NGROK_BASIC_AUTH`. Jangan pernah buka ngrok tanpa basic-auth, jangan print isi `NGROK_BASIC_AUTH`, dan matiin brief + tunnel kalau udah selesai. Siapa aja di WiFi yang sama tetap bisa buka alamat LAN, jadi jangan jalanin brief di WiFi publik.

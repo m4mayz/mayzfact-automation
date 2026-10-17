@@ -9,24 +9,23 @@ Pipeline YouTube Shorts. Naskah ditulis AI agent (Claude Code, Codex, dll) dan d
 
 1. `uv sync`
 2. `nvm use 22.23.1`, lalu `cd remotion && npm install && npx remotion browser ensure`
-3. Copy `.env.example` jadi `.env`, terus isi semua key-nya.
+3. Copy `.env.example` jadi `.env`, terus isi. `.env` cuma buat rahasia: `ELEVENLABS_API_KEYS`, `YOUTUBE_CLIENT_SECRET_JSON`, `YOUTUBE_TOKEN_JSON`, `NGROK_BASIC_AUTH`.
 4. `ELEVENLABS_API_KEYS` boleh lebih dari 1 key, dipisah koma tanpa spasi. Key dipakai berurutan, dan kalau satu key ditolak (kuota habis/izin kurang), otomatis pindah ke key berikutnya.
-5. `uv run mayzfact voices` buat nyari `ELEVENLABS_VOICE_ID` (butuh key dengan izin "Voices: Read").
+5. Setting lain (voice ID, model, durasi, port brief, dll.) ada di `Settings` di `mayzfact/config.py`, ubah langsung di situ. `uv run mayzfact voices` buat nyari voice ID (butuh key dengan izin "Voices: Read").
 
 ## Pakai
 
 ```bash
 uv run mayzfact run <video_id atau URL>        # jalanin semua step yang belum ada
-uv run mayzfact run <id> --from clips          # ulang klip + timeline + render; suara nggak dibuat ulang
 uv run mayzfact check-script <id>              # cek runs/<id>/script.json yang ditulis agent
-uv run mayzfact run <id> --from clips --no-render   # berhenti di timeline.json, review di Remotion Studio dulu
+uv run mayzfact run <id> --from fetch --no-render   # ulang klip + timeline, berhenti buat review di Remotion Studio
 ```
 
 Hasilnya ada di `runs/<id>/final.mp4`. Jangan hapus `runs/<id>/voice.mp3`, soalnya kalau kehapus suara harus dibuat ulang dan kredit kepakai lagi.
 
-## Mode manual (default)
+## Isi link klip
 
-Klip dicari sendiri, terus pipeline yang download + milih bagian terbaik.
+Klip dicari sendiri, terus pipeline yang download + milih bagian terbaik. Nggak ada mode cari klip otomatis (dihapus di D-031).
 
 ```bash
 uv run mayzfact run <id> --no-render        # run pertama berhenti nunggu naskah (exit 3); setelah naskah ada: sampai plan, nunggu link
@@ -36,7 +35,7 @@ uv run mayzfact run <id> --from fetch --no-render   # download + potong; shot ga
 
 Shot dikelompokin per konteks (semua shot hook = 1 kelompok, sisanya per subjek), tapi link diisi per shot: 1 shot = 1 link, plus kolom Mulai/Selesai (detik) kalau mau potongan tertentu. Shot berurutan yang pakai link sama videonya nyambung. Link boleh teks share Douyin apa adanya. Video source ikut tampil di halaman.
 
-Server brief kebuka ke LAN biar bisa diisi dari HP (alamatnya di-print pas start). Nggak ada login, jadi jangan jalanin di WiFi publik. Link RedNote ditolak (butuh login), save file-nya dari app terus upload. Tambahin ` #3` buat cuma pakai foto ke-3 dari post foto ganda. Mode lama: `CLIP_SOURCE=auto`.
+Server brief kebuka ke LAN biar bisa diisi dari HP (alamatnya di-print pas start). Nggak ada login, jadi jangan jalanin di WiFi publik. Link RedNote ditolak (butuh login), save file-nya dari app terus upload. Tambahin ` #3` buat cuma pakai foto ke-3 dari post foto ganda.
 
 ## Review di Remotion Studio
 
@@ -76,18 +75,6 @@ uv run mayzfact upload <id> --now                      # langsung public, tanpa 
 ```
 
 Metadata-nya dibaca dari `runs/<id>/upload.json` (`title`, `description`, `tags`, `category_id`, `language`). Video di-upload sebagai private dengan `publishAt`, jadi YouTube yang bikin public di jamnya. Hasilnya (link video + Studio) disimpan di `runs/<id>/youtube.json`, dan run yang sama nggak bisa ke-upload 2 kali.
-
-## Hook (Fase 2)
-
-Login sekali per platform. Sesinya disimpan di `browser-profiles/`, jangan di-share.
-
-```bash
-uv run mayzfact login tiktok      # juga: douyin, rednote, pinterest
-uv run mayzfact login --check
-uv run mayzfact run <id> --from hook   # cari ulang klip hook; suara nggak dibuat ulang
-```
-
-Kalau platform kena captcha atau login expired, platform itu di-skip dan run tetap jalan. Log-nya nyebut platform mana yang perlu login ulang.
 
 ## Test
 

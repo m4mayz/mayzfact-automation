@@ -137,7 +137,7 @@
 
 ## Selesai
 
-- **Mode `CLIP_SOURCE=manual`** (default): `source → script → tts → plan → fetch → timeline → (Studio) → render`. Mode `auto` (Fase 2) tetap ada.
+- **Mode `CLIP_SOURCE=manual`** (default): `source → script → tts → plan → fetch → timeline → (Studio) → render`. Mode `auto` (Fase 2) tetap ada *(dihapus di D-031)*.
 - **`plan`:**
   - shot dikelompokin per konteks: semua hook jadi 1 kelompok, sisanya per subjek
   - frame referensi per shot hook
@@ -487,3 +487,20 @@
 ## Delivery
 
 - Next: lanjutin 4735ZE89GXQ (fetch → Studio → render → upload).
+
+---
+
+# Handoff — Hapus mode auto (D-031)
+
+- **Updated:** 2026-10-17, Claude Code
+- **Goal & scope:** D-031, [spec](superpowers/specs/2026-10-17-hapus-mode-auto-design.md), [plan](superpowers/plans/2026-10-17-hapus-mode-auto.md).
+
+## Selesai
+
+- Step `hook`/`clips`, Pexels/Pixabay, Playwright, `login <platform>`, `CLIP_SOURCE`, dan `fallback_query` dihapus. Bagian Fase 2 di atas sekarang cuma riwayat.
+- Fungsi yang dipakai manual dipindah: `mayzfact/source_frames.py` (frame hook), `mayzfact/shots.py` (`split_shots`, `beat_subjects`), `normalize_local` ke `steps/fetch.py`.
+- `.env` tinggal 4 rahasia; setting lain jadi default di `mayzfact/config.py` (`min_duration_seconds` 32, voice ID `TX3LPaxmHKxFdv7VOQHJ`).
+
+## Masalah terbuka
+
+1. Sisa auto di disk tinggal `runs/i2xag_1OJfM/hook/` (11 MB) + `hook.json`; nggak dibaca kode lagi. `browser-profiles/` dan `cache/search|thumbs|media` udah nggak ada. Akmal yang mutusin hapus.
