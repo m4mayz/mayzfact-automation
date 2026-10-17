@@ -30,7 +30,7 @@ Model SigLIP + OWLv2 (±1,4 GB), emoji Lottie, dan SFX ke-download otomatis pas 
 Yang nggak ada di git, jadi harus dibawa manual dari komputer lama:
 
 - `.env`: 4 rahasia (ElevenLabs, YouTube, ngrok). Pindahin lewat flashdisk atau password manager, jangan lewat chat/email.
-- `runs/`: hasil tiap video. `youtube.json` di dalamnya dipakai `next-slot` buat ngecek jadwal yang udah kepakai dan nyegah upload dobel; `voice.mp3` dibikin pakai kredit ElevenLabs.
+- `runs/<id>/youtube.json` buat video yang **belum tayang** aja. `next-slot` ngecek jadwal dari file ini; kalau ketinggalan, slot yang udah kepake bisa diusulin lagi. Sisa `runs/` nggak perlu (kecuali mau revisi video yang belum final).
 - `assets/bgm/*.mp3`: BGM dari Akmal, nggak bisa di-download ulang.
 
 Yang nggak perlu dibawa (ke-download ulang): `models/`, `assets/emoji/`, `assets/sfx/*.mp3`, `cache/`, `remotion/node_modules/`.
