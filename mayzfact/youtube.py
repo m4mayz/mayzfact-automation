@@ -26,7 +26,7 @@ from mayzfact.store import (
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 WIB = timezone(timedelta(hours=7))  # WIB nggak pakai DST, jadi cukup offset tetap
 LOGIN_HINT = "Jalanin: uv run mayzfact login youtube"
-SLOT_HOURS = (4, 21)
+SLOT_HOURS = (1, 4)
 MIN_LEAD = timedelta(minutes=15)
 CHUNK = 8 * 1024 * 1024
 
@@ -148,7 +148,7 @@ def taken_slots(runs_dir: Path) -> list[datetime]:
 
 
 def next_slot(taken: list[datetime], now: datetime) -> datetime:
-    """Slot 04.00/21.00 WIB pertama yang belum kepake dan minimal 15 menit dari sekarang."""
+    """Slot 01.00/04.00 WIB pertama yang belum kepake dan minimal 15 menit dari sekarang."""
     used = {t.astimezone(WIB) for t in taken}
     start = now.astimezone(WIB).replace(hour=0, minute=0, second=0, microsecond=0)
     for day in range(366):

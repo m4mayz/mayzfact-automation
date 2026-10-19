@@ -89,10 +89,10 @@ def test_load_meta_reports_problems(tmp_path):
 
 
 def test_next_slot_skips_taken_and_too_soon():
-    now = wib("2026-10-15 20:50")  # 21.00 cuma 10 menit lagi, jadi dilewat
+    now = wib("2026-10-16 00:50")  # 01.00 cuma 10 menit lagi, jadi dilewat
     assert youtube.next_slot([], now) == wib("2026-10-16 04:00")
-    assert youtube.next_slot([wib("2026-10-16 04:00")], now) == wib("2026-10-16 21:00")
-    assert youtube.next_slot([], wib("2026-10-15 12:00")) == wib("2026-10-15 21:00")
+    assert youtube.next_slot([wib("2026-10-16 04:00")], now) == wib("2026-10-17 01:00")
+    assert youtube.next_slot([], wib("2026-10-15 12:00")) == wib("2026-10-16 01:00")
 
 
 def test_taken_slots_reads_uploaded_runs(tmp_path):

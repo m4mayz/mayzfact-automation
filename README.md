@@ -91,8 +91,8 @@ Butuh `YOUTUBE_CLIENT_SECRET_JSON` di `.env` (JSON OAuth client dari Google Clou
 
 ```bash
 uv run mayzfact login youtube                          # sekali: browser kebuka, token disimpan ke YOUTUBE_TOKEN_JSON di .env
-uv run mayzfact next-slot                              # slot tayang kosong berikutnya (04.00/21.00 WIB)
-uv run mayzfact upload <id> --at "2026-10-15 21:00"   # upload terjadwal (jam WIB)
+uv run mayzfact next-slot                              # slot tayang kosong berikutnya (01.00/04.00 WIB)
+uv run mayzfact upload <id> --at "2026-10-15 01:00"   # upload terjadwal (jam WIB)
 uv run mayzfact upload <id> --now                      # langsung public, tanpa jadwal
 ```
 

@@ -357,3 +357,10 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Voice ID pindah ke kode:** tugas D-009 (ganti voice Liam sebelum 2026-12-31) sekarang dikerjain di `Settings.elevenlabs_voice_id` (`mayzfact/config.py`), bukan `ELEVENLABS_VOICE_ID` di `.env` (variabel itu udah diabaikan).
 - **Nanti, kalau auto balik:** yang otomatis cuma nyari klip, pakai browser Akmal sendiri yang udah login TikTok. Kode Playwright lama nggak dipakai ulang, ditulis dari nol.
 - **Authority:** Akmal (chat 2026-10-17).
+
+## D-032 — 2026-10-18 — Slot tayang jadi 01.00 dan 04.00 WIB
+
+- **Status:** accepted, diimplementasi.
+- **Keputusan:** `SLOT_HOURS` di `mayzfact/youtube.py` jadi `(1, 4)`. Slot 21.00 diganti 01.00 WIB, slot 04.00 tetap. Keduanya jatuh pas jam siang-sore US (01.00 WIB = 14.00 EDT, 04.00 WIB = 17.00 EDT; mulai 1 November jadi 13.00 dan 16.00 EST).
+- **Revisi:** D-027 dan angka 21.00 di Fase 4 (yang lama nggak diedit).
+- **Authority:** Akmal (chat 2026-10-18).

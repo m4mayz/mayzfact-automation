@@ -190,7 +190,7 @@ def test_next_slot_prints_wib_time(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
     assert cli.main(["next-slot"]) == 0
     out = capsys.readouterr().out.strip()
-    assert out.endswith(("04:00", "21:00")) and len(out) == len("2026-10-15 21:00")
+    assert out.endswith(("01:00", "04:00")) and len(out) == len("2026-10-15 21:00")
 
 
 def test_upload_without_login_fails_cleanly(monkeypatch, tmp_path, capsys):

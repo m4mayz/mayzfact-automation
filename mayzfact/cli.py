@@ -26,7 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("voices", help="List voice ElevenLabs di akun lu")
     login = sub.add_parser("login", help="Login YouTube buat upload (token disimpan di .env)")
     login.add_argument("platform", choices=["youtube"])
-    sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (04.00/21.00 WIB)")
+    sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (01.00/04.00 WIB)")
     upload = sub.add_parser("upload", help="Upload final.mp4 ke YouTube sebagai video terjadwal")
     upload.add_argument("video", help="Video ID atau URL YouTube source")
     when = upload.add_mutually_exclusive_group(required=True)

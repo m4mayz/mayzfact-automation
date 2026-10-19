@@ -61,7 +61,7 @@ uv run mayzfact run <id> --from fetch --no-render     # download + potong klip, 
 uv run mayzfact run <id> --from timeline --no-render  # bikin ulang timeline aja
 uv run mayzfact run <id> --from render                # render final.mp4 (5–8 menit)
 uv run mayzfact login youtube                         # login Google sekali, token masuk .env
-uv run mayzfact next-slot                             # slot tayang kosong berikutnya (04.00/21.00 WIB)
+uv run mayzfact next-slot                             # slot tayang kosong berikutnya (01.00/04.00 WIB)
 uv run mayzfact upload <id> --at "YYYY-MM-DD HH:MM"  # upload terjadwal, jam WIB
 uv run mayzfact upload <id> --now                     # langsung public (cuma kalau Akmal minta)
 cd remotion && npx remotion studio src/index.ts --public-dir=../runs/<id> --props=../runs/<id>/timeline.json --port=3000 --no-open
