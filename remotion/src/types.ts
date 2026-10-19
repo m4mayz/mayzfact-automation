@@ -59,6 +59,7 @@ export type EmojiOverlay = {
   src: string;
   from: number;
   durationInFrames: number;
+  x?: number; // pusat horizontal; default 540 (tengah)
 };
 
 export type CtaAction = {

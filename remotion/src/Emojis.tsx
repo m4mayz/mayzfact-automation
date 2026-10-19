@@ -36,7 +36,7 @@ const EmojiAnim: React.FC<{emoji: EmojiOverlay}> = ({emoji}) => {
     <div
       style={{
         position: 'absolute',
-        left: 540 - SIZE / 2,
+        left: (emoji.x ?? 540) - SIZE / 2,
         top: CENTER_Y - SIZE / 2,
         width: SIZE,
         height: SIZE,
