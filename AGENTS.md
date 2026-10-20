@@ -103,11 +103,10 @@ cd remotion && npx tsc --noEmit -p .
 
 ### Review video
 
-- Habis ngubah apa pun yang kelihatan di video, jangan langsung render. Jalanin `--no-render`, restart Studio, terus minta Akmal review di <http://localhost:3000>.
-- Render cuma setelah Akmal bilang oke.
-- Studio cuma baca `--props` pas start. Kalau `timeline.json` berubah, matiin dulu proses lama di port 3000, baru start lagi.
-- Toggle layer di Studio bisa nulis ke `remotion/src/`. Cek `git diff remotion/src` setelah Akmal review.
-- Jangan nyetir Studio Akmal pakai browser automation.
+- Akmal nggak review di Remotion Studio (D-035). Habis fetch + timeline langsung render, terus kirim preview 720p (`runs/<id>/preview.mp4`) ke Akmal. Revisi dikerjain setelah dia nonton preview, terus render ulang.
+- Upload tetap cuma setelah Akmal oke video-nya dan konfirmasi jam tayang.
+- Cek `git diff remotion/src` sebelum render.
+- Kalau Akmal minta Studio lagi: Studio cuma baca `--props` pas start (kalau `timeline.json` berubah, matiin dulu proses lama di port 3000, baru start lagi), toggle layer bisa nulis ke `remotion/src/`, dan jangan nyetir Studio Akmal pakai browser automation.
 - Buat ngecek visual sendiri, pakai `npx remotion still` atau `npx remotion render ... --sequence --frames=<a>-<b>`.
 
 ### Laporan bug visual

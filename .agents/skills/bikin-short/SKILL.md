@@ -1,13 +1,13 @@
 ---
 name: bikin-short
-description: Bikin 1 video YouTube Shorts dari video source (URL/ID YouTube) pakai pipeline mayzfact, dari nulis naskah sampai final.mp4 dan upload terjadwal ke YouTube, dengan checkpoint buat Akmal (review naskah, isi link klip, review di Remotion Studio, oke render, konfirmasi jam tayang). Pakai kalau Akmal minta bikin video baru, lanjutin video yang setengah jadi, atau revisi video (make a short, new video, render).
+description: Bikin 1 video YouTube Shorts dari video source (URL/ID YouTube) pakai pipeline mayzfact, dari nulis naskah sampai final.mp4 dan upload terjadwal ke YouTube, dengan checkpoint buat Akmal (review naskah, isi link klip, cek preview render, konfirmasi jam tayang). Pakai kalau Akmal minta bikin video baru, lanjutin video yang setengah jadi, atau revisi video (make a short, new video, render).
 ---
 
 # Bikin short
 
 Alurnya:
 
-source → **[agent tulis naskah]** → **[Akmal review naskah]** → suara → plan → **[Akmal isi link]** → fetch → timeline → **[Akmal review di Studio]** → render → **[Akmal cek final]** → metadata → **[Akmal konfirmasi jam]** → upload YouTube → metadata TikTok (Akmal upload manual)
+source → **[agent tulis naskah]** → **[Akmal review naskah]** → suara → plan → **[Akmal isi link]** → fetch → timeline → render → **[Akmal cek preview]** → metadata → **[Akmal konfirmasi jam]** → upload YouTube → metadata TikTok (Akmal upload manual)
 
 Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal persis apa yang harus dia lakuin. Aturan umum ada di `AGENTS.md`, terutama bagian Keamanan, Biaya, dan Review video.
 
@@ -119,7 +119,9 @@ uv run mayzfact run <id> --from fetch --no-render
 - Deteksi subjek (OWLv2) makan ±3 menit kalau belum ke-cache, jadi jalanin di background.
 - Kalau log nyebut BGM/SFX/emoji/panah dilewat, video tetap jadi. Sebutin ke Akmal apa yang dilewat.
 
-## 7. Checkpoint: review di Studio
+## 7. Review di Studio (cuma kalau Akmal minta)
+
+Default-nya dilewat: Akmal nggak review di Studio (D-035). Habis langkah 6 langsung ke langkah 8. Langkah di bawah cuma kalau dia minta Studio lagi.
 
 1. Matiin proses lama di port 3000 kalau ada.
 2. Start Studio di background:
@@ -150,7 +152,7 @@ Jalanin di background (5–8 menit):
 uv run mayzfact run <id> --from render
 ```
 
-Cek pakai `ffprobe`: resolusinya 1080×1920 dan durasinya masuk akal. Terus minta Akmal nonton `runs/<id>/final.mp4`.
+Cek pakai `ffprobe`: resolusinya 1080×1920 dan durasinya masuk akal. Terus kirim preview 720p (`runs/<id>/preview.mp4`, maksimal 45 MB) ke Akmal, plus jam penting dari `timeline.json` (card `countdown`, `emojis`, `cta`, panah `overlays`; frame / 30 = detik), apa aja yang dilewat (BGM/SFX/emoji/panah), dan shot dengan skor relevansi < 0.10. Ini checkpoint review-nya: kalau Akmal minta revisi, ikutin "Laporan bug visual" di `AGENTS.md`, jalanin `--from timeline --no-render` kalau timeline berubah, render ulang, kirim preview lagi. Lanjut ke langkah 9 setelah Akmal oke.
 
 ## 9. Metadata YouTube
 

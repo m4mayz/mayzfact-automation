@@ -382,3 +382,11 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Status:** accepted, diimplementasi.
 - **Keputusan:** `SCOPES` di `mayzfact/youtube.py` nambah `yt-analytics.readonly` dan `youtube.readonly` (cuma baca), buat ngambil kurva retensi per video lewat YouTube Analytics API. Butuh login ulang sekali (`mayzfact login youtube`). "Viewed vs swiped away" belum ada di API, tetap dari YouTube Studio.
 - **Authority:** Akmal (chat 2026-10-20).
+
+## D-035 — 2026-10-20 — Review di Studio diganti preview render
+
+- **Status:** accepted.
+- **Konteks:** Akmal nggak bisa review di Remotion Studio (chat 2026-10-20).
+- **Keputusan:** Checkpoint review di Studio (langkah 7 skill `bikin-short`) dilewat. Habis fetch + timeline langsung render, terus agent ngirim preview 720p (`runs/<id>/preview.mp4`) ke Akmal. Itu checkpoint review-nya: revisi dikerjain setelah Akmal nonton, terus render ulang. Upload tetap nunggu oke video + konfirmasi jam. Studio cuma dibuka kalau Akmal minta.
+- **Konsekuensi:** Tiap revisi visual = 1 render ulang (±5–8 menit).
+- **Authority:** Akmal (chat 2026-10-20: "untuk sekarang dan seterusnya render aja langsung terus kirim previewnya").
