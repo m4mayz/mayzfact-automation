@@ -390,3 +390,15 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Keputusan:** Checkpoint review di Studio (langkah 7 skill `bikin-short`) dilewat. Habis fetch + timeline langsung render, terus agent ngirim preview 720p (`runs/<id>/preview.mp4`) ke Akmal. Itu checkpoint review-nya: revisi dikerjain setelah Akmal nonton, terus render ulang. Upload tetap nunggu oke video + konfirmasi jam. Studio cuma dibuka kalau Akmal minta.
 - **Konsekuensi:** Tiap revisi visual = 1 render ulang (±5–8 menit).
 - **Authority:** Akmal (chat 2026-10-20: "untuk sekarang dan seterusnya render aja langsung terus kirim previewnya").
+
+## D-036 — 2026-10-20 — Suara TTS nyambung antar beat: stability 1.0 + kalimat disambung
+
+- **Status:** accepted, diimplementasi.
+- **Konteks:** Akmal: suara antar shot kedengeran kayak konteksnya ganti. Suara dibikin sekali jalan dan diputer utuh (bukan per shot), jadi sumbernya cara v3 baca naskah. Naskah 5 video terakhir 4,5–6,5 kata per kalimat (source 7,4–12,5) dan tiap beat diakhiri titik. Nada antar beat loncat rata-rata 2,6–4,1 semitone (maks 10,7). Request TTS nggak ngirim `voice_settings`, jadi pakai setting bawaan voice.
+- **Tes A/B** (beat 5–12 `PPZhbe711qg`, seed sama, `_notes/tools/tts_ab.py` + `voice_flow.py`), nada loncat antar beat: bawaan 5,0 st (maks 11,3), stability 1.0 3,4 (6,8), kalimat disambung 4,3 (8,1), disambung + stability 1.0 2,5 (4,6). Kalimat disambung juga lebih cepat (1,88 → 2,20 kata/dtk). `eleven_multilingual_v2` jeda antar beat 0,60 dtk, kepanjangan.
+- **Keputusan:**
+  1. `Settings.elevenlabs_stability = 1.0` dikirim sebagai `voice_settings.stability` dan dicatat di `tts.json`.
+  2. Aturan **Alur** di skill `bikin-short`: satu ide = satu kalimat yang dipecah ke beberapa beat (koma + kata sambung). Titik cuma di akhir CTA, countdown, kalimat sebelum celetukan, celetukan, dan beat terakhir.
+  3. CTA disambung pakai kata penghubung ("So comment…," / "and don't forget to like and subscribe."), bukan "Like and subscribe." yang berdiri sendiri. Berlaku mulai video berikutnya; `PPZhbe711qg` di-upload apa adanya.
+- **Konsekuensi:** Variasi nada di dalam kalimat sedikit turun (5,5 → 3,8 st di tes). Kalau Akmal ngerasa terlalu datar, turunin stability ke 0.5 (Natural).
+- **Authority:** Akmal (chat 2026-10-20: "do the best aja terserah lu"; poin 3 dari review preview `PPZhbe711qg` v3: "harusnya pake kata penghubung lah biar nyambung").

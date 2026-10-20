@@ -37,12 +37,22 @@ Tiap beat harus bisa ditunjuk kalimat source-nya (kolom "dasar dari source" di l
 
 1. Beat 1 kalimat lengkap yang nunjuk ke layar: dibuka "These…" dan ada kata kerjanya. Jangan judul doang: "Top five animals that can disappear in plain sight." → "These five animals can literally vanish in plain sight."
 2. Kata kerja dan kata pembatas source tetap (can, literally, probably, might, some of the).
-3. Kalau source punya teaser nomor 1, jadiin beat 2 dan bagian paling ekstremnya jangan dilemahin: "number one is absolutely terrifying" → "And number one? Absolutely terrifying."
-4. Teaser jangan dibuka "Number one" + koma/titik/titik dua/strip, karena itu kebaca jadi card countdown (`mayzfact/countdown.py`). Yang aman: "And number one? …", "Wait for number one."
+3. Kalau source punya teaser nomor 1, jadiin beat 2 dan bagian paling ekstremnya jangan dilemahin: "number one is absolutely terrifying" → beat 1 diakhiri koma, beat 2 "and number one is absolutely terrifying."
+4. Teaser jangan dibuka "Number one" + koma/titik/titik dua/strip, karena itu kebaca jadi card countdown (`mayzfact/countdown.py`). Yang aman: "and number one looks…", "Wait for number one."
 
 **Nada.** Persis source. Kalau source santai dan pakai "bro", naskah juga. Tiap item ditutup celetukan atau perbandingan sehari-hari kayak source, tapi gambarannya bikin sendiri: jangan disalin, jangan cuma ganti sinonim (source "Bro, that's one unusual-looking cat" → "Bro, a cat in a wetsuit."). Hindari kata bombastis (terrifyingly, blazing, lightning-fast). Kalau mau beda dari source, ubah struktur kalimat dan sudut pandangnya, jangan cuma ganti sinonim.
 
-**Panjang.** ±80% durasi source. `check-script` ngasih target kata; tulis **di bawah atau pas target**, jangan di atas, walaupun toleransinya ±15%. `check-script` ngitung 2.2 kata/detik (ElevenLabs v3 aslinya 2.07–2.28), jadi naskah pas target hasilnya ±77–85% durasi source. Pendekin dengan buang kata hiasan ("actually", "just like", "way", "amazing", "for more"), bukan dengan buang fakta. Intro dipadetin. CTA source dipadetin ke comment + like + subscribe dalam 1–2 beat, dan **harus pakai kata "like" dan "subscribe" beneran** (itu pemicu animasi CTA). Teaser nomor 1 di hook dipertahankan kalau source punya.
+**Alur.** Suara dibikin sekali jalan, tapi ElevenLabs v3 baca tiap titik/tanda tanya sebagai kalimat baru: nada dan emosinya mulai lagi dari nol, jadi tiap shot kedengeran kayak ganti konteks (D-036). Jadi:
+
+1. Satu ide = satu kalimat yang dipecah ke beberapa beat. Beat yang ngelanjutin kalimat diakhiri koma dan dibuka kata sambung kalau perlu (and, so, for, with, which, but).
+2. Titik cuma di akhir CTA, "Number N, [subject].", kalimat penjelasan sebelum celetukan, celetukan, dan beat terakhir.
+3. Jangan pakai tanya retoris atau potongan pendek di tengah item ("Result? …", "Plus wrinkles. …").
+4. Tiap beat tetap ≤ 10 kata dan 1 ide visual; yang berubah cuma tanda baca dan kata sambungnya.
+5. CTA juga disambung, jangan ditempel. "Like and subscribe." yang berdiri sendiri kedengeran tiba-tiba. Masuk ke CTA pakai kata penghubung, terus like/subscribe disambung ke ajakan comment: "So comment which one's most unique," / "and don't forget to like and subscribe." Polanya harus tetap kebaca `mayzfact/cta.py`: "like" diikuti and/or/subscribe/button, atau didahului hit/smash/tap/give/drop/leave. Contoh yang nggak kebaca: "if you like them, subscribe" (cuma subscribe yang kepicu).
+
+Contoh: "Number four, Scottish Fold." / "Ears fold forward and down," / "for an adorable round face," / "almost like it's always eavesdropping."
+
+**Panjang.** ±80% durasi source. `check-script` ngasih target kata; tulis **di bawah atau pas target**, jangan di atas, walaupun toleransinya ±15%. `check-script` ngitung 2.2 kata/detik (ElevenLabs v3 aslinya 1.9–2.3; makin banyak titik makin lambat), jadi naskah pas target hasilnya ±77–85% durasi source. Pendekin dengan buang kata hiasan ("actually", "just like", "way", "amazing", "for more"), bukan dengan buang fakta. Intro dipadetin. CTA source dipadetin ke comment + like + subscribe dalam 1–2 beat, dan **harus pakai kata "like" dan "subscribe" beneran** (itu pemicu animasi CTA). Teaser nomor 1 di hook dipertahankan kalau source punya.
 
 **Format.** Tiap beat ≤ 10 kata, 1 ide visual:
 
