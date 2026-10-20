@@ -23,7 +23,12 @@ from mayzfact.store import (
     write_json_atomic,
 )
 
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+SCOPES = [
+    "https://www.googleapis.com/auth/youtube.upload",
+    # baca Analytics (kurva retensi, durasi tonton) buat ngevaluasi naskah; reports.query juga minta youtube.readonly
+    "https://www.googleapis.com/auth/yt-analytics.readonly",
+    "https://www.googleapis.com/auth/youtube.readonly",
+]
 WIB = timezone(timedelta(hours=7))  # WIB nggak pakai DST, jadi cukup offset tetap
 LOGIN_HINT = "Jalanin: uv run mayzfact login youtube"
 SLOT_HOURS = (1, 4)
