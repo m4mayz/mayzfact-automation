@@ -108,3 +108,16 @@ def test_synthesize_reports_when_all_keys_fail_without_leaking_keys():
         ElevenLabsTTS(["k1", "k2"], "voice123", "eleven_v3", client).synthesize("Hi")
     assert seen == ["k1", "k2"]
     assert "k1" not in str(exc.value) and "k2" not in str(exc.value)
+
+
+def test_synthesize_sends_voice_stability():
+    # D-036: stability 1.0 (Robust) biar nada antar kalimat nggak loncat
+    seen = []
+
+    def handler(request):
+        seen.append(request)
+        return httpx.Response(200, json={"audio_base64": base64.b64encode(b"ID3audio").decode(), "alignment": ALIGNMENT})
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    ElevenLabsTTS(["secret"], "voice123", "eleven_v3", client, stability=1.0).synthesize("Hi")
+    assert json.loads(seen[0].content) == {"text": "Hi", "model_id": "eleven_v3", "voice_settings": {"stability": 1.0}}

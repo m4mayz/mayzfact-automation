@@ -55,3 +55,7 @@ def test_secrets_are_hidden_from_repr():
     text = repr(Settings(elevenlabs_api_keys=("KEYVAL",), youtube_token_json="TOKVAL", youtube_client_secret_json="SECVAL",
                          ngrok_basic_auth="NGROKVAL"))
     assert not any(v in text for v in ("KEYVAL", "TOKVAL", "SECVAL", "NGROKVAL"))
+
+
+def test_elevenlabs_stability_defaults_to_robust():
+    assert Settings().elevenlabs_stability == 1.0  # D-036

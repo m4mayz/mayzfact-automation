@@ -27,6 +27,7 @@ def run_tts(
     measure: Callable[[Path], float] = audio_duration,
 ) -> dict:
     text = script_text(script["beats"])
+    stability = getattr(tts, "stability", None)  # provider lama/fake di test boleh nggak punya
     incoming = paths.root / "voice.incoming.mp3"
     incoming_meta = paths.root / "tts.incoming.json"
     # Audio yang udah dibayar disimpan dulu. Kalau langkah setelahnya gagal (mis. ffprobe), run berikutnya
@@ -36,7 +37,7 @@ def run_tts(
         log("[tts] Pakai audio ElevenLabs yang udah dibayar sebelumnya (voice.incoming.mp3)")
         alignment = pending["alignment"]
     else:
-        log(f"[tts] Kirim {len(text)} karakter ke ElevenLabs (voice {tts.voice_id}, model {tts.model_id})")
+        log(f"[tts] Kirim {len(text)} karakter ke ElevenLabs (voice {tts.voice_id}, model {tts.model_id}, stability {stability})")
         audio, alignment = tts.synthesize(text)
         write_bytes_atomic(incoming, audio)
         write_json_atomic(incoming_meta, {"text_sha256": text_hash(text), "alignment": alignment})
@@ -44,6 +45,7 @@ def run_tts(
         "text_sha256": text_hash(text),
         "voice_id": tts.voice_id,
         "model_id": tts.model_id,
+        "stability": stability,
         "characters": len(text),
         "duration_s": round(measure(incoming), 3),
         "alignment": alignment,

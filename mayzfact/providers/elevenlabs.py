@@ -32,13 +32,21 @@ def _with_key_fallback(api_keys: Sequence[str], step: str, call: Callable[[str],
 
 
 class ElevenLabsTTS:
-    def __init__(self, api_keys: Sequence[str], voice_id: str, model_id: str, client: httpx.Client) -> None:
+    def __init__(
+        self, api_keys: Sequence[str], voice_id: str, model_id: str, client: httpx.Client, stability: float | None = None
+    ) -> None:
         self._api_keys = list(api_keys)
         self.voice_id = voice_id
         self.model_id = model_id
+        self.stability = stability
         self._client = client
 
     def synthesize(self, text: str) -> tuple[bytes, dict]:
+        body: dict = {"text": text, "model_id": self.model_id}
+        if self.stability is not None:
+            # v3: 0.0 Creative, 0.5 Natural, 1.0 Robust. None = setting bawaan voice di akun.
+            body["voice_settings"] = {"stability": self.stability}
+
         def call(key: str) -> dict:
             return request_json(
                 self._client,
@@ -48,7 +56,7 @@ class ElevenLabsTTS:
                 idempotent=False,
                 params={"output_format": OUTPUT_FORMAT},
                 headers={"xi-api-key": key},
-                json={"text": text, "model_id": self.model_id},
+                json=body,
                 timeout=180.0,
             )
 

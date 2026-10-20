@@ -62,3 +62,10 @@ def test_failed_measure_does_not_bill_elevenlabs_twice(tmp_path, sine_mp3):
     assert len(tts.texts) == 1
     assert paths.voice_mp3.read_bytes() == sine_mp3.read_bytes()
     assert sorted(p.name for p in tmp_path.iterdir()) == ["tts.json", "voice.mp3"]
+
+
+def test_run_tts_records_voice_stability(tmp_path, sine_mp3):
+    tts = FakeTTS(sine_mp3.read_bytes())
+    tts.stability = 1.0
+    data = run_tts(RunPaths(tmp_path), SCRIPT, tts, log=lambda _: None)
+    assert data["stability"] == 1.0

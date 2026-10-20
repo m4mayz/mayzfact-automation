@@ -178,7 +178,11 @@ def real_deps(settings: Settings) -> Deps:
         fetch_transcript=youtube_transcript,
         download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
         tts=lambda: ElevenLabsTTS(
-            settings.elevenlabs_api_keys, settings.elevenlabs_voice_id, settings.elevenlabs_model, http()
+            settings.elevenlabs_api_keys,
+            settings.elevenlabs_voice_id,
+            settings.elevenlabs_model,
+            http(),
+            stability=settings.elevenlabs_stability,
         ),
         http=http,
         render=run_render,

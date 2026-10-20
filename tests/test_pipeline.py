@@ -456,3 +456,9 @@ def test_deleted_script_with_voice_present_is_a_clean_error(world):
     paths.script_json.unlink()
     with pytest.raises(PipelineError, match="script.json"):
         run(world, from_step="fetch")
+
+
+def test_real_deps_passes_stability_to_elevenlabs():
+    from mayzfact.pipeline import real_deps
+
+    assert real_deps(Settings(**KEYS, elevenlabs_stability=0.5)).tts().stability == 0.5

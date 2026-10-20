@@ -22,6 +22,8 @@ class Settings:
     # Setting biasa: ubah langsung di sini (bukan lewat .env), biar harness mana pun bisa ngeditnya.
     elevenlabs_voice_id: str = "TX3LPaxmHKxFdv7VOQHJ"
     elevenlabs_model: str = "eleven_v3"
+    # 1.0 = "Robust": nada antar kalimat konsisten. Default voice bikin tiap beat kedengeran ganti konteks (D-036).
+    elevenlabs_stability: float = 1.0
     target_duration_ratio: float = 0.8
     min_duration_seconds: float = 32.0
     max_shot_seconds: float = 4.0
