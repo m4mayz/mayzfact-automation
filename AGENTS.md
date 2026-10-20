@@ -88,7 +88,7 @@ cd remotion && npx tsc --noEmit -p .
 
 - Jangan print, log, atau commit isi `.env` (`ELEVENLABS_API_KEYS`, `YOUTUBE_CLIENT_SECRET_JSON`, `YOUTUBE_TOKEN_JSON`, `NGROK_BASIC_AUTH`), cookie, atau apa pun di `browser-profiles/` (sisa mode auto, isinya cookie session).
 - `.env` cuma buat rahasia. Setting lain ada di `Settings` (`mayzfact/config.py`); ubah di situ, jangan nambah variabel ke `.env`.
-- Upload ke YouTube itu aksi keluar yang nggak bisa ditarik. Jalanin `mayzfact upload` cuma setelah Akmal konfirmasi jam tayangnya.
+- Upload ke YouTube itu aksi keluar yang nggak bisa ditarik. Jalanin `mayzfact upload` cuma setelah Akmal oke preview video-nya. Jamnya langsung slot kosong berikutnya (`next-slot`), nggak usah nanya; kabarin jam tayangnya setelah upload (D-037).
 - Jangan solve captcha yang butuh manusia. Jangan rotasi proxy/IP. Jangan spoof fingerprint, termasuk impersonation `curl_cffi` di yt-dlp.
 - Kalau link klip minta captcha atau login, jangan diakalin. Kasih tau Akmal shot mana, minta link lain atau upload file.
 - Challenge yang diselesaiin browser biasa tanpa manusia (WAF proof-of-work Douyin) boleh (D-018).
@@ -104,7 +104,7 @@ cd remotion && npx tsc --noEmit -p .
 ### Review video
 
 - Akmal nggak review di Remotion Studio (D-035). Habis fetch + timeline langsung render, terus kirim preview 720p (`runs/<id>/preview.mp4`) ke Akmal. Revisi dikerjain setelah dia nonton preview, terus render ulang.
-- Upload tetap cuma setelah Akmal oke video-nya dan konfirmasi jam tayang.
+- Upload setelah Akmal oke video-nya, langsung ke slot kosong berikutnya tanpa nanya jam (D-037).
 - Cek `git diff remotion/src` sebelum render.
 - Kalau Akmal minta Studio lagi: Studio cuma baca `--props` pas start (kalau `timeline.json` berubah, matiin dulu proses lama di port 3000, baru start lagi), toggle layer bisa nulis ke `remotion/src/`, dan jangan nyetir Studio Akmal pakai browser automation.
 - Buat ngecek visual sendiri, pakai `npx remotion still` atau `npx remotion render ... --sequence --frames=<a>-<b>`.

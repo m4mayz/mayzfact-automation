@@ -402,3 +402,11 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   3. CTA disambung pakai kata penghubung ("So comment…," / "and don't forget to like and subscribe."), bukan "Like and subscribe." yang berdiri sendiri. Berlaku mulai video berikutnya; `PPZhbe711qg` di-upload apa adanya.
 - **Konsekuensi:** Variasi nada di dalam kalimat sedikit turun (5,5 → 3,8 st di tes). Kalau Akmal ngerasa terlalu datar, turunin stability ke 0.5 (Natural).
 - **Authority:** Akmal (chat 2026-10-20: "do the best aja terserah lu"; poin 3 dari review preview `PPZhbe711qg` v3: "harusnya pake kata penghubung lah biar nyambung").
+
+## D-037 — 2026-10-20 — Upload langsung ke slot kosong, tanpa nanya jam
+
+- **Status:** accepted.
+- **Konteks:** Akmal nggak mau ditanya jam tayang tiap video.
+- **Keputusan:** Setelah Akmal oke preview (D-035), agent langsung upload ke slot kosong berikutnya (`mayzfact next-slot`), terus ngabarin jam tayang + link. Ini gantiin checkpoint "konfirmasi jam" di D-035 dan langkah 10 skill `bikin-short`. Kalau Akmal nyebut jam sendiri, pakai jam itu. `--now` tetap cuma kalau Akmal minta.
+- **Konsekuensi:** Upload nggak bisa ditarik, jadi oke Akmal di preview jadi satu-satunya checkpoint sebelum upload.
+- **Authority:** Akmal (chat 2026-10-20: "gausah nunggu konfirmasi dari gua lain kali, upload dan kasih tau aja jam berapa lu jadwalin").

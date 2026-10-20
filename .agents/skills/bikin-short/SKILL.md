@@ -1,13 +1,13 @@
 ---
 name: bikin-short
-description: Bikin 1 video YouTube Shorts dari video source (URL/ID YouTube) pakai pipeline mayzfact, dari nulis naskah sampai final.mp4 dan upload terjadwal ke YouTube, dengan checkpoint buat Akmal (review naskah, isi link klip, cek preview render, konfirmasi jam tayang). Pakai kalau Akmal minta bikin video baru, lanjutin video yang setengah jadi, atau revisi video (make a short, new video, render).
+description: Bikin 1 video YouTube Shorts dari video source (URL/ID YouTube) pakai pipeline mayzfact, dari nulis naskah sampai final.mp4 dan upload terjadwal ke YouTube, dengan checkpoint buat Akmal (review naskah, isi link klip, cek preview render). Pakai kalau Akmal minta bikin video baru, lanjutin video yang setengah jadi, atau revisi video (make a short, new video, render).
 ---
 
 # Bikin short
 
 Alurnya:
 
-source → **[agent tulis naskah]** → **[Akmal review naskah]** → suara → plan → **[Akmal isi link]** → fetch → timeline → render → **[Akmal cek preview]** → metadata → **[Akmal konfirmasi jam]** → upload YouTube → metadata TikTok (Akmal upload manual)
+source → **[agent tulis naskah]** → **[Akmal review naskah]** → suara → plan → **[Akmal isi link]** → fetch → timeline → render → **[Akmal cek preview]** → metadata → upload YouTube → metadata TikTok (Akmal upload manual)
 
 Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal persis apa yang harus dia lakuin. Aturan umum ada di `AGENTS.md`, terutama bagian Keamanan, Biaya, dan Review video.
 
@@ -177,9 +177,9 @@ Agent nulis `runs/<id>/upload.json` dari `script.json` dan `clips.json`:
 - **tags:** 5–10 tag topik, total maksimal 500 karakter.
 - **category_id:** pilih sesuai isi, misal `15` Pets & Animals, `27` Education, `28` Science & Technology, `24` Entertainment.
 
-## 10. Checkpoint: konfirmasi jadwal
+## 10. Jadwal
 
-Jalanin `uv run mayzfact next-slot`. Tunjukin ke Akmal judul + jam usulan (WIB), terus tanya: jadwalin jam segitu atau jam lain? Tunggu jawabannya. Jangan upload sebelum Akmal konfirmasi. Kalau Akmal minta langsung public tanpa jadwal, pakai `--now` di langkah 11.
+Jalanin `uv run mayzfact next-slot` dan pakai slot kosong itu. Jangan nanya jam ke Akmal (D-037): langsung lanjut ke langkah 11, terus kabarin jam tayangnya setelah upload. Kalau Akmal nyebut jam sendiri, pakai jam itu. Kalau Akmal minta langsung public tanpa jadwal, pakai `--now` di langkah 11.
 
 ## 11. Upload
 
@@ -192,11 +192,11 @@ uv run mayzfact upload <id> --now                         # langsung public, cum
 
 - Kalau error "Belum login YouTube" atau "Token YouTube ditolak": minta Akmal jalanin `uv run mayzfact login youtube` (browser kebuka buat izin akun), terus ulang.
 - Kalau error "udah pernah di-upload": jangan hapus `youtube.json` sendiri, tanya Akmal.
-- Sukses: kasih Akmal link video dan link YouTube Studio dari output-nya.
+- Sukses: kabarin Akmal jam tayang, link video, dan link YouTube Studio dari output-nya.
 
 ## 12. Metadata TikTok
 
-Akmal upload ke TikTok sendiri (manual). Begitu Akmal oke upload YouTube di langkah 10, agent sekalian nulis `runs/<id>/tiktok.json`:
+Akmal upload ke TikTok sendiri (manual). Begitu Akmal oke preview di langkah 8, agent sekalian nulis `runs/<id>/tiktok.json`:
 
 ```json
 {"caption": "...", "cover_s": 1.0, "cover_text": "...", "ai_label": true}
