@@ -252,9 +252,9 @@ def test_check_script_passes_a_good_script(monkeypatch, tmp_path, capsys):
 
     paths = RunPaths(tmp_path / "abcdefghijk")
     paths.root.mkdir()
-    write_json_atomic(paths.source_json, {"video_id": "abcdefghijk", "duration_s": 52.9,
-                                          "transcript": [{"text": "unique source words only here", "start": 0.0, "duration": 52.9}]})
-    write_json_atomic(paths.script_json, make_script().model_dump())  # 110 kata = 0.8 * 52.9 * 2.6
+    write_json_atomic(paths.source_json, {"video_id": "abcdefghijk", "duration_s": 62.5,
+                                          "transcript": [{"text": "unique source words only here", "start": 0.0, "duration": 62.5}]})
+    write_json_atomic(paths.script_json, make_script().model_dump())  # 110 kata = 0.8 * 62.5 * 2.2
     monkeypatch.setattr(cli, "load_settings", lambda: Settings())
     monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
     assert cli.main(["check-script", "abcdefghijk"]) == 0

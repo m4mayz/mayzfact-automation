@@ -11,11 +11,11 @@ from mayzfact.models import Script
 from mayzfact.store import RunPaths, read_json
 from mayzfact.text import clean_text, ngram_overlap, words
 
-WORDS_PER_SECOND = 2.6
+WORDS_PER_SECOND = 2.2  # ElevenLabs v3 aslinya 2.07–2.28 kata/detik; dulu 2.6 bikin video 90%+ durasi source (D-033)
 WORD_TOLERANCE = 0.15
 PHOTO_SHARE_RANGE = (0.15, 0.45)
 MAX_NGRAM_OVERLAP = 0.15
-MAX_BEAT_WORDS = 10  # ±3.5 detik dengan 2.6 kata/detik
+MAX_BEAT_WORDS = 10  # ±4.5 detik dengan 2.2 kata/detik
 
 
 def target_duration(source_duration_s: float, ratio: float, minimum_s: float) -> float:

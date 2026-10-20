@@ -16,12 +16,14 @@ SOURCE = {
     ],
 }
 SOURCE_TEXT = " ".join(s["text"] for s in SOURCE["transcript"])
-DURATION = target_duration(70.8, 0.6, 32)
+DURATION = target_duration(83.4, 0.6, 32)  # 50.04 detik: naskah 110 kata (make_script) pas di target
 
 
 def test_target_duration_and_word_range():
-    assert round(DURATION, 2) == 42.48
+    assert round(target_duration(70.8, 0.6, 32), 2) == 42.48
     assert target_duration(40, 0.6, 32) == 32
+    # 2.2 kata/detik, bukan 2.6: ElevenLabs v3 aslinya cuma 2.07–2.28 (D-033)
+    assert word_range(42.48) == (93, 80, 106)
     assert word_range(DURATION) == (110, 94, 126)
 
 

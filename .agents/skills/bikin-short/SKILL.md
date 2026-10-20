@@ -33,9 +33,16 @@ Tiap beat harus bisa ditunjuk kalimat source-nya (kolom "dasar dari source" di l
 - Ngerasin klaim. "Can die if kept underwater" ≠ "will suffocate when trapped". "Can/may/some" di source tetap "can/may/some". Jangan pakai "zero", "always", "never", "will" kalau source nggak bilang.
 - Detail source yang dibuang. Kalau source bilang "sit on it and even walk on it", dua-duanya masuk.
 
-**Nada.** Persis source. Kalau source santai dan pakai "bro", naskah juga. Tiap item ditutup celetukan atau perbandingan sehari-hari kayak source ("Bro, that's basically a living underwater punch machine"). Hindari kata bombastis (terrifyingly, blazing, lightning-fast). Kalau mau beda dari source, ubah struktur kalimat dan sudut pandangnya, jangan cuma ganti sinonim.
+**Hook (beat 1–2).** Di sini penonton mutusin nonton atau swipe (±40% swipe di video lama). Urutan source tetap (label kategori → teaser nomor 1 → CTA), kalimatnya yang dipoles:
 
-**Panjang.** ±80% durasi source. `check-script` ngasih target kata; tulis **di bawah atau pas target**, jangan di atas, walaupun toleransinya ±15%. ElevenLabs v3 ngomong cuma ±2.4 kata/detik (lebih pelan dari 2.6 yang dipakai `check-script`), jadi naskah yang pas di atas target hasilnya 90%+ durasi source. Pendekin dengan buang kata hiasan ("actually", "just like", "way", "amazing", "for more"), bukan dengan buang fakta. Intro dipadetin. CTA source dipadetin ke comment + like + subscribe dalam 1–2 beat, dan **harus pakai kata "like" dan "subscribe" beneran** (itu pemicu animasi CTA). Teaser nomor 1 di hook dipertahankan kalau source punya.
+1. Beat 1 kalimat lengkap yang nunjuk ke layar: dibuka "These…" dan ada kata kerjanya. Jangan judul doang: "Top five animals that can disappear in plain sight." → "These five animals can literally vanish in plain sight."
+2. Kata kerja dan kata pembatas source tetap (can, literally, probably, might, some of the).
+3. Kalau source punya teaser nomor 1, jadiin beat 2 dan bagian paling ekstremnya jangan dilemahin: "number one is absolutely terrifying" → "And number one? Absolutely terrifying."
+4. Teaser jangan dibuka "Number one" + koma/titik/titik dua/strip, karena itu kebaca jadi card countdown (`mayzfact/countdown.py`). Yang aman: "And number one? …", "Wait for number one."
+
+**Nada.** Persis source. Kalau source santai dan pakai "bro", naskah juga. Tiap item ditutup celetukan atau perbandingan sehari-hari kayak source, tapi gambarannya bikin sendiri: jangan disalin, jangan cuma ganti sinonim (source "Bro, that's one unusual-looking cat" → "Bro, a cat in a wetsuit."). Hindari kata bombastis (terrifyingly, blazing, lightning-fast). Kalau mau beda dari source, ubah struktur kalimat dan sudut pandangnya, jangan cuma ganti sinonim.
+
+**Panjang.** ±80% durasi source. `check-script` ngasih target kata; tulis **di bawah atau pas target**, jangan di atas, walaupun toleransinya ±15%. `check-script` ngitung 2.2 kata/detik (ElevenLabs v3 aslinya 2.07–2.28), jadi naskah pas target hasilnya ±77–85% durasi source. Pendekin dengan buang kata hiasan ("actually", "just like", "way", "amazing", "for more"), bukan dengan buang fakta. Intro dipadetin. CTA source dipadetin ke comment + like + subscribe dalam 1–2 beat, dan **harus pakai kata "like" dan "subscribe" beneran** (itu pemicu animasi CTA). Teaser nomor 1 di hook dipertahankan kalau source punya.
 
 **Format.** Tiap beat ≤ 10 kata, 1 ide visual:
 
@@ -59,7 +66,7 @@ Tiap beat harus bisa ditunjuk kalimat source-nya (kolom "dasar dari source" di l
 
 Contoh beat yang bagus (source: "This tiny marine predator can throw one of the fastest strikes in the animal kingdom, creating a shockwave powerful enough to stun its prey. Bro, that's basically a living underwater punch machine."):
 
-> "Number five, mantis shrimp." / "This little guy throws one of the fastest punches alive." / "The shockwave alone knocks its prey out cold." / "Bro, it's basically an underwater boxing machine."
+> "Number five, mantis shrimp." / "This little guy throws one of the fastest punches alive." / "The shockwave alone knocks its prey out cold." / "Bro, never pick a fight with this guy."
 
 Terus:
 

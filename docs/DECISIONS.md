@@ -364,3 +364,21 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Keputusan:** `SLOT_HOURS` di `mayzfact/youtube.py` jadi `(1, 4)`. Slot 21.00 diganti 01.00 WIB, slot 04.00 tetap. Keduanya jatuh pas jam siang-sore US (01.00 WIB = 14.00 EDT, 04.00 WIB = 17.00 EDT; mulai 1 November jadi 13.00 dan 16.00 EST).
 - **Revisi:** D-027 dan angka 21.00 di Fase 4 (yang lama nggak diedit).
 - **Authority:** Akmal (chat 2026-10-18).
+
+## D-033 — 2026-10-20 — Hook naskah dipoles, target kata pakai 2.2 kata/detik
+
+- **Status:** accepted, diimplementasi.
+- **Konteks:** Data YouTube Studio Akmal: ±40% penonton swipe di awal, retensi turun di detik 20–40. 4 video terakhir dibuka label tanpa kata kerja ("Five most beautiful white animals."), celetukan nyontek source, dan durasinya 81–98% source (target 80%) karena `check-script` ngitung 2.6 kata/detik, padahal ElevenLabs v3 cuma 2.07–2.28.
+- **Keputusan:**
+  - `WORDS_PER_SECOND` di `mayzfact/steps/script.py` jadi 2.2.
+  - Skill `bikin-short` langkah 2 dapat bagian Hook: beat 1 kalimat "These…" lengkap dengan kata kerja + pembatas source, beat 2 teaser nomor 1 yang nggak dilemahin, teaser nggak dibuka "Number one,".
+  - Celetukan pakai gambaran sendiri, bukan salinan source.
+  - Fakta, urutan item, bagian tengah, dan posisi CTA nggak diubah.
+- **Ukuran:** "Viewed vs swiped away" 2–3 video berikutnya. Kalau nggak turun dari 40%, coba pamerin nomor 1 di detik 0.
+- **Authority:** Akmal (chat 2026-10-20).
+
+## D-034 — 2026-10-20 — Token YouTube bisa baca Analytics
+
+- **Status:** accepted, diimplementasi.
+- **Keputusan:** `SCOPES` di `mayzfact/youtube.py` nambah `yt-analytics.readonly` dan `youtube.readonly` (cuma baca), buat ngambil kurva retensi per video lewat YouTube Analytics API. Butuh login ulang sekali (`mayzfact login youtube`). "Viewed vs swiped away" belum ada di API, tetap dari YouTube Studio.
+- **Authority:** Akmal (chat 2026-10-20).
