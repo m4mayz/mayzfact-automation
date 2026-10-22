@@ -118,3 +118,14 @@ def test_missing_bgm_files_mean_no_bgm(tmp_path):
     out = prepare_audio(paths, {"beats": []}, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, log=logs.append)
     assert out["bgm"] is None and out["bgm_main"] is None and "riser_s" not in out
     assert any("mystery.mp3" in m for m in logs)
+
+
+def test_riser_length_ignores_trailing_silence(tmp_path):
+    import subprocess
+
+    from mayzfact.audio import audible_length
+
+    path = tmp_path / "riser.mp3"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
+                    "-af", "apad=pad_dur=1", "-c:a", "libmp3lame", str(path)], check=True)
+    assert abs(audible_length(path) - 1.0) < 0.1  # file 2 detik, yang kedengeran cuma 1 detik

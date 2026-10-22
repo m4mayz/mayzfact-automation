@@ -161,7 +161,8 @@ ITEM_SCRIPT = {"beats": [{"text": "Look at this creature."}, {"text": "Number fi
 ITEM_ALIGN = fake_alignment("Look at this creature. Number five, horseshoe crab. It is old. It is very old. It is so old.", 10.0)
 ITEM_AUDIO = {"bgm": "audio/bgm/mystery.mp3", "bgm_main": "audio/bgm/main.mp3", "riser_s": 2.0,
               "sfx": {"cut": "audio/sfx/click.mp3", "item_first": "audio/sfx/check.mp3", "item_reveal": "audio/sfx/reveal.mp3",
-                      "riser": "audio/sfx/riser.mp3", "extra_oof": "audio/sfx/oof.mp3", "extra_punch": "audio/sfx/punch.mp3"}}
+                      "riser": "audio/sfx/riser.mp3", "number": "audio/sfx/number.mp3", "extra_oof": "audio/sfx/oof.mp3",
+                      "extra_punch": "audio/sfx/punch.mp3"}}
 
 
 def item_timeline(audio=ITEM_AUDIO):
@@ -211,7 +212,9 @@ def test_bgm_switches_at_first_number_and_riser_ends_there():
          "volume": 0.12, "fadeOutFrames": 30},
     ]
     riser = [x for x in t["sfx"] if x["src"] == "audio/sfx/riser.mp3"]
-    assert riser == [{"src": "audio/sfx/riser.mp3", "from": switch - 60, "volume": 0.6}]  # 2 detik, habis pas "Number"
+    whoosh = next(x["from"] for x in t["sfx"] if x["src"] == "audio/sfx/number.mp3")
+    # riser 2 detik (bagian yang kedengeran), habis pas bunyi angka masuk
+    assert riser == [{"src": "audio/sfx/riser.mp3", "from": whoosh - 60, "volume": 0.6}]
 
 
 def test_single_bgm_when_main_bgm_missing():

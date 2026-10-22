@@ -166,8 +166,9 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
                 "fadeOutFrames": BGM_SWITCH_FADE_FRAMES},
                {"src": audio["bgm_main"], "from": switch, "durationInFrames": total - switch, "volume": BGM_VOLUME,
                 "fadeOutFrames": BGM_FADE_FRAMES}]
-        if audio.get("riser_s"):
-            add("riser", switch - round(audio["riser_s"] * FPS))
+        if audio.get("riser_s"):  # ujung bunyi riser pas sama whoosh angka "Number" pertama
+            whoosh = countdown[0]["numberFrom"] + countdown[0]["numberAt"] - SFX_LEAD_FRAMES if countdown else switch
+            add("riser", whoosh - round(audio["riser_s"] * FPS))
     elif audio.get("bgm") or audio.get("bgm_main"):
         bgm = [{"src": audio.get("bgm") or audio["bgm_main"], "from": 0, "durationInFrames": total, "volume": BGM_VOLUME,
                 "fadeOutFrames": BGM_FADE_FRAMES}]

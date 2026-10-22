@@ -70,6 +70,21 @@ def list_bgm(bgm_dir: Path) -> list[str]:
     return sorted(p.name for p in bgm_dir.iterdir() if p.suffix.lower() in AUDIO_EXTS)
 
 
+def audible_length(path: Path) -> float:
+    """Detik sampai bunyi terakhir yang kedengeran (hening di ujung file nggak dihitung)."""
+    import re
+    import subprocess
+
+    total = probe(path, "timeline")["duration_s"]
+    result = subprocess.run(["ffmpeg", "-v", "info", "-i", str(path), "-af", "silencedetect=noise=-40dB:d=0.05", "-f", "null", "-"],
+                            capture_output=True, text=True, encoding="utf-8", errors="replace")
+    starts = [float(x) for x in re.findall(r"silence_start: ([\d.]+)", result.stderr)]
+    ends = [float(x) for x in re.findall(r"silence_end: ([\d.]+)", result.stderr)]
+    if starts and len(starts) > len(ends) or (starts and ends and abs(ends[-1] - total) < 0.05 and starts[-1] < ends[-1]):
+        return starts[-1]  # hening terakhir nyampe ujung file
+    return total
+
+
 HOOK_BGM = "mystery.mp3"  # D-038: BGM cuma 2, mystery di hook...
 MAIN_BGM = "main.mp3"  # ...terus ini mulai "Number" pertama sampai akhir
 
@@ -92,7 +107,7 @@ def prepare_audio(
         out["sfx"][event] = _copy(path, paths.root / "audio" / "sfx", paths)
         if event == "riser":  # panjang riser dipakai buat ngepasin ujungnya ke "Number" pertama
             try:
-                out["riser_s"] = probe(path, "timeline")["duration_s"]
+                out["riser_s"] = audible_length(path)
             except PipelineError as exc:
                 log(f"[timeline] riser dilewat, durasinya nggak kebaca: {exc.message.splitlines()[0]}")
                 del out["sfx"][event]
