@@ -8,6 +8,7 @@ import {IntroWhip} from './Intro';
 import {NumberCard} from './NumberCard';
 import {Overlays} from './Overlays';
 import {ShotView} from './ShotView';
+import {ZoomIn} from './ZoomIn';
 import {SoundLayer} from './SoundLayer';
 import {SubjectCard} from './SubjectCard';
 import type {TimelineProps} from './types';
@@ -20,11 +21,17 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
     countdown.some((card) => card.numberFrom <= from && from + duration <= card.cardFrom + card.cardDuration);
   return (
     <AbsoluteFill style={{backgroundColor: 'black'}}>
-      <IntroWhip intro={intro} transitions={transitions}>
+      <IntroWhip intro={intro}>
       {shots.filter((shot) => !coveredByCard(shot.from, shot.durationInFrames)).map((shot) => (
         // premountFor: shot dimuat 1 detik sebelum tayang, biar preview Studio nggak kedip hitam.
         <Sequence key={shot.src} from={shot.from} durationInFrames={shot.durationInFrames} premountFor={fps}>
-          <ShotView shot={shot} photoZoom={photoZoom} />
+          {transitions.some((t) => t.from === shot.from) ? (
+            <ZoomIn durationInFrames={transitions.find((t) => t.from === shot.from)?.durationInFrames ?? 7}>
+              <ShotView shot={shot} photoZoom={photoZoom} />
+            </ZoomIn>
+          ) : (
+            <ShotView shot={shot} photoZoom={photoZoom} />
+          )}
         </Sequence>
       ))}
       {countdown.map((card) => (

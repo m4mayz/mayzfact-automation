@@ -81,7 +81,7 @@ def _word_at(words: list[dict], char: int) -> int | None:
 
 
 def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_duration_s: float, entries: list[dict],
-               total: int, log: Callable[[str], None]) -> tuple[list[dict], list[tuple[float, float]], set[str]]:
+               total: int, log: Callable[[str], None], beat_starts: list[int] = ()) -> tuple[list[dict], list[tuple[float, float]], set[str]]:
     """Card per beat countdown + rentang detik beat countdown (buat ngumpetin caption) + kata-kata nama subjek.
 
     Angka muncul sedikit sebelum "Number" kedengeran (numberAt), subject card mulai pas nama subjeknya kedengeran.
@@ -108,6 +108,8 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
             card_from = to_frame(words[after]["start_s"])
         else:
             card_from = to_frame(float(ends[offset + countdown.number_end]))
+        # plan bisa motong box subjek lebih pendek: shot beat berikutnya mulai di tengah beat countdown
+        card_end = min([card_end] + [f for f in beat_starts if card_from < f < card_end])
         card_from = min(max(card_from, number_from + number_at + 1), card_end - 1)
         shot = next(e for e in reversed(entries) if e["from"] <= card_from)
         clip_frames = shot["durationInFrames"] + TAIL_FRAMES
@@ -365,7 +367,11 @@ def build_timeline(
             words = word_timings(alignment)
             if voice_envelope is not None:
                 words = snap_word_starts(words, voice_envelope)
-            countdown, spans, subject_words = _countdown(script["beats"], alignment, words, audio_duration_s, entries, total, log)
+            # frame shot yang mulai beat baru (clips.json nyimpen beat-nya); dipakai buat ujung box subjek
+            beat_starts = [e["from"] for i, (e, s) in enumerate(zip(entries, shots))
+                           if i and s.get("beat") is not None and s.get("beat") != shots[i - 1].get("beat")]
+            countdown, spans, subject_words = _countdown(script["beats"], alignment, words, audio_duration_s, entries, total, log,
+                                                         beat_starts)
             captions = _captions(words, audio_duration_s, spans, subject_words, total)
             timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
             beat_of = _beat_of(words, script["beats"])

@@ -70,6 +70,13 @@ def test_countdown_card_covers_countdown_beat():
     assert len(timeline["shots"]) == 3
 
 
+def test_card_ends_where_next_clip_starts_when_plan_shortened_the_box():
+    early = {"shots": [{**CD_CLIPS["shots"][0], "beat": 0}, {**CD_CLIPS["shots"][1], "beat": 1},
+                       {**shot("clips/shot_03.jpg", "photo", 4.5, 1080, 1920), "beat": 2}]}
+    card = build_timeline(early, 6.5, 0.5, script=SCRIPT, alignment=ALIGN)["countdown"][0]
+    assert card["cardFrom"] + card["cardDuration"] == 135  # 4,5 detik, bukan ujung beat (156)
+
+
 def test_captions_one_word_each_outside_countdown():
     captions = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN)["captions"]
     assert [(c["text"], c["from"], c["durationInFrames"]) for c in captions] == [

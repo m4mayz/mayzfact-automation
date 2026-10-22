@@ -1,10 +1,11 @@
 import React from 'react';
-import {AbsoluteFill, Img, interpolate, OffthreadVideo, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, Easing, Img, interpolate, OffthreadVideo, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {ANTON} from './fonts';
 import {Particles} from './Particles';
 import type {CountdownCard} from './types';
 
 const BOX = 820;
+const EXIT_FRAMES = 6; // zoom-through: box nge-zoom nembus layar, terus klip pertama masuk zoom-in (ZoomIn di ShortVideo)
 
 // Klip subjek di dalam frame menyala + label nama (gaya STURGEON di source i2xag).
 export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
@@ -13,10 +14,17 @@ export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
   const pop = spring({frame, fps, config: {damping: 14, stiffness: 150}, durationInFrames: 10});
   const scale = interpolate(pop, [0, 1], [0.8, 1]);
   const glow = 0.65 + 0.35 * Math.sin((frame / fps) * Math.PI * 2.2);
+  const exitStart = Math.max(0, card.cardDuration - EXIT_FRAMES);
+  const exit = interpolate(frame, [exitStart, card.cardDuration], [1, 3.2], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+    easing: Easing.in(Easing.cubic),
+  });
+  const exitBlur = interpolate(frame, [exitStart, card.cardDuration], [0, 12], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   const src = staticFile(card.src);
   const media: React.CSSProperties = {width: '100%', height: '100%', objectFit: 'cover'};
   return (
-    <AbsoluteFill>
+    <AbsoluteFill style={{transform: exit !== 1 ? `scale(${exit})` : undefined, filter: exitBlur > 0.1 ? `blur(${exitBlur}px)` : undefined}}>
       <Particles seed={`subject-${card.number}`} />
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 56}}>
         <div

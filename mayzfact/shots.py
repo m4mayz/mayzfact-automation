@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from mayzfact.countdown import parse_countdown
+from mayzfact.text import beat_texts
+from mayzfact.timing import beat_offsets, word_timings
 
 
 @dataclass(frozen=True)
@@ -46,4 +48,29 @@ def beat_subjects(beats: list[dict]) -> list[str | None]:
         elif countdown:
             current = countdown.subject.lower()
         out.append(current)
+    return out
+
+
+def tighten_countdown(slots: list[ShotSlot], beats: list[dict], alignment: dict, box_s: float) -> list[ShotSlot]:
+    """Box subjek di card cuma box_s detik setelah nama subjek mulai kedengeran, terus langsung klip berikutnya (D-038).
+
+    Shot beat countdown dipendekin, shot pertama beat berikutnya mulai lebih awal (ngisi sisa beat countdown).
+    """
+    texts = beat_texts(beats)
+    words = word_timings(alignment)
+    offsets = beat_offsets(texts)
+    out = list(slots)
+    for i, slot in enumerate(out[:-1]):
+        countdown = parse_countdown(texts[slot.beat])
+        nxt = out[i + 1]
+        if not countdown or nxt.beat != slot.beat + 1:
+            continue
+        number_char = offsets[slot.beat] + countdown.number_end
+        after = next((k + 1 for k, w in enumerate(words) if w["char_start"] <= number_char <= w["char_end"]), None)
+        if after is None or after >= len(words):
+            continue
+        end = round(words[after]["start_s"] + box_s, 3)
+        if slot.start_s < end < slot.end_s - 0.05:
+            out[i] = replace(slot, end_s=end)
+            out[i + 1] = replace(nxt, start_s=end)
     return out
