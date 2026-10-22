@@ -4,7 +4,7 @@ import subprocess
 
 import pytest
 
-from mayzfact.steps.render import render_command, run_render
+from mayzfact.steps.render import render_command, run_render, speed_command, speed_up
 from mayzfact.steps.timeline import build_timeline
 from mayzfact.store import RunPaths, write_json_atomic
 from tests.factories import fake_alignment
@@ -18,6 +18,27 @@ def test_render_command_uses_absolute_props_and_public_dir(tmp_path):
     assert f"--props={paths.timeline_json}" in cmd
     assert f"--public-dir={paths.root}" in cmd
     assert "--codec=h264" in cmd
+
+
+def test_speed_command_speeds_picture_and_voice_together(tmp_path):
+    cmd = speed_command(tmp_path / "in.mp4", tmp_path / "out.mp4", 1.2)
+    graph = cmd[cmd.index("-filter_complex") + 1]
+    assert "setpts=PTS/1.2" in graph and "atempo=1.2" in graph  # atempo: tempo naik, nada suara tetap
+    assert cmd[-1] == str(tmp_path / "out.mp4")
+
+
+def test_speed_up_shortens_video_by_the_factor(tmp_path):
+    src = tmp_path / "in.mp4"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=red:s=320x568:d=3:r=30",
+                    "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-shortest", "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p", "-c:a", "aac", str(src)], check=True)
+    out = speed_up(src, tmp_path / "out.mp4", 1.2)
+    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(out)],
+                           capture_output=True, text=True, check=True)
+    assert abs(float(probe.stdout) - 2.5) < 0.1
+    streams = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_type", "-of", "csv=p=0", str(out)],
+                             capture_output=True, text=True, check=True).stdout.split()
+    assert sorted(streams) == ["audio", "video"]
 
 
 @pytest.mark.render

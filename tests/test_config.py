@@ -59,3 +59,7 @@ def test_secrets_are_hidden_from_repr():
 
 def test_elevenlabs_stability_defaults_to_robust():
     assert Settings().elevenlabs_stability == 1.0  # D-036
+
+
+def test_video_speed_defaults_to_1_2():
+    assert Settings().video_speed == 1.2  # hasil render dipercepat 1,2x (D-038)

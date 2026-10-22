@@ -185,7 +185,7 @@ def real_deps(settings: Settings) -> Deps:
             stability=settings.elevenlabs_stability,
         ),
         http=http,
-        render=run_render,
+        render=lambda paths: run_render(paths, speed=settings.video_speed),
         plan=plan,
         fetch=fetch,
         audio=audio,

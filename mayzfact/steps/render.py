@@ -22,7 +22,27 @@ def render_command(npx: str, paths: RunPaths, output: Path) -> list[str]:
     ]
 
 
-def run_render(paths: RunPaths, remotion_dir: Path = REMOTION_DIR) -> Path:
+def speed_command(src: Path, dest: Path, speed: float) -> list[str]:
+    """Gambar + suara dipercepat bareng. atempo naikin tempo tanpa ngubah nada suara."""
+    return [
+        "ffmpeg", "-v", "error", "-y", "-i", str(src),
+        "-filter_complex", f"[0:v]setpts=PTS/{speed:g}[v];[0:a]atempo={speed:g}[a]",
+        "-map", "[v]", "-map", "[a]", "-r", "30", "-c:v", "libx264", "-crf", "18", "-preset", "medium",
+        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(dest),
+    ]
+
+
+def speed_up(src: Path, dest: Path, speed: float) -> Path:
+    tmp = tmp_path_for(dest)
+    result = subprocess.run(speed_command(src, tmp, speed), capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if result.returncode != 0 or not tmp.exists():
+        tmp.unlink(missing_ok=True)
+        raise PipelineError("render", f"ffmpeg gagal mempercepat video {speed:g}x: " + (result.stderr or "")[-1500:])
+    os.replace(tmp, dest)
+    return dest
+
+
+def run_render(paths: RunPaths, remotion_dir: Path = REMOTION_DIR, *, speed: float = 1.0) -> Path:
     npx = shutil.which("npx")
     if npx is None:
         raise PipelineError("render", "npx nggak ketemu. Aktifin Node dulu: nvm use 22.23.1")
@@ -35,5 +55,10 @@ def run_render(paths: RunPaths, remotion_dir: Path = REMOTION_DIR) -> Path:
     )
     if result.returncode != 0:
         raise PipelineError("render", "Remotion gagal:\n" + (result.stderr or result.stdout)[-2000:])
-    os.replace(output, paths.final_mp4)
-    return paths.final_mp4
+    if speed == 1.0:
+        os.replace(output, paths.final_mp4)
+        return paths.final_mp4
+    try:  # Remotion render di kecepatan normal, terus satu video dipercepat (D-038)
+        return speed_up(output, paths.final_mp4, speed)
+    finally:
+        output.unlink(missing_ok=True)
