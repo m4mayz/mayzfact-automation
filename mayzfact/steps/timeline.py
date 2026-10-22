@@ -154,7 +154,7 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
 
 
 def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overlays: list[dict],
-           emojis: list[dict], cta: list[dict], hook_end: int, total: int
+           emojis: list[dict], cta: list[dict], hook_end: int, total: int, same_clip: set[int] = frozenset()
            ) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
     """BGM (hook + utama), SFX, frame transisi magic reveal, dan flash putih di pergantian klip hook."""
     if not audio:
@@ -201,6 +201,8 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
             continue
         if since_card is not None:
             since_card += 1
+        if entry["from"] in same_clip and since_card != 1:  # klip yang sama lanjut: bukan transisi
+            continue
         if entry["from"] < hook_end:  # di dalam hook: camera flash + flash putih
             if "hook_cut" in files:
                 add("hook_cut", entry["from"] - SFX_LEAD_FRAMES)
@@ -416,7 +418,10 @@ def build_timeline(
     shown = _overlays(overlays, entries, countdown, _point_ranges(timings, marks))
     hook_end = max((e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None),
                    default=0)
-    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total)
+    # shot yang ngelanjutin link/klip yang sama kayak shot sebelumnya nggak dapat bunyi/efek transisi
+    same_clip = {e["from"] for i, (e, s) in enumerate(zip(entries, shots))
+                 if i and s.get("page_url") and s.get("page_url") == shots[i - 1].get("page_url")}
+    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total, same_clip)
     return {
         "fps": FPS,
         "width": FRAME_W,

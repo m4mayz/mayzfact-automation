@@ -180,6 +180,21 @@ def test_hook_clip_changes_get_camera_flash_and_white_flash():
     assert t["flashes"] == [{"from": 30, "durationInFrames": 6}, {"from": 60, "durationInFrames": 6}]
 
 
+def test_no_transition_between_shots_from_the_same_clip():
+    def from_link(name, start, link, hook=None):
+        return {**shot(f"clips/{name}.mp4", "video", start, 1080, 1920), "page_url": link, "hook_segment": hook}
+
+    clips = {"shots": [from_link("h1", 0.0, "https://t/1", 0), from_link("h2", 1.0, "https://t/1", 1),
+                       from_link("h3", 2.0, "https://t/2", 2), from_link("a", 3.0, "https://t/3"),
+                       from_link("b", 4.0, "https://t/3"), from_link("c", 5.0, "https://t/4")]}
+    audio = {"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3", "hook_cut": "audio/sfx/flash.mp3"}}
+    t = build_timeline(clips, 6.0, 0.5, audio=audio)
+    # h1→h2 dan a→b klip yang sama: sepi. h2→h3 flash, h3→a klik, b→c klik.
+    assert [(x["from"], x["src"]) for x in t["sfx"]] == [(57, "audio/sfx/flash.mp3"), (87, "audio/sfx/click.mp3"),
+                                                          (147, "audio/sfx/click.mp3")]
+    assert t["flashes"] == [{"from": 60, "durationInFrames": 6}]
+
+
 def test_transition_sfx_only_after_hook():
     clips = {"shots": [{**shot("clips/h1.mp4", "video", 0.0, 1080, 1920), "hook_segment": 0},
                        {**shot("clips/h2.mp4", "video", 1.0, 1080, 1920), "hook_segment": 1},
