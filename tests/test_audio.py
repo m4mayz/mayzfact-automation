@@ -9,7 +9,7 @@ from mayzfact.audio import (
     load_sfx_map,
     prepare_audio,
 )
-from mayzfact.store import RunPaths, read_json, write_json_atomic
+from mayzfact.store import RunPaths, read_json
 
 SCRIPT = {"beats": [{"text": "Five ancient creatures still alive."}, {"text": "Number five, horseshoe crab."}]}
 
@@ -90,30 +90,31 @@ def test_broken_json_files_do_not_crash(tmp_path):
     assert any("sfx.json" in line for line in logs)
 
 
-def test_bgm_comes_from_script(tmp_path):
+def test_fixed_hook_and_main_bgm_plus_riser_length(tmp_path, sine_mp3):
+    """D-038: BGM cuma 2 (mystery di hook, main setelah CTA), pilihan bgm di naskah nggak dipakai lagi."""
     bgm_dir, sfx_dir = tmp_path / "bgm", tmp_path / "sfx"
     bgm_dir.mkdir()
+    sfx_dir.mkdir()
     (bgm_dir / "mystery.mp3").write_bytes(b"m")
+    (bgm_dir / "main.mp3").write_bytes(b"x")
+    (sfx_dir / "sfx.json").write_text(json.dumps({"riser": "riser.mp3", "cut": "click.mp3"}), encoding="utf-8")
+    (sfx_dir / "riser.mp3").write_bytes(sine_mp3.read_bytes())
+    (sfx_dir / "click.mp3").write_bytes(b"c")
+    client, _ = serving({})
+    paths = RunPaths(tmp_path / "run")
+    out = prepare_audio(paths, {"beats": [], "bgm": "epic.mp3"}, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client,
+                        log=lambda m: None)
+    assert (out["bgm"], out["bgm_main"]) == ("audio/bgm/mystery.mp3", "audio/bgm/main.mp3")
+    assert abs(out["riser_s"] - 3.0) < 0.1  # sine_mp3 3 detik; dipakai buat ngepasin ujung riser ke "Number"
+    assert (paths.root / "audio/bgm/main.mp3").read_bytes() == b"x"
+
+
+def test_missing_bgm_files_mean_no_bgm(tmp_path):
+    bgm_dir, sfx_dir = tmp_path / "bgm", tmp_path / "sfx"
+    bgm_dir.mkdir()
     client, _ = serving({name: b"sfx" for name in SFX_DEFAULTS.values()})
     paths = RunPaths(tmp_path / "run")
     logs = []
-    out = prepare_audio(paths, {"beats": [], "bgm": "mystery.mp3"}, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, log=logs.append)
-    assert out["bgm"] == "audio/bgm/mystery.mp3" and out["sfx"]["number"] == "audio/sfx/vine-boom.mp3"
-    assert (paths.root / "audio/bgm/mystery.mp3").read_bytes() == b"m"
-    assert read_json(paths.root / "audio.json") == {"bgm": "mystery.mp3"}
-    out = prepare_audio(paths, {"beats": [], "bgm": "epic.mp3"}, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, log=logs.append)
-    assert out["bgm"] is None and any("epic.mp3" in m for m in logs)
     out = prepare_audio(paths, {"beats": []}, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, log=logs.append)
-    assert out["bgm"] is None  # naskah lama tanpa field bgm: tanpa BGM, nggak error
-
-
-def test_old_script_without_bgm_keeps_previous_choice(tmp_path):
-    bgm_dir, sfx_dir = tmp_path / "bgm", tmp_path / "sfx"
-    bgm_dir.mkdir()
-    (bgm_dir / "mystery.mp3").write_bytes(b"m")
-    client, _ = serving({name: b"sfx" for name in SFX_DEFAULTS.values()})
-    paths = RunPaths(tmp_path / "run")
-    write_json_atomic(paths.root / "audio.json", {"bgm": "mystery.mp3"})  # pilihan lama dari run sebelum naskah bawa bgm
-    out = prepare_audio(paths, {"beats": []}, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, log=lambda m: None)
-    assert out["bgm"] == "audio/bgm/mystery.mp3"
-    assert read_json(paths.root / "audio.json") == {"bgm": "mystery.mp3"}
+    assert out["bgm"] is None and out["bgm_main"] is None and "riser_s" not in out
+    assert any("mystery.mp3" in m for m in logs)

@@ -12,8 +12,9 @@ import httpx
 
 from mayzfact.config import PROJECT_ROOT
 from mayzfact.errors import PipelineError
+from mayzfact.ffmpeg import probe
 from mayzfact.net import download
-from mayzfact.store import RunPaths, read_json, write_json_atomic
+from mayzfact.store import RunPaths, write_json_atomic
 
 BGM_DIR = PROJECT_ROOT / "assets" / "bgm"
 SFX_DIR = PROJECT_ROOT / "assets" / "sfx"
@@ -69,27 +70,32 @@ def list_bgm(bgm_dir: Path) -> list[str]:
     return sorted(p.name for p in bgm_dir.iterdir() if p.suffix.lower() in AUDIO_EXTS)
 
 
+HOOK_BGM = "mystery.mp3"  # D-038: BGM cuma 2, mystery di hook...
+MAIN_BGM = "main.mp3"  # ...terus ini mulai "Number" pertama sampai akhir
+
+
 def prepare_audio(
     paths: RunPaths, script: dict, *, bgm_dir: Path, sfx_dir: Path, client: httpx.Client,
     log: Callable[[str], None],
 ) -> dict:
-    """BGM dari naskah, siapin SFX, copy ke runs/<id>/audio/ buat Remotion."""
+    """BGM hook + utama, siapin SFX, copy ke runs/<id>/audio/ buat Remotion. Field bgm di naskah nggak dipakai lagi."""
     choices = list_bgm(bgm_dir)
-    saved = paths.root / "audio.json"
-    if "bgm" in script:
-        bgm = script.get("bgm") or None  # dipilih agent pas nulis naskah
-    else:  # naskah lama (sebelum agent nulis bgm): pakai pilihan yang udah disetujui di run sebelumnya
-        bgm = read_json(saved).get("bgm") if saved.exists() else None
-    if bgm and bgm not in choices:
-        log(f"[timeline] BGM {bgm!r} nggak ada di assets/bgm, video tanpa BGM")
-        bgm = None
-    write_json_atomic(saved, {"bgm": bgm})
-    out: dict[str, Any] = {"bgm": None, "sfx": {}}
-    if bgm:
-        out["bgm"] = _copy(bgm_dir / bgm, paths.root / "audio" / "bgm", paths)
-        log(f"[timeline] BGM: {bgm}")
+    out: dict[str, Any] = {"bgm": None, "bgm_main": None, "sfx": {}}
+    for key, name in (("bgm", HOOK_BGM), ("bgm_main", MAIN_BGM)):
+        if name in choices:
+            out[key] = _copy(bgm_dir / name, paths.root / "audio" / "bgm", paths)
+            log(f"[timeline] BGM {key}: {name}")
+        else:
+            log(f"[timeline] {name} nggak ada di assets/bgm, bagian itu tanpa BGM")
+    write_json_atomic(paths.root / "audio.json", {"bgm": HOOK_BGM if out["bgm"] else None})
     for event, path in ensure_sfx(sfx_dir, client, load_sfx_map(sfx_dir, log), log).items():
         out["sfx"][event] = _copy(path, paths.root / "audio" / "sfx", paths)
+        if event == "riser":  # panjang riser dipakai buat ngepasin ujungnya ke "Number" pertama
+            try:
+                out["riser_s"] = probe(path, "timeline")["duration_s"]
+            except PipelineError as exc:
+                log(f"[timeline] riser dilewat, durasinya nggak kebaca: {exc.message.splitlines()[0]}")
+                del out["sfx"][event]
     return out
 
 

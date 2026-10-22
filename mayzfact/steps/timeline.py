@@ -22,8 +22,11 @@ CAPTION_HOLD_S = 0.4  # kata terakhir tetap tampil sebentar pas jeda
 CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
-SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.6, "cut_alt": 0.6, "overlay": 0.35, "emoji": 0.6,
-              "click": 0.8}
+SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.6, "overlay": 0.35, "emoji": 0.6, "click": 0.8,
+              "item_first": 0.7, "item_reveal": 0.7, "riser": 0.6}
+EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_oof, extra_punch, ...)
+EXTRA_VOLUME = 0.6
+BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)
 SFX_LEAD_FRAMES = 3  # whoosh mulai sedikit sebelum gambar ganti (puncak whoosh-clean di ±0.1 detik)
 # Pembuka = bagian "masuk" transisi antar scene di source i2xag: scene muncul hampir putih + blur vertikal,
 # cepat tajam, terangnya pudar ke normal. Barengan SFX hook.
@@ -142,30 +145,63 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
 
 
 def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overlays: list[dict],
-           emojis: list[dict], cta: list[dict], hook_end: int = 0) -> tuple[dict | None, list[dict]]:
+           emojis: list[dict], cta: list[dict], hook_end: int, total: int) -> tuple[list[dict], list[dict], list[dict]]:
+    """BGM (hook + utama), SFX, dan frame transisi magic reveal (efeknya sama kayak pembuka video)."""
     if not audio:
-        return None, []
-    bgm = {"src": audio["bgm"], "volume": BGM_VOLUME, "fadeOutFrames": BGM_FADE_FRAMES} if audio.get("bgm") else None
+        return [], [], []
     files = audio.get("sfx", {})
     sfx: list[dict] = []
+    reveals: list[dict] = []
 
     def add(event: str, frame: int) -> None:
         if event in files:
-            sfx.append({"src": files[event], "from": max(0, frame), "volume": SFX_VOLUME[event]})
+            volume = EXTRA_VOLUME if event.startswith(EXTRA_PREFIX) else SFX_VOLUME[event]
+            sfx.append({"src": files[event], "from": max(0, frame), "volume": volume})
+
+    # BGM hook sampai "Number" pertama, terus BGM utama sampai akhir. Riser habis pas di titik ganti itu.
+    switch = countdown[0]["numberFrom"] if countdown else hook_end
+    bgm: list[dict] = []
+    if audio.get("bgm") and audio.get("bgm_main") and 0 < switch < total:
+        bgm = [{"src": audio["bgm"], "from": 0, "durationInFrames": switch, "volume": BGM_VOLUME,
+                "fadeOutFrames": BGM_SWITCH_FADE_FRAMES},
+               {"src": audio["bgm_main"], "from": switch, "durationInFrames": total - switch, "volume": BGM_VOLUME,
+                "fadeOutFrames": BGM_FADE_FRAMES}]
+        if audio.get("riser_s"):
+            add("riser", switch - round(audio["riser_s"] * FPS))
+    elif audio.get("bgm") or audio.get("bgm_main"):
+        bgm = [{"src": audio.get("bgm") or audio["bgm_main"], "from": 0, "durationInFrames": total, "volume": BGM_VOLUME,
+                "fadeOutFrames": BGM_FADE_FRAMES}]
 
     add("hook", 0)
     for card in countdown:
         add("number", card["numberFrom"] + card["numberAt"] - SFX_LEAD_FRAMES)
         add("subject", card["cardFrom"] - SFX_LEAD_FRAMES)
-    # Pergantian klip setelah hook: klik selalu, "cut_alt" ikut secara acak. Seed tetap biar render ulang sama.
+
+    # Pergantian klip setelah hook (D-038): klip ke-1 habis card = check mark, ke-2 = magic reveal + efek pembuka,
+    # sisanya klik + 1 SFX tambahan acak (atau nggak ada). Seed tetap biar render ulang bunyinya sama.
+    extras = sorted(event for event in files if event.startswith(EXTRA_PREFIX))
     rng = random.Random(len(entries))
+    since_card = None  # urutan klip sejak card terakhir habis
     for entry in entries[1:]:
         covered = any(c["numberFrom"] <= entry["from"] < c["cardFrom"] + c["cardDuration"] for c in countdown)
-        if entry["from"] < hook_end or covered:  # di dalam hook sepi; masuk card udah punya bunyi sendiri
+        if covered:  # masuk card udah punya bunyi sendiri
+            since_card = 0
             continue
-        add("cut", entry["from"] - SFX_LEAD_FRAMES)
-        if rng.random() < 0.5:
-            add("cut_alt", entry["from"] - SFX_LEAD_FRAMES)
+        if since_card is not None:
+            since_card += 1
+        if entry["from"] < hook_end:  # di dalam hook sepi
+            continue
+        frame = entry["from"] - SFX_LEAD_FRAMES
+        if since_card == 1 and "item_first" in files:
+            add("item_first", frame)
+        elif since_card == 2 and "item_reveal" in files:
+            add("item_reveal", frame)
+            reveals.append({"from": entry["from"], "durationInFrames": INTRO_FRAMES})
+        else:
+            add("cut", frame)
+            pick = rng.choice([None, *extras]) if extras else None
+            if pick:
+                add(pick, frame)
     for overlay in overlays:
         add("overlay", overlay["from"])
     for emoji in emojis:
@@ -173,7 +209,7 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
     for action in cta:
         add("click", action["from"] + action["clickAt"] - CLICK_LEAD_FRAMES)
     sfx.sort(key=lambda s: s["from"])
-    return bgm, sfx
+    return bgm, sfx, reveals
 
 
 def _point_ranges(timings: list[dict], marks: dict | None) -> list[tuple[int, int]] | None:
@@ -343,7 +379,7 @@ def build_timeline(
     shown = _overlays(overlays, entries, countdown, _point_ranges(timings, marks))
     hook_end = max((e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None),
                    default=0)
-    bgm, sfx = _sound(audio, entries, countdown, shown, emojis, cta, hook_end)
+    bgm, sfx, reveals = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total)
     return {
         "fps": FPS,
         "width": FRAME_W,
@@ -360,6 +396,7 @@ def build_timeline(
         "bgm": bgm,
         "sfx": sfx,
         "intro": {"durationInFrames": INTRO_FRAMES} if audio and "hook" in audio.get("sfx", {}) else None,
+        "transitions": reveals,
     }
 
 

@@ -37,6 +37,13 @@ export type Bgm = {
   src: string;
   volume: number;
   fadeOutFrames: number;
+  from?: number; // segmen BGM (hook / utama); tanpa from = satu BGM sepanjang video (timeline lama)
+  durationInFrames?: number;
+};
+
+export type Transition = {
+  from: number;
+  durationInFrames: number;
 };
 
 export type OverlayKeyframe = {
@@ -84,9 +91,10 @@ export type TimelineProps = {
   shots: Shot[];
   countdown?: CountdownCard[];
   captions?: Caption[];
-  bgm?: Bgm | null;
+  bgm?: Bgm | Bgm[] | null;
   sfx?: Sfx[];
   intro?: Intro | null;
+  transitions?: Transition[];
   overlays?: Overlay[];
   emojis?: EmojiOverlay[];
   cta?: CtaAction[];

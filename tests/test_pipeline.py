@@ -363,7 +363,7 @@ def test_timeline_step_uses_audio_deps(world):
     paths = start(world, no_render=True)
     timeline = read_json(paths.timeline_json)
     assert seen == [VIDEO_ID]
-    assert timeline["bgm"]["src"] == "audio/bgm/mystery.mp3" and timeline["sfx"][0]["from"] == 0
+    assert timeline["bgm"][0]["src"] == "audio/bgm/mystery.mp3" and timeline["sfx"][0]["from"] == 0
 
 
 def test_audio_failure_never_breaks_timeline(world):
@@ -372,7 +372,7 @@ def test_audio_failure_never_breaks_timeline(world):
 
     world.deps.audio = broken
     paths = start(world, no_render=True)
-    assert read_json(paths.timeline_json)["bgm"] is None
+    assert read_json(paths.timeline_json)["bgm"] == []
 
 
 def test_timeline_step_uses_overlay_deps_and_survives_errors(world):

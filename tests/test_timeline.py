@@ -128,7 +128,8 @@ AUDIO = {"bgm": "audio/bgm/mystery.mp3", "sfx": {"hook": "audio/sfx/h.mp3", "num
 
 def test_sfx_and_bgm_placement():
     timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, audio=AUDIO)
-    assert timeline["bgm"] == {"src": "audio/bgm/mystery.mp3", "volume": 0.12, "fadeOutFrames": 30}
+    assert timeline["bgm"] == [{"src": "audio/bgm/mystery.mp3", "from": 0, "durationInFrames": 195, "volume": 0.12,
+                               "fadeOutFrames": 30}]
     # shot ke-2 ketutup card → nggak dapat "cut"; card dapat "number" + "subject"; shot ke-3 dapat "cut" 3 frame sebelum ganti.
     assert timeline["sfx"] == [
         {"src": "audio/sfx/h.mp3", "from": 0, "volume": 0.8},
@@ -140,10 +141,10 @@ def test_sfx_and_bgm_placement():
 
 def test_cut_sfx_on_plain_shots_and_missing_audio():
     timeline = build_timeline(CLIPS, 6.5, 0.5, audio={"bgm": None, "sfx": {"cut": "audio/sfx/c.mp3"}})
-    assert timeline["bgm"] is None
+    assert timeline["bgm"] == []
     assert [s["from"] for s in timeline["sfx"]] == [69, 129]
     plain = build_timeline(CLIPS, 6.5, 0.5)
-    assert plain["bgm"] is None and plain["sfx"] == []
+    assert plain["bgm"] == [] and plain["sfx"] == []
 
 
 def test_transition_sfx_only_after_hook():
@@ -155,15 +156,68 @@ def test_transition_sfx_only_after_hook():
     assert [(s["from"], s["src"]) for s in timeline["sfx"]] == [(57, "audio/sfx/click.mp3"), (87, "audio/sfx/click.mp3")]
 
 
-def test_transition_always_clicks_and_randomly_adds_alt():
-    clips = {"shots": [shot(f"clips/s{i}.mp4", "video", float(i), 1080, 1920) for i in range(12)]}
-    audio = {"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3", "cut_alt": "audio/sfx/alt.mp3"}}
-    sfx = build_timeline(clips, 12.0, 0.5, audio=audio)["sfx"]
-    clicks = [s["from"] for s in sfx if s["src"] == "audio/sfx/click.mp3"]
-    alts = [s["from"] for s in sfx if s["src"] == "audio/sfx/alt.mp3"]
-    assert len(clicks) == 11  # klik selalu ada di tiap pergantian klip
-    assert 0 < len(alts) < 11 and set(alts) <= set(clicks)  # SFX kedua acak: kadang ikut, kadang nggak
-    assert build_timeline(clips, 12.0, 0.5, audio=audio)["sfx"] == sfx  # render ulang nggak ganti bunyi
+ITEM_SCRIPT = {"beats": [{"text": "Look at this creature."}, {"text": "Number five, horseshoe crab."},
+                         {"text": "It is old."}, {"text": "It is very old."}, {"text": "It is so old."}]}
+ITEM_ALIGN = fake_alignment("Look at this creature. Number five, horseshoe crab. It is old. It is very old. It is so old.", 10.0)
+ITEM_AUDIO = {"bgm": "audio/bgm/mystery.mp3", "bgm_main": "audio/bgm/main.mp3", "riser_s": 2.0,
+              "sfx": {"cut": "audio/sfx/click.mp3", "item_first": "audio/sfx/check.mp3", "item_reveal": "audio/sfx/reveal.mp3",
+                      "riser": "audio/sfx/riser.mp3", "extra_oof": "audio/sfx/oof.mp3", "extra_punch": "audio/sfx/punch.mp3"}}
+
+
+def item_timeline(audio=ITEM_AUDIO):
+    """Hook 1 shot, CTA 1 shot, card #5, terus 3 klip penjelasan."""
+    card = build_timeline({"shots": [shot("clips/x.mp4", "video", 0.0, 1080, 1920)]}, 10.0, 0.5,
+                          script=ITEM_SCRIPT, alignment=ITEM_ALIGN)["countdown"][0]
+    number_s, end_s = card["numberFrom"] / 30, (card["cardFrom"] + card["cardDuration"]) / 30
+    clips = {"shots": [{**shot("clips/hook.mp4", "video", 0.0, 1080, 1920), "hook_segment": 0},
+                       shot("clips/cta.mp4", "video", 1.0, 1080, 1920), shot("clips/card.mp4", "video", number_s, 1080, 1920),
+                       shot("clips/p1.jpg", "photo", end_s, 1080, 1920), shot("clips/v2.mp4", "video", end_s + 1.0, 1080, 1920),
+                       shot("clips/v3.mp4", "video", end_s + 2.0, 1080, 1920)]}
+    return build_timeline(clips, 10.0, 0.5, script=ITEM_SCRIPT, alignment=ITEM_ALIGN, audio=audio)
+
+
+def test_item_clips_get_check_then_reveal_then_click():
+    t = item_timeline()
+    starts = {s["src"]: s["from"] for s in t["shots"]}
+    at = lambda name: sorted(x["src"].split("/")[-1] for x in t["sfx"] if x["from"] == starts[name] - 3)  # noqa: E731
+    assert at("clips/cta.mp4")[0] == "click.mp3"  # setelah hook, sebelum card: klik (+acak)
+    assert at("clips/p1.jpg") == ["check.mp3"]  # klip pertama habis card
+    assert at("clips/v2.mp4") == ["reveal.mp3"]  # klip kedua: magic reveal aja
+    assert at("clips/v3.mp4")[0] == "click.mp3"  # sisanya klik (+acak)
+    assert t["transitions"] == [{"from": starts["clips/v2.mp4"], "durationInFrames": 7}]  # efek kayak awal video
+    assert not any(x["src"].endswith(("check.mp3", "reveal.mp3", "click.mp3")) and x["from"] == starts["clips/card.mp4"] - 3
+                   for x in t["sfx"])  # masuk card number nggak dapat bunyi transisi
+
+
+def test_click_transitions_add_random_extra_or_nothing_the_same_way_each_time():
+    clips = {"shots": [shot(f"clips/s{i}.mp4", "video", float(i), 1080, 1920) for i in range(16)]}
+    audio = {"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3", "extra_oof": "audio/sfx/oof.mp3",
+                                  "extra_punch": "audio/sfx/punch.mp3"}}
+    sfx = build_timeline(clips, 16.0, 0.5, audio=audio)["sfx"]
+    clicks = {x["from"] for x in sfx if x["src"] == "audio/sfx/click.mp3"}
+    extras = [x for x in sfx if x["src"] != "audio/sfx/click.mp3"]
+    assert len(clicks) == 15 and {x["from"] for x in extras} <= clicks
+    assert 0 < len(extras) < 15  # kadang nggak ada SFX tambahan
+    assert len({x["from"] for x in extras}) == len(extras)  # maksimal 1 SFX tambahan per transisi
+    assert build_timeline(clips, 16.0, 0.5, audio=audio)["sfx"] == sfx  # render ulang nggak ganti bunyi
+
+
+def test_bgm_switches_at_first_number_and_riser_ends_there():
+    t = item_timeline()
+    switch = t["countdown"][0]["numberFrom"]
+    assert t["bgm"] == [
+        {"src": "audio/bgm/mystery.mp3", "from": 0, "durationInFrames": switch, "volume": 0.12, "fadeOutFrames": 8},
+        {"src": "audio/bgm/main.mp3", "from": switch, "durationInFrames": t["durationInFrames"] - switch,
+         "volume": 0.12, "fadeOutFrames": 30},
+    ]
+    riser = [x for x in t["sfx"] if x["src"] == "audio/sfx/riser.mp3"]
+    assert riser == [{"src": "audio/sfx/riser.mp3", "from": switch - 60, "volume": 0.6}]  # 2 detik, habis pas "Number"
+
+
+def test_single_bgm_when_main_bgm_missing():
+    t = item_timeline({"bgm": "audio/bgm/mystery.mp3", "sfx": {}})
+    assert t["bgm"] == [{"src": "audio/bgm/mystery.mp3", "from": 0, "durationInFrames": t["durationInFrames"],
+                         "volume": 0.12, "fadeOutFrames": 30}]
 
 
 def test_intro_transition_goes_with_hook_sfx():
