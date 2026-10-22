@@ -177,7 +177,7 @@ def test_hook_clip_changes_get_camera_flash_and_white_flash():
     # di dalam hook (frame 30, 60): camera flash + flash putih; masuk isi (90): klik kayak biasa
     assert [(x["from"], x["src"]) for x in t["sfx"]] == [(27, "audio/sfx/flash.mp3"), (57, "audio/sfx/flash.mp3"),
                                                           (87, "audio/sfx/click.mp3")]
-    assert t["flashes"] == [{"from": 30, "durationInFrames": 6}, {"from": 60, "durationInFrames": 6}]
+    assert t["flashes"] == [{"from": 30, "durationInFrames": 3}, {"from": 60, "durationInFrames": 3}]
 
 
 def test_no_transition_between_shots_from_the_same_clip():
@@ -192,7 +192,7 @@ def test_no_transition_between_shots_from_the_same_clip():
     # h1→h2 dan a→b klip yang sama: sepi. h2→h3 flash, h3→a klik, b→c klik.
     assert [(x["from"], x["src"]) for x in t["sfx"]] == [(57, "audio/sfx/flash.mp3"), (87, "audio/sfx/click.mp3"),
                                                           (147, "audio/sfx/click.mp3")]
-    assert t["flashes"] == [{"from": 60, "durationInFrames": 6}]
+    assert t["flashes"] == [{"from": 60, "durationInFrames": 3}]
 
 
 def test_transition_sfx_only_after_hook():

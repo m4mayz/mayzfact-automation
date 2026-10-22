@@ -32,7 +32,7 @@ CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
 SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.6, "overlay": 0.35, "emoji": 0.6, "click": 0.8,
               "item_reveal": 0.7, "riser": 1.0, "hook_cut": 0.8}
-FLASH_FRAMES = 6  # flash putih di pergantian klip hook (barengan camera flash)
+FLASH_FRAMES = 3  # flash putih di pergantian klip hook (barengan camera flash)
 EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_oof, extra_punch, ...)
 EXTRA_VOLUME = 0.6
 BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)
