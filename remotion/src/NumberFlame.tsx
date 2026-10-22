@@ -5,7 +5,7 @@ import fire from './assets/number-fire.mp4';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
-// Ledakan api biru di belakang angka countdown, niru source i2xag (#3 platypus 37.65-38.05 dtk): api rapet di sekitar
+// Ledakan api biru di atas angka countdown, niru source i2xag (#3 platypus 37.65-38.05 dtk): api rapet di sekitar
 // angka, ngembang jadi cincin dengan tengah gelap, terus pudar. Sumbernya "Blue Fire Powers Pack" blackscreen
 // (youtube.com/watch?v=Q46O_LHNDns, detik 64,7-65,45, dipercepat 1,5x), diputer 90° jadi portrait biar menuhin
 // layar tanpa di-crop. Blend `screen` bikin hitamnya ilang.

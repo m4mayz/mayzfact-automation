@@ -9,7 +9,7 @@ const POP_FRAMES = 2;
 
 // Angka countdown chrome di background gelap berpartikel (gaya source i2xag).
 // Masuknya kayak source: angka langsung nongol (sedikit mengecil ke ukuran penuh, 2 frame) dengan ledakan api biru
-// di belakangnya (NumberFlame, VFX ledakan energi biru), barengan SFX fire whoosh. Abis itu zoom pelan.
+// numpuk di atasnya (NumberFlame, VFX ledakan api biru), barengan SFX fire whoosh. Abis itu zoom pelan.
 export const NumberCard: React.FC<{number: number; numberAt: number; durationInFrames: number}> = ({
   number,
   numberAt,
@@ -24,11 +24,6 @@ export const NumberCard: React.FC<{number: number; numberAt: number; durationInF
   return (
     <AbsoluteFill>
       <Particles seed={`number-${number}`} />
-      {local >= 0 ? (
-        <Sequence from={numberAt} durationInFrames={BURST_FRAMES} layout="none">
-          <NumberFlame />
-        </Sequence>
-      ) : null}
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center'}}>
         <div
           style={{
@@ -48,6 +43,11 @@ export const NumberCard: React.FC<{number: number; numberAt: number; durationInF
           {number}
         </div>
       </AbsoluteFill>
+      {local >= 0 ? (
+        <Sequence from={numberAt} durationInFrames={BURST_FRAMES} layout="none">
+          <NumberFlame />
+        </Sequence>
+      ) : null}
     </AbsoluteFill>
   );
 };
