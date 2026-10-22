@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import random
 import re
 from typing import Any, Callable
 
@@ -21,7 +22,8 @@ CAPTION_HOLD_S = 0.4  # kata terakhir tetap tampil sebentar pas jeda
 CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
-SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.35, "overlay": 0.35, "emoji": 0.6, "click": 0.8}
+SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.6, "cut_alt": 0.6, "overlay": 0.35, "emoji": 0.6,
+              "click": 0.8}
 SFX_LEAD_FRAMES = 3  # whoosh mulai sedikit sebelum gambar ganti (puncak whoosh-clean di ±0.1 detik)
 # Pembuka = bagian "masuk" transisi antar scene di source i2xag: scene muncul hampir putih + blur vertikal,
 # cepat tajam, terangnya pudar ke normal. Barengan SFX hook.
@@ -140,7 +142,7 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
 
 
 def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overlays: list[dict],
-           emojis: list[dict], cta: list[dict]) -> tuple[dict | None, list[dict]]:
+           emojis: list[dict], cta: list[dict], hook_end: int = 0) -> tuple[dict | None, list[dict]]:
     if not audio:
         return None, []
     bgm = {"src": audio["bgm"], "volume": BGM_VOLUME, "fadeOutFrames": BGM_FADE_FRAMES} if audio.get("bgm") else None
@@ -155,10 +157,13 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
     for card in countdown:
         add("number", card["numberFrom"] + card["numberAt"] - SFX_LEAD_FRAMES)
         add("subject", card["cardFrom"] - SFX_LEAD_FRAMES)
+    # Bunyi transisi cuma setelah hook, acak antara "cut" dan "cut_alt" (kalau ada). Seed tetap biar render ulang sama.
+    choices = [event for event in ("cut", "cut_alt") if event in files]
+    rng = random.Random(len(entries))
     for entry in entries[1:]:
         covered = any(c["numberFrom"] <= entry["from"] < c["cardFrom"] + c["cardDuration"] for c in countdown)
-        if not covered:  # pergantian ke card udah punya bunyi sendiri
-            add("cut", entry["from"] - SFX_LEAD_FRAMES)
+        if choices and entry["from"] >= hook_end and not covered:  # pergantian ke card udah punya bunyi sendiri
+            add(rng.choice(choices), entry["from"] - SFX_LEAD_FRAMES)
     for overlay in overlays:
         add("overlay", overlay["from"])
     for emoji in emojis:
@@ -334,7 +339,9 @@ def build_timeline(
             log(f"[timeline] caption & countdown dilewat: {reason}")
             countdown, captions, emojis, cta, timings = [], [], [], [], []
     shown = _overlays(overlays, entries, countdown, _point_ranges(timings, marks))
-    bgm, sfx = _sound(audio, entries, countdown, shown, emojis, cta)
+    hook_end = max((e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None),
+                   default=0)
+    bgm, sfx = _sound(audio, entries, countdown, shown, emojis, cta, hook_end)
     return {
         "fps": FPS,
         "width": FRAME_W,

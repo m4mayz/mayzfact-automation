@@ -134,7 +134,7 @@ def test_sfx_and_bgm_placement():
         {"src": "audio/sfx/h.mp3", "from": 0, "volume": 0.8},
         {"src": "audio/sfx/n.mp3", "from": 66, "volume": 0.9},
         {"src": "audio/sfx/s.mp3", "from": 105, "volume": 0.7},
-        {"src": "audio/sfx/c.mp3", "from": 153, "volume": 0.35},
+        {"src": "audio/sfx/c.mp3", "from": 153, "volume": 0.6},
     ]
 
 
@@ -144,6 +144,23 @@ def test_cut_sfx_on_plain_shots_and_missing_audio():
     assert [s["from"] for s in timeline["sfx"]] == [69, 129]
     plain = build_timeline(CLIPS, 6.5, 0.5)
     assert plain["bgm"] is None and plain["sfx"] == []
+
+
+def test_transition_sfx_only_after_hook():
+    clips = {"shots": [{**shot("clips/h1.mp4", "video", 0.0, 1080, 1920), "hook_segment": 0},
+                       {**shot("clips/h2.mp4", "video", 1.0, 1080, 1920), "hook_segment": 1},
+                       shot("clips/a.mp4", "video", 2.0, 1080, 1920), shot("clips/b.mp4", "video", 3.0, 1080, 1920)]}
+    timeline = build_timeline(clips, 4.0, 0.5, audio={"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3"}})
+    # pergantian di dalam hook (frame 30) sepi; masuk isi (60) dan sesudahnya (90) dapat klik, 3 frame lebih awal
+    assert [(s["from"], s["src"]) for s in timeline["sfx"]] == [(57, "audio/sfx/click.mp3"), (87, "audio/sfx/click.mp3")]
+
+
+def test_transition_sfx_picks_between_click_and_alt_the_same_way_each_time():
+    clips = {"shots": [shot(f"clips/s{i}.mp4", "video", float(i), 1080, 1920) for i in range(12)]}
+    audio = {"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3", "cut_alt": "audio/sfx/alt.mp3"}}
+    first = build_timeline(clips, 12.0, 0.5, audio=audio)["sfx"]
+    assert {s["src"] for s in first} == {"audio/sfx/click.mp3", "audio/sfx/alt.mp3"} and len(first) == 11
+    assert build_timeline(clips, 12.0, 0.5, audio=audio)["sfx"] == first  # render ulang nggak ganti bunyi
 
 
 def test_intro_transition_goes_with_hook_sfx():
