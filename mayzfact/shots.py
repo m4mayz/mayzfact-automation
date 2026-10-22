@@ -51,25 +51,34 @@ def beat_subjects(beats: list[dict]) -> list[str | None]:
     return out
 
 
-def tighten_countdown(slots: list[ShotSlot], beats: list[dict], alignment: dict, box_s: float) -> list[ShotSlot]:
-    """Box subjek di card cuma box_s detik setelah nama subjek mulai kedengeran, terus langsung klip berikutnya (D-038).
+BOX_TAIL_S = 0.1  # box subjek ditutup segini setelah nama subjek selesai diucapin (source i2xag)
+BOX_MIN_S = 0.5  # nama subjek pendek: box tetap tampil minimal segini
 
-    Shot beat countdown dipendekin, shot pertama beat berikutnya mulai lebih awal (ngisi sisa beat countdown).
+
+def tighten_countdown(slots: list[ShotSlot], beats: list[dict], alignment: dict) -> list[ShotSlot]:
+    """Box subjek di card ditutup pas nama subjek selesai, terus langsung klip berikutnya (D-038, niru source i2xag).
+
+    Shot beat countdown dipendekin, shot pertama beat berikutnya mulai lebih awal (ngisi jeda sisa beat countdown).
     """
     texts = beat_texts(beats)
     words = word_timings(alignment)
     offsets = beat_offsets(texts)
+
+    def word_at(char: int) -> int | None:
+        return next((k for k, w in enumerate(words) if w["char_start"] <= char <= w["char_end"]), None)
+
     out = list(slots)
     for i, slot in enumerate(out[:-1]):
         countdown = parse_countdown(texts[slot.beat])
         nxt = out[i + 1]
         if not countdown or nxt.beat != slot.beat + 1:
             continue
-        number_char = offsets[slot.beat] + countdown.number_end
-        after = next((k + 1 for k, w in enumerate(words) if w["char_start"] <= number_char <= w["char_end"]), None)
-        if after is None or after >= len(words):
+        number_word = word_at(offsets[slot.beat] + countdown.number_end)
+        last_word = word_at(offsets[slot.beat] + len(texts[slot.beat].rstrip()) - 1)
+        if number_word is None or last_word is None or number_word + 1 > last_word:
             continue
-        end = round(words[after]["start_s"] + box_s, 3)
+        name_start = words[number_word + 1]["start_s"]
+        end = round(max(words[last_word]["end_s"] + BOX_TAIL_S, name_start + BOX_MIN_S), 3)
         if slot.start_s < end < slot.end_s - 0.05:
             out[i] = replace(slot, end_s=end)
             out[i + 1] = replace(nxt, start_s=end)

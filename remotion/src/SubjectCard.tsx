@@ -1,38 +1,56 @@
 import React from 'react';
-import {AbsoluteFill, Easing, Img, interpolate, OffthreadVideo, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, Easing, Img, interpolate, OffthreadVideo, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {ANTON} from './fonts';
 import {Particles} from './Particles';
 import {TextBlurs} from './TextBlurs';
 import type {CountdownCard} from './types';
 
 const BOX = 820;
-const EXIT_FRAMES = 6; // zoom-through: box nge-zoom nembus layar, terus klip pertama masuk zoom-in (ZoomIn di ShortVideo)
+const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
+const BLUR_ID = 'subject-exit-blur';
+// Dicek frame per frame di source i2xag (#5 horseshoe crab 17.50 & 18.20 dtk, #3 platypus 38.33 & 38.73 dtk):
+// masuk 3 frame dari ±2,4x mengecil ke ukuran normal sambil blur; keluar 4 frame makin terang + blur vertikal
+// + sedikit membesar (frame terakhir agak menyempit), terus cut biasa ke klip berikutnya.
+const ENTER_FRAMES = 3;
+const EXIT_FRAMES = 4;
 
 // Klip subjek di dalam frame menyala + label nama (gaya STURGEON di source i2xag).
 export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const pop = spring({frame, fps, config: {damping: 14, stiffness: 150}, durationInFrames: 10});
-  const scale = interpolate(pop, [0, 1], [0.8, 1]);
   const glow = 0.65 + 0.35 * Math.sin((frame / fps) * Math.PI * 2.2);
-  const exitStart = Math.max(0, card.cardDuration - EXIT_FRAMES);
-  const exit = interpolate(frame, [exitStart, card.cardDuration], [1, 3.2], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-    easing: Easing.in(Easing.cubic),
-  });
-  const exitBlur = interpolate(frame, [exitStart, card.cardDuration], [0, 12], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  const enter = interpolate(frame, [0, ENTER_FRAMES - 1], [2.4, 1], {...clamp, easing: Easing.out(Easing.cubic)});
+  const enterBlur = interpolate(frame, [0, ENTER_FRAMES - 1], [16, 0], clamp);
+  const e = frame - Math.max(ENTER_FRAMES, card.cardDuration - EXIT_FRAMES); // 0..3 di 4 frame terakhir
+  const exiting = e >= 0;
+  const exitScale = exiting ? interpolate(e, [0, EXIT_FRAMES - 1], [1.04, 1.14], clamp) : 1;
+  const squeezeX = exiting ? interpolate(e, [EXIT_FRAMES - 2, EXIT_FRAMES - 1], [1, 0.85], clamp) : 1;
+  const brightness = exiting ? interpolate(e, [0, EXIT_FRAMES - 2, EXIT_FRAMES - 1], [1.6, 2.4, 1.7], clamp) : 1;
+  const blurY = exiting ? interpolate(e, [0, EXIT_FRAMES - 1], [10, 34], clamp) : 0;
+  const boxFilter = [
+    enterBlur > 0.1 ? `blur(${enterBlur}px)` : '',
+    blurY > 0.1 ? `url(#${BLUR_ID})` : '',
+    brightness !== 1 ? `brightness(${brightness})` : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
   const src = staticFile(card.src);
   const media: React.CSSProperties = {width: '100%', height: '100%', objectFit: 'cover'};
   return (
-    <AbsoluteFill style={{transform: exit !== 1 ? `scale(${exit})` : undefined, filter: exitBlur > 0.1 ? `blur(${exitBlur}px)` : undefined}}>
+    <AbsoluteFill>
+      <svg width="0" height="0" style={{position: 'absolute'}}>
+        <filter id={BLUR_ID} x="-10%" y="-20%" width="120%" height="140%">
+          <feGaussianBlur stdDeviation={`2 ${blurY}`} />
+        </filter>
+      </svg>
       <Particles seed={`subject-${card.number}`} />
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 56}}>
         <div
           style={{
             width: BOX,
             height: BOX,
-            transform: `scale(${scale})`,
+            transform: `scale(${enter * exitScale * squeezeX}, ${enter * exitScale})`,
+            filter: boxFilter || undefined,
             position: 'relative',
             border: '12px solid #ffb02e',
             borderRadius: 10,
@@ -61,7 +79,7 @@ export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
             textAlign: 'center',
             maxWidth: 1000,
             lineHeight: 1.05,
-            transform: `scale(${scale})`,
+            opacity: enter > 1.5 ? 0 : 1, // label nongol begitu box hampir di ukuran normal
             WebkitTextStroke: '6px black',
             paintOrder: 'stroke fill',
             textShadow: '0 6px 18px rgba(0,0,0,0.8)',

@@ -115,9 +115,6 @@ def _shot_frames(paths: RunPaths, source: dict, shots: list[dict], voice_total_s
             log(f"[plan] frame shot {shot['index'] + 1} gagal: {exc.message.splitlines()[0][:120]}")
 
 
-SUBJECT_BOX_S = 0.6  # box subjek di card tampil segini setelah nama subjek mulai, terus langsung klip pertama (D-038)
-
-
 def run_plan(
     paths: RunPaths,
     script: dict,
@@ -131,7 +128,7 @@ def run_plan(
 ) -> dict:
     beats = script["beats"]
     slots = split_shots(beat_timings(beat_texts(beats), tts["alignment"], tts["duration_s"]), beats, max_shot_s)
-    slots = tighten_countdown(slots, beats, tts["alignment"], SUBJECT_BOX_S)
+    slots = tighten_countdown(slots, beats, tts["alignment"])
     subjects = beat_subjects(beats)
     segs = prepare_source_segments(paths, source, download_source, hook_seconds, paths.plan_dir, retry_step="plan") if hook_seconds > 0 else []
     mapping = hook_slot_map(slots, len(segs), hook_seconds)

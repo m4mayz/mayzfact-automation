@@ -31,7 +31,7 @@ CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
 SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.6, "overlay": 0.35, "emoji": 0.6, "click": 0.8,
-              "item_reveal": 0.7, "riser": 0.6}
+              "item_reveal": 0.7, "riser": 1.0}
 EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_oof, extra_punch, ...)
 EXTRA_VOLUME = 0.6
 BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)
@@ -53,7 +53,6 @@ EMOJI_FIT_FRAMES = 30  # kata pemicu mepet card/CTA: mulainya dimajuin sampai em
 CTA_FRAMES = {"like": 16, "subscribe": 27}
 CTA_CLICK = {"like": 4, "subscribe": 14}
 CLICK_LEAD_FRAMES = 3  # puncak bunyi mouse-click di ±0.1 detik
-NUMBER_LEAD_FRAMES = 6  # angka masuk ±0.2 detik sebelum "Number" kedengeran, biar card nggak kosong kelamaan
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
@@ -92,7 +91,7 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
                total: int, log: Callable[[str], None], beat_starts: list[int] = ()) -> tuple[list[dict], list[tuple[float, float]], set[str]]:
     """Card per beat countdown + rentang detik beat countdown (buat ngumpetin caption) + kata-kata nama subjek.
 
-    Angka muncul sedikit sebelum "Number" kedengeran (numberAt), subject card mulai pas nama subjeknya kedengeran.
+    Angka muncul bareng kartunya (numberAt 0), subject card mulai pas nama subjeknya kedengeran.
     """
     texts = beat_texts(beats)
     timings = beat_timings(texts, alignment, audio_duration_s)
@@ -108,9 +107,8 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
         spans.append((timing["start_s"], timing["end_s"]))
         number_from = to_frame(timing["start_s"])
         card_end = min(to_frame(timing["end_s"]), total)
-        first = _word_at(words, offset)
         number_word = _word_at(words, offset + countdown.number_end)
-        number_at = max(0, to_frame(words[first]["start_s"]) - number_from - NUMBER_LEAD_FRAMES) if first is not None else 0
+        number_at = 0  # angka muncul bareng kartunya (source i2xag)
         after = number_word + 1 if number_word is not None else None
         if after is not None and after < len(words) and words[after]["start_s"] < timing["end_s"]:
             card_from = to_frame(words[after]["start_s"])

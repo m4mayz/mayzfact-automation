@@ -235,7 +235,7 @@ def test_bgm_switches_at_first_number_and_riser_ends_there():
     riser = [x for x in t["sfx"] if x["src"] == "audio/sfx/riser.mp3"]
     whoosh = next(x["from"] for x in t["sfx"] if x["src"] == "audio/sfx/number.mp3")
     # riser 2 detik (bagian yang kedengeran), habis pas bunyi angka masuk
-    assert riser == [{"src": "audio/sfx/riser.mp3", "from": whoosh - 60, "volume": 0.6}]
+    assert riser == [{"src": "audio/sfx/riser.mp3", "from": whoosh - 60, "volume": 1.0}]
 
 
 def test_single_bgm_when_main_bgm_missing():
@@ -291,9 +291,9 @@ def test_voice_onset_moves_number_and_captions():
     timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, voice_envelope=env,
                               audio={"bgm": None, "sfx": {"number": "audio/sfx/w.mp3"}})
     card = timeline["countdown"][0]
-    # Angka masuk 6 frame sebelum "Number" kedengeran (frame 84), biar card nggak kosong kelamaan.
-    assert (card["numberFrom"], card["numberAt"], card["cardFrom"]) == (69, 9, 111)
-    assert timeline["sfx"] == [{"src": "audio/sfx/w.mp3", "from": 75, "volume": 0.9}]
+    # Angka langsung muncul bareng kartunya (source i2xag), nggak nunggu "Number" kedengeran
+    assert (card["numberFrom"], card["numberAt"], card["cardFrom"]) == (69, 0, 111)
+    assert timeline["sfx"] == [{"src": "audio/sfx/w.mp3", "from": 66, "volume": 0.9}]
     assert [c["from"] for c in timeline["captions"] if c["text"] == "IT"] == [162]
 
 

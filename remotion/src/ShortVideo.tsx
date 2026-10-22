@@ -8,12 +8,11 @@ import {IntroWhip} from './Intro';
 import {NumberCard} from './NumberCard';
 import {Overlays} from './Overlays';
 import {ShotView} from './ShotView';
-import {ZoomIn} from './ZoomIn';
 import {SoundLayer} from './SoundLayer';
 import {SubjectCard} from './SubjectCard';
 import type {TimelineProps} from './types';
 
-export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null, transitions = [], overlays = [], emojis = [], cta = []}) => {
+export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null, overlays = [], emojis = [], cta = []}) => {
   const {fps} = useVideoConfig();
   // Shot yang seluruh durasinya ketutup card countdown nggak dirender, biar videonya nggak tembus di belakang card.
   // Klip shot itu tetap tampil di dalam subject card.
@@ -25,13 +24,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
       {shots.filter((shot) => !coveredByCard(shot.from, shot.durationInFrames)).map((shot) => (
         // premountFor: shot dimuat 1 detik sebelum tayang, biar preview Studio nggak kedip hitam.
         <Sequence key={shot.src} from={shot.from} durationInFrames={shot.durationInFrames} premountFor={fps}>
-          {transitions.some((t) => t.from === shot.from) ? (
-            <ZoomIn durationInFrames={transitions.find((t) => t.from === shot.from)?.durationInFrames ?? 7}>
-              <ShotView shot={shot} photoZoom={photoZoom} />
-            </ZoomIn>
-          ) : (
-            <ShotView shot={shot} photoZoom={photoZoom} />
-          )}
+          <ShotView shot={shot} photoZoom={photoZoom} />
         </Sequence>
       ))}
       {countdown.map((card) => (
