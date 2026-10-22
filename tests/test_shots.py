@@ -37,10 +37,13 @@ def test_countdown_box_ends_right_after_subject_name():
     beats = [{"text": "Look at this.", "media": "video"}, {"text": "Number five, horseshoe crab.", "media": "photo"},
              {"text": "It is old.", "media": "video"}]
     texts = [b["text"] for b in beats]
-    alignment = fake_alignment(" ".join(texts), 9.0)
     full = " ".join(texts)
+    alignment = fake_alignment(full, 2.0)  # nama subjek ±0,6 detik
+    pause_from = full.index("It is")
+    for key in ("character_start_times_seconds", "character_end_times_seconds"):  # jeda 2 detik habis nama subjek
+        alignment[key] = [t + 2.0 if i >= pause_from else t for i, t in enumerate(alignment[key])]
     name_end = alignment["character_end_times_seconds"][full.index("crab.") + 4]  # kata "crab." sampai titiknya
-    slots = split_shots(beat_timings(texts, alignment, 9.0), beats, 10.0)
+    slots = split_shots(beat_timings(texts, alignment, 4.0), beats, 10.0)
     out = tighten_countdown(slots, beats, alignment)
     assert out[0] == slots[0] and out[1].start_s == slots[1].start_s
     assert out[1].end_s == out[2].start_s == round(name_end + 0.1, 3)
@@ -59,6 +62,18 @@ def test_countdown_box_keeps_a_minimum_when_name_is_short():
     slots = split_shots(beat_timings(texts, alignment, 5.0), beats, 10.0)
     out = tighten_countdown(slots, beats, alignment)
     assert out[1].end_s == out[2].start_s == round(name_start + 0.5, 3)  # box tetap minimal 0,5 detik
+
+
+def test_countdown_box_capped_when_name_is_long():
+    beats = [{"text": "Look.", "media": "video"}, {"text": "Number two, American dipper bird.", "media": "photo"},
+             {"text": "It is old.", "media": "video"}]
+    texts = [b["text"] for b in beats]
+    full = " ".join(texts)
+    alignment = fake_alignment(full, 10.0)  # nama subjek panjang & lambat (±2 detik)
+    name_start = alignment["character_start_times_seconds"][full.index("American")]
+    slots = split_shots(beat_timings(texts, alignment, 10.0), beats, 10.0)
+    out = tighten_countdown(slots, beats, alignment)
+    assert out[1].end_s == out[2].start_s == round(name_start + 0.9, 3)  # maksimal 0,9 detik (source 0,5-0,8)
 
 
 def test_countdown_box_untouched_when_already_short():
