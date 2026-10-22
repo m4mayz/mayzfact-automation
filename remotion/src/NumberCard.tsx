@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Easing, interpolate, Sequence, useCurrentFrame} from 'remotion';
 import {ANTON} from './fonts';
-import {NumberFlame} from './NumberFlame';
+import {BURST_FRAMES, NumberFlame} from './NumberFlame';
 import {Particles} from './Particles';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
@@ -9,7 +9,7 @@ const POP_FRAMES = 2;
 
 // Angka countdown chrome di background gelap berpartikel (gaya source i2xag).
 // Masuknya kayak source: angka langsung nongol (sedikit mengecil ke ukuran penuh, 2 frame) dengan ledakan api biru
-// di belakangnya (NumberFlame), barengan SFX fire whoosh. Abis itu zoom pelan.
+// di belakangnya (NumberFlame, VFX ledakan energi biru), barengan SFX fire whoosh. Abis itu zoom pelan.
 export const NumberCard: React.FC<{number: number; numberAt: number; durationInFrames: number}> = ({
   number,
   numberAt,
@@ -25,8 +25,8 @@ export const NumberCard: React.FC<{number: number; numberAt: number; durationInF
     <AbsoluteFill>
       <Particles seed={`number-${number}`} />
       {local >= 0 ? (
-        <Sequence from={numberAt} layout="none">
-          <NumberFlame id={`flame-${number}`} />
+        <Sequence from={numberAt} durationInFrames={BURST_FRAMES} layout="none">
+          <NumberFlame />
         </Sequence>
       ) : null}
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center'}}>
