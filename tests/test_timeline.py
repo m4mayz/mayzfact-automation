@@ -160,7 +160,7 @@ ITEM_SCRIPT = {"beats": [{"text": "Look at this creature."}, {"text": "Number fi
                          {"text": "It is old."}, {"text": "It is very old."}, {"text": "It is so old."}]}
 ITEM_ALIGN = fake_alignment("Look at this creature. Number five, horseshoe crab. It is old. It is very old. It is so old.", 10.0)
 ITEM_AUDIO = {"bgm": "audio/bgm/mystery.mp3", "bgm_main": "audio/bgm/main.mp3", "riser_s": 2.0,
-              "sfx": {"cut": "audio/sfx/click.mp3", "item_first": "audio/sfx/check.mp3", "item_reveal": "audio/sfx/reveal.mp3",
+              "sfx": {"cut": "audio/sfx/click.mp3", "subject": "audio/sfx/check.mp3", "item_reveal": "audio/sfx/reveal.mp3",
                       "riser": "audio/sfx/riser.mp3", "number": "audio/sfx/number.mp3", "extra_oof": "audio/sfx/oof.mp3",
                       "extra_punch": "audio/sfx/punch.mp3"}}
 
@@ -177,15 +177,16 @@ def item_timeline(audio=ITEM_AUDIO):
     return build_timeline(clips, 10.0, 0.5, script=ITEM_SCRIPT, alignment=ITEM_ALIGN, audio=audio)
 
 
-def test_item_clips_get_check_then_reveal_then_click():
+def test_item_box_checks_then_first_clip_reveals_then_clicks():
     t = item_timeline()
     starts = {s["src"]: s["from"] for s in t["shots"]}
-    at = lambda name: sorted(x["src"].split("/")[-1] for x in t["sfx"] if x["from"] == starts[name] - 3)  # noqa: E731
-    assert at("clips/cta.mp4")[0] == "click.mp3"  # setelah hook, sebelum card: klik (+acak)
-    assert at("clips/p1.jpg") == ["check.mp3"]  # klip pertama habis card
-    assert at("clips/v2.mp4") == ["reveal.mp3"]  # klip kedua: magic reveal aja
-    assert at("clips/v3.mp4")[0] == "click.mp3"  # sisanya klik (+acak)
-    assert t["transitions"] == [{"from": starts["clips/v2.mp4"], "durationInFrames": 7}]  # efek kayak awal video
+    at = lambda frame: sorted(x["src"].split("/")[-1] for x in t["sfx"] if x["from"] == frame - 3)  # noqa: E731
+    card = t["countdown"][0]
+    assert at(starts["clips/cta.mp4"])[0] == "click.mp3"  # setelah hook, sebelum card: klik (+acak)
+    assert at(card["cardFrom"]) == ["check.mp3"]  # box foto subjek muncul pas "Number five, ..."
+    assert at(starts["clips/p1.jpg"]) == ["reveal.mp3"]  # klip pertama habis card: magic reveal aja
+    assert at(starts["clips/v2.mp4"])[0] == "click.mp3" and at(starts["clips/v3.mp4"])[0] == "click.mp3"
+    assert t["transitions"] == [{"from": starts["clips/p1.jpg"], "durationInFrames": 7}]  # efek kayak awal video
     assert not any(x["src"].endswith(("check.mp3", "reveal.mp3", "click.mp3")) and x["from"] == starts["clips/card.mp4"] - 3
                    for x in t["sfx"])  # masuk card number nggak dapat bunyi transisi
 

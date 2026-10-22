@@ -23,7 +23,7 @@ CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
 SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.6, "overlay": 0.35, "emoji": 0.6, "click": 0.8,
-              "item_first": 0.7, "item_reveal": 0.7, "riser": 0.6}
+              "item_reveal": 0.7, "riser": 0.6}
 EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_oof, extra_punch, ...)
 EXTRA_VOLUME = 0.6
 BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)
@@ -178,8 +178,8 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
         add("number", card["numberFrom"] + card["numberAt"] - SFX_LEAD_FRAMES)
         add("subject", card["cardFrom"] - SFX_LEAD_FRAMES)
 
-    # Pergantian klip setelah hook (D-038): klip ke-1 habis card = check mark, ke-2 = magic reveal + efek pembuka,
-    # sisanya klik + 1 SFX tambahan acak (atau nggak ada). Seed tetap biar render ulang bunyinya sama.
+    # Pergantian klip setelah hook (D-038): klip pertama habis card = magic reveal + efek pembuka (box subjek di card
+    # bunyi "subject" = check mark), sisanya klik + 1 SFX tambahan acak (atau nggak ada). Seed tetap biar render ulang sama.
     extras = sorted(event for event in files if event.startswith(EXTRA_PREFIX))
     rng = random.Random(len(entries))
     since_card = None  # urutan klip sejak card terakhir habis
@@ -193,9 +193,7 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
         if entry["from"] < hook_end:  # di dalam hook sepi
             continue
         frame = entry["from"] - SFX_LEAD_FRAMES
-        if since_card == 1 and "item_first" in files:
-            add("item_first", frame)
-        elif since_card == 2 and "item_reveal" in files:
+        if since_card == 1 and "item_reveal" in files:
             add("item_reveal", frame)
             reveals.append({"from": entry["from"], "durationInFrames": INTRO_FRAMES})
         else:
