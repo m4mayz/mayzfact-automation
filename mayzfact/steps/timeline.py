@@ -40,6 +40,7 @@ EMOJI_FIT_FRAMES = 30  # kata pemicu mepet card/CTA: mulainya dimajuin sampai em
 CTA_FRAMES = {"like": 16, "subscribe": 27}
 CTA_CLICK = {"like": 4, "subscribe": 14}
 CLICK_LEAD_FRAMES = 3  # puncak bunyi mouse-click di ±0.1 detik
+NUMBER_LEAD_FRAMES = 6  # angka masuk ±0.2 detik sebelum "Number" kedengeran, biar card nggak kosong kelamaan
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
@@ -78,7 +79,7 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
                total: int, log: Callable[[str], None]) -> tuple[list[dict], list[tuple[float, float]], set[str]]:
     """Card per beat countdown + rentang detik beat countdown (buat ngumpetin caption) + kata-kata nama subjek.
 
-    Angka muncul pas "Number" kedengeran (numberAt), subject card mulai pas nama subjeknya kedengeran.
+    Angka muncul sedikit sebelum "Number" kedengeran (numberAt), subject card mulai pas nama subjeknya kedengeran.
     """
     texts = beat_texts(beats)
     timings = beat_timings(texts, alignment, audio_duration_s)
@@ -96,7 +97,7 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
         card_end = min(to_frame(timing["end_s"]), total)
         first = _word_at(words, offset)
         number_word = _word_at(words, offset + countdown.number_end)
-        number_at = max(0, to_frame(words[first]["start_s"]) - number_from) if first is not None else 0
+        number_at = max(0, to_frame(words[first]["start_s"]) - number_from - NUMBER_LEAD_FRAMES) if first is not None else 0
         after = number_word + 1 if number_word is not None else None
         if after is not None and after < len(words) and words[after]["start_s"] < timing["end_s"]:
             card_from = to_frame(words[after]["start_s"])
