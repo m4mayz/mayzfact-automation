@@ -54,6 +54,7 @@ EMOJI_FIT_FRAMES = 30  # kata pemicu mepet card/CTA: mulainya dimajuin sampai em
 CTA_FRAMES = {"like": 16, "subscribe": 27}
 CTA_CLICK = {"like": 4, "subscribe": 14}
 CLICK_LEAD_FRAMES = 3  # puncak bunyi mouse-click di ±0.1 detik
+NUMBER_SFX_LEAD_FRAMES = 9  # fire whoosh baru kedengeran ±0.28 detik, puncaknya pas api di kartu lagi gede
 BGM_VOLUME = 0.12
 BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
@@ -177,16 +178,15 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
                 "fadeOutFrames": BGM_SWITCH_FADE_FRAMES},
                {"src": audio["bgm_main"], "from": switch, "durationInFrames": total - switch, "volume": BGM_VOLUME,
                 "fadeOutFrames": BGM_FADE_FRAMES}]
-        if audio.get("riser_s"):  # ujung bunyi riser pas sama whoosh angka "Number" pertama
-            whoosh = countdown[0]["numberFrom"] + countdown[0]["numberAt"] - SFX_LEAD_FRAMES if countdown else switch
-            add("riser", whoosh - round(audio["riser_s"] * FPS))
+        if audio.get("riser_s"):  # ujung bunyi riser pas kartu angka pertama muncul (api + whoosh)
+            add("riser", switch - round(audio["riser_s"] * FPS))
     elif audio.get("bgm") or audio.get("bgm_main"):
         bgm = [{"src": audio.get("bgm") or audio["bgm_main"], "from": 0, "durationInFrames": total, "volume": BGM_VOLUME,
                 "fadeOutFrames": BGM_FADE_FRAMES}]
 
     add("hook", 0)
     for card in countdown:
-        add("number", card["numberFrom"] + card["numberAt"] - SFX_LEAD_FRAMES)
+        add("number", card["numberFrom"] + card["numberAt"] - NUMBER_SFX_LEAD_FRAMES)
         add("subject", card["cardFrom"] - SFX_LEAD_FRAMES)
 
     # Pergantian klip setelah hook (D-038): klip pertama habis card = magic reveal + efek pembuka (box subjek di card

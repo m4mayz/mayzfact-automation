@@ -153,7 +153,7 @@ def test_sfx_and_bgm_placement():
     # shot ke-2 ketutup card → nggak dapat "cut"; card dapat "number" + "subject"; shot ke-3 dapat "cut" 3 frame sebelum ganti.
     assert timeline["sfx"] == [
         {"src": "audio/sfx/h.mp3", "from": 0, "volume": 0.8},
-        {"src": "audio/sfx/n.mp3", "from": 66, "volume": 0.9},
+        {"src": "audio/sfx/n.mp3", "from": 60, "volume": 0.9},
         {"src": "audio/sfx/s.mp3", "from": 105, "volume": 0.7},
         {"src": "audio/sfx/c.mp3", "from": 153, "volume": 0.6},
     ]
@@ -261,9 +261,8 @@ def test_bgm_switches_at_first_number_and_riser_ends_there():
          "volume": 0.12, "fadeOutFrames": 30},
     ]
     riser = [x for x in t["sfx"] if x["src"] == "audio/sfx/riser.mp3"]
-    whoosh = next(x["from"] for x in t["sfx"] if x["src"] == "audio/sfx/number.mp3")
-    # riser 2 detik (bagian yang kedengeran), habis pas bunyi angka masuk
-    assert riser == [{"src": "audio/sfx/riser.mp3", "from": whoosh - 60, "volume": 1.0}]
+    # riser 2 detik (bagian yang kedengeran), habis pas kartu angka pertama muncul
+    assert riser == [{"src": "audio/sfx/riser.mp3", "from": switch - 60, "volume": 1.0}]
 
 
 def test_single_bgm_when_main_bgm_missing():
@@ -321,7 +320,8 @@ def test_voice_onset_moves_number_and_captions():
     card = timeline["countdown"][0]
     # Angka langsung muncul bareng kartunya (source i2xag), nggak nunggu "Number" kedengeran
     assert (card["numberFrom"], card["numberAt"], card["cardFrom"]) == (69, 0, 111)
-    assert timeline["sfx"] == [{"src": "audio/sfx/w.mp3", "from": 66, "volume": 0.9}]
+    # whoosh api: bunyinya baru kedengeran ±9 frame, jadi dimulai 9 frame sebelum kartu
+    assert timeline["sfx"] == [{"src": "audio/sfx/w.mp3", "from": 60, "volume": 0.9}]
     assert [c["from"] for c in timeline["captions"] if c["text"] == "IT"] == [162]
 
 
