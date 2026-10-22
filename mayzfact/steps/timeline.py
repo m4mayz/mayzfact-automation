@@ -157,13 +157,15 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
     for card in countdown:
         add("number", card["numberFrom"] + card["numberAt"] - SFX_LEAD_FRAMES)
         add("subject", card["cardFrom"] - SFX_LEAD_FRAMES)
-    # Bunyi transisi cuma setelah hook, acak antara "cut" dan "cut_alt" (kalau ada). Seed tetap biar render ulang sama.
-    choices = [event for event in ("cut", "cut_alt") if event in files]
+    # Pergantian klip setelah hook: klik selalu, "cut_alt" ikut secara acak. Seed tetap biar render ulang sama.
     rng = random.Random(len(entries))
     for entry in entries[1:]:
         covered = any(c["numberFrom"] <= entry["from"] < c["cardFrom"] + c["cardDuration"] for c in countdown)
-        if choices and entry["from"] >= hook_end and not covered:  # pergantian ke card udah punya bunyi sendiri
-            add(rng.choice(choices), entry["from"] - SFX_LEAD_FRAMES)
+        if entry["from"] < hook_end or covered:  # di dalam hook sepi; masuk card udah punya bunyi sendiri
+            continue
+        add("cut", entry["from"] - SFX_LEAD_FRAMES)
+        if rng.random() < 0.5:
+            add("cut_alt", entry["from"] - SFX_LEAD_FRAMES)
     for overlay in overlays:
         add("overlay", overlay["from"])
     for emoji in emojis:

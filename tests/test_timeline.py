@@ -155,12 +155,15 @@ def test_transition_sfx_only_after_hook():
     assert [(s["from"], s["src"]) for s in timeline["sfx"]] == [(57, "audio/sfx/click.mp3"), (87, "audio/sfx/click.mp3")]
 
 
-def test_transition_sfx_picks_between_click_and_alt_the_same_way_each_time():
+def test_transition_always_clicks_and_randomly_adds_alt():
     clips = {"shots": [shot(f"clips/s{i}.mp4", "video", float(i), 1080, 1920) for i in range(12)]}
     audio = {"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3", "cut_alt": "audio/sfx/alt.mp3"}}
-    first = build_timeline(clips, 12.0, 0.5, audio=audio)["sfx"]
-    assert {s["src"] for s in first} == {"audio/sfx/click.mp3", "audio/sfx/alt.mp3"} and len(first) == 11
-    assert build_timeline(clips, 12.0, 0.5, audio=audio)["sfx"] == first  # render ulang nggak ganti bunyi
+    sfx = build_timeline(clips, 12.0, 0.5, audio=audio)["sfx"]
+    clicks = [s["from"] for s in sfx if s["src"] == "audio/sfx/click.mp3"]
+    alts = [s["from"] for s in sfx if s["src"] == "audio/sfx/alt.mp3"]
+    assert len(clicks) == 11  # klik selalu ada di tiap pergantian klip
+    assert 0 < len(alts) < 11 and set(alts) <= set(clicks)  # SFX kedua acak: kadang ikut, kadang nggak
+    assert build_timeline(clips, 12.0, 0.5, audio=audio)["sfx"] == sfx  # render ulang nggak ganti bunyi
 
 
 def test_intro_transition_goes_with_hook_sfx():
