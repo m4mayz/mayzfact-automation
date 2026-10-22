@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Easing, interpolate, Sequence, useCurrentFrame} from 'remotion';
 import {ANTON} from './fonts';
-import {BURST_FRAMES, FireBurst} from './FireBurst';
+import {FIRE_WHITE_AT, FireBurst} from './FireBurst';
 import {Particles} from './Particles';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
@@ -9,7 +9,8 @@ const POP_FRAMES = 2;
 
 // Angka countdown chrome di background gelap berpartikel (gaya source i2xag).
 // Masuknya kayak source: angka langsung nongol (sedikit mengecil ke ukuran penuh, 2 frame) dengan ledakan api biru
-// numpuk di atasnya (FireBurst, VFX ledakan api biru), barengan SFX fire whoosh. Abis itu zoom pelan.
+// numpuk di atasnya (FireBurst, VFX ledakan api biru), barengan SFX fire whoosh. Abis itu zoom
+// pelan. Apinya jalan terus sampai kartu box foto masuk.
 export const NumberCard: React.FC<{number: number; numberAt: number; durationInFrames: number}> = ({
   number,
   numberAt,
@@ -44,8 +45,8 @@ export const NumberCard: React.FC<{number: number; numberAt: number; durationInF
         </div>
       </AbsoluteFill>
       {local >= 0 ? (
-        <Sequence from={numberAt} durationInFrames={BURST_FRAMES} layout="none">
-          <FireBurst />
+        <Sequence from={numberAt} durationInFrames={durationInFrames - numberAt} layout="none">
+          <FireBurst durationInFrames={durationInFrames - numberAt} endAt={FIRE_WHITE_AT} fadeOut />
         </Sequence>
       ) : null}
     </AbsoluteFill>

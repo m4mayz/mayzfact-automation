@@ -1,7 +1,7 @@
 import React from 'react';
 import {Video} from '@remotion/media';
 import {AbsoluteFill, Easing, Img, interpolate, Sequence, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
-import {BURST_FRAMES, FireBurst} from './FireBurst';
+import {FIRE_RING_AT, FireBurst} from './FireBurst';
 import {ANTON} from './fonts';
 import {Particles} from './Particles';
 import {TextBlurs} from './TextBlurs';
@@ -16,8 +16,8 @@ const BLUR_ID = 'subject-exit-blur';
 const ENTER_FRAMES = 3;
 const EXIT_FRAMES = 4;
 
-// Klip subjek di dalam frame menyala + label nama (gaya STURGEON di source i2xag). Api biru meledak di belakang box
-// pas masuk, sama kayak kartu angka.
+// Klip subjek di dalam frame menyala + label nama (gaya STURGEON di source i2xag). Api biru di belakang box nyambung dari
+// kartu angka: mulai dari tengah klip (cincin api udah di sekitar box), tanpa pudar.
 export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -47,8 +47,8 @@ export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
         </filter>
       </svg>
       <Particles seed={`subject-${card.number}`} />
-      <Sequence durationInFrames={BURST_FRAMES} layout="none">
-        <FireBurst />
+      <Sequence durationInFrames={card.cardDuration} layout="none">
+        <FireBurst durationInFrames={card.cardDuration} startAt={FIRE_RING_AT} />
       </Sequence>
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 56}}>
         <div
