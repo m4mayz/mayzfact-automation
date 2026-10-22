@@ -1,5 +1,6 @@
 import React from 'react';
-import {AbsoluteFill, Easing, Img, interpolate, OffthreadVideo, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {Video} from '@remotion/media';
+import {AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {ANTON} from './fonts';
 import {Particles} from './Particles';
 import {TextBlurs} from './TextBlurs';
@@ -64,7 +65,7 @@ export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
           }}
         >
           {card.kind === 'video' ? (
-            <OffthreadVideo src={src} muted trimBefore={card.clipOffset} style={media} />
+            <Video src={src} muted trimBefore={card.clipOffset} objectFit="cover" style={{width: '100%', height: '100%'}} />
           ) : (
             <Img src={src} style={media} />
           )}

@@ -1,5 +1,6 @@
 import React from 'react';
-import {AbsoluteFill, Img, interpolate, OffthreadVideo, staticFile, useCurrentFrame} from 'remotion';
+import {Video} from '@remotion/media';
+import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import {TextBlurs} from './TextBlurs';
 import type {Shot} from './types';
 
@@ -8,7 +9,8 @@ const cover: React.CSSProperties = {width: '100%', height: '100%', objectFit: 'c
 const Media: React.FC<{shot: Shot; style?: React.CSSProperties}> = ({shot, style}) => {
   const src = staticFile(shot.src);
   return shot.kind === 'video' ? (
-    <OffthreadVideo src={src} muted style={{...cover, ...style}} />
+    // Video dari @remotion/media (rekomendasi Remotion, lebih ringan dari OffthreadVideo); object-fit lewat prop, bukan CSS
+    <Video src={src} muted objectFit="cover" style={{width: '100%', height: '100%', ...style}} />
   ) : (
     <Img src={src} style={{...cover, ...style}} />
   );
