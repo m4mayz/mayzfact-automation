@@ -104,6 +104,7 @@ export type TimelineProps = {
   sfx?: Sfx[];
   intro?: Intro | null;
   transitions?: Transition[];
+  flashes?: Transition[];
   overlays?: Overlay[];
   emojis?: EmojiOverlay[];
   cta?: CtaAction[];

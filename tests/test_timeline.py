@@ -167,6 +167,19 @@ def test_cut_sfx_on_plain_shots_and_missing_audio():
     assert plain["bgm"] == [] and plain["sfx"] == []
 
 
+def test_hook_clip_changes_get_camera_flash_and_white_flash():
+    clips = {"shots": [{**shot("clips/h1.mp4", "video", 0.0, 1080, 1920), "hook_segment": 0},
+                       {**shot("clips/h2.mp4", "video", 1.0, 1080, 1920), "hook_segment": 1},
+                       {**shot("clips/h3.mp4", "video", 2.0, 1080, 1920), "hook_segment": 2},
+                       shot("clips/a.mp4", "video", 3.0, 1080, 1920)]}
+    audio = {"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3", "hook_cut": "audio/sfx/flash.mp3"}}
+    t = build_timeline(clips, 4.0, 0.5, audio=audio)
+    # di dalam hook (frame 30, 60): camera flash + flash putih; masuk isi (90): klik kayak biasa
+    assert [(x["from"], x["src"]) for x in t["sfx"]] == [(27, "audio/sfx/flash.mp3"), (57, "audio/sfx/flash.mp3"),
+                                                          (87, "audio/sfx/click.mp3")]
+    assert t["flashes"] == [{"from": 30, "durationInFrames": 6}, {"from": 60, "durationInFrames": 6}]
+
+
 def test_transition_sfx_only_after_hook():
     clips = {"shots": [{**shot("clips/h1.mp4", "video", 0.0, 1080, 1920), "hook_segment": 0},
                        {**shot("clips/h2.mp4", "video", 1.0, 1080, 1920), "hook_segment": 1},

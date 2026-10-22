@@ -31,7 +31,8 @@ CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
 SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.6, "overlay": 0.35, "emoji": 0.6, "click": 0.8,
-              "item_reveal": 0.7, "riser": 1.0}
+              "item_reveal": 0.7, "riser": 1.0, "hook_cut": 0.8}
+FLASH_FRAMES = 6  # flash putih di pergantian klip hook (barengan camera flash)
 EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_oof, extra_punch, ...)
 EXTRA_VOLUME = 0.6
 BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)
@@ -153,13 +154,15 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
 
 
 def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overlays: list[dict],
-           emojis: list[dict], cta: list[dict], hook_end: int, total: int) -> tuple[list[dict], list[dict], list[dict]]:
-    """BGM (hook + utama), SFX, dan frame transisi magic reveal (efeknya sama kayak pembuka video)."""
+           emojis: list[dict], cta: list[dict], hook_end: int, total: int
+           ) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
+    """BGM (hook + utama), SFX, frame transisi magic reveal, dan flash putih di pergantian klip hook."""
     if not audio:
-        return [], [], []
+        return [], [], [], []
     files = audio.get("sfx", {})
     sfx: list[dict] = []
     reveals: list[dict] = []
+    flashes: list[dict] = []
 
     def add(event: str, frame: int) -> None:
         if event in files:
@@ -198,7 +201,10 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
             continue
         if since_card is not None:
             since_card += 1
-        if entry["from"] < hook_end:  # di dalam hook sepi
+        if entry["from"] < hook_end:  # di dalam hook: camera flash + flash putih
+            if "hook_cut" in files:
+                add("hook_cut", entry["from"] - SFX_LEAD_FRAMES)
+                flashes.append({"from": entry["from"], "durationInFrames": FLASH_FRAMES})
             continue
         frame = entry["from"] - SFX_LEAD_FRAMES
         if since_card == 1 and "item_reveal" in files:
@@ -216,7 +222,7 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
     for action in cta:
         add("click", action["from"] + action["clickAt"] - CLICK_LEAD_FRAMES)
     sfx.sort(key=lambda s: s["from"])
-    return bgm, sfx, reveals
+    return bgm, sfx, reveals, flashes
 
 
 SUBJECT_BOX = 820  # ukuran box klip di SubjectCard.tsx
@@ -410,7 +416,7 @@ def build_timeline(
     shown = _overlays(overlays, entries, countdown, _point_ranges(timings, marks))
     hook_end = max((e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None),
                    default=0)
-    bgm, sfx, reveals = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total)
+    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total)
     return {
         "fps": FPS,
         "width": FRAME_W,
@@ -428,6 +434,7 @@ def build_timeline(
         "sfx": sfx,
         "intro": {"durationInFrames": INTRO_FRAMES} if audio and "hook" in audio.get("sfx", {}) else None,
         "transitions": reveals,
+        "flashes": flashes,
     }
 
 
