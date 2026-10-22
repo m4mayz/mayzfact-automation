@@ -4,7 +4,6 @@ import {Audio} from '@remotion/media';
 import {Captions} from './Captions';
 import {Cta} from './Cta';
 import {Emojis} from './Emojis';
-import {Flashes} from './Flashes';
 import {IntroWhip} from './Intro';
 import {NumberCard} from './NumberCard';
 import {Overlays} from './Overlays';
@@ -21,7 +20,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
     countdown.some((card) => card.numberFrom <= from && from + duration <= card.cardFrom + card.cardDuration);
   return (
     <AbsoluteFill style={{backgroundColor: 'black'}}>
-      <IntroWhip intro={intro}>
+      <IntroWhip intro={intro} cuts={flashes}>
       {shots.filter((shot) => !coveredByCard(shot.from, shot.durationInFrames)).map((shot) => (
         // premountFor: shot dimuat 1 detik sebelum tayang, biar preview Studio nggak kedip hitam.
         <Sequence key={shot.src} from={shot.from} durationInFrames={shot.durationInFrames} premountFor={fps}>
@@ -40,7 +39,6 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
         </React.Fragment>
       ))}
       </IntroWhip>
-      <Flashes flashes={flashes} />
       <Overlays overlays={overlays} />
       <Emojis emojis={emojis} />
       <Captions captions={captions} />
