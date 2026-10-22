@@ -5,6 +5,7 @@ export type Shot = {
   from: number;
   durationInFrames: number;
   fgHeight?: number;
+  blurs?: BlurBox[]; // kotak blur teks, piksel layar
 };
 
 export type Caption = {
@@ -25,6 +26,7 @@ export type CountdownCard = {
   src: string;
   kind: 'video' | 'photo';
   clipOffset: number;
+  blurs?: BlurBox[]; // kotak blur teks, piksel di box 820x820
 };
 
 export type Sfx = {
@@ -39,6 +41,13 @@ export type Bgm = {
   fadeOutFrames: number;
   from?: number; // segmen BGM (hook / utama); tanpa from = satu BGM sepanjang video (timeline lama)
   durationInFrames?: number;
+};
+
+export type BlurBox = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 };
 
 export type Transition = {

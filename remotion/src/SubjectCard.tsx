@@ -2,6 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Easing, Img, interpolate, OffthreadVideo, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {ANTON} from './fonts';
 import {Particles} from './Particles';
+import {TextBlurs} from './TextBlurs';
 import type {CountdownCard} from './types';
 
 const BOX = 820;
@@ -32,6 +33,7 @@ export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
             width: BOX,
             height: BOX,
             transform: `scale(${scale})`,
+            position: 'relative',
             border: '12px solid #ffb02e',
             borderRadius: 10,
             overflow: 'hidden',
@@ -48,6 +50,7 @@ export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
           ) : (
             <Img src={src} style={media} />
           )}
+          <TextBlurs boxes={card.blurs} />
         </div>
         <div
           style={{

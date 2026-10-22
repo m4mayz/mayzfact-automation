@@ -11,7 +11,15 @@ from mayzfact.countdown import parse_countdown
 from mayzfact.cta import _EDGE_PUNCT, SUBSCRIBE, is_like_cta
 from mayzfact.cta import clean as _clean
 from mayzfact.errors import PipelineError
-from mayzfact.media import FRAME_H, FRAME_W, PHOTO_ZOOM, fg_height, layout_for
+from mayzfact.media import (
+    FRAME_H,
+    FRAME_W,
+    PHOTO_ZOOM,
+    cover_box,
+    fg_height,
+    layout_for,
+    screen_box,
+)
 from mayzfact.store import RunPaths, write_json_atomic
 from mayzfact.text import beat_texts
 from mayzfact.timing import beat_offsets, beat_timings, word_timings
@@ -213,6 +221,24 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
     return bgm, sfx, reveals
 
 
+SUBJECT_BOX = 820  # ukuran box klip di SubjectCard.tsx
+
+
+def _add_blurs(blurs: dict, shots: list[dict], entries: list[dict], countdown: list[dict], fg_min_ratio: float) -> None:
+    """Kotak blur teks (0..1 per klip) → piksel layar di tiap shot, dan piksel box di card yang nampilin klip itu."""
+    size = {s["file"].replace("\\", "/"): (s["width"], s["height"]) for s in shots}
+    found = {k.replace("\\", "/"): v for k, v in blurs.items()}
+    for entry in entries:
+        if entry["src"] in found:
+            w, h = size[entry["src"]]
+            entry["blurs"] = [dict(zip(("x", "y", "w", "h"), screen_box(tuple(b), w, h, fg_min_ratio=fg_min_ratio)))
+                              for b in found[entry["src"]]]
+    for card in countdown:
+        if card["src"] in found:
+            w, h = size[card["src"]]
+            card["blurs"] = [cover_box(tuple(b), w, h, SUBJECT_BOX, SUBJECT_BOX) for b in found[card["src"]]]
+
+
 def _point_ranges(timings: list[dict], marks: dict | None) -> list[tuple[int, int]] | None:
     """Rentang frame beat point (beat point yang nyambung digabung). None = nggak ada info tanda → semua shot."""
     if marks is None or not timings:
@@ -350,6 +376,7 @@ def build_timeline(
     overlays: dict | None = None,
     marks: dict | None = None,
     voice_envelope: Any = None,
+    blurs: dict | None = None,
     log: Callable[[str], None] = print,
 ) -> dict:
     shots = clips["shots"]
@@ -381,6 +408,7 @@ def build_timeline(
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
             log(f"[timeline] caption & countdown dilewat: {reason}")
             countdown, captions, emojis, cta, timings = [], [], [], [], []
+    _add_blurs(blurs or {}, shots, entries, countdown, fg_min_ratio)
     shown = _overlays(overlays, entries, countdown, _point_ranges(timings, marks))
     hook_end = max((e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None),
                    default=0)
@@ -407,7 +435,7 @@ def build_timeline(
 
 def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float, script: dict | None = None,
                  audio: dict | None = None, overlays: dict | None = None, marks: dict | None = None,
-                 log: Callable[[str], None] = print) -> dict:
+                 blurs: dict | None = None, log: Callable[[str], None] = print) -> dict:
     envelope = None
     if paths.voice_mp3.exists():
         from mayzfact.voice_onset import voice_envelope
@@ -417,6 +445,6 @@ def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float
         except Exception as exc:  # cuma buat ngepasin timing caption/card; tanpa ini tetap jalan pakai alignment
             log(f"[timeline] energi suara gagal dibaca, timing pakai alignment: {exc}")
     data = build_timeline(clips, tts["duration_s"], fg_min_ratio, script=script, alignment=tts.get("alignment"),
-                          audio=audio, overlays=overlays, marks=marks, voice_envelope=envelope, log=log)
+                          audio=audio, overlays=overlays, marks=marks, voice_envelope=envelope, blurs=blurs, log=log)
     write_json_atomic(paths.timeline_json, data)
     return data

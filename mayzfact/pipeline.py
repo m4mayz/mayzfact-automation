@@ -97,6 +97,7 @@ class Deps:
     audio: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # None = video tanpa BGM/SFX
     overlay: Callable[..., dict] | None = None  # (paths, log, point_beats) → deteksi subjek; None = tanpa panah/lingkaran
     marks: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # tanda beat: point + emoji (Fase 3C-2)
+    textblur: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # kotak blur teks di klip (D-038)
     download_source: Callable[[str, Path], Path] | None = None  # download source.mp4 di step source; None = lewat
 
 
@@ -153,6 +154,14 @@ def real_deps(settings: Settings) -> Deps:
 
     detectors: dict[str, object] = {}
 
+    text_detectors: dict[str, object] = {}
+
+    def textblur(paths: RunPaths, log: Callable[[str], None]) -> dict:
+        from mayzfact.textblur import RapidTextDetector, prepare_text_blurs
+
+        detector = text_detectors.setdefault("rapid", RapidTextDetector())
+        return prepare_text_blurs(paths, read_json(paths.clips_json), detector, log=log)
+
     def overlay(paths: RunPaths, log: Callable[[str], None], point_beats: set[int] | None = None) -> dict:
         from mayzfact.detect import Owlv2Detector
         from mayzfact.overlay import prepare_overlays
@@ -190,6 +199,7 @@ def real_deps(settings: Settings) -> Deps:
         fetch=fetch,
         audio=audio,
         overlay=overlay,
+        textblur=textblur,
         marks=marks,
         close=close,
     )
@@ -287,7 +297,13 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
                 overlays = deps.overlay(paths, log, point_beats)
             except Exception as exc:  # panah/lingkaran cuma hiasan
                 log(f"[timeline] panah/lingkaran dilewat: {type(exc).__name__}: {exc}")
+        blurs = None
+        if deps.textblur:
+            try:
+                blurs = deps.textblur(paths, log)
+            except Exception as exc:  # blur teks cuma hiasan
+                log(f"[timeline] blur teks dilewat: {type(exc).__name__}: {exc}")
         run_timeline(paths, read_json(paths.clips_json), read_json(paths.tts_json), fg_min_ratio=settings.fg_min_height_ratio,
-                     script=read_json(paths.script_json), audio=audio, overlays=overlays, marks=marks, log=log)
+                     script=read_json(paths.script_json), audio=audio, overlays=overlays, marks=marks, blurs=blurs, log=log)
     elif step == "render":
         deps.render(paths)

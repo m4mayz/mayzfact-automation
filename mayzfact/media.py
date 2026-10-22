@@ -40,3 +40,28 @@ def zoom_for(kind: str) -> float:
 def downscale_factor(width: int, height: int, fg_min_ratio: float, zoom: float = 1.0) -> float:
     """Faktor resize buat normalisasi. Cuma ngecilin, nggak pernah ngegedein."""
     return min(1.0, needed_scale(width, height, fg_min_ratio, zoom))
+
+
+def screen_box(box: tuple[float, float, float, float], width: int, height: int, *, fg_min_ratio: float) -> tuple[int, int, int, int]:
+    """Kotak (0..1 di frame klip) → (x, y, w, h) piksel di layar 1080x1920, ngikutin layout full/blur."""
+    if layout_for(width, height) == "full":
+        area_y, area_h = 0, FRAME_H
+    else:
+        area_h = fg_height(width, height, fg_min_ratio)
+        area_y = (FRAME_H - area_h) // 2
+    scale = max(FRAME_W / width, area_h / height)  # objectFit cover
+    off_x = (FRAME_W - width * scale) / 2
+    off_y = area_y + (area_h - height * scale) / 2
+    x0, y0, x1, y1 = box
+    return (round(off_x + x0 * width * scale), round(off_y + y0 * height * scale),
+            round((x1 - x0) * width * scale), round((y1 - y0) * height * scale))
+
+
+def cover_box(box: tuple[float, float, float, float], width: int, height: int, area_w: float, area_h: float) -> dict:
+    """Kotak (0..1 di klip) → piksel di area area_w x area_h yang nampilin klip pakai object-fit cover."""
+    scale = max(area_w / width, area_h / height)
+    off_x = (area_w - width * scale) / 2
+    off_y = (area_h - height * scale) / 2
+    x0, y0, x1, y1 = box
+    return {"x": round(off_x + x0 * width * scale), "y": round(off_y + y0 * height * scale),
+            "w": round((x1 - x0) * width * scale), "h": round((y1 - y0) * height * scale)}

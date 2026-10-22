@@ -12,6 +12,7 @@ dependencies = [
   "pillow>=11",
   "pydantic>=2.9",
   "python-dotenv>=1.0",
+  "rapidocr-onnxruntime>=1.4",
   "torch>=2.9",
   "transformers>=4.40",
   "youtube-transcript-api>=1.2",

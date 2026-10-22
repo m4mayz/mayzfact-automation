@@ -77,6 +77,19 @@ def test_card_ends_where_next_clip_starts_when_plan_shortened_the_box():
     assert card["cardFrom"] + card["cardDuration"] == 135  # 4,5 detik, bukan ujung beat (156)
 
 
+def test_text_blurs_follow_layout_on_shots_and_cards():
+    from mayzfact.overlay import screen_box
+
+    blurs = {"clips/shot_01.mp4": [(0.4, 0.9, 0.6, 0.95)], "clips/shot_02.mp4": [(0.1, 0.1, 0.3, 0.2)]}
+    timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, blurs=blurs)
+    x, y, w, h = screen_box((0.4, 0.9, 0.6, 0.95), 1080, 1920, fg_min_ratio=0.5)
+    assert timeline["shots"][0]["blurs"] == [{"x": x, "y": y, "w": w, "h": h}]
+    assert "blurs" not in timeline["shots"][2]
+    # card nampilin klip shot_02 di box 820x820 (object-fit cover): kotaknya ikut skala box
+    assert timeline["countdown"][0]["blurs"] == [{"x": 82, "y": round(820 * (1920 / 1080) * 0.1 - (820 * 1920 / 1080 - 820) / 2),
+                                                  "w": 164, "h": round(820 * 1920 / 1080 * 0.1)}]
+
+
 def test_captions_one_word_each_outside_countdown():
     captions = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN)["captions"]
     assert [(c["text"], c["from"], c["durationInFrames"]) for c in captions] == [

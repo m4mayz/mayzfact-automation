@@ -1,5 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, Img, interpolate, OffthreadVideo, staticFile, useCurrentFrame} from 'remotion';
+import {TextBlurs} from './TextBlurs';
 import type {Shot} from './types';
 
 const cover: React.CSSProperties = {width: '100%', height: '100%', objectFit: 'cover'};
@@ -28,6 +29,7 @@ export const ShotView: React.FC<{shot: Shot; photoZoom: number}> = ({shot, photo
     return (
       <AbsoluteFill style={{overflow: 'hidden'}}>
         <Media shot={shot} style={zoomStyle} />
+        <TextBlurs boxes={shot.blurs} style={zoomStyle} />
       </AbsoluteFill>
     );
   }
@@ -43,6 +45,8 @@ export const ShotView: React.FC<{shot: Shot; photoZoom: number}> = ({shot, photo
           <Media shot={shot} style={zoomStyle} />
         </div>
       </AbsoluteFill>
+      {/* kotak blur pakai koordinat layar penuh; zoom foto di tengah layar, jadi skalanya sama */}
+      <TextBlurs boxes={shot.blurs} style={zoomStyle} />
     </AbsoluteFill>
   );
 };

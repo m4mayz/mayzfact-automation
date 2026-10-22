@@ -7,7 +7,7 @@ from typing import Any, Callable
 
 from mayzfact.countdown import parse_countdown
 from mayzfact.ffmpeg import extract_frame
-from mayzfact.media import FRAME_H, FRAME_W, fg_height, layout_for
+from mayzfact.media import screen_box  # noqa: F401  (dipakai test + modul lain lewat overlay)
 from mayzfact.shots import beat_subjects
 from mayzfact.steps.timeline import (
     FPS,
@@ -23,21 +23,6 @@ SAMPLE_EVERY_S = 1.0
 DETECT_WIDTH = 960
 # Shot lebih pendek dari ini pasti nggak dapat overlay di timeline, jadi nggak usah dideteksi (±3.8 detik/frame).
 MIN_SHOT_S = (OVERLAY_DELAY_FRAMES + OVERLAY_END_GAP_FRAMES + OVERLAY_MIN_FRAMES) / FPS
-
-
-def screen_box(box: tuple[float, float, float, float], width: int, height: int, *, fg_min_ratio: float) -> tuple[int, int, int, int]:
-    """Kotak (0..1 di frame klip) → (x, y, w, h) piksel di layar 1080x1920, ngikutin layout full/blur."""
-    if layout_for(width, height) == "full":
-        area_y, area_h = 0, FRAME_H
-    else:
-        area_h = fg_height(width, height, fg_min_ratio)
-        area_y = (FRAME_H - area_h) // 2
-    scale = max(FRAME_W / width, area_h / height)  # objectFit cover
-    off_x = (FRAME_W - width * scale) / 2
-    off_y = area_y + (area_h - height * scale) / 2
-    x0, y0, x1, y1 = box
-    return (round(off_x + x0 * width * scale), round(off_y + y0 * height * scale),
-            round((x1 - x0) * width * scale), round((y1 - y0) * height * scale))
 
 
 def fill_points(points: list[dict | None]) -> list[dict] | None:

@@ -462,3 +462,18 @@ def test_real_deps_passes_stability_to_elevenlabs():
     from mayzfact.pipeline import real_deps
 
     assert real_deps(Settings(**KEYS, elevenlabs_stability=0.5)).tts().stability == 0.5
+
+
+def test_timeline_step_uses_text_blurs_and_survives_errors(world):
+    paths = start(world, no_render=True)
+    first = read_json(paths.timeline_json)["shots"][0]["src"]
+    world.deps.textblur = lambda p, log: {first: [(0.4, 0.9, 0.6, 0.95)]}
+    paths = run(world, from_step="timeline", no_render=True)
+    assert read_json(paths.timeline_json)["shots"][0]["blurs"]
+
+    def broken(p, log):
+        raise RuntimeError("ocr rusak")
+
+    world.deps.textblur = broken
+    paths = run(world, from_step="timeline", no_render=True)
+    assert "blurs" not in read_json(paths.timeline_json)["shots"][0]
