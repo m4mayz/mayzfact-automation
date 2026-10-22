@@ -25,8 +25,8 @@ export const SubjectCard: React.FC<{card: CountdownCard}> = ({card}) => {
   const exiting = e >= 0;
   const exitScale = exiting ? interpolate(e, [0, EXIT_FRAMES - 1], [1.04, 1.14], clamp) : 1;
   const squeezeX = exiting ? interpolate(e, [EXIT_FRAMES - 2, EXIT_FRAMES - 1], [1, 0.85], clamp) : 1;
-  const brightness = exiting ? interpolate(e, [0, EXIT_FRAMES - 2, EXIT_FRAMES - 1], [1.6, 2.4, 1.7], clamp) : 1;
-  const blurY = exiting ? interpolate(e, [0, EXIT_FRAMES - 1], [10, 34], clamp) : 0;
+  const brightness = exiting ? interpolate(e, [0, EXIT_FRAMES - 2, EXIT_FRAMES - 1], [2.2, 3.4, 2.4], clamp) : 1;
+  const blurY = exiting ? interpolate(e, [0, EXIT_FRAMES - 1], [14, 40], clamp) : 0;
   const boxFilter = [
     enterBlur > 0.1 ? `blur(${enterBlur}px)` : '',
     blurY > 0.1 ? `url(#${BLUR_ID})` : '',
