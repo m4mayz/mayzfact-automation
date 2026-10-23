@@ -144,3 +144,23 @@ def test_riser_length_ignores_trailing_silence(tmp_path):
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
                     "-af", "apad=pad_dur=1", "-c:a", "libmp3lame", str(path)], check=True)
     assert abs(audible_length(path) - 1.0) < 0.1  # file 2 detik, yang kedengeran cuma 1 detik
+
+
+def test_custom_sfx_copied_with_onset(tmp_path, sine_mp3):
+    """SFX kustom dari brief ikut di-copy ke run; nama aneh / file yang nggak ada dilewat (cuma hiasan)."""
+    bgm_dir, sfx_dir = tmp_path / "bgm", tmp_path / "sfx"
+    bgm_dir.mkdir()
+    sfx_dir.mkdir()
+    (sfx_dir / "sfx.json").write_text("{}", encoding="utf-8")
+    (sfx_dir / "uy.mp3").write_bytes(sine_mp3.read_bytes())
+    (tmp_path / "x.mp3").write_bytes(sine_mp3.read_bytes())
+    client, _ = serving({})
+    paths = RunPaths(tmp_path / "run")
+    logs = []
+    custom = [{"file": "uy.mp3", "at_s": 1.0}, {"file": "hilang.mp3", "at_s": 2.0}, {"file": "../x.mp3", "at_s": 0.5}]
+    out = prepare_audio(paths, {"beats": []}, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, log=logs.append,
+                        custom=custom)
+    assert [(c["src"], c["at_s"]) for c in out["custom"]] == [("audio/sfx/uy.mp3", 1.0)]
+    assert out["custom"][0]["onset"] < 0.06
+    assert (paths.root / "audio/sfx/uy.mp3").exists() and not (paths.root / "audio/x.mp3").exists()
+    assert any("hilang.mp3" in line for line in logs) and any("../x.mp3" in line for line in logs)

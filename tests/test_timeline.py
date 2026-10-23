@@ -496,3 +496,12 @@ def test_overlays_only_inside_point_beats():
     long = timeline["overlays"][0]
     assert (long["from"], long["durationInFrames"]) == (162, 18)
     assert long["keyframes"][0]["frame"] == 15 - 162 and long["keyframes"][1]["frame"] == 180 - 162
+
+
+def test_custom_sfx_from_brief_play_at_their_second():
+    clips = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920), shot("clips/b.mp4", "video", 2.0, 1080, 1920)]}
+    audio = {"bgm": None, "sfx": {}, "custom": [{"src": "audio/sfx/uy.mp3", "at_s": 1.0, "onset": 0.1},
+                                                {"src": "audio/sfx/gasp.mp3", "at_s": 0.0, "onset": 0.2}]}
+    sfx = build_timeline(clips, 4.0, 0.5, audio=audio)["sfx"]
+    # bunyinya kedengeran pas di detik yang dipilih: mulai lebih awal sebesar hening di depan file
+    assert sfx == [{"src": "audio/sfx/gasp.mp3", "from": 0, "volume": 0.5}, {"src": "audio/sfx/uy.mp3", "from": 27, "volume": 0.5}]

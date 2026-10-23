@@ -146,11 +146,18 @@ def real_deps(settings: Settings) -> Deps:
 
     def audio(paths: RunPaths, log: Callable[[str], None]) -> dict:
         from mayzfact.audio import BGM_DIR, SFX_DIR, prepare_audio
+        from mayzfact.manual.links import custom_sfx_events, load_links
 
         # Client sendiri yang cepat nyerah: myinstants lambat jangan sampai nahan step timeline.
         client = httpx.Client(timeout=httpx.Timeout(10.0, connect=5.0), headers={"User-Agent": "mayzfact-automation/0.1"})
         closers.append(client.close)
-        return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=client, log=log)
+        custom: list[dict] = []
+        try:  # SFX kustom per shot dari brief (links.json); cuma hiasan
+            custom = custom_sfx_events(read_json(paths.shots_plan_json), load_links(paths.links_json))
+        except Exception as exc:
+            log(f"[timeline] SFX kustom dilewat: {type(exc).__name__}: {exc}")
+        return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=client, log=log,
+                             custom=custom)
 
     detectors: dict[str, object] = {}
 

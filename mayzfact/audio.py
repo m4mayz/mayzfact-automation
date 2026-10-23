@@ -108,9 +108,12 @@ MAIN_BGM = "main.mp3"  # ...terus ini mulai "Number" pertama sampai akhir
 
 def prepare_audio(
     paths: RunPaths, script: dict, *, bgm_dir: Path, sfx_dir: Path, client: httpx.Client,
-    log: Callable[[str], None],
+    log: Callable[[str], None], custom: list[dict] | None = None,
 ) -> dict:
-    """BGM hook + utama, siapin SFX, copy ke runs/<id>/audio/ buat Remotion. Field bgm di naskah nggak dipakai lagi."""
+    """BGM hook + utama, siapin SFX, copy ke runs/<id>/audio/ buat Remotion. Field bgm di naskah nggak dipakai lagi.
+
+    custom: SFX kustom dari brief [{"file", "at_s"}], file-nya dari sfx_dir (nggak di-download).
+    """
     choices = list_bgm(bgm_dir)
     out: dict[str, Any] = {"bgm": None, "bgm_main": None, "sfx": {}}
     for key, name in (("bgm", HOOK_BGM), ("bgm_main", MAIN_BGM)):
@@ -133,6 +136,18 @@ def prepare_audio(
                 out.setdefault("sfx_onset", {})[event] = audible_start(path)
             except Exception as exc:  # hiasan: gagal = SFX diputer apa adanya
                 log(f"[timeline] awal bunyi {path.name} nggak kebaca, nggak disejajarin: {exc}")
+    for item in custom or []:
+        name = item.get("file")
+        path = sfx_dir / str(name)
+        if not isinstance(name, str) or Path(name).name != name or not path.is_file():
+            log(f"[timeline] SFX kustom {name!r} nggak ada di assets/sfx, dilewat")
+            continue
+        try:
+            onset = audible_start(path)
+        except Exception:  # hiasan: gagal baca = diputer apa adanya
+            onset = 0.0
+        out.setdefault("custom", []).append({"src": _copy(path, paths.root / "audio" / "sfx", paths),
+                                             "at_s": float(item["at_s"]), "onset": onset})
     return out
 
 

@@ -37,6 +37,7 @@ EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_o
 EXTRA_VOLUME = 0.45  # Akmal: 0,6 kekerasan, 0,3 kepelanan
 EXTRA_VOLUME_BY_EVENT = {"extra_punch": 0.22}  # file punch ±6 dB lebih keras dari yang lain
 HOOK_EXTRA_PREFIX = "hook_extra_"  # 1 SFX acak tambahan tiap ganti klip di hook, barengan camera flash (sfx.json)
+CUSTOM_SFX_VOLUME = 0.5  # SFX kustom dari brief (dipilih Akmal per shot)
 HOOK_EXTRA_VOLUME = 0.3  # kata Akmal (awalnya 0,4)
 BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)
 SFX_LEAD_FRAMES = 3  # SFX transisi mulai sedikit sebelum gambar ganti (puncaknya di ±0.1 detik)
@@ -241,6 +242,9 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
         add("emoji", emoji["from"])
     for action in cta:
         add("click", action["from"] + action["clickAt"] - CLICK_LEAD_FRAMES)
+    for item in audio.get("custom", []):  # kedengeran pas di detiknya: mulai lebih awal sebesar hening di depan file
+        sfx.append({"src": item["src"], "from": max(0, to_frame(item["at_s"] - item.get("onset", 0.0))),
+                    "volume": CUSTOM_SFX_VOLUME})
     sfx.sort(key=lambda s: s["from"])
     return bgm, sfx, reveals, flashes
 
