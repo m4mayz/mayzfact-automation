@@ -115,7 +115,10 @@ def test_brief_opens_lan_by_default(monkeypatch, tmp_path, capsys, flags):
     monkeypatch.setattr(cli.tunnel_mod, "start_tunnel", start_tunnel)
 
     assert cli.main(["brief", "i2xag_1OJfM", *flags]) == 0
-    make_server.assert_called_once_with(paths, 3100, host="0.0.0.0", prefetcher=ANY)
+    from mayzfact.audio import SFX_DIR
+    from mayzfact.config import CACHE_DIR
+    make_server.assert_called_once_with(paths, 3100, host="0.0.0.0", prefetcher=ANY, sfx_dir=SFX_DIR,
+                                        media_dir=CACHE_DIR / "manual")
     out = capsys.readouterr().out
     assert "http://192.168.1.20:3100" in out
     assert "http://127.0.0.1:3100" in out
