@@ -39,7 +39,7 @@ File penting di `runs/<id>/`:
 
 - `script.json`: naskah per beat (ditulis agent), termasuk `queries`/`queries_zh`, tanda `point`/`emoji`/`emoji_word`, dan `hook_queries`.
 - `voice.mp3` + `tts.json`: suara. **Dibikin pakai kredit ElevenLabs, jangan dihapus.**
-- `links.json`: link klip per shot dari halaman brief (plus start/end detik kalau diisi).
+- `links.json`: link klip per shot dari halaman brief (plus start/end detik kalau diisi, dan SFX kustom `sfx: {file, at_s}`).
 - `clips.json`: klip per shot, termasuk sumbernya (`provider`, `page_url`, `author`).
 - `timeline.json`: props buat Remotion.
 - `overlays.json`: cache deteksi subjek.

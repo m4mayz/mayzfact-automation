@@ -109,7 +109,7 @@ uv run mayzfact brief <id>
 Jalanin pakai `PYTHONUNBUFFERED=1` biar alamatnya langsung kebaca di log. Brief otomatis buka tunnel ngrok ber-password (`NGROK_BASIC_AUTH` di `.env`). CLI nge-print 3 alamat: `Internet` (URL ngrok, buat HP di jaringan mana aja), `HP / LAN` (IP WiFi), dan `Lokal PC` (http://127.0.0.1:3100). Kalau ada baris `ngrok gagal: ...`, brief tetap jalan lokal; kasih tau Akmal pesannya. Bilang ke Akmal:
 
 1. Buka salah satu alamat itu (URL `Internet` minta login: user + password dari `NGROK_BASIC_AUTH`, Akmal udah tau). Video source ada di halaman, bisa diputer sambil ngisi. Tombol waktu di tiap shot muter suara naskah beat itu.
-2. Isi 1 link per shot (Douyin/TikTok/Pinterest/YouTube), atau upload file. Kolom Mulai/Selesai (detik) opsional, buat milih potongan tertentu dari klip. Tiap shot punya 3 frame source sebagai referensi.
+2. Isi 1 link per shot (Douyin/TikTok/Pinterest/YouTube), atau upload file. Kolom Mulai/Selesai (detik) opsional, buat milih potongan tertentu dari klip. Tiap shot punya 3 frame source sebagai referensi. Kalau link-nya udah `siap`, tombol "Preview klip" nunjukin bagian yang bakal dipakai ("Pakai detik ini" ngisi Mulai). Pill SFX di tiap shot buat nambah 1 SFX kustom di detik tertentu (D-040).
 3. Klik Simpan. Link langsung di-download di background; status per shot kelihatan (`antre` / `download…` / `siap` / `gagal`). Kalau ada yang `gagal`, ganti link-nya, atau klik Simpan lagi buat coba ulang (autosave nggak ngulang yang gagal).
 4. Kalau semua `siap`, kabarin.
 
@@ -122,6 +122,7 @@ uv run mayzfact run <id> --from fetch --no-render
 ```
 
 - Link yang udah `siap` di brief nggak di-download lagi (cache sama), jadi fetch tinggal motong + nilai klip.
+- Kalau Akmal cuma ganti SFX kustom di brief, cukup `--from timeline --no-render` (SFX-nya dibaca langsung dari `links.json`).
 - Kalau ada shot yang gagal, run berhenti dengan exit 3 dan shot itu muncul lagi di brief. Kasih tau Akmal shot mana dan pesan error-nya, minta link lain atau upload, terus ulang langkah 6.
 - Kalau udah nggak butuh isi link lagi, matiin server brief (dia kebuka ke LAN dan internet). Kalau brief dimatiin paksa (TaskStop), ngrok-nya bisa nyangkut: jalanin `Stop-Process -Name ngrok` di PowerShell.
 - Deteksi subjek (OWLv2) makan ±3 menit kalau belum ke-cache, jadi jalanin di background.

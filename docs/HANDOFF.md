@@ -541,3 +541,24 @@
 ## Masalah terbuka
 
 1. Run lama yang mau di-render ulang: `--from plan`, bukan `--from timeline` (D-039 no. 4).
+
+---
+
+# Handoff — Brief preview klip + SFX kustom (D-040)
+
+- **Updated:** 2026-10-24, Claude Code
+- **Goal & scope:** D-040. Branch `fase-brief-sfx`.
+
+## Selesai
+
+- SFX tambahan setelah hook 0,45 (punch 0,22).
+- Brief: preview bagian klip yang dipakai, tombol "Pakai detik ini", pill SFX kustom per shot + detik-nya.
+- SFX kustom masuk timeline dari `links.json` (volume 0,5).
+- Fix fetch: shot setelah hook 1 video nyambung dengan link sama lanjut dari ujung hook.
+- Dari final review: upload nggak ngapus SFX kustom lagi, SFX di detik 0 bunyi di preview, lanjutan yang lewat ujung video ditandain otomatis.
+- Dicek di browser (server brief lokal, salinan run NSua): preview ngulang bagian yang dipakai, SFX bunyi di detiknya, Mulai + SFX kesimpen, keyboard (panah + fokus) jalan, lebar 390 px tanpa scroll samping. Timeline salinan NSua dapat 2 SFX kustom di frame yang bener.
+
+## Masalah terbuka
+
+1. Video Douyin yang codec-nya HEVC bisa nggak keputer di Chrome. Preview-nya nampilin pesan, fetch tetap jalan.
+2. Suara SFX tambahan 0,45 belum didengar di render beneran.

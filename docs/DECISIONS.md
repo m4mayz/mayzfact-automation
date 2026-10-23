@@ -440,3 +440,17 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   6. **SFX transisi lebih pelan + sejajar.** Klik setelah hook 0,6 jadi 0,4, `extra_*` 0,6 jadi 0,3 (`extra_punch` 0,15, filenya ±6 dB lebih keras), camera flash 0,4, `hook_extra_*` 0,3. SFX tumpukan (`extra_*`, `hook_extra_*`) digeser lebih awal sebesar selisih hening di depan file-nya dibanding SFX utama (klik / camera flash), jadi bunyinya kedengeran barengan (punch dulu telat ±0,34 detik). `extra_fart` (`dry-fart.mp3`) dihapus.
 - **Konsekuensi:** Durasi final ±91% dari durasi sebelum dipercepat. Run lama perlu `--from plan` biar awal shot countdown ikut aturan no. 4; `--from timeline` doang bikin klip countdown nongol sebentar sebelum kartu.
 - **Authority:** Akmal (chat 2026-10-23, review Studio + preview `NkixGkCxOg8`).
+
+## D-040 — 2026-10-24 — Brief: preview klip + SFX kustom per shot
+
+- **Status:** accepted.
+- **Konteks:** Akmal mau lihat bagian video yang bakal jadi klip sebelum fetch, terus nambah SFX sendiri di momen tertentu. Spec: [2026-10-24-brief-preview-sfx-design.md](superpowers/specs/2026-10-24-brief-preview-sfx-design.md). Akmal minta langsung dikerjain tanpa sesi tanya, jadi pilihan library SFX, volume, dan batas 1 SFX per shot itu pilihan agent.
+- **Keputusan:**
+  1. **SFX tambahan setelah hook lebih keras.** `extra_*` 0,3 jadi 0,45, `extra_punch` 0,15 jadi 0,22 (kata Akmal 0,3 kepelanan, 0,6 kekerasan).
+  2. **Preview klip di brief.** Tombol "Preview klip" di tiap shot yang link-nya udah `siap` atau file-nya udah di-upload. Preview ngulang bagian yang bakal dipakai: kolom Mulai, kalau kosong lanjutan link yang sama dari shot sebelumnya, terus `source_s` hasil fetch terakhir kalau link-nya masih sama. Selain itu "otomatis", baru dipilih SigLIP pas fetch. Tombol "Pakai detik ini" ngisi Mulai dari posisi preview.
+  3. **SFX kustom per shot.** Pill radio dari semua file audio di `assets/sfx/` (1 per shot, "Tanpa" buat ngosongin). Klik pill muter SFX-nya. Detik-nya dihitung dari awal shot muncul, bisa diisi dari posisi preview ("Dari preview"). Pas preview jalan, SFX-nya ikut bunyi di detik itu.
+  4. Disimpan di `links.json`: `"sfx": {"file", "at_s"}`. Server nolak nama di luar library dan detik di luar durasi shot. Timeline baca langsung dari `links.json` + `shots_plan.json`, jadi ganti SFX cukup `--from timeline`. Volume 0,5, hening di depan file dihitung, nambah di atas SFX otomatis.
+  5. Fetch nganggep entry tetap "link sama" walaupun SFX-nya beda, jadi hook nyambung dan klip lanjutan nggak putus.
+  6. **Fix fetch:** shot setelah hook 1 video nyambung yang link-nya sama sekarang lanjut dari ujung hook. Dulu dipilih ulang pakai SigLIP, padahal komentarnya bilang nyambung. Preview brief ngikutin aturan yang sama.
+- **Konsekuensi:** Brief nyajiin file hasil download dari `cache/manual/` lewat `/media/<shot>` (cuma file yang tercatat di `prefetch.json` buat link shot itu) dan SFX lewat `/sfx/<nama>`.
+- **Authority:** Akmal (chat 2026-10-24).
