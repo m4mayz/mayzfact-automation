@@ -48,7 +48,9 @@ def run_render(paths: RunPaths, remotion_dir: Path = REMOTION_DIR, *, speed: flo
         raise PipelineError("render", "npx nggak ketemu. Aktifin Node dulu: nvm use 22.23.1")
     if not (remotion_dir / "node_modules").exists():
         raise PipelineError("render", "Dependency Remotion belum ke-install. Jalanin: cd remotion && npm install")
-    output = tmp_path_for(paths.final_mp4)
+    # speed_up juga pakai tmp_path_for(final.mp4) buat hasilnya, jadi output Remotion harus beda nama
+    # (kalau sama, ffmpeg nolak: "same as Input").
+    output = tmp_path_for(paths.final_mp4) if speed == 1.0 else paths.final_mp4.with_name("final.raw.mp4")
     result = subprocess.run(
         render_command(npx, paths, output),
         cwd=remotion_dir, capture_output=True, text=True, encoding="utf-8", errors="replace",

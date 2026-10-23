@@ -41,6 +41,31 @@ def test_speed_up_shortens_video_by_the_factor(tmp_path):
     assert sorted(streams) == ["audio", "video"]
 
 
+def test_run_render_speed_up_does_not_clash_with_its_own_tmp_file(tmp_path, monkeypatch):
+    # Regresi: output Remotion dulu final.tmp.mp4, sama kayak file sementara speed_up -> ffmpeg "same as Input"
+    paths = RunPaths(tmp_path / "run")
+    paths.root.mkdir(parents=True)
+    remotion_dir = tmp_path / "remotion"
+    (remotion_dir / "node_modules").mkdir(parents=True)
+    real_run = subprocess.run
+
+    def fake_run(cmd, **kw):
+        if cmd[0] == "npx":  # Remotion palsu: bikin video 3 detik di path output-nya
+            return real_run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=red:s=320x568:d=3:r=30",
+                             "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-shortest", "-c:v", "libx264",
+                             "-pix_fmt", "yuv420p", "-c:a", "aac", cmd[5]], **kw)
+        return real_run(cmd, **kw)
+
+    monkeypatch.setattr("mayzfact.steps.render.shutil.which", lambda _name: "npx")
+    monkeypatch.setattr("mayzfact.steps.render.subprocess.run", fake_run)
+    out = run_render(paths, remotion_dir, speed=1.2)
+    assert out == paths.final_mp4
+    probe = real_run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(out)],
+                     capture_output=True, text=True, check=True)
+    assert abs(float(probe.stdout) - 2.5) < 0.1
+    assert not list(paths.root.glob("*.tmp.mp4"))  # file sementara dibersihin
+
+
 @pytest.mark.render
 def test_render_fixture_timeline(tmp_path, make_video, make_photo, sine_mp3):
     paths = RunPaths(tmp_path / "run")
