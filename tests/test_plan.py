@@ -40,6 +40,25 @@ def test_plan_marks_hook_shots_with_reference_frames(tmp_path, cut_video):
     assert data["segments"][0]["frames"][0] == "plan/seg_01_0.jpg"
 
 
+def test_hook_shot_stays_hook_when_number_is_heard_late(tmp_path, cut_video, monkeypatch):
+    """Shot terakhir hook dipanjangin sampai "Number" kedengeran (D-039): tetap shot hook, bukan klik biasa."""
+    from mayzfact.timing import word_timings
+
+    def late_number(paths, tts, log):
+        return [dict(w, start_s=1.9) if w["text"] == "Number" else w for w in word_timings(tts["alignment"])]
+
+    monkeypatch.setattr("mayzfact.steps.plan._voiced_words", late_number)
+    script = {"beats": [*SCRIPT["beats"], {"text": "It is old and lives in the deep sea.", "media": "video",
+                                           "queries": ["sea"]}]}
+    text = " ".join(b["text"] for b in script["beats"])
+    tts = {"duration_s": 4.0, "alignment": fake_alignment(text, 3.8)}
+    data = run_plan(RunPaths(tmp_path / "run"), script, tts, SOURCE, max_shot_s=5.0, hook_seconds=1.0,
+                    download_source=lambda vid, dest: shutil.copyfile(cut_video, dest) or dest, log=lambda m: None)
+    first, second = data["shots"][:2]
+    assert first["end_s"] == second["start_s"] == 1.9  # lewat area hook 1 dtk gara-gara jeda sebelum "Number"
+    assert first["hook_segment"] == 0
+
+
 def test_plan_without_hook_area(tmp_path, cut_video):
     _, data = plan_with(tmp_path, cut_video, hook_seconds=0.0)
     assert all(shot["hook_segment"] is None for shot in data["shots"])

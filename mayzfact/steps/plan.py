@@ -141,10 +141,13 @@ def run_plan(
 ) -> dict:
     beats = script["beats"]
     slots = split_shots(beat_timings(beat_texts(beats), tts["alignment"], tts["duration_s"]), beats, max_shot_s)
+    # Shot hook ditentuin dari batas versi alignment: shot terakhir hook yang dipanjangin sampai "Number" kedengeran
+    # (D-039) tetap shot hook, bukan jadi klik biasa.
+    by_alignment = tighten_countdown(slots, beats, tts["alignment"])
     slots = tighten_countdown(slots, beats, tts["alignment"], voiced_words=_voiced_words(paths, tts, log))
     subjects = beat_subjects(beats)
     segs = prepare_source_segments(paths, source, download_source, hook_seconds, paths.plan_dir, retry_step="plan") if hook_seconds > 0 else []
-    mapping = hook_slot_map(slots, len(segs), hook_seconds)
+    mapping = hook_slot_map(by_alignment, len(segs), hook_seconds)
     hook_queries = script.get("hook_queries", {})  # ditulis agent sambil lihat frame plan/seg_*.jpg
 
     def rel(path: Path) -> str:
