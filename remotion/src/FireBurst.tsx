@@ -5,7 +5,7 @@ import fire from './assets/fire-burst.mp4';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
-// Ledakan api biru pas angka countdown (di atas angka) dan box foto subjek (di belakang box) masuk, niru source
+// Ledakan api biru pas angka countdown (di belakang angka) dan box foto subjek (di belakang box) masuk, niru source
 // i2xag (#3 platypus 37.65-38.05 dtk): api rapet di tengah, ngembang jadi cincin dengan tengah gelap, terus pudar.
 // Sumbernya "Blue Fire Powers Pack" blackscreen (youtube.com/watch?v=Q46O_LHNDns), diputer 90° jadi portrait biar
 // menuhin layar tanpa di-crop. 50 frame: frame 0-9 ledakannya kecepatan normal (detik 64,8-65,13) biar barengan

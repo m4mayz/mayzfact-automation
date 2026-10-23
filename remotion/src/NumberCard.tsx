@@ -10,7 +10,7 @@ const POP_FROM = 2.5;
 
 // Angka countdown chrome di background gelap berpartikel (gaya source i2xag).
 // Masuknya barengan SFX fire whoosh: angka nongol gede terus mengecil cepet ke ukuran penuh (2,5x ke 1x, 4 frame),
-// ledakan api biru numpuk di atasnya (FireBurst). Abis itu zoom pelan. Ledakannya ngikutin SFX, sisanya slow-mo
+// ledakan api biru di belakangnya (FireBurst). Abis itu zoom pelan. Ledakannya ngikutin SFX, sisanya slow-mo
 // sampai kartu box foto masuk.
 export const NumberCard: React.FC<{number: number; numberAt: number; durationInFrames: number}> = ({
   number,
@@ -26,6 +26,11 @@ export const NumberCard: React.FC<{number: number; numberAt: number; durationInF
   return (
     <AbsoluteFill>
       <Particles seed={`number-${number}`} />
+      {local >= 0 ? (
+        <Sequence from={numberAt} durationInFrames={durationInFrames - numberAt} layout="none">
+          <FireBurst durationInFrames={durationInFrames - numberAt} endAt={FIRE_WHITE_AT} fadeOut />
+        </Sequence>
+      ) : null}
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center'}}>
         <div
           style={{
@@ -45,11 +50,6 @@ export const NumberCard: React.FC<{number: number; numberAt: number; durationInF
           {number}
         </div>
       </AbsoluteFill>
-      {local >= 0 ? (
-        <Sequence from={numberAt} durationInFrames={durationInFrames - numberAt} layout="none">
-          <FireBurst durationInFrames={durationInFrames - numberAt} endAt={FIRE_WHITE_AT} fadeOut />
-        </Sequence>
-      ) : null}
     </AbsoluteFill>
   );
 };
