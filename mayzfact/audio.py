@@ -70,6 +70,23 @@ def list_bgm(bgm_dir: Path) -> list[str]:
     return sorted(p.name for p in bgm_dir.iterdir() if p.suffix.lower() in AUDIO_EXTS)
 
 
+def audible_start(path: Path) -> float:
+    """Detik sampai bunyi pertama kedengeran (hening di depan file). Dipakai buat nyejajarin SFX yang ditumpuk."""
+    import re
+    import subprocess
+
+    result = subprocess.run(["ffmpeg", "-v", "info", "-i", str(path), "-af", "silencedetect=noise=-40dB:d=0.02", "-f", "null", "-"],
+                            capture_output=True, text=True, encoding="utf-8", errors="replace")
+    starts = [float(x) for x in re.findall(r"silence_start: (-?[\d.]+)", result.stderr)]
+    ends = [float(x) for x in re.findall(r"silence_end: ([\d.]+)", result.stderr)]
+    if starts and ends and starts[0] <= 0.01:
+        return round(ends[0], 3)
+    return 0.0
+
+
+ONSET_EVENTS = ("cut", "hook_cut", "extra_", "hook_extra_")  # SFX transisi yang ditumpuk: bunyinya disejajarin
+
+
 def audible_length(path: Path) -> float:
     """Detik sampai bunyi terakhir yang kedengeran (hening di ujung file nggak dihitung)."""
     import re
@@ -111,6 +128,11 @@ def prepare_audio(
             except PipelineError as exc:
                 log(f"[timeline] riser dilewat, durasinya nggak kebaca: {exc.message.splitlines()[0]}")
                 del out["sfx"][event]
+        if event.startswith(ONSET_EVENTS):
+            try:
+                out.setdefault("sfx_onset", {})[event] = audible_start(path)
+            except Exception as exc:  # hiasan: gagal = SFX diputer apa adanya
+                log(f"[timeline] awal bunyi {path.name} nggak kebaca, nggak disejajarin: {exc}")
     return out
 
 

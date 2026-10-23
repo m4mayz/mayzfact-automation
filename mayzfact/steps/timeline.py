@@ -30,11 +30,12 @@ CAPTION_HOLD_S = 0.4  # kata terakhir tetap tampil sebentar pas jeda
 CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
-SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.6, "overlay": 0.35, "emoji": 0.6, "click": 0.8,
-              "item_reveal": 0.7, "riser": 1.0, "hook_cut": 0.45}
+SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.4, "overlay": 0.35, "emoji": 0.6, "click": 0.8,
+              "item_reveal": 0.7, "riser": 1.0, "hook_cut": 0.4}
 FLASH_FRAMES = 3  # flash putih di pergantian klip hook (barengan camera flash)
 EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_oof, extra_punch, ...)
-EXTRA_VOLUME = 0.6
+EXTRA_VOLUME = 0.3  # Akmal: klik + SFX tambahan jangan terlalu keras (dulu 0,6)
+EXTRA_VOLUME_BY_EVENT = {"extra_punch": 0.15}  # file punch ±6 dB lebih keras dari yang lain
 HOOK_EXTRA_PREFIX = "hook_extra_"  # 1 SFX acak tambahan tiap ganti klip di hook, barengan camera flash (sfx.json)
 HOOK_EXTRA_VOLUME = 0.3  # kata Akmal (awalnya 0,4)
 BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)
@@ -172,10 +173,15 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
     reveals: list[dict] = []
     flashes: list[dict] = []
 
-    def add(event: str, frame: int) -> None:
+    onset = audio.get("sfx_onset", {})
+
+    def add(event: str, frame: int, align_to: str | None = None) -> None:
         if event in files:
             volume = (HOOK_EXTRA_VOLUME if event.startswith(HOOK_EXTRA_PREFIX)
-                      else EXTRA_VOLUME if event.startswith(EXTRA_PREFIX) else SFX_VOLUME[event])
+                      else EXTRA_VOLUME_BY_EVENT.get(event, EXTRA_VOLUME) if event.startswith(EXTRA_PREFIX)
+                      else SFX_VOLUME[event])
+            if align_to:  # SFX tumpukan mulai kedengeran barengan SFX utamanya (contoh punch: hening 0,36 dtk di depan)
+                frame -= round((onset.get(event, 0.0) - onset.get(align_to, 0.0)) * FPS)
             sfx.append({"src": files[event], "from": max(0, frame), "volume": volume})
 
     # BGM hook sampai "Number" pertama, terus BGM utama sampai akhir. Riser habis pas di titik ganti itu.
@@ -217,7 +223,7 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
             if "hook_cut" in files:
                 add("hook_cut", entry["from"] - SFX_LEAD_FRAMES)
                 if hook_extras:
-                    add(hook_rng.choice(hook_extras), entry["from"] - SFX_LEAD_FRAMES)
+                    add(hook_rng.choice(hook_extras), entry["from"] - SFX_LEAD_FRAMES, align_to="hook_cut")
                 flashes.append({"from": entry["from"], "durationInFrames": FLASH_FRAMES})
             continue
         frame = entry["from"] - SFX_LEAD_FRAMES
@@ -228,7 +234,7 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
             add("cut", frame)
             pick = rng.choice([None, *extras]) if extras else None
             if pick:
-                add(pick, frame)
+                add(pick, frame, align_to="cut")
     for overlay in overlays:
         add("overlay", overlay["from"])
     for emoji in emojis:

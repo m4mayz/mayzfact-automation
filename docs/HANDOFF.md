@@ -534,7 +534,8 @@
 
 ## Selesai
 
-- Flash hook lebih tipis + camera flash 0,45, +1 SFX hook acak (0,3), box foto +0,5 detik, "Number" barengan api + angka, render 1,1x.
+- Flash hook lebih tipis, +1 SFX hook acak, box foto +0,5 detik, "Number" barengan api + angka, render 1,1x.
+- SFX transisi lebih pelan (klik 0,4, tambahan 0,3, punch 0,15, camera flash 0,4) dan SFX tumpukan disejajarin ke bunyi klik/flash. `dry-fart.mp3` dihapus.
 - Fix render: output Remotion dulu sama kayak file sementara speed-up (`final.tmp.mp4`), ffmpeg nolak. Sekarang `final.raw.mp4`.
 
 ## Masalah terbuka

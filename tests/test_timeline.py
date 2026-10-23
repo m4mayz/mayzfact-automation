@@ -162,7 +162,7 @@ def test_sfx_and_bgm_placement():
         {"src": "audio/sfx/h.mp3", "from": 0, "volume": 0.8},
         {"src": "audio/sfx/n.mp3", "from": 60, "volume": 0.9},
         {"src": "audio/sfx/s.mp3", "from": 105, "volume": 0.7},
-        {"src": "audio/sfx/c.mp3", "from": 153, "volume": 0.6},
+        {"src": "audio/sfx/c.mp3", "from": 153, "volume": 0.4},  # klik 0,4 (Akmal: jangan terlalu keras)
     ]
 
 
@@ -275,6 +275,35 @@ def test_click_transitions_add_random_extra_or_nothing_the_same_way_each_time():
     assert 0 < len(extras) < 15  # kadang nggak ada SFX tambahan
     assert len({x["from"] for x in extras}) == len(extras)  # maksimal 1 SFX tambahan per transisi
     assert build_timeline(clips, 16.0, 0.5, audio=audio)["sfx"] == sfx  # render ulang nggak ganti bunyi
+
+
+def test_extra_sfx_lines_up_with_click_and_stays_quiet():
+    clips = {"shots": [shot(f"clips/s{i}.mp4", "video", float(i), 1080, 1920) for i in range(16)]}
+    audio = {"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3", "extra_oof": "audio/sfx/oof.mp3",
+                                  "extra_punch": "audio/sfx/punch.mp3"},
+             # detik sampai bunyinya mulai kedengeran (hening di depan file)
+             "sfx_onset": {"cut": 0.02, "extra_oof": 0.2, "extra_punch": 0.38}}
+    sfx = build_timeline(clips, 16.0, 0.5, audio=audio)["sfx"]
+    clicks = sorted(x["from"] for x in sfx if x["src"] == "audio/sfx/click.mp3")
+    assert {x["volume"] for x in sfx if x["src"] == "audio/sfx/click.mp3"} == {0.4}
+    oof = [x for x in sfx if x["src"] == "audio/sfx/oof.mp3"]
+    punch = [x for x in sfx if x["src"] == "audio/sfx/punch.mp3"]
+    assert oof and punch
+    # bunyi tambahan mulai kedengeran barengan klik: digeser lebih awal sebesar selisih heningnya
+    assert all(x["from"] + 5 in clicks and x["volume"] == 0.3 for x in oof)  # (0,2 - 0,02) * 30 = 5,4 -> 5 frame
+    assert all(x["from"] + 11 in clicks and x["volume"] == 0.15 for x in punch)  # file punch jauh lebih keras
+
+
+def test_hook_extra_lines_up_with_camera_flash():
+    clips = {"shots": [{**shot("clips/h1.mp4", "video", 0.0, 1080, 1920), "hook_segment": 0},
+                       {**shot("clips/h2.mp4", "video", 1.0, 1080, 1920), "hook_segment": 1},
+                       shot("clips/a.mp4", "video", 2.0, 1080, 1920)]}
+    audio = {"bgm": None, "sfx": {"hook_cut": "audio/sfx/flash.mp3", "hook_extra_uy": "audio/sfx/uy.mp3"},
+             "sfx_onset": {"hook_cut": 0.12, "hook_extra_uy": 0.18}}
+    sfx = build_timeline(clips, 3.0, 0.5, audio=audio)["sfx"]
+    # flash 3 frame sebelum cut; "uy" hening 0,06 dtk lebih lama di depan -> mulai 2 frame lebih awal (urut per frame)
+    assert [(x["src"], x["from"], x["volume"]) for x in sfx] == [("audio/sfx/uy.mp3", 25, 0.3),
+                                                                 ("audio/sfx/flash.mp3", 27, 0.4)]
 
 
 def test_bgm_switches_at_first_number_and_riser_ends_there():

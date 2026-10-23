@@ -120,6 +120,21 @@ def test_missing_bgm_files_mean_no_bgm(tmp_path):
     assert any("mystery.mp3" in m for m in logs)
 
 
+def test_audible_start_skips_leading_silence(tmp_path):
+    import subprocess
+
+    from mayzfact.audio import audible_start
+
+    path = tmp_path / "punch.mp3"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
+                    "-af", "adelay=400", "-c:a", "libmp3lame", str(path)], check=True)
+    assert abs(audible_start(path) - 0.4) < 0.06  # 0,4 detik hening dulu baru bunyi
+    loud = tmp_path / "click.mp3"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
+                    "-c:a", "libmp3lame", str(loud)], check=True)
+    assert audible_start(loud) < 0.06
+
+
 def test_riser_length_ignores_trailing_silence(tmp_path):
     import subprocess
 
