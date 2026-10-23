@@ -14,7 +14,7 @@ from mayzfact.shots import beat_subjects, split_shots, tighten_countdown
 from mayzfact.source_frames import prepare_source_segments
 from mayzfact.store import RunPaths, write_json_atomic
 from mayzfact.text import beat_texts, words
-from mayzfact.timing import beat_timings
+from mayzfact.timing import beat_timings, word_timings
 
 SOURCE_FRAMES = (0.25, 0.5, 0.75)
 _NO_COUNTDOWN = Countdown(None, "", -1)
@@ -115,6 +115,19 @@ def _shot_frames(paths: RunPaths, source: dict, shots: list[dict], voice_total_s
             log(f"[plan] frame shot {shot['index'] + 1} gagal: {exc.message.splitlines()[0][:120]}")
 
 
+def _voiced_words(paths: RunPaths, tts: dict, log: Callable[[str], None]) -> list[dict] | None:
+    """Awal kata yang beneran kedengeran (voice.mp3). Gagal = None, shot countdown pakai awal beat versi alignment."""
+    if not paths.voice_mp3.exists():
+        return None
+    try:
+        from mayzfact.voice_onset import snap_word_starts, voice_envelope
+
+        return snap_word_starts(word_timings(tts["alignment"]), voice_envelope(paths.voice_mp3))
+    except Exception as exc:
+        log(f"[plan] energi suara gagal dibaca, awal shot countdown pakai alignment: {exc}")
+        return None
+
+
 def run_plan(
     paths: RunPaths,
     script: dict,
@@ -128,7 +141,7 @@ def run_plan(
 ) -> dict:
     beats = script["beats"]
     slots = split_shots(beat_timings(beat_texts(beats), tts["alignment"], tts["duration_s"]), beats, max_shot_s)
-    slots = tighten_countdown(slots, beats, tts["alignment"])
+    slots = tighten_countdown(slots, beats, tts["alignment"], voiced_words=_voiced_words(paths, tts, log))
     subjects = beat_subjects(beats)
     segs = prepare_source_segments(paths, source, download_source, hook_seconds, paths.plan_dir, retry_step="plan") if hook_seconds > 0 else []
     mapping = hook_slot_map(slots, len(segs), hook_seconds)

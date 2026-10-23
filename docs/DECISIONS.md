@@ -426,3 +426,16 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   8. Remotion naik ke 4.0.538, video pakai `Video` dari `@remotion/media`.
 - **Konsekuensi:** Durasi final jadi ±83% dari durasi sebelum dipercepat. SFX dan BGM tetap dipilih Akmal; file yang nggak kepake (`whoosh-clean.mp3`) dihapus.
 - **Authority:** Akmal (chat 2026-10-22 s/d 2026-10-23, review di Studio dan preview; "udah oke, tolong cleanup, merge dan push").
+
+## D-039 — 2026-10-23 — Revisi hook + kartu angka dari preview `NkixGkCxOg8`
+
+- **Status:** accepted.
+- **Konteks:** Akmal review Studio + preview run `NkixGkCxOg8` (D-038 pertama kali dipakai di run baru).
+- **Keputusan:**
+  1. **Flash hook lebih tipis.** Lapisan putih di frame cut 0,75/0,3 jadi 0,4/0,15, brightness 1,8/1,3 jadi 1,4/1,15 (`Intro.tsx`). `camera-flash-sound-effect.mp3` volume 0,8 jadi 0,45.
+  2. **+1 SFX acak di cut hook.** Tiap ganti klip di hook: camera flash + persis 1 dari `hook_extra_*` (`uy.mp3`, `fahhh_KcgAXfs.mp3`, `gasp_SJHmiqB.mp3`, link myinstants dari Akmal), volume 0,3. Pilihan pakai rng sendiri biar SFX setelah hook nggak berubah.
+  3. **Box foto +0,5 detik.** Ditutup `max(akhir nama + 0,6, awal nama + 1,0)`, maksimal awal nama + 1,4 (dulu 0,1 / 0,5 / 0,9). Box boleh masuk ke awal beat berikutnya asal shot berikutnya sisa ≥ 1 detik; kartu habis pas shot beat berikutnya mulai.
+  4. **"Number" barengan api + angka.** Alignment ElevenLabs ngitung jeda sebelum "Number" sebagai bagian katanya (di run ini telat 0,5–1,1 detik). Plan sekarang mulai shot countdown pas "Number" kedengeran (`voice_onset`), jeda sebelumnya ikut shot sebelumnya (minimal 0,5 detik); timeline naruh kartu + angka di situ, SFX api tetap 9 frame sebelumnya.
+  5. **Video 1,1x** (dulu 1,2x di D-038 no. 5). `Settings.video_speed`.
+- **Konsekuensi:** Durasi final ±91% dari durasi sebelum dipercepat. Run lama perlu `--from plan` biar awal shot countdown ikut aturan no. 4; `--from timeline` doang bikin klip countdown nongol sebentar sebelum kartu.
+- **Authority:** Akmal (chat 2026-10-23, review Studio + preview `NkixGkCxOg8`).

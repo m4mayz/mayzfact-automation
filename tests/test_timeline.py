@@ -343,10 +343,10 @@ def test_voice_onset_moves_number_and_captions():
     timeline = build_timeline(CD_CLIPS, 6.5, 0.5, script=SCRIPT, alignment=ALIGN, voice_envelope=env,
                               audio={"bgm": None, "sfx": {"number": "audio/sfx/w.mp3"}})
     card = timeline["countdown"][0]
-    # Angka langsung muncul bareng kartunya (source i2xag), nggak nunggu "Number" kedengeran
-    assert (card["numberFrom"], card["numberAt"], card["cardFrom"]) == (69, 0, 111)
+    # Kartu + angka muncul pas "Number" kedengeran (2.8s), bukan di awal beat (2.3s) (Akmal)
+    assert (card["numberFrom"], card["numberAt"], card["cardFrom"]) == (84, 0, 111)
     # whoosh api: bunyinya baru kedengeran ±9 frame, jadi dimulai 9 frame sebelum kartu
-    assert timeline["sfx"] == [{"src": "audio/sfx/w.mp3", "from": 60, "volume": 0.9}]
+    assert timeline["sfx"] == [{"src": "audio/sfx/w.mp3", "from": 75, "volume": 0.9}]
     assert [c["from"] for c in timeline["captions"] if c["text"] == "IT"] == [162]
 
 

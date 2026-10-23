@@ -524,3 +524,19 @@
 1. Run lama belum dicoba di-render ulang pakai komponen baru. Kalau perlu, jalanin `--from timeline` dulu biar SFX/BGM/blur-nya ikut aturan baru.
 2. Ujung api di box foto agak terang di 2–3 frame terakhir (klip VFX-nya jadi putih), barengan efek keluar box. Akmal udah oke.
 3. Sisa minor dari hapus-auto: default `retry_step` "hook", label error "[hook]", help `--port`, HANDOFF baris 140.
+
+---
+
+# Handoff — Revisi hook + kartu angka (D-039)
+
+- **Updated:** 2026-10-23, Claude Code
+- **Goal & scope:** D-039, dari review run `NkixGkCxOg8`. Branch `fase-revisi-hook`.
+
+## Selesai
+
+- Flash hook lebih tipis + camera flash 0,45, +1 SFX hook acak (0,3), box foto +0,5 detik, "Number" barengan api + angka, render 1,1x.
+- Fix render: output Remotion dulu sama kayak file sementara speed-up (`final.tmp.mp4`), ffmpeg nolak. Sekarang `final.raw.mp4`.
+
+## Masalah terbuka
+
+1. Run lama yang mau di-render ulang: `--from plan`, bukan `--from timeline` (D-039 no. 4).

@@ -95,7 +95,7 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
                total: int, log: Callable[[str], None], beat_starts: list[int] = ()) -> tuple[list[dict], list[tuple[float, float]], set[str]]:
     """Card per beat countdown + rentang detik beat countdown (buat ngumpetin caption) + kata-kata nama subjek.
 
-    Angka muncul bareng kartunya (numberAt 0), subject card mulai pas nama subjeknya kedengeran.
+    Angka muncul bareng kartunya (numberAt 0) pas "Number" kedengeran, subject card mulai pas nama subjeknya kedengeran.
     """
     texts = beat_texts(beats)
     timings = beat_timings(texts, alignment, audio_duration_s)
@@ -109,7 +109,10 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
         if countdown.number is None:
             continue
         spans.append((timing["start_s"], timing["end_s"]))
-        number_from = to_frame(timing["start_s"])
+        # kartu + angka (+ SFX api) mulai pas "Number" kedengeran, bukan di awal beat versi alignment (Akmal)
+        first_word = _word_at(words, offset)
+        heard = words[first_word]["start_s"] if first_word is not None else timing["start_s"]
+        number_from = to_frame(heard if timing["start_s"] <= heard < timing["end_s"] else timing["start_s"])
         card_end = min(to_frame(timing["end_s"]), total)
         number_word = _word_at(words, offset + countdown.number_end)
         number_at = 0  # angka muncul bareng kartunya (source i2xag)

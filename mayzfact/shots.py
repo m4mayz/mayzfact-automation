@@ -55,12 +55,16 @@ BOX_TAIL_S = 0.6  # box subjek ditutup segini setelah nama subjek selesai diucap
 BOX_MIN_S = 1.0  # nama subjek pendek: box tetap tampil minimal segini
 BOX_MAX_S = 1.4  # nama panjang dipotong di sini
 NEXT_MIN_S = 1.0  # shot beat berikutnya jangan jadi lebih pendek dari ini gara-gara box dipanjangin
+PREV_MIN_S = 0.5  # shot sebelum countdown minimal segini kalau awal countdown digeser ke "Number" kedengeran
 
 
-def tighten_countdown(slots: list[ShotSlot], beats: list[dict], alignment: dict) -> list[ShotSlot]:
+def tighten_countdown(slots: list[ShotSlot], beats: list[dict], alignment: dict,
+                      voiced_words: list[dict] | None = None) -> list[ShotSlot]:
     """Box subjek di card ditutup pas nama subjek selesai, terus langsung klip berikutnya (D-038, niru source i2xag).
 
     Shot beat countdown dipendekin, shot pertama beat berikutnya mulai lebih awal (ngisi jeda sisa beat countdown).
+    Kalau `voiced_words` ada (awal kata digeser ke suara beneran, voice_onset), shot countdown baru mulai pas
+    "Number" kedengeran: jeda sebelumnya ikut shot sebelumnya, jadi suara + api + angka barengan (Akmal).
     """
     texts = beat_texts(beats)
     words = word_timings(alignment)
@@ -70,7 +74,8 @@ def tighten_countdown(slots: list[ShotSlot], beats: list[dict], alignment: dict)
         return next((k for k, w in enumerate(words) if w["char_start"] <= char <= w["char_end"]), None)
 
     out = list(slots)
-    for i, slot in enumerate(out[:-1]):
+    for i in range(len(out) - 1):
+        slot = out[i]
         countdown = parse_countdown(texts[slot.beat])
         nxt = out[i + 1]
         if not countdown or nxt.beat != slot.beat + 1:
@@ -79,6 +84,12 @@ def tighten_countdown(slots: list[ShotSlot], beats: list[dict], alignment: dict)
         last_word = word_at(offsets[slot.beat] + len(texts[slot.beat].rstrip()) - 1)
         if number_word is None or last_word is None or number_word + 1 > last_word:
             continue
+        first_word = word_at(offsets[slot.beat])
+        if voiced_words and i and slot.part == 0 and out[i - 1].beat == slot.beat - 1 and first_word is not None:
+            heard = round(voiced_words[first_word]["start_s"], 3)
+            if slot.start_s < heard < slot.end_s and heard - out[i - 1].start_s >= PREV_MIN_S:
+                out[i - 1] = replace(out[i - 1], end_s=heard)
+                slot = out[i] = replace(slot, start_s=heard)
         name_start = words[number_word + 1]["start_s"]
         end = round(min(max(words[last_word]["end_s"] + BOX_TAIL_S, name_start + BOX_MIN_S), name_start + BOX_MAX_S), 3)
         # box bisa lewat ujung beat countdown (masuk ke awal beat berikutnya), asal shot berikutnya masih cukup panjang

@@ -61,5 +61,5 @@ def test_elevenlabs_stability_defaults_to_robust():
     assert Settings().elevenlabs_stability == 1.0  # D-036
 
 
-def test_video_speed_defaults_to_1_2():
-    assert Settings().video_speed == 1.2  # hasil render dipercepat 1,2x (D-038)
+def test_video_speed_defaults_to_1_1():
+    assert Settings().video_speed == 1.1  # hasil render dipercepat 1,1x (D-039, awalnya 1,2x di D-038)

@@ -1,5 +1,5 @@
 from mayzfact.shots import beat_subjects, split_shots, tighten_countdown
-from mayzfact.timing import beat_timings
+from mayzfact.timing import beat_timings, word_timings
 from tests.factories import fake_alignment
 
 
@@ -88,6 +88,22 @@ def test_countdown_box_runs_into_next_beat_when_name_ends_at_beat_end():
     out = tighten_countdown(slots, beats, alignment)
     assert out[1].end_s == out[2].start_s == round(name_end + 0.6, 3) > slots[1].end_s
     assert out[2].end_s == slots[2].end_s
+
+
+def test_countdown_shot_starts_when_number_is_audible():
+    """Jeda sebelum "Number" ikut shot sebelumnya: shot countdown mulai pas "Number" kedengeran (Akmal)."""
+    beats = [{"text": "Look at this.", "media": "video"}, {"text": "Number five, crab.", "media": "photo"},
+             {"text": "It is old and very big and it lives in the sea.", "media": "video"}]
+    texts = [b["text"] for b in beats]
+    alignment = fake_alignment(" ".join(texts), 6.0)
+    slots = split_shots(beat_timings(texts, alignment, 6.0), beats, 10.0)
+    words = word_timings(alignment)
+    k = next(i for i, w in enumerate(words) if w["text"] == "Number")
+    voiced = [dict(w, start_s=w["start_s"] + 0.3) if i == k else w for i, w in enumerate(words)]
+    out = tighten_countdown(slots, beats, alignment, voiced_words=voiced)
+    assert out[0].start_s == slots[0].start_s
+    assert out[0].end_s == out[1].start_s == round(words[k]["start_s"] + 0.3, 3) > slots[1].start_s
+    assert tighten_countdown(slots, beats, alignment)[1].start_s == slots[1].start_s  # tanpa voice: tetap
 
 
 def test_countdown_box_untouched_when_already_short():

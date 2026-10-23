@@ -24,7 +24,7 @@ class Settings:
     elevenlabs_model: str = "eleven_v3"
     # 1.0 = "Robust": nada antar kalimat konsisten. Default voice bikin tiap beat kedengeran ganti konteks (D-036).
     elevenlabs_stability: float = 1.0
-    video_speed: float = 1.2  # hasil render dipercepat (gambar + suara, nada tetap); 1.0 = normal (D-038)
+    video_speed: float = 1.1  # hasil render dipercepat (gambar + suara, nada tetap); 1.0 = normal (D-039, dulu 1,2)
     target_duration_ratio: float = 0.8
     min_duration_seconds: float = 32.0
     max_shot_seconds: float = 4.0
