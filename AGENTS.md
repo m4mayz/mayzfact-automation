@@ -15,7 +15,7 @@ Peran agent di sini:
 - **Operator:** jalanin CLI, berhenti di checkpoint yang butuh Akmal, ngecek hasilnya.
 - **Developer:** benerin bug dan nambah fitur.
 
-Naskah, keyword klip, tanda emoji/panah, dan BGM ditulis **agent** ke `runs/<id>/script.json`, dicek pakai `mayzfact check-script`, dan harus di-review Akmal sebelum suara dibikin. Nggak ada LLM eksternal di pipeline. Aturan nulis naskahnya ada di skill `bikin-short` langkah 2.
+Naskah, keyword klip, dan tanda emoji/panah ditulis **agent** ke `runs/<id>/script.json`, dicek pakai `mayzfact check-script`, dan harus di-review Akmal sebelum suara dibikin. Nggak ada LLM eksternal di pipeline. Aturan nulis naskahnya ada di skill `bikin-short` langkah 2.
 
 ## Bikin video
 
@@ -28,7 +28,7 @@ Ikutin skill `.agents/skills/bikin-short/SKILL.md`. Codex, OpenCode, dan Antigra
 | `mayzfact/` | package Python: CLI `mayzfact`, step pipeline di `steps/`, aturan naskah di `steps/script.py` |
 | `remotion/` | komponen video (React + Remotion 4) |
 | `runs/<id>/` | hasil per video (di-gitignore) |
-| `assets/bgm/<mood>.mp3` | BGM dari Akmal. Mood: mystery, suspense, dark, epic, space, tech, nature, playful, funny, inspiring, sad, energetic |
+| `assets/bgm/` | 2 BGM dari Akmal: `mystery.mp3` di hook, `main.mp3` mulai "Number" pertama (D-038) |
 | `assets/sfx/sfx.json` | momen → nama file SFX myinstants. File mp3-nya ke-download otomatis |
 | `assets/emoji/`, `models/` | cache yang ke-download otomatis: Lottie Noto, model SigLIP + OWLv2 (±1,4 GB) |
 | `docs/DECISIONS.md` | keputusan project (D-001, D-002, …) |
@@ -37,12 +37,13 @@ Ikutin skill `.agents/skills/bikin-short/SKILL.md`. Codex, OpenCode, dan Antigra
 
 File penting di `runs/<id>/`:
 
-- `script.json`: naskah per beat (ditulis agent), termasuk `queries`/`queries_zh`, tanda `point`/`emoji`/`emoji_word`, `bgm`, dan `hook_queries`.
+- `script.json`: naskah per beat (ditulis agent), termasuk `queries`/`queries_zh`, tanda `point`/`emoji`/`emoji_word`, dan `hook_queries`.
 - `voice.mp3` + `tts.json`: suara. **Dibikin pakai kredit ElevenLabs, jangan dihapus.**
 - `links.json`: link klip per shot dari halaman brief (plus start/end detik kalau diisi).
 - `clips.json`: klip per shot, termasuk sumbernya (`provider`, `page_url`, `author`).
 - `timeline.json`: props buat Remotion.
 - `overlays.json`: cache deteksi subjek.
+- `textblur.json`: cache kotak blur teks per klip.
 - `final.mp4`: hasil render.
 - `upload.json`: metadata YouTube yang ditulis agent.
 - `tiktok.json`: caption + cover + label AI buat TikTok. Akmal upload ke TikTok manual.

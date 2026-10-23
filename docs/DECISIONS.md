@@ -410,3 +410,19 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Keputusan:** Setelah Akmal oke preview (D-035), agent langsung upload ke slot kosong berikutnya (`mayzfact next-slot`), terus ngabarin jam tayang + link. Ini gantiin checkpoint "konfirmasi jam" di D-035 dan langkah 10 skill `bikin-short`. Kalau Akmal nyebut jam sendiri, pakai jam itu. `--now` tetap cuma kalau Akmal minta.
 - **Konsekuensi:** Upload nggak bisa ditarik, jadi oke Akmal di preview jadi satu-satunya checkpoint sebelum upload.
 - **Authority:** Akmal (chat 2026-10-20: "gausah nunggu konfirmasi dari gua lain kali, upload dan kasih tau aja jam berapa lu jadwalin").
+
+## D-038 — 2026-10-23 — Polish edit: SFX per transisi, 2 BGM, blur teks, 1,2x, api di kartu
+
+- **Status:** accepted.
+- **Konteks:** Akmal review salinan run `NSua7RPoFJg` di Studio dan minta edit-nya lebih mirip source `i2xag_1OJfM`.
+- **Keputusan:**
+  1. **SFX transisi.** Di dalam hook, ganti klip = `camera-flash-sound-effect.mp3` + whip ala source (blur horizontal, terus putih + blur vertikal, 3 frame). Setelah hook, ganti klip = klik `mouse-click-by-ek6_VR0O6PL.mp3` + 1 SFX `extra_*` acak (oof, alert, rizz, fart, punch), termasuk kemungkinan nggak ada. Klip pertama habis kartu dapet `magic-reveal-audio.mp3` + efek pembuka, bukan klik. Shot berurutan dari link yang sama (`page_url`) nggak dapet transisi.
+  2. **SFX kartu.** Angka: `fire-whoosh-transition-sound-effect-yleggs.mp3` (mulai 9 frame sebelum angka). Box foto subjek: `check-mark_oPG7Xo5.mp3`.
+  3. **BGM cuma 2.** `mystery.mp3` dari awal sampai "Number" pertama, `main.mp3` sesudahnya. Riser `riser-reveal-sound-effect_aOQs8d9.mp3` selesai pas angka pertama (pakai panjang bagian yang kedengeran). Field `bgm` di naskah nggak dipakai lagi.
+  4. **Blur teks.** RapidOCR baca 3 frame sampel per klip (1 buat foto). Teks yang yakin kebaca (skor ≥ 0,8, bentuk baris, ≥ 2 huruf) ditutup kotak blur. Cache di `textblur.json`. Gagal = klip itu tanpa blur, run tetap jalan.
+  5. **Video 1,2x.** Remotion render normal, terus ffmpeg mempercepat gambar + suara (`atempo`, nada tetap). Setting: `Settings.video_speed`.
+  6. **Kartu angka.** Angka muncul bareng kartu, masuk dari 2,5x ke 1x dalam 4 frame. Di belakang angka ada ledakan api biru (VFX blackscreen "Blue Fire Powers Pack", `youtube.com/watch?v=Q46O_LHNDns` detik 64,8–65,45, diputer portrait, blend `screen`). 10 frame pertama kecepatan normal biar barengan puncak SFX, sisanya slow-mo sampai box foto masuk.
+  7. **Box foto subjek.** Dibuka pas nama subjek disebut, ditutup `max(akhir nama + 0,1, awal nama + 0,5)` detik, maksimal awal nama + 0,9. Masuk 3 frame (2,4x ke 1x + blur), keluar 4 frame (makin terang + blur vertikal). Api yang sama di belakang box, mulai dari cincinnya, tanpa pudar.
+  8. Remotion naik ke 4.0.538, video pakai `Video` dari `@remotion/media`.
+- **Konsekuensi:** Durasi final jadi ±83% dari durasi sebelum dipercepat. SFX dan BGM tetap dipilih Akmal; file yang nggak kepake (`whoosh-clean.mp3`) dihapus.
+- **Authority:** Akmal (chat 2026-10-22 s/d 2026-10-23, review di Studio dan preview; "udah oke, tolong cleanup, merge dan push").

@@ -62,7 +62,6 @@ Contoh: "Number four, Scottish Fold." / "Ears fold forward and down," / "for an 
     {"text": "Number five, mantis shrimp.", "media": "video", "queries": ["mantis shrimp close up underwater"],
      "queries_zh": ["螳螂虾 特写"], "subject": "mantis shrimp", "point": false, "emoji": "", "emoji_word": ""}
   ],
-  "bgm": "mystery.mp3",
   "hook_queries": {"0": {"en": ["giant bird on radio tower"], "zh": ["巨鸟 铁塔"]}}
 }
 ```
@@ -71,7 +70,6 @@ Contoh: "Number four, Scottish Fold." / "Ears fold forward and down," / "for an 
 - `media`: "photo" buat 15–45% beat (close-up subjek), beat pertama selalu "video". `subject`: 1–3 kata benda yang **kelihatan di gambar**, dipakai deteksi subjek buat posisi panah (misal "goat", bukan "goat milk"; "turtle", bukan "drowning reptiles"). "" buat intro/CTA.
 - `point`: true kalau beat ngajak lihat sesuatu atau subjeknya baru muncul di layar; agent yang nentuin, nggak ada kuota. Jangan di beat countdown/teaser.
 - `emoji`: dari daftar di `mayzfact/emoji.py` (`EMOJI`), kira-kira 1 dari 3 beat, nggak 2 beat berturut-turut, nggak di beat countdown. `emoji_word`: kata di beat itu tempat emoji muncul.
-- `bgm`: nama file di `assets/bgm/` yang mood-nya cocok (lihat `ls assets/bgm`). "" kalau nggak ada yang cocok.
 - `hook_queries`: lihat frame `runs/<id>/plan/seg_*.jpg` (index segmen = angka di nama file minus 1), tulis keyword Inggris + Mandarin buat nyari klip yang mirip. `{}` kalau frame belum ada.
 
 Contoh beat yang bagus (source: "This tiny marine predator can throw one of the fastest strikes in the animal kingdom, creating a shockwave powerful enough to stun its prey. Bro, that's basically a living underwater punch machine."):
@@ -90,7 +88,7 @@ Perbaiki sampai keluar `OK`. Kalau cek jumlah kata gagal, tambah/kurangi beat, j
 
 ## 3. Checkpoint: Akmal review naskah
 
-Tunjukin ke Akmal di chat, per beat: teks baru | kalimat source yang jadi dasarnya | keyword. Sebutin juga BGM yang dipilih. Tunggu "oke" atau koreksi. Edit sesuai koreksi, cek lagi, tunjukin lagi. **Jangan lanjut ke langkah 4 sebelum Akmal oke** (langkah 4 bikin suara, pakai kredit ElevenLabs).
+Tunjukin ke Akmal di chat, per beat: teks baru | kalimat source yang jadi dasarnya | keyword. Tunggu "oke" atau koreksi. Edit sesuai koreksi, cek lagi, tunjukin lagi. **Jangan lanjut ke langkah 4 sebelum Akmal oke** (langkah 4 bikin suara, pakai kredit ElevenLabs).
 
 ## 4. Suara dan plan
 

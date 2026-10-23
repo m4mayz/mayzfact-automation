@@ -23,5 +23,5 @@ class HookQuery(BaseModel):
 
 class Script(BaseModel):
     beats: list[Beat]
-    bgm: str = ""  # nama file di assets/bgm, dipilih agent; "" = tanpa BGM
+    bgm: str = ""  # sisa lama, nggak dipakai: BGM selalu mystery.mp3 (hook) + main.mp3 (D-038)
     hook_queries: dict[str, HookQuery] = {}  # per index segmen hook (plan/seg_XX), ditulis agent

@@ -505,3 +505,22 @@
 
 1. Sisa auto di disk tinggal `runs/i2xag_1OJfM/hook/` (11 MB) + `hook.json`; nggak dibaca kode lagi. `browser-profiles/` dan `cache/search|thumbs|media` udah nggak ada. Akmal yang mutusin hapus.
 2. Sebelum 2026-12-31 voice Liam dimatiin ElevenLabs (D-009): ganti `elevenlabs_voice_id` di `mayzfact/config.py`, bukan di `.env`.
+
+---
+
+# Handoff — Polish edit (D-038)
+
+- **Updated:** 2026-10-23, Claude Code
+- **Goal & scope:** D-038. Di-review Akmal lewat salinan run `NSua7RPoFJg` (Studio + preview), branch `fase-polish`.
+
+## Selesai
+
+- SFX transisi per jenis klip, 2 BGM + riser, blur teks RapidOCR, render 1,2x, box subjek ngikutin source, whip di hook, api biru di kartu angka + box foto.
+- Remotion 4.0.538, `@remotion/media`.
+- `assets/sfx/whoosh-clean.mp3` dihapus (nggak dipakai `sfx.json` lagi).
+
+## Masalah terbuka
+
+1. Run lama belum dicoba di-render ulang pakai komponen baru. Kalau perlu, jalanin `--from timeline` dulu biar SFX/BGM/blur-nya ikut aturan baru.
+2. Ujung api di box foto agak terang di 2–3 frame terakhir (klip VFX-nya jadi putih), barengan efek keluar box. Akmal udah oke.
+3. Sisa minor dari hapus-auto: default `retry_step` "hook", label error "[hook]", help `--port`, HANDOFF baris 140.

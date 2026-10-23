@@ -72,7 +72,7 @@ Studio cuma baca `--props` pas start. Kalau `timeline.json` berubah, restart Stu
 
 ## Aset
 
-- `assets/bgm/<mood>.mp3`: BGM disiapin sendiri, nggak ikut di-commit. Agent milih file yang mood-nya cocok pas nulis naskah (field `bgm`). Mood: mystery, suspense, dark, epic, space, tech, nature, playful, funny, inspiring, sad, energetic.
+- `assets/bgm/`: 2 BGM dari Akmal, ikut di-commit. `mystery.mp3` di hook, `main.mp3` mulai "Number" pertama sampai akhir.
 - `assets/sfx/sfx.json`: momen → nama file di myinstants. File mp3-nya ke-download otomatis.
 - `assets/emoji/` (Lottie Noto) dan `models/` (SigLIP + OWLv2, ±1,4 GB) ke-download otomatis pas pertama kali dipakai.
 

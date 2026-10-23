@@ -36,7 +36,7 @@ FLASH_FRAMES = 3  # flash putih di pergantian klip hook (barengan camera flash)
 EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_oof, extra_punch, ...)
 EXTRA_VOLUME = 0.6
 BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)
-SFX_LEAD_FRAMES = 3  # whoosh mulai sedikit sebelum gambar ganti (puncak whoosh-clean di ±0.1 detik)
+SFX_LEAD_FRAMES = 3  # SFX transisi mulai sedikit sebelum gambar ganti (puncaknya di ±0.1 detik)
 # Pembuka = bagian "masuk" transisi antar scene di source i2xag: scene muncul hampir putih + blur vertikal,
 # cepat tajam, terangnya pudar ke normal. Barengan SFX hook.
 INTRO_FRAMES = 7
