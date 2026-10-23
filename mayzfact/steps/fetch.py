@@ -11,7 +11,7 @@ import numpy as np
 from mayzfact.embed import Encoder, mean_unit
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.ffmpeg import normalize_video, probe, sample_frames
-from mayzfact.manual.links import link_kind, load_links, missing_groups, missing_shots
+from mayzfact.manual.links import link_kind, load_links, missing_groups, missing_shots, same_clip
 from mayzfact.manual.obtain import cache_key, media_kind
 from mayzfact.media import downscale_factor
 from mayzfact.photo import normalize_photo
@@ -76,13 +76,6 @@ def _target(shot: dict, paths: RunPaths, encoder: Encoder) -> tuple[np.ndarray, 
         return mean_unit(encoder.texts(kws)), LOW_TEXT_SCORE
     text = shot.get("subject") or shot.get("text") or "nature"
     return encoder.texts([text])[0], LOW_TEXT_SCORE
-
-
-def _same_clip(a: dict, b: dict) -> bool:
-    """Link + pilihan item sama; detik mulai/selesai nggak dihitung."""
-    def strip(e: dict) -> dict:
-        return {k: v for k, v in e.items() if k not in ("start_s", "end_s")}
-    return strip(a) == strip(b)
 
 
 def _window_start(center: float, duration: float, total: float) -> float:
@@ -322,8 +315,11 @@ def run_fetch(
                     continue
 
                 if gid == "hook" and len(g_shots) > 1:
+                    def clip_of(entry: dict | None) -> dict:  # SFX kustom bukan bagian dari klipnya
+                        return {k: v for k, v in (entry or {}).items() if k != "sfx"}
+
                     first_entry = shots_data[str(g_shots[0]["index"])]
-                    if all(shots_data.get(str(s["index"])) == first_entry for s in g_shots):
+                    if all(clip_of(shots_data.get(str(s["index"]))) == clip_of(first_entry) for s in g_shots):
                         try:
                             srcs = _sources(first_entry, get_files(first_entry), paths, encoder)
                             if len(srcs) == 1 and srcs[0].kind == "video":
@@ -366,7 +362,7 @@ def run_fetch(
                             chosen = (v_source, 1.0, clamped)
                         # Jika shot ini pakai entry video yang persis sama dengan shot sebelumnya di grup ini
                         # Link sama kayak shot sebelumnya (detik mulai cuma di shot pertama): lanjut nyambung
-                        elif (prev_entry and entry.get("url") and _same_clip(prev_entry, entry) and prev_source
+                        elif (prev_entry and entry.get("url") and same_clip(prev_entry, entry) and prev_source
                               and prev_source.kind == "video"):
                             cont_start = prev_end_time
                             cont_end = cont_start + duration + TAIL_S

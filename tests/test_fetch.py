@@ -404,3 +404,22 @@ def test_normalize_local_clamps_offset_and_rejects_short_video(tmp_path, make_vi
     assert abs(probe(paths.root / out["file"], "clips")["duration_s"] - 2.2) < 0.1
     with pytest.raises(PipelineError, match="cuma"):
         normalize_local(0, 0.0, 3.0, make_video(1080, 1920, 1.0), "video", 0.0, paths, 0.5)
+
+
+def test_custom_sfx_does_not_break_continuous_clips(tmp_path, cut_video):
+    """SFX kustom di entry bukan alasan klip putus: hook tetap 1 video nyambung, link sama tetap lanjut."""
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["shots"][2:] = [{**plan["shots"][2], "start_s": 0.6, "end_s": 1.0, "media": "video"},
+                         {**plan["shots"][3], "start_s": 1.0, "end_s": 1.4, "media": "video"}]
+    sfx = {"file": "uy.mp3", "at_s": 0.1}
+    save_links(paths.links_json, {"shots": {
+        "0": {"url": "https://www.douyin.com/video/1"},
+        "1": {"url": "https://www.douyin.com/video/1", "sfx": sfx},
+        "2": {"url": "https://a.b/video", "start_s": 0.5},
+        "3": {"url": "https://a.b/video", "sfx": sfx},
+    }})
+    data = run_fetch(paths, plan, obtain=lambda e, r: [cut_video], encoder=FakeEncoder(), **QUIET)
+    hook, s2, s3 = data["shots"]
+    assert (hook["start_s"], hook["end_s"]) == (0.0, 0.6)
+    assert abs(s3["source_s"] - (s2["source_s"] + plan["shots"][2]["end_s"] - plan["shots"][2]["start_s"])) < 1e-3

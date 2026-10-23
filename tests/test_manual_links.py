@@ -150,3 +150,62 @@ def test_lines_of_formats_timestamps():
     )
     assert lines_of(entries) == expected
 
+
+
+SFX_PLAN = {"shots": [{"index": 0, "start_s": 0.0, "end_s": 2.0}, {"index": 1, "start_s": 2.0, "end_s": 3.5},
+                      {"index": 2, "start_s": 3.5, "end_s": 5.0}, {"index": 3, "start_s": 5.0, "end_s": 6.0},
+                      {"index": 4, "start_s": 6.0, "end_s": 8.0}]}
+
+
+def test_attach_sfx_validates_name_and_time():
+    from mayzfact.manual.links import attach_sfx
+    data = normalize_links({"shots": {"0": "https://a.b/v", "1": "https://a.b/w"}}, shot_count=5)
+    attach_sfx(data, {"0": {"file": "uy.mp3", "at_s": 1.234}, "1": None, "3": {"file": "uy.mp3", "at_s": 0}},
+               {"uy.mp3", "gasp.mp3"}, SFX_PLAN)
+    assert data["shots"]["0"]["sfx"] == {"file": "uy.mp3", "at_s": 1.23}
+    assert "sfx" not in data["shots"]["1"] and "3" not in data["shots"]  # shot tanpa link: SFX-nya dibuang
+    with pytest.raises(ValueError, match="shot 1: SFX ../x.mp3"):
+        attach_sfx(data, {"0": {"file": "../x.mp3", "at_s": 0}}, {"uy.mp3"}, SFX_PLAN)
+    with pytest.raises(ValueError, match="shot 2: detik SFX"):
+        attach_sfx(data, {"1": {"file": "uy.mp3", "at_s": 1.6}}, {"uy.mp3"}, SFX_PLAN)  # shot 2 cuma 1,5 detik
+    with pytest.raises(ValueError, match="shot 1: detik SFX"):
+        attach_sfx(data, {"0": {"file": "uy.mp3", "at_s": -0.1}}, {"uy.mp3"}, SFX_PLAN)
+
+
+def test_normalize_links_drops_unchecked_sfx_from_raw_entries():
+    res = normalize_links({"shots": {"0": {"url": "https://a.b/v", "sfx": {"file": "../../.env", "at_s": 0}}}}, shot_count=5)
+    assert res == {"shots": {"0": {"url": "https://a.b/v"}}}
+
+
+def test_custom_sfx_events_use_absolute_time():
+    from mayzfact.manual.links import custom_sfx_events
+    links = {"shots": {"2": {"url": "https://a.b/v", "sfx": {"file": "gasp.mp3", "at_s": 0.5}},
+                       "0": {"url": "https://a.b/w", "sfx": {"file": "uy.mp3", "at_s": 1.0}},
+                       "1": {"url": "https://a.b/x"}}}
+    assert custom_sfx_events(SFX_PLAN, links) == [{"file": "uy.mp3", "at_s": 1.0}, {"file": "gasp.mp3", "at_s": 4.0}]
+    assert custom_sfx_events(SFX_PLAN, {"groups": {}}) == []
+
+
+def test_same_clip_ignores_time_and_sfx():
+    from mayzfact.manual.links import same_clip
+    assert same_clip({"url": "u", "start_s": 3}, {"url": "u", "sfx": {"file": "uy.mp3", "at_s": 0}})
+    assert not same_clip({"url": "u", "pick": 1}, {"url": "u", "pick": 2})
+
+
+def test_preview_starts_follow_fetch_rules():
+    from mayzfact.manual.links import preview_starts
+    links = {"shots": {
+        "0": {"url": "https://a.b/hook"},                        # fetch udah jalan: source_s dari clips.json
+        "1": {"url": "https://a.b/v", "start_s": 4.0},           # Mulai diisi
+        "2": {"url": "https://a.b/v", "sfx": {"file": "uy.mp3", "at_s": 0}},  # link sama: lanjut dari shot 1
+        "3": {"url": "https://a.b/baru"},                        # belum pernah di-fetch: otomatis
+        "4": {"url": "https://a.b/ganti"},                       # clips.json masih link lama: otomatis
+    }}
+    clips = {"shots": [{"index": 0, "start_s": 0.0, "end_s": 2.0, "page_url": "https://a.b/hook", "source_s": 7.5},
+                       {"index": 4, "start_s": 6.0, "end_s": 8.0, "page_url": "https://a.b/lama", "source_s": 1.0}]}
+    assert preview_starts(SFX_PLAN, links, clips) == {0: 7.5, 1: 4.0, 2: 5.5, 3: None, 4: None}
+    # hook 1 video nyambung: 1 klip buat beberapa shot, shot berikutnya geser dari source_s
+    hook = {"shots": {"0": {"url": "https://a.b/hook"}, "1": {"url": "https://a.b/hook"}}}
+    long_clip = {"shots": [{"index": 0, "start_s": 0.0, "end_s": 3.5, "page_url": "https://a.b/hook", "source_s": 10.0}]}
+    assert preview_starts(SFX_PLAN, hook, long_clip) == {0: 10.0, 1: 12.0}
+    assert preview_starts(SFX_PLAN, {"shots": {"1": {"file": "manual/shot_2.mp4"}}}, None) == {1: None}

@@ -151,7 +151,7 @@ def normalize_links(raw: dict, group_ids: list[str] | None = None, shot_count: i
                     continue
                 entry = _entry(line, f"shot {idx + 1}")
             elif isinstance(value, dict):
-                entry = value
+                entry = {k: v for k, v in value.items() if k != "sfx"}  # SFX cuma lewat attach_sfx (dicek dulu)
             else:
                 continue
             shots[str(idx)] = entry
@@ -167,6 +167,72 @@ def normalize_links(raw: dict, group_ids: list[str] | None = None, shot_count: i
         if entries:
             groups[gid] = entries
     return {"groups": groups}
+
+
+def attach_sfx(data: dict, raw_sfx: dict | None, names: set[str], plan: dict) -> None:
+    """SFX kustom dari brief {idx: {"file", "at_s"} | None} → entry["sfx"]. Shot tanpa link: SFX-nya dibuang."""
+    durations = {s["index"]: s["end_s"] - s["start_s"] for s in plan.get("shots", [])}
+    for key, value in (raw_sfx or {}).items():
+        entry = data.get("shots", {}).get(str(key))
+        if not value or entry is None:
+            continue
+        idx = int(key)
+        file, at_s = value.get("file"), float(value.get("at_s") or 0)
+        if file not in names:
+            raise ValueError(f"shot {idx + 1}: SFX {file} nggak ada di assets/sfx")
+        if not 0 <= at_s <= durations.get(idx, 0) + 0.05:
+            raise ValueError(f"shot {idx + 1}: detik SFX harus 0-{durations.get(idx, 0):.1f}")
+        entry["sfx"] = {"file": file, "at_s": round(at_s, 2)}
+
+
+def custom_sfx_events(plan: dict, links: dict) -> list[dict]:
+    """SFX kustom per shot → [{"file", "at_s"}] dengan detik dari awal video (awal shot + detik di shot)."""
+    starts = {s["index"]: s["start_s"] for s in plan.get("shots", [])}
+    out = []
+    for key, entry in links.get("shots", {}).items():
+        sfx = entry.get("sfx") if isinstance(entry, dict) else None
+        if sfx and int(key) in starts:
+            out.append({"file": sfx["file"], "at_s": round(starts[int(key)] + float(sfx["at_s"]), 3)})
+    return sorted(out, key=lambda e: e["at_s"])
+
+
+def same_clip(a: dict, b: dict) -> bool:
+    """Link + pilihan item sama; detik mulai/selesai dan SFX nggak dihitung."""
+    def strip(e: dict) -> dict:
+        return {k: v for k, v in e.items() if k not in ("start_s", "end_s", "sfx")}
+    return strip(a) == strip(b)
+
+
+def preview_starts(plan: dict, links: dict, clips: dict | None) -> dict[int, float | None]:
+    """Detik mulai bagian video yang bakal jadi klip per shot (preview brief). None = dipilih otomatis pas fetch.
+
+    Urutannya sama kayak fetch: kolom Mulai, lanjutan link yang sama dari shot sebelumnya, terus hasil fetch terakhir
+    (clips.json) kalau link-nya masih sama. Clamp ke panjang video dikerjain di browser (durasinya baru ketahuan di situ).
+    """
+    entries = links.get("shots", {})
+    done = (clips or {}).get("shots", [])
+    out: dict[int, float | None] = {}
+    prev: tuple[dict, float | None, float] | None = None
+    for shot in sorted(plan.get("shots", []), key=lambda s: s["index"]):
+        entry = entries.get(str(shot["index"]))
+        if not isinstance(entry, dict):
+            prev = None
+            continue
+        start = None
+        if entry.get("start_s") is not None:
+            start = float(entry["start_s"])
+        elif prev and prev[1] is not None and entry.get("url") and same_clip(prev[0], entry):
+            start = round(prev[1] + prev[2], 2)
+        else:
+            page = entry.get("url") or entry.get("file")
+            for clip in done:
+                if (clip.get("page_url") == page and clip.get("source_s") is not None
+                        and clip["start_s"] - 1e-6 <= shot["start_s"] < clip["end_s"] - 1e-6):
+                    start = round(clip["source_s"] + shot["start_s"] - clip["start_s"], 2)
+                    break
+        out[shot["index"]] = start
+        prev = (entry, start, shot["end_s"] - shot["start_s"])
+    return out
 
 
 def missing_groups(plan: dict, links: dict) -> list[str]:
