@@ -11,7 +11,13 @@ import numpy as np
 from mayzfact.embed import Encoder, mean_unit
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.ffmpeg import normalize_video, probe, sample_frames
-from mayzfact.manual.links import link_kind, load_links, missing_groups, missing_shots, same_clip
+from mayzfact.manual.links import (
+    link_kind,
+    load_links,
+    missing_groups,
+    missing_shots,
+    same_clip,
+)
 from mayzfact.manual.obtain import cache_key, media_kind
 from mayzfact.media import downscale_factor
 from mayzfact.photo import normalize_photo
