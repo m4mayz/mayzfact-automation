@@ -51,9 +51,10 @@ def beat_subjects(beats: list[dict]) -> list[str | None]:
     return out
 
 
-BOX_TAIL_S = 0.1  # box subjek ditutup segini setelah nama subjek selesai diucapin (source i2xag)
-BOX_MIN_S = 0.5  # nama subjek pendek: box tetap tampil minimal segini
-BOX_MAX_S = 0.9  # suara kita lebih lambat dari source (box source 0,5-0,8 dtk); nama panjang dipotong di sini
+BOX_TAIL_S = 0.6  # box subjek ditutup segini setelah nama subjek selesai diucapin (source i2xag 0,1; Akmal minta +0,5)
+BOX_MIN_S = 1.0  # nama subjek pendek: box tetap tampil minimal segini
+BOX_MAX_S = 1.4  # nama panjang dipotong di sini
+NEXT_MIN_S = 1.0  # shot beat berikutnya jangan jadi lebih pendek dari ini gara-gara box dipanjangin
 
 
 def tighten_countdown(slots: list[ShotSlot], beats: list[dict], alignment: dict) -> list[ShotSlot]:
@@ -80,7 +81,8 @@ def tighten_countdown(slots: list[ShotSlot], beats: list[dict], alignment: dict)
             continue
         name_start = words[number_word + 1]["start_s"]
         end = round(min(max(words[last_word]["end_s"] + BOX_TAIL_S, name_start + BOX_MIN_S), name_start + BOX_MAX_S), 3)
-        if slot.start_s < end < slot.end_s - 0.05:
+        # box bisa lewat ujung beat countdown (masuk ke awal beat berikutnya), asal shot berikutnya masih cukup panjang
+        if slot.start_s < end < nxt.end_s - NEXT_MIN_S and abs(end - slot.end_s) >= 0.05:
             out[i] = replace(slot, end_s=end)
             out[i + 1] = replace(nxt, start_s=end)
     return out

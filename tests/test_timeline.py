@@ -77,6 +77,13 @@ def test_card_ends_where_next_clip_starts_when_plan_shortened_the_box():
     assert card["cardFrom"] + card["cardDuration"] == 135  # 4,5 detik, bukan ujung beat (156)
 
 
+def test_card_runs_until_next_beat_clip_when_plan_lengthened_the_box():
+    late = {"shots": [{**CD_CLIPS["shots"][0], "beat": 0}, {**CD_CLIPS["shots"][1], "beat": 1},
+                      {**shot("clips/shot_03.jpg", "photo", 5.6, 1080, 1920), "beat": 2}]}
+    card = build_timeline(late, 6.5, 0.5, script=SCRIPT, alignment=ALIGN)["countdown"][0]
+    assert card["cardFrom"] + card["cardDuration"] == 168  # 5,6 detik, lewat ujung beat countdown (156)
+
+
 def test_text_blurs_follow_layout_on_shots_and_cards():
     from mayzfact.overlay import screen_box
 
@@ -178,6 +185,24 @@ def test_hook_clip_changes_get_camera_flash_and_white_flash():
     assert [(x["from"], x["src"]) for x in t["sfx"]] == [(27, "audio/sfx/flash.mp3"), (57, "audio/sfx/flash.mp3"),
                                                           (87, "audio/sfx/click.mp3")]
     assert t["flashes"] == [{"from": 30, "durationInFrames": 3}, {"from": 60, "durationInFrames": 3}]
+
+
+def test_hook_cut_adds_one_random_hook_extra_at_low_volume():
+    clips = {"shots": [{**shot("clips/h1.mp4", "video", 0.0, 1080, 1920), "hook_segment": 0},
+                       {**shot("clips/h2.mp4", "video", 1.0, 1080, 1920), "hook_segment": 1},
+                       {**shot("clips/h3.mp4", "video", 2.0, 1080, 1920), "hook_segment": 2},
+                       shot("clips/a.mp4", "video", 3.0, 1080, 1920)]}
+    audio = {"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3", "hook_cut": "audio/sfx/flash.mp3",
+                                  "hook_extra_uy": "audio/sfx/uy.mp3", "hook_extra_gasp": "audio/sfx/gasp.mp3"}}
+    t = build_timeline(clips, 4.0, 0.5, audio=audio)
+    extra = {"audio/sfx/uy.mp3", "audio/sfx/gasp.mp3"}
+    # tiap ganti klip di hook: camera flash + persis 1 SFX tambahan hook (volume 0,3); habis hook nggak ada
+    for frame in (27, 57):
+        at = [x for x in t["sfx"] if x["from"] == frame]
+        assert [x["src"] for x in at if x["src"] == "audio/sfx/flash.mp3"] == ["audio/sfx/flash.mp3"]
+        picked = [x for x in at if x["src"] in extra]
+        assert len(picked) == 1 and picked[0]["volume"] == 0.3
+    assert not [x for x in t["sfx"] if x["from"] >= 87 and x["src"] in extra]
 
 
 def test_no_transition_between_shots_from_the_same_clip():

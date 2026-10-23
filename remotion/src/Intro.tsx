@@ -38,8 +38,8 @@ export const IntroWhip: React.FC<{
     } else if (incoming) {
       const k = now - incoming.from;
       blurY = k === 0 ? 50 : 22;
-      white = k === 0 ? 0.75 : 0.3;
-      brightness = k === 0 ? 1.8 : 1.3;
+      white = k === 0 ? 0.4 : 0.15; // dulu 0.75/0.3, kata Akmal kelewat putih
+      brightness = k === 0 ? 1.4 : 1.15; // dulu 1.8/1.3
       scale = k === 0 ? 1.08 : 1.03;
     }
   }

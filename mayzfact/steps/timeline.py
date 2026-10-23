@@ -31,10 +31,12 @@ CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 LONG_WORD = 6
 SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.6, "overlay": 0.35, "emoji": 0.6, "click": 0.8,
-              "item_reveal": 0.7, "riser": 1.0, "hook_cut": 0.8}
+              "item_reveal": 0.7, "riser": 1.0, "hook_cut": 0.45}
 FLASH_FRAMES = 3  # flash putih di pergantian klip hook (barengan camera flash)
 EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_oof, extra_punch, ...)
 EXTRA_VOLUME = 0.6
+HOOK_EXTRA_PREFIX = "hook_extra_"  # 1 SFX acak tambahan tiap ganti klip di hook, barengan camera flash (sfx.json)
+HOOK_EXTRA_VOLUME = 0.3  # kata Akmal (awalnya 0,4)
 BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)
 SFX_LEAD_FRAMES = 3  # SFX transisi mulai sedikit sebelum gambar ganti (puncaknya di ±0.1 detik)
 # Pembuka = bagian "masuk" transisi antar scene di source i2xag: scene muncul hampir putih + blur vertikal,
@@ -116,8 +118,10 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
             card_from = to_frame(words[after]["start_s"])
         else:
             card_from = to_frame(float(ends[offset + countdown.number_end]))
-        # plan bisa motong box subjek lebih pendek: shot beat berikutnya mulai di tengah beat countdown
-        card_end = min([card_end] + [f for f in beat_starts if card_from < f < card_end])
+        # plan bisa motong / manjangin box subjek: card habis pas shot beat berikutnya mulai
+        next_start = min((f for f in beat_starts if f > card_from), default=None)
+        if next_start is not None:
+            card_end = min(next_start, total)
         card_from = min(max(card_from, number_from + number_at + 1), card_end - 1)
         shot = next(e for e in reversed(entries) if e["from"] <= card_from)
         clip_frames = shot["durationInFrames"] + TAIL_FRAMES
@@ -167,7 +171,8 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
 
     def add(event: str, frame: int) -> None:
         if event in files:
-            volume = EXTRA_VOLUME if event.startswith(EXTRA_PREFIX) else SFX_VOLUME[event]
+            volume = (HOOK_EXTRA_VOLUME if event.startswith(HOOK_EXTRA_PREFIX)
+                      else EXTRA_VOLUME if event.startswith(EXTRA_PREFIX) else SFX_VOLUME[event])
             sfx.append({"src": files[event], "from": max(0, frame), "volume": volume})
 
     # BGM hook sampai "Number" pertama, terus BGM utama sampai akhir. Riser habis pas di titik ganti itu.
@@ -192,7 +197,9 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
     # Pergantian klip setelah hook (D-038): klip pertama habis card = magic reveal + efek pembuka (box subjek di card
     # bunyi "subject" = check mark), sisanya klik + 1 SFX tambahan acak (atau nggak ada). Seed tetap biar render ulang sama.
     extras = sorted(event for event in files if event.startswith(EXTRA_PREFIX))
+    hook_extras = sorted(event for event in files if event.startswith(HOOK_EXTRA_PREFIX))
     rng = random.Random(len(entries))
+    hook_rng = random.Random(len(entries) + 1)  # rng sendiri biar pilihan SFX setelah hook nggak ikut geser
     since_card = None  # urutan klip sejak card terakhir habis
     for entry in entries[1:]:
         covered = any(c["numberFrom"] <= entry["from"] < c["cardFrom"] + c["cardDuration"] for c in countdown)
@@ -203,9 +210,11 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
             since_card += 1
         if entry["from"] in same_clip and since_card != 1:  # klip yang sama lanjut: bukan transisi
             continue
-        if entry["from"] < hook_end:  # di dalam hook: camera flash + flash putih
+        if entry["from"] < hook_end:  # di dalam hook: camera flash + 1 SFX hook acak + flash putih
             if "hook_cut" in files:
                 add("hook_cut", entry["from"] - SFX_LEAD_FRAMES)
+                if hook_extras:
+                    add(hook_rng.choice(hook_extras), entry["from"] - SFX_LEAD_FRAMES)
                 flashes.append({"from": entry["from"], "durationInFrames": FLASH_FRAMES})
             continue
         frame = entry["from"] - SFX_LEAD_FRAMES

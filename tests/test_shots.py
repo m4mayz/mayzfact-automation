@@ -46,7 +46,7 @@ def test_countdown_box_ends_right_after_subject_name():
     slots = split_shots(beat_timings(texts, alignment, 4.0), beats, 10.0)
     out = tighten_countdown(slots, beats, alignment)
     assert out[0] == slots[0] and out[1].start_s == slots[1].start_s
-    assert out[1].end_s == out[2].start_s == round(name_end + 0.1, 3)
+    assert out[1].end_s == out[2].start_s == round(name_end + 0.6, 3)  # Akmal: box +0,5 dtk dari source (0,1)
     assert out[2].end_s == slots[2].end_s
 
 
@@ -61,7 +61,7 @@ def test_countdown_box_keeps_a_minimum_when_name_is_short():
     name_start = alignment["character_start_times_seconds"][full.index("ox.")]
     slots = split_shots(beat_timings(texts, alignment, 5.0), beats, 10.0)
     out = tighten_countdown(slots, beats, alignment)
-    assert out[1].end_s == out[2].start_s == round(name_start + 0.5, 3)  # box tetap minimal 0,5 detik
+    assert out[1].end_s == out[2].start_s == round(name_start + 1.0, 3)  # box tetap minimal 1 detik
 
 
 def test_countdown_box_capped_when_name_is_long():
@@ -73,10 +73,25 @@ def test_countdown_box_capped_when_name_is_long():
     name_start = alignment["character_start_times_seconds"][full.index("American")]
     slots = split_shots(beat_timings(texts, alignment, 10.0), beats, 10.0)
     out = tighten_countdown(slots, beats, alignment)
-    assert out[1].end_s == out[2].start_s == round(name_start + 0.9, 3)  # maksimal 0,9 detik (source 0,5-0,8)
+    assert out[1].end_s == out[2].start_s == round(name_start + 1.4, 3)  # maksimal 1,4 detik
+
+
+def test_countdown_box_runs_into_next_beat_when_name_ends_at_beat_end():
+    """Nama subjek habis pas beat countdown habis: box tetap +0,6 dtk, shot beat berikutnya mulai belakangan."""
+    beats = [{"text": "Look.", "media": "video"}, {"text": "Number five, crab.", "media": "photo"},
+             {"text": "It is old and very big and it lives in the sea.", "media": "video"}]
+    texts = [b["text"] for b in beats]
+    full = " ".join(texts)
+    alignment = fake_alignment(full, 6.0)
+    name_end = alignment["character_end_times_seconds"][full.index("crab.") + 4]
+    slots = split_shots(beat_timings(texts, alignment, 6.0), beats, 10.0)
+    out = tighten_countdown(slots, beats, alignment)
+    assert out[1].end_s == out[2].start_s == round(name_end + 0.6, 3) > slots[1].end_s
+    assert out[2].end_s == slots[2].end_s
 
 
 def test_countdown_box_untouched_when_already_short():
+    # shot berikutnya kependekan (< 1 dtk sisanya): box nggak dipanjangin
     beats = [{"text": "Number five, crab.", "media": "photo"}, {"text": "It is old.", "media": "video"}]
     texts = [b["text"] for b in beats]
     alignment = fake_alignment(" ".join(texts), 2.0)
