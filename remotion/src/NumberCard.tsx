@@ -10,7 +10,7 @@ const POP_FRAMES = 2;
 // Angka countdown chrome di background gelap berpartikel (gaya source i2xag).
 // Masuknya kayak source: angka langsung nongol (sedikit mengecil ke ukuran penuh, 2 frame) dengan ledakan api biru
 // numpuk di atasnya (FireBurst, VFX ledakan api biru), barengan SFX fire whoosh. Abis itu zoom
-// pelan. Apinya jalan terus sampai kartu box foto masuk.
+// pelan. Ledakannya ngikutin SFX, sisanya slow-mo sampai kartu box foto masuk.
 export const NumberCard: React.FC<{number: number; numberAt: number; durationInFrames: number}> = ({
   number,
   numberAt,
