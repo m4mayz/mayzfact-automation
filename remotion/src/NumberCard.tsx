@@ -5,12 +5,13 @@ import {FIRE_WHITE_AT, FireBurst} from './FireBurst';
 import {Particles} from './Particles';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
-const POP_FRAMES = 2;
+const POP_FRAMES = 4; // angka mendarat pas SFX fire whoosh mulai paling kenceng (frame 4 kartu)
+const POP_FROM = 2.5;
 
 // Angka countdown chrome di background gelap berpartikel (gaya source i2xag).
-// Masuknya kayak source: angka langsung nongol (sedikit mengecil ke ukuran penuh, 2 frame) dengan ledakan api biru
-// numpuk di atasnya (FireBurst, VFX ledakan api biru), barengan SFX fire whoosh. Abis itu zoom
-// pelan. Ledakannya ngikutin SFX, sisanya slow-mo sampai kartu box foto masuk.
+// Masuknya barengan SFX fire whoosh: angka nongol gede terus mengecil cepet ke ukuran penuh (2,5x ke 1x, 4 frame),
+// ledakan api biru numpuk di atasnya (FireBurst). Abis itu zoom pelan. Ledakannya ngikutin SFX, sisanya slow-mo
+// sampai kartu box foto masuk.
 export const NumberCard: React.FC<{number: number; numberAt: number; durationInFrames: number}> = ({
   number,
   numberAt,
@@ -18,7 +19,7 @@ export const NumberCard: React.FC<{number: number; numberAt: number; durationInF
 }) => {
   const frame = useCurrentFrame();
   const local = frame - numberAt;
-  const pop = interpolate(local, [0, POP_FRAMES], [0.88, 1], {...clamp, easing: Easing.out(Easing.cubic)});
+  const pop = interpolate(local, [0, POP_FRAMES], [POP_FROM, 1], {...clamp, easing: Easing.out(Easing.cubic)});
   const drift = interpolate(local, [POP_FRAMES, Math.max(POP_FRAMES + 1, durationInFrames - numberAt)], [1, 1.05], clamp);
   const glow = interpolate(local, [0, 6], [1, 0.35], clamp); // angka nyala biru pas api meledak
   const opacity = local < 0 ? 0 : 1;
