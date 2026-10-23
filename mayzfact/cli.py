@@ -156,6 +156,7 @@ def _upload(args: argparse.Namespace, settings: Settings) -> int:
 def _brief(args: argparse.Namespace, settings: Settings) -> int:
     import httpx
 
+    from mayzfact.audio import SFX_DIR
     from mayzfact.brief.prefetch import Prefetcher
     from mayzfact.brief.server import link_urls, make_server, missing_frames
     from mayzfact.config import CACHE_DIR
@@ -175,7 +176,8 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
     # Link yang disimpan langsung di-download di background (cache sama kayak fetch), biar fetch tinggal motong.
     client = httpx.Client(headers={"User-Agent": DESKTOP_UA}, timeout=httpx.Timeout(120.0, connect=15.0), follow_redirects=True)
     prefetcher = Prefetcher(paths, Obtainer(CACHE_DIR / "manual", client, log=print).obtain, log=print)
-    server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0", prefetcher=prefetcher)  # port bentrok = berhenti di sini
+    server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0", prefetcher=prefetcher,
+                         sfx_dir=SFX_DIR, media_dir=CACHE_DIR / "manual")  # port bentrok = berhenti di sini
     prefetcher.start()
     prefetcher.enqueue(link_urls(load_links(paths.links_json)), retry_failed=True)  # link lama yang belum siap, termasuk yang gagal
     port = server.server_address[1]

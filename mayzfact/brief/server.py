@@ -9,15 +9,18 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path, PurePosixPath
 from urllib.parse import parse_qs, unquote, urlparse
 
+from mayzfact.audio import list_bgm
 from mayzfact.brief.page import render_page
 from mayzfact.brief.prefetch import Prefetcher
 from mayzfact.manual.links import (
     IMAGE_EXTS,
     VIDEO_EXTS,
+    attach_sfx,
     load_links,
     missing_groups,
     missing_shots,
     normalize_links,
+    preview_starts,
     save_links,
 )
 from mayzfact.store import RunPaths, read_json
@@ -44,7 +47,9 @@ def link_urls(links: dict) -> list[str]:
 
 
 def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_upload: int = MAX_UPLOAD,
-                prefetcher: Prefetcher | None = None) -> ThreadingHTTPServer:
+                prefetcher: Prefetcher | None = None, sfx_dir: Path | None = None,
+                media_dir: Path | None = None) -> ThreadingHTTPServer:
+    """sfx_dir: library SFX buat pill SFX kustom. media_dir: folder hasil download prefetch (buat preview klip)."""
     root = paths.root.resolve()
 
     def plan() -> dict:
@@ -55,6 +60,36 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
 
     def status() -> dict:
         return read_json(paths.links_status_json) if paths.links_status_json.exists() else {"groups": {}}
+
+    def sfx_names() -> list[str]:
+        return list_bgm(sfx_dir) if sfx_dir else []  # semua file audio di folder
+
+    def clips() -> dict | None:
+        return read_json(paths.clips_json) if paths.clips_json.exists() else None
+
+    def media_path(key: str) -> Path | None:
+        """File buat preview shot: upload di folder run, atau hasil download prefetch di media_dir."""
+        entry = load_links(paths.links_json).get("shots", {}).get(key)
+        if not isinstance(entry, dict):
+            return None
+        if entry.get("file"):
+            target = (root / entry["file"]).resolve()
+            return target if root in target.parents and target.is_file() else None
+        if not (prefetcher and media_dir and entry.get("url")):
+            return None
+        state = prefetcher.snapshot().get(entry["url"], {})
+        if state.get("state") != "siap":
+            return None
+        base = media_dir.resolve()
+        files = [f for f in ((base / name).resolve() for name in state.get("files", [])) if base in f.parents and f.is_file()]
+        videos = [f for f in files if f.suffix.lower() in VIDEO_EXTS]
+        photos = [f for f in files if f.suffix.lower() in IMAGE_EXTS]
+        pick = entry.get("pick")
+        if videos:  # fetch juga cuma pakai video pertama
+            return videos[0]
+        if photos:
+            return photos[pick - 1] if pick and pick <= len(photos) else photos[0]
+        return None
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args) -> None:  # jangan spam terminal
@@ -135,8 +170,10 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             if url.path == "/":
                 source = paths.source_mp4.name if paths.source_mp4.exists() else None
                 voice = paths.voice_mp3.name if paths.voice_mp3.exists() else None
-                html = render_page(paths.root.name, plan(), load_links(paths.links_json), status(), source=source, voice=voice,
-                                   prefetch=prefetcher.snapshot() if prefetcher else {})
+                links = load_links(paths.links_json)
+                html = render_page(paths.root.name, plan(), links, status(), source=source, voice=voice,
+                                   prefetch=prefetcher.snapshot() if prefetcher else {}, sfx_names=sfx_names(),
+                                   previews=preview_starts(plan(), links, clips()))
                 return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
             if url.path == "/api/progress":
                 progress = paths.fetch_progress_json
@@ -154,6 +191,14 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             if url.path.startswith("/files/"):
                 target = (root / unquote(url.path[len("/files/"):])).resolve()
                 if root in target.parents and target.is_file():
+                    return self._file(target)
+            if url.path.startswith("/sfx/"):
+                name = unquote(url.path[len("/sfx/"):])
+                if name in sfx_names():
+                    return self._file(sfx_dir / name)
+            if url.path.startswith("/media/"):
+                target = media_path(url.path[len("/media/"):])
+                if target:
                     return self._file(target)
             self._json(404, {"error": "nggak ada"})
 
@@ -191,6 +236,8 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 try:
                     body = json.loads(self.rfile.read(length) or b"{}")
                     data = normalize_links(body, group_ids(), shot_count=len(plan().get("shots", [])))
+                    if "shots" in data:
+                        attach_sfx(data, body.get("sfx"), set(sfx_names()), plan())
                 except (ValueError, TypeError, AttributeError) as exc:
                     return self._json(400, {"error": str(exc)})
                 save_links(paths.links_json, data)
@@ -199,7 +246,8 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 missing = missing_shots(plan(), data) if "shots" in data else missing_groups(plan(), data)
                 # URL hasil normalisasi per shot, buat JS nempelin badge prefetch tanpa reload
                 urls = {idx: entry.get("url", "") for idx, entry in data.get("shots", {}).items()}
-                return self._json(200, {"ok": True, "missing": missing, "urls": urls})
+                return self._json(200, {"ok": True, "missing": missing, "urls": urls,
+                                        "previews": preview_starts(plan(), data, clips())})
             if url.path == "/api/upload":
                 qs = parse_qs(url.query)
                 shot_param = qs.get("shot", [""])[0]
@@ -239,6 +287,8 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                             entry["start_s"] = old_entry["start_s"]
                         if old_entry.get("end_s") is not None:
                             entry["end_s"] = old_entry["end_s"]
+                        if old_entry.get("sfx"):
+                            entry["sfx"] = old_entry["sfx"]
                     links.setdefault("shots", {})[str(shot_idx)] = entry
                     save_links(paths.links_json, links)
                     return self._json(200, {"file": rel})

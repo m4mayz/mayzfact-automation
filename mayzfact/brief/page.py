@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from html import escape
+from pathlib import Path
 
 _CSS = """
 :root {
@@ -998,6 +999,87 @@ body {
 
 .mobile-dock { display: none; }
 
+/* Preview klip + SFX kustom per shot */
+.clip-tools {
+  display: grid;
+  gap: 8px;
+}
+.preview-box {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.preview-stage {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.preview-stage[hidden] { display: none; }
+.preview-media {
+  max-width: 100%;
+  max-height: 60vh;
+  border-radius: 8px;
+  background: #000;
+  justify-self: start;
+}
+.preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.preview-pos {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+}
+.preview-bar .btn-well-ghost, .sfx-time .btn-well-ghost { white-space: nowrap; }
+.sfx-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.sfx-pill {
+  position: relative;
+  display: inline-flex;
+}
+.sfx-pill input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.sfx-pill span {
+  border: 1px solid var(--border-card);
+  background: #fff;
+  color: var(--text-secondary);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.sfx-pill:hover span { border-color: #93c5fd; color: var(--blue-main); }
+.sfx-pill input:checked + span {
+  background: var(--blue-main);
+  border-color: var(--blue-main);
+  color: #fff;
+}
+.sfx-pill input:focus-visible + span {
+  outline: 2px solid var(--blue-main);
+  outline-offset: 2px;
+}
+.sfx-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.sfx-time[hidden] { display: none; }
+
 @media (max-width: 960px) {
   .workspace-layout {
     grid-template-columns: 1fr;
@@ -1149,7 +1231,7 @@ body {
   .shot-script {
     padding: 6px 8px;
   }
-  .kw-chip, .time-seek-pill {
+  .kw-chip, .time-seek-pill, .sfx-pill span, .clip-tools .btn-well-ghost {
     min-height: 44px;
   }
   .kw-row {
@@ -1159,6 +1241,14 @@ body {
     padding: 2px 0;
   }
   .kw-row-label, .kw-chip {
+    flex-shrink: 0;
+  }
+  .sfx-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 2px;
+  }
+  .sfx-row > * {
     flex-shrink: 0;
   }
   .zentra-prompt-well {
@@ -1487,15 +1577,17 @@ function scheduleAutoSave() {
       const res = await fetch('/api/links', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({shots})
+        body: JSON.stringify({shots, sfx: collectSfx()})
       });
       if (res.ok) {
         setMsg('Tersimpan otomatis ✓');
         const data = await res.json();
         if (data.urls) setPrefetchUrls(data.urls);
+        if (data.previews) setPreviewStarts(data.previews);
         pollProgress();
       } else {
-        setMsg('Gagal simpan');
+        const err = await res.json().catch(() => ({}));
+        setMsg('Gagal simpan' + (err.error ? ': ' + err.error : ''), true);
       }
     } catch (e) {
       setMsg('Gagal simpan');
@@ -1515,10 +1607,190 @@ function setPrefetchUrls(urls) {
 }
 
 document.addEventListener('input', (e) => {
-  if (e.target.matches('input[data-shot], input[data-time-start], input[data-time-end]')) {
+  if (e.target.matches('input[data-shot], input[data-time-start], input[data-time-end], input[data-sfx-at]')) {
     scheduleAutoSave();
   }
 });
+
+// Preview klip + SFX kustom per shot. Bagian yang dipakai = [mulai, mulai + durasi shot]; mulai dari kolom Mulai,
+// kalau kosong dari server (lanjutan link sama / hasil fetch terakhir), kalau masih kosong dipilih otomatis pas fetch.
+// Detik SFX dihitung dari awal shot muncul di video.
+const previews = {};
+function toolsOf(idx) {
+  return document.querySelector(`[data-clip-tools="${idx}"]`);
+}
+function shotDur(idx) {
+  return parseFloat(toolsOf(idx).dataset.shotDur) || 0;
+}
+function windowStart(idx, video) {
+  const inp = document.querySelector(`input[data-time-start="${idx}"]`);
+  let start = inp ? parseFloat(inp.value) : NaN;
+  if (Number.isNaN(start)) {
+    const auto = toolsOf(idx).dataset.autoStart;
+    if (auto === '') return null;
+    start = parseFloat(auto);
+  }
+  if (!video || !video.duration) return start;
+  return Math.max(0, Math.min(start, video.duration - shotDur(idx) - 0.2));  // dipotong kayak fetch
+}
+function setPreviewStarts(starts) {
+  document.querySelectorAll('[data-clip-tools]').forEach(el => {
+    const v = starts[el.dataset.clipTools];
+    el.dataset.autoStart = (v === null || v === undefined) ? '' : String(v);
+  });
+}
+function selectedSfx(idx) {
+  const picked = document.querySelector(`input[name="sfx-${idx}"]:checked`);
+  return picked && picked.value ? picked.value : '';
+}
+function sfxAt(idx) {
+  return parseFloat(document.querySelector(`input[data-sfx-at="${idx}"]`).value) || 0;
+}
+function collectSfx() {
+  const out = {};
+  document.querySelectorAll('[data-clip-tools]').forEach(el => {
+    const idx = el.dataset.clipTools;
+    const file = selectedSfx(idx);
+    out[idx] = file ? {file, at_s: Math.max(0, Math.min(sfxAt(idx), shotDur(idx)))} : null;
+  });
+  return out;
+}
+let sfxAudio = null;
+function playSfx(file) {
+  if (sfxAudio) sfxAudio.pause();
+  sfxAudio = new Audio('/sfx/' + encodeURIComponent(file));
+  sfxAudio.play().catch(() => {});
+}
+document.addEventListener('click', (e) => {
+  const radio = e.target.closest('input[type="radio"][name^="sfx-"]');
+  if (!radio) return;
+  const idx = radio.name.slice(4);
+  document.querySelector(`[data-sfx-time="${idx}"]`).hidden = !radio.value;
+  if (radio.value) playSfx(radio.value);
+  scheduleAutoSave();
+});
+function setInput(inp, value) {
+  inp.value = value;
+  inp.dispatchEvent(new Event('input', {bubbles: true}));
+}
+function useCurrentSecond(idx) {
+  const st = previews[idx];
+  if (!st) return;
+  const t = st.video.currentTime;
+  const end = document.querySelector(`input[data-time-end="${idx}"]`);
+  if (end && end.value && parseFloat(end.value) <= t) end.value = '';  // Selesai harus setelah Mulai
+  setInput(document.querySelector(`input[data-time-start="${idx}"]`), t.toFixed(1));
+  showToast(`Shot ${+idx + 1} mulai dari detik ${t.toFixed(1)}`);
+}
+function sfxFromPreview(idx) {
+  const st = previews[idx];
+  if (!st) { showToast('Buka preview klipnya dulu'); return; }
+  const start = windowStart(idx, st.video);
+  if (start === null) { showToast('Isi Mulai dulu, biar detik SFX kehitung dari awal shot'); return; }
+  const rel = st.video.currentTime - start;
+  if (rel < 0 || rel > shotDur(idx)) { showToast('Posisi preview di luar bagian yang dipakai'); return; }
+  setInput(document.querySelector(`input[data-sfx-at="${idx}"]`), rel.toFixed(1));
+}
+function closePreview(idx) {
+  const st = previews[idx];
+  if (st) { st.video.pause(); st.video.removeAttribute('src'); st.video.load(); }
+  delete previews[idx];
+  const stage = document.querySelector(`[data-preview-stage="${idx}"]`);
+  stage.replaceChildren();
+  stage.hidden = true;
+  const btn = document.querySelector(`[data-preview-btn="${idx}"]`);
+  btn.setAttribute('aria-expanded', 'false');
+  btn.textContent = 'Preview klip';
+}
+function previewButton(label, onClick) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'btn-well-ghost';
+  b.textContent = label;
+  b.addEventListener('click', onClick);
+  return b;
+}
+async function togglePreview(idx) {
+  if (previews[idx] || document.querySelector(`[data-preview-btn="${idx}"]`).getAttribute('aria-expanded') === 'true') {
+    closePreview(idx);
+    return;
+  }
+  const btn = document.querySelector(`[data-preview-btn="${idx}"]`);
+  const stage = document.querySelector(`[data-preview-stage="${idx}"]`);
+  btn.setAttribute('aria-expanded', 'true');
+  btn.textContent = 'Tutup preview';
+  stage.hidden = false;
+  stage.textContent = 'Memuat klip...';
+  const src = `/media/${idx}?v=${Date.now()}`;
+  let type = '';
+  try {
+    const res = await fetch(src, {headers: {Range: 'bytes=0-0'}});
+    if (!res.ok) throw new Error(String(res.status));
+    type = res.headers.get('Content-Type') || '';
+  } catch (e) {
+    stage.textContent = 'Klipnya belum ke-download. Tunggu badge "siap", terus buka lagi.';
+    return;
+  }
+  stage.replaceChildren();
+  if (type.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = `Foto shot ${+idx + 1}`;
+    img.className = 'preview-media';
+    stage.appendChild(img);
+    return;
+  }
+  const video = document.createElement('video');
+  video.className = 'preview-media';
+  video.src = src;
+  video.muted = true;
+  video.playsInline = true;
+  video.controls = true;
+  const pos = document.createElement('span');
+  pos.className = 'preview-pos';
+  pos.setAttribute('aria-live', 'off');
+  const bar = document.createElement('div');
+  bar.className = 'preview-bar';
+  bar.append(pos, previewButton('Pakai detik ini', () => useCurrentSecond(idx)));
+  stage.append(video, bar);
+  const st = {video, prevT: null};
+  previews[idx] = st;
+  video.addEventListener('error', () => {
+    if (previews[idx] === st) stage.textContent = 'Video ini nggak bisa diputer di browser (codec-nya nggak didukung).';
+  });
+  video.addEventListener('loadedmetadata', () => {
+    const start = windowStart(idx, video);
+    video.currentTime = start === null ? 0 : start;
+    video.play().catch(() => {});
+  });
+  const tick = () => {
+    if (previews[idx] !== st) return;
+    const start = windowStart(idx, video);
+    const dur = shotDur(idx);
+    const t = video.currentTime;
+    const prev = st.prevT;
+    const natural = prev !== null && !video.paused && t >= prev && t - prev < 0.5;  // diputer, bukan di-seek
+    if (start !== null && natural && prev < start + dur && t >= start + dur) {
+      video.currentTime = start;  // bagian yang dipakai diulang terus
+      st.prevT = null;
+    } else {
+      if (start !== null) {
+        const rel = t - start;
+        const file = selectedSfx(idx);
+        const at = sfxAt(idx);
+        if (file && natural && prev - start < at && rel >= at) playSfx(file);
+        pos.textContent = rel >= -0.05 && rel <= dur
+          ? `${Math.max(0, rel).toFixed(1)}s / ${dur.toFixed(1)}s shot · detik ${t.toFixed(1)} video`
+          : `detik ${t.toFixed(1)} video (di luar bagian yang dipakai)`;
+      } else {
+        pos.textContent = `Otomatis, dipilih pas fetch · detik ${t.toFixed(1)} video`;
+      }
+      st.prevT = t;
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
 
 async function save() {
   clearTimeout(autoSaveTimer);
@@ -1528,7 +1800,7 @@ async function save() {
     const res = await fetch('/api/links', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({shots, retry: true})  // klik Simpan = link yang gagal dicoba lagi
+      body: JSON.stringify({shots, sfx: collectSfx(), retry: true})  // klik Simpan = link yang gagal dicoba lagi
     });
     if (res.ok) {
       const data = await res.json();
@@ -1709,8 +1981,51 @@ def _prefetch_badge(idx: int, url: str, state: dict | None) -> str:
             f'{escape(label)}</span>')
 
 
+FILLER_WORDS = {"sound", "effect", "audio", "hd"}  # nempel di hampir semua nama file myinstants
+
+
+def sfx_label(name: str) -> str:
+    """'punch-gaming-sound-effect-hd_RzlG1GE.mp3' → 'punch gaming': id acak myinstants + kata pengisi dibuang."""
+    words = Path(name).stem.split("_")[0].split("-")
+    kept = [w for w in words if w.lower() not in FILLER_WORDS]
+    return " ".join(kept or words)
+
+
+def _clip_tools(s_idx: int, dur: float, entry: dict | str | None, sfx_names: list[str], start: float | None) -> str:
+    """Preview bagian klip yang dipakai + pill SFX kustom (radio, 1 per shot)."""
+    has_media = isinstance(entry, dict) and bool(entry.get("url") or entry.get("file"))
+    current = entry.get("sfx") if isinstance(entry, dict) else None
+    picked = current.get("file", "") if isinstance(current, dict) else ""
+    at = f"{current['at_s']:g}" if picked else ""
+    preview = (f"""
+        <div class="preview-box" data-preview="{s_idx}">
+          <button type="button" class="btn-well-ghost" data-preview-btn="{s_idx}" aria-expanded="false"
+                  onclick="togglePreview({s_idx})">Preview klip</button>
+          <div class="preview-stage" data-preview-stage="{s_idx}" hidden></div>
+        </div>""" if has_media else "")
+    pills = "".join(
+        f'<label class="sfx-pill" title="{escape(name, quote=True)}"><input type="radio" name="sfx-{s_idx}" '
+        f'value="{escape(name, quote=True)}"{" checked" if name == picked else ""}><span>{escape(sfx_label(name))}</span></label>'
+        for name in sfx_names
+    )
+    none_checked = "" if picked in sfx_names else " checked"
+    auto = "" if start is None else f"{start:g}"
+    return f"""
+      <div class="clip-tools" data-clip-tools="{s_idx}" data-shot-dur="{dur:.2f}" data-auto-start="{auto}">{preview}
+        <div class="sfx-row" role="radiogroup" aria-label="SFX kustom shot {s_idx + 1}">
+          <span class="kw-row-label">SFX:</span>
+          <label class="sfx-pill"><input type="radio" name="sfx-{s_idx}" value=""{none_checked}><span>Tanpa</span></label>
+          {pills}
+        </div>
+        <div class="sfx-time" data-sfx-time="{s_idx}"{"" if picked in sfx_names and picked else " hidden"}>
+          <label class="trim-pill">Bunyi di detik <input type="number" step="0.1" min="0" max="{dur:.1f}" data-sfx-at="{s_idx}" value="{escape(at)}" placeholder="0.0">s</label>
+          <button type="button" class="btn-well-ghost" onclick="sfxFromPreview({s_idx})">Dari preview</button>
+        </div>
+      </div>"""
+
+
 def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, voice_ok: bool = False,
-              prefetch: dict | None = None) -> str:
+              prefetch: dict | None = None, sfx_names: list[str] | None = None, preview_start: float | None = None) -> str:
     s_idx = shot["index"]
     pill_attr = (f'onclick="playBeat(this, {shot["start_s"]:.1f}, {shot["end_s"]:.1f})"' if voice_ok
                  else 'disabled title="suara belum ada"')
@@ -1818,11 +2133,12 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
           </div>
         </div>
       </div>
+      {_clip_tools(s_idx, shot["end_s"] - shot["start_s"], entry, sfx_names or [], preview_start)}
     </div>"""
 
 
 def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: bool = False,
-          prefetch: dict | None = None) -> str:
+          prefetch: dict | None = None, sfx_names: list[str] | None = None, previews: dict | None = None) -> str:
     is_hook = group["id"] == "hook"
 
     shot_rows = []
@@ -1843,7 +2159,7 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: b
         elif "groups" in status and group["id"] in status["groups"]:
             st = status["groups"][group["id"]]
 
-        shot_rows.append(_shot_row(shot, group, entry, st, voice_ok, prefetch))
+        shot_rows.append(_shot_row(shot, group, entry, st, voice_ok, prefetch, sfx_names, (previews or {}).get(s_idx)))
 
     return f"""
 <section class="card-group card" data-group="{escape(group['id'], quote=True)}">
@@ -1858,7 +2174,8 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: b
 
 
 def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str | None = None,
-                voice: str | None = None, prefetch: dict | None = None) -> str:
+                voice: str | None = None, prefetch: dict | None = None, sfx_names: list[str] | None = None,
+                previews: dict | None = None) -> str:
     shots = {shot["index"]: shot for shot in plan["shots"]}
     groups = plan["groups"]
 
@@ -1918,7 +2235,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
         </div>""")
 
     cards = "".join(
-        _card(group, [shots[i] for i in group["shots"]], links, status, voice is not None, prefetch)
+        _card(group, [shots[i] for i in group["shots"]], links, status, voice is not None, prefetch, sfx_names, previews)
         for group in groups
     )
 
