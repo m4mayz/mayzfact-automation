@@ -34,8 +34,8 @@ SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.4, "overlay":
               "item_reveal": 0.7, "riser": 1.0, "hook_cut": 0.4}
 FLASH_FRAMES = 3  # flash putih di pergantian klip hook (barengan camera flash)
 EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_oof, extra_punch, ...)
-EXTRA_VOLUME = 0.3  # Akmal: klik + SFX tambahan jangan terlalu keras (dulu 0,6)
-EXTRA_VOLUME_BY_EVENT = {"extra_punch": 0.15}  # file punch ±6 dB lebih keras dari yang lain
+EXTRA_VOLUME = 0.45  # Akmal: 0,6 kekerasan, 0,3 kepelanan
+EXTRA_VOLUME_BY_EVENT = {"extra_punch": 0.22}  # file punch ±6 dB lebih keras dari yang lain
 HOOK_EXTRA_PREFIX = "hook_extra_"  # 1 SFX acak tambahan tiap ganti klip di hook, barengan camera flash (sfx.json)
 HOOK_EXTRA_VOLUME = 0.3  # kata Akmal (awalnya 0,4)
 BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)

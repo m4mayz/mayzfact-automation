@@ -290,8 +290,8 @@ def test_extra_sfx_lines_up_with_click_and_stays_quiet():
     punch = [x for x in sfx if x["src"] == "audio/sfx/punch.mp3"]
     assert oof and punch
     # bunyi tambahan mulai kedengeran barengan klik: digeser lebih awal sebesar selisih heningnya
-    assert all(x["from"] + 5 in clicks and x["volume"] == 0.3 for x in oof)  # (0,2 - 0,02) * 30 = 5,4 -> 5 frame
-    assert all(x["from"] + 11 in clicks and x["volume"] == 0.15 for x in punch)  # file punch jauh lebih keras
+    assert all(x["from"] + 5 in clicks and x["volume"] == 0.45 for x in oof)  # (0,2 - 0,02) * 30 = 5,4 -> 5 frame
+    assert all(x["from"] + 11 in clicks and x["volume"] == 0.22 for x in punch)  # file punch jauh lebih keras
 
 
 def test_hook_extra_lines_up_with_camera_flash():
