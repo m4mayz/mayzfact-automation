@@ -105,3 +105,14 @@ def test_sfx_label_drops_myinstants_noise():
     assert sfx_label("punch-gaming-sound-effect-hd_RzlG1GE.mp3") == "punch gaming"
     assert sfx_label("check-mark_oPG7Xo5.mp3") == "check mark"
     assert sfx_label("sound-effect.mp3") == "sound effect"  # isinya cuma kata pengisi: biarin
+
+
+def test_save_without_sfx_key_keeps_saved_sfx(brief):
+    """Upload di brief nyimpen {shots} dulu tanpa sfx: SFX yang udah kesimpen jangan ikut kehapus."""
+    paths, base, _ = brief
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v", "2": "https://a.b/w"},
+                                          "sfx": {"0": {"file": "uy.mp3", "at_s": 0.8}}})
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v", "2": "https://a.b/w"}})
+    assert read_json(paths.links_json)["shots"]["0"]["sfx"] == {"file": "uy.mp3", "at_s": 0.8}
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "sfx": {"0": None}})  # pilih "Tanpa"
+    assert "sfx" not in read_json(paths.links_json)["shots"]["0"]

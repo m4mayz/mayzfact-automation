@@ -143,11 +143,15 @@ def prepare_audio(
             log(f"[timeline] SFX kustom {name!r} nggak ada di assets/sfx, dilewat")
             continue
         try:
+            src = _copy(path, paths.root / "audio" / "sfx", paths)
+        except OSError as exc:  # hiasan: SFX ini doang yang dilewat, BGM + SFX lain tetap jalan
+            log(f"[timeline] SFX kustom {name} gagal di-copy, dilewat: {exc}")
+            continue
+        try:
             onset = audible_start(path)
         except Exception:  # hiasan: gagal baca = diputer apa adanya
             onset = 0.0
-        out.setdefault("custom", []).append({"src": _copy(path, paths.root / "audio" / "sfx", paths),
-                                             "at_s": float(item["at_s"]), "onset": onset})
+        out.setdefault("custom", []).append({"src": src, "at_s": float(item["at_s"]), "onset": onset})
     return out
 
 

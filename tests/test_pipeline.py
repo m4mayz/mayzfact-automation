@@ -477,3 +477,19 @@ def test_timeline_step_uses_text_blurs_and_survives_errors(world):
     world.deps.textblur = broken
     paths = run(world, from_step="timeline", no_render=True)
     assert "blurs" not in read_json(paths.timeline_json)["shots"][0]
+
+
+def test_real_audio_dep_passes_custom_sfx_from_brief(tmp_path, monkeypatch):
+    import mayzfact.audio as audio_mod
+    from mayzfact.pipeline import real_deps
+
+    paths = RunPaths(tmp_path / "run")
+    paths.root.mkdir(parents=True)
+    write_json_atomic(paths.script_json, {"beats": []})
+    write_json_atomic(paths.shots_plan_json, {"shots": [{"index": 0, "start_s": 0.0, "end_s": 2.0},
+                                                        {"index": 1, "start_s": 2.0, "end_s": 4.0}]})
+    write_json_atomic(paths.links_json, {"shots": {"1": {"url": "https://a.b/v", "sfx": {"file": "uy.mp3", "at_s": 0.5}}}})
+    seen = {}
+    monkeypatch.setattr(audio_mod, "prepare_audio", lambda *a, **kw: seen.update(kw) or {})
+    real_deps(Settings(**KEYS)).audio(paths, lambda m: None)
+    assert seen["custom"] == [{"file": "uy.mp3", "at_s": 2.5}]

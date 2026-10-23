@@ -337,6 +337,8 @@ def run_fetch(
                                     group_status[gid] = {"state": "ok", "message": ""}
                                     for s in g_shots:
                                         shot_status[str(s["index"])] = {"state": "ok", "message": ""}
+                                    prev_entry, prev_source = first_entry, srcs[0]
+                                    prev_end_time = clip["source_s"] + clip["end_s"] - clip["start_s"]
                                     continue
                         except Exception:
                             pass

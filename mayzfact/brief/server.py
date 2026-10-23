@@ -236,8 +236,13 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 try:
                     body = json.loads(self.rfile.read(length) or b"{}")
                     data = normalize_links(body, group_ids(), shot_count=len(plan().get("shots", [])))
-                    if "shots" in data:
-                        attach_sfx(data, body.get("sfx"), set(sfx_names()), plan())
+                    if "shots" in data and "sfx" in body:
+                        attach_sfx(data, body["sfx"], set(sfx_names()), plan())
+                    elif "shots" in data:  # request tanpa sfx (lama / upload): SFX yang udah kesimpen dibawa
+                        old = load_links(paths.links_json).get("shots", {})
+                        for key, entry in data["shots"].items():
+                            if isinstance(old.get(key), dict) and old[key].get("sfx"):
+                                entry["sfx"] = old[key]["sfx"]
                 except (ValueError, TypeError, AttributeError) as exc:
                     return self._json(400, {"error": str(exc)})
                 save_links(paths.links_json, data)

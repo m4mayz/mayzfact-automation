@@ -1629,6 +1629,8 @@ function windowStart(idx, video) {
     const auto = toolsOf(idx).dataset.autoStart;
     if (auto === '') return null;
     start = parseFloat(auto);
+    // lanjutan link sama yang lewat ujung video: fetch balik milih otomatis
+    if (video && video.duration && start + shotDur(idx) + 0.2 > video.duration + 0.001) return null;
   }
   if (!video || !video.duration) return start;
   return Math.max(0, Math.min(start, video.duration - shotDur(idx) - 0.2));  // dipotong kayak fetch
@@ -1753,7 +1755,7 @@ async function togglePreview(idx) {
   bar.className = 'preview-bar';
   bar.append(pos, previewButton('Pakai detik ini', () => useCurrentSecond(idx)));
   stage.append(video, bar);
-  const st = {video, prevT: null};
+  const st = {video, prevT: null, fired: false};
   previews[idx] = st;
   video.addEventListener('error', () => {
     if (previews[idx] === st) stage.textContent = 'Video ini nggak bisa diputer di browser (codec-nya nggak didukung).';
@@ -1773,12 +1775,17 @@ async function togglePreview(idx) {
     if (start !== null && natural && prev < start + dur && t >= start + dur) {
       video.currentTime = start;  // bagian yang dipakai diulang terus
       st.prevT = null;
+      st.fired = false;
     } else {
       if (start !== null) {
         const rel = t - start;
         const file = selectedSfx(idx);
-        const at = sfxAt(idx);
-        if (file && natural && prev - start < at && rel >= at) playSfx(file);
+        const at = Math.min(sfxAt(idx), Math.max(0, dur - 0.05));  // detik terakhir keburu di-loop
+        if (rel < at - 0.05) st.fired = false;  // di-seek mundur
+        if (file && !st.fired && !video.paused && !video.seeking && rel >= at && rel - at < 0.3) {
+          playSfx(file);
+          st.fired = true;
+        }
         pos.textContent = rel >= -0.05 && rel <= dur
           ? `${Math.max(0, rel).toFixed(1)}s / ${dur.toFixed(1)}s shot · detik ${t.toFixed(1)} video`
           : `detik ${t.toFixed(1)} video (di luar bagian yang dipakai)`;
@@ -1818,12 +1825,13 @@ async function uploadShot(shotIndex, input) {
   const file = input.files[0];
   if (!file) return;
   setMsg(`Upload shot ${shotIndex + 1} (${file.name})...`, true);
+  if (previews[shotIndex]) closePreview(shotIndex);  // Windows: file yang lagi di-stream nggak bisa ditimpa
   const shots = collectShots();
   try {
     const saved = await fetch('/api/links', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({shots})
+      body: JSON.stringify({shots, sfx: collectSfx()})
     });
     if (saved.ok) {
       const res = await fetch(`/api/upload?shot=${encodeURIComponent(shotIndex)}`, {

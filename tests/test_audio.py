@@ -164,3 +164,29 @@ def test_custom_sfx_copied_with_onset(tmp_path, sine_mp3):
     assert out["custom"][0]["onset"] < 0.06
     assert (paths.root / "audio/sfx/uy.mp3").exists() and not (paths.root / "audio/x.mp3").exists()
     assert any("hilang.mp3" in line for line in logs) and any("../x.mp3" in line for line in logs)
+
+
+def test_custom_sfx_copy_failure_skips_only_that_sfx(tmp_path, sine_mp3, monkeypatch):
+    import mayzfact.audio as audio_mod
+
+    bgm_dir, sfx_dir = tmp_path / "bgm", tmp_path / "sfx"
+    bgm_dir.mkdir()
+    sfx_dir.mkdir()
+    (bgm_dir / "mystery.mp3").write_bytes(b"m")
+    (sfx_dir / "sfx.json").write_text("{}", encoding="utf-8")
+    for name in ("uy.mp3", "gasp.mp3"):
+        (sfx_dir / name).write_bytes(sine_mp3.read_bytes())
+    real_copy = audio_mod._copy
+
+    def flaky(src, dest_dir, paths):
+        if src.name == "uy.mp3":
+            raise OSError("disk penuh")
+        return real_copy(src, dest_dir, paths)
+
+    monkeypatch.setattr(audio_mod, "_copy", flaky)
+    client, _ = serving({})
+    logs = []
+    out = prepare_audio(RunPaths(tmp_path / "run"), {"beats": []}, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client,
+                        log=logs.append, custom=[{"file": "uy.mp3", "at_s": 1.0}, {"file": "gasp.mp3", "at_s": 2.0}])
+    assert out["bgm"] == "audio/bgm/mystery.mp3"  # BGM nggak ikut ilang
+    assert [c["src"] for c in out["custom"]] == ["audio/sfx/gasp.mp3"] and any("uy.mp3" in m for m in logs)

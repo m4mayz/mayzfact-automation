@@ -423,3 +423,18 @@ def test_custom_sfx_does_not_break_continuous_clips(tmp_path, cut_video):
     hook, s2, s3 = data["shots"]
     assert (hook["start_s"], hook["end_s"]) == (0.0, 0.6)
     assert abs(s3["source_s"] - (s2["source_s"] + plan["shots"][2]["end_s"] - plan["shots"][2]["start_s"])) < 1e-3
+
+
+def test_same_link_continues_after_continuous_hook(tmp_path, cut_video):
+    """Hook 1 video nyambung, shot pertama kelompok berikutnya link sama: lanjut dari ujung hook, bukan milih sendiri."""
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["shots"][2] = {**plan["shots"][2], "start_s": 0.6, "end_s": 1.0, "media": "video"}
+    hook_link = {"url": "https://www.douyin.com/video/1"}
+    save_links(paths.links_json, {"shots": {"0": hook_link, "1": hook_link, "2": hook_link, "3": {"url": "https://a.b/x"}}})
+    other = photos(tmp_path, "x")
+    data = run_fetch(paths, plan, obtain=lambda e, r: [cut_video] if "douyin" in e["url"] else other,
+                     encoder=FakeEncoder(), **QUIET)
+    hook, s2 = data["shots"][:2]
+    assert (hook["start_s"], hook["end_s"]) == (0.0, 0.6)
+    assert abs(s2["source_s"] - (hook["source_s"] + 0.6)) < 1e-3
