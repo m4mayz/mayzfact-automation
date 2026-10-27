@@ -62,7 +62,7 @@ def test_saving_sfx_and_preview_starts(brief):
                                                "sfx": {"0": {"file": "uy.mp3", "at_s": 1.2}, "1": None}})
     assert ok.status_code == 200
     assert read_json(paths.links_json)["shots"]["0"] == {"url": "https://a.b/v", "sfx": {"file": "uy.mp3", "at_s": 1.2}}
-    assert ok.json()["previews"] == {"0": 3.5, "2": 1.5}
+    assert ok.json()["previews"] == {"0": 0.0, "2": 1.5}  # Mulai kosong = detik 0, clips.json lama nggak dipakai
     bad = httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "sfx": {"0": {"file": "nope.mp3", "at_s": 0}}})
     assert bad.status_code == 400 and "nope.mp3" in bad.json()["error"]
     late = httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "sfx": {"0": {"file": "uy.mp3", "at_s": 9}}})

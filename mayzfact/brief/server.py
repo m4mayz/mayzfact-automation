@@ -64,9 +64,6 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
     def sfx_names() -> list[str]:
         return list_bgm(sfx_dir) if sfx_dir else []  # semua file audio di folder
 
-    def clips() -> dict | None:
-        return read_json(paths.clips_json) if paths.clips_json.exists() else None
-
     def media_path(key: str) -> Path | None:
         """File buat preview shot: upload di folder run, atau hasil download prefetch di media_dir."""
         entry = load_links(paths.links_json).get("shots", {}).get(key)
@@ -173,7 +170,7 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 links = load_links(paths.links_json)
                 html = render_page(paths.root.name, plan(), links, status(), source=source, voice=voice,
                                    prefetch=prefetcher.snapshot() if prefetcher else {}, sfx_names=sfx_names(),
-                                   previews=preview_starts(plan(), links, clips()))
+                                   previews=preview_starts(plan(), links))
                 return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
             if url.path == "/api/progress":
                 progress = paths.fetch_progress_json
@@ -252,7 +249,7 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 # URL hasil normalisasi per shot, buat JS nempelin badge prefetch tanpa reload
                 urls = {idx: entry.get("url", "") for idx, entry in data.get("shots", {}).items()}
                 return self._json(200, {"ok": True, "missing": missing, "urls": urls,
-                                        "previews": preview_starts(plan(), data, clips())})
+                                        "previews": preview_starts(plan(), data)})
             if url.path == "/api/upload":
                 qs = parse_qs(url.query)
                 shot_param = qs.get("shot", [""])[0]

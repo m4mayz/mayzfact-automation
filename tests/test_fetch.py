@@ -82,8 +82,8 @@ def test_single_hook_video_plays_continuously(tmp_path, cut_video):
     data = run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
     hook, third, fourth = data["shots"]
     # 1 klip nyambung buat shot 1-2. Mulai di detik 0.5: frame detik 1.0 (= ref) jatuh di tengah shot 2.
-    assert (hook["start_s"], hook["end_s"], hook["file"], hook["source_s"]) == (0.0, 0.6, "clips/shot_01.mp4", 0.5)
-    assert (hook["kind"], hook["provider"], hook["match"], hook["hook_segment"]) == ("video", "douyin", 0.5, 0)
+    assert (hook["start_s"], hook["end_s"], hook["file"], hook["source_s"]) == (0.0, 0.6, "clips/shot_01.mp4", 0.0)
+    assert (hook["kind"], hook["provider"], hook["match"], hook["hook_segment"]) == ("video", "douyin", 0.0, 0)
     assert abs(probe(paths.root / hook["file"], "t")["duration_s"] - 0.8) < 0.1
     assert (third["page_url"], third["match"]) == ("https://x.com/post", 1.0)
     assert fourth["match"] == 0.0 and fourth["query"] == "manual"
@@ -438,3 +438,18 @@ def test_same_link_continues_after_continuous_hook(tmp_path, cut_video):
     hook, s2 = data["shots"][:2]
     assert (hook["start_s"], hook["end_s"]) == (0.0, 0.6)
     assert abs(s2["source_s"] - (hook["source_s"] + 0.6)) < 1e-3
+
+
+def test_video_without_start_time_starts_at_zero(tmp_path, cut_video):
+    """Mulai kosong: klip dari detik 0, nggak dipilih SigLIP (D-042). Frame paling mirip ref ada di detik 1.0."""
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["shots"][2] = {**plan["shots"][2], "start_s": 0.6, "end_s": 1.0, "media": "video"}
+    files = {"https://a.b/v": [cut_video], "https://a.b/p": photos(tmp_path, "x"), "https://a.b/p2": photos(tmp_path, "y")}
+    save_links(paths.links_json, {"shots": {"0": {"url": "https://a.b/v"}, "1": {"url": "https://a.b/p"},
+                                            "2": {"url": "https://a.b/v"}, "3": {"url": "https://a.b/p2"}}})
+    data = run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
+    by_index = {s["index"]: s for s in data["shots"]}
+    assert by_index[0]["source_s"] == 0.0
+    # link sama tapi nggak berurutan: lanjut dari bagian yang belum tampil (shot 1 kepake 0-0.3 + ekor 0.2)
+    assert abs(by_index[2]["source_s"] - 0.5) < 1e-3

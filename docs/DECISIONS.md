@@ -464,3 +464,15 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   2. Volume ngikutin loudness file-nya (ebur128, hening depan dibuang): `hook_extra_*` 0,5 (dulu 0,3), `hook_extra_gasp` 0,4, `hook_extra_fahhh` 1,0, `extra_punch` 0,15 (dulu 0,22). Extra lain tetap 0,45.
 - **Konsekuensi:** `fahhh_KcgAXfs.mp3` (-28 LUFS) di volume 1,0 masih ±7 dB lebih pelan dari `uy`/`gasp`. Kalau mau setara, file-nya harus dikerasin, atau Akmal kasih file lain.
 - **Authority:** Akmal (chat 2026-10-27).
+
+## D-042 — 2026-10-27 — Klip tanpa Mulai diambil dari detik 0
+
+- **Status:** accepted. Gantiin aturan "otomatis dipilih SigLIP" di D-040 no. 2.
+- **Konteks:** Akmal: "klip otomatis mengambil dari detik 0, bukan otomatis ngambil".
+- **Keputusan:**
+  1. Kolom Mulai kosong: video diambil dari detik 0, nggak dipilih SigLIP lagi. Ini juga berlaku buat hook 1 video nyambung.
+  2. Link yang sama dari shot sebelumnya tetap lanjut nyambung. Link yang sama tapi nggak berurutan mulai dari bagian pertama yang belum tampil. Kalau video-nya udah kepakai semua, diulang dari detik 0 dan ada peringatan.
+  3. Foto dari post galeri tetap kayak dulu: `#n`, atau dipilih SigLIP kalau `#n` nggak diisi. Mode lama per kelompok (`groups`) juga nggak diubah.
+  4. Preview brief ngikutin aturan yang sama. `clips.json` dari fetch lama nggak dipakai lagi buat preview.
+- **Konsekuensi:** Skor relevansi (`match`) masih dihitung di detik yang dipakai, cuma buat info.
+- **Authority:** Akmal (chat 2026-10-27).

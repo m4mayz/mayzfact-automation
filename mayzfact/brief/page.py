@@ -1613,7 +1613,7 @@ document.addEventListener('input', (e) => {
 });
 
 // Preview klip + SFX kustom per shot. Bagian yang dipakai = [mulai, mulai + durasi shot]; mulai dari kolom Mulai,
-// kalau kosong dari server (lanjutan link sama / hasil fetch terakhir), kalau masih kosong dipilih otomatis pas fetch.
+// kalau kosong dari server (lanjutan link sama, atau detik 0 / bagian pertama link itu yang belum tampil, D-042).
 // Detik SFX dihitung dari awal shot muncul di video.
 const previews = {};
 function toolsOf(idx) {
@@ -1629,8 +1629,8 @@ function windowStart(idx, video) {
     const auto = toolsOf(idx).dataset.autoStart;
     if (auto === '') return null;
     start = parseFloat(auto);
-    // lanjutan link sama yang lewat ujung video: fetch balik milih otomatis
-    if (video && video.duration && start + shotDur(idx) + 0.2 > video.duration + 0.001) return null;
+    // lanjutan yang lewat ujung video: fetch balik ke detik 0
+    if (video && video.duration && start + shotDur(idx) + 0.2 > video.duration + 0.001) return 0;
   }
   if (!video || !video.duration) return start;
   return Math.max(0, Math.min(start, video.duration - shotDur(idx) - 0.2));  // dipotong kayak fetch
@@ -1790,7 +1790,7 @@ async function togglePreview(idx) {
           ? `${Math.max(0, rel).toFixed(1)}s / ${dur.toFixed(1)}s shot · detik ${t.toFixed(1)} video`
           : `detik ${t.toFixed(1)} video (di luar bagian yang dipakai)`;
       } else {
-        pos.textContent = `Otomatis, dipilih pas fetch · detik ${t.toFixed(1)} video`;
+        pos.textContent = `detik ${t.toFixed(1)} video`;
       }
       st.prevT = t;
     }

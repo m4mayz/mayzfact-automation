@@ -195,17 +195,13 @@ def test_same_clip_ignores_time_and_sfx():
 def test_preview_starts_follow_fetch_rules():
     from mayzfact.manual.links import preview_starts
     links = {"shots": {
-        "0": {"url": "https://a.b/hook"},                        # fetch udah jalan: source_s dari clips.json
+        "0": {"url": "https://a.b/hook"},                        # Mulai kosong: dari detik 0 (D-042)
         "1": {"url": "https://a.b/v", "start_s": 4.0},           # Mulai diisi
         "2": {"url": "https://a.b/v", "sfx": {"file": "uy.mp3", "at_s": 0}},  # link sama: lanjut dari shot 1
-        "3": {"url": "https://a.b/baru"},                        # belum pernah di-fetch: otomatis
-        "4": {"url": "https://a.b/ganti"},                       # clips.json masih link lama: otomatis
+        "3": {"url": "https://a.b/baru"},                        # link baru: detik 0
+        "4": {"url": "https://a.b/hook"},                        # link shot 0 lagi (nggak berurutan): lanjut dari yang belum tampil
     }}
-    clips = {"shots": [{"index": 0, "start_s": 0.0, "end_s": 2.0, "page_url": "https://a.b/hook", "source_s": 7.5},
-                       {"index": 4, "start_s": 6.0, "end_s": 8.0, "page_url": "https://a.b/lama", "source_s": 1.0}]}
-    assert preview_starts(SFX_PLAN, links, clips) == {0: 7.5, 1: 4.0, 2: 5.5, 3: None, 4: None}
-    # hook 1 video nyambung: 1 klip buat beberapa shot, shot berikutnya geser dari source_s
+    assert preview_starts(SFX_PLAN, links) == {0: 0.0, 1: 4.0, 2: 5.5, 3: 0.0, 4: 2.2}
     hook = {"shots": {"0": {"url": "https://a.b/hook"}, "1": {"url": "https://a.b/hook"}}}
-    long_clip = {"shots": [{"index": 0, "start_s": 0.0, "end_s": 3.5, "page_url": "https://a.b/hook", "source_s": 10.0}]}
-    assert preview_starts(SFX_PLAN, hook, long_clip) == {0: 10.0, 1: 12.0}
-    assert preview_starts(SFX_PLAN, {"shots": {"1": {"file": "manual/shot_2.mp4"}}}, None) == {1: None}
+    assert preview_starts(SFX_PLAN, hook) == {0: 0.0, 1: 2.0}
+    assert preview_starts(SFX_PLAN, {"shots": {"1": {"file": "manual/shot_2.mp4"}}}) == {1: 0.0}

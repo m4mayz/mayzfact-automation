@@ -111,6 +111,21 @@ def _sources(entry: dict, files: list[Path], paths: RunPaths, encoder: Encoder) 
     raise PipelineError("fetch", "file-nya bukan video/gambar yang bisa dibaca")
 
 
+def _score_at(source: Source, target: np.ndarray, t: float) -> float:
+    """Kemiripan frame sample terdekat dari detik t (video) sama target. Cuma buat info + peringatan skor rendah."""
+    return float((source.vectors @ target)[int(np.argmin(np.abs(np.array(source.times) - t)))])
+
+
+def _first_free(source: Source, duration: float) -> float | None:
+    """Detik mulai pertama dari 0 yang belum pernah tampil (D-042). None kalau nggak ada sisa atau video kependekan."""
+    start = 0.0
+    for used_start, used_end in sorted(source.used):
+        if start + duration + TAIL_S <= used_start:
+            break
+        start = max(start, used_end)
+    return start if start + duration + TAIL_S <= source.total_s + 1e-6 else None
+
+
 def _best(sources: list[Source], target: np.ndarray, duration: float, used_sources: bool) -> tuple[Source, float, float] | None:
     """(source, skor, detik mulai) terbaik dari yang belum pernah tampil.
 
@@ -172,8 +187,8 @@ def _continuous(group: dict, shots: list[dict], source: Source, paths: RunPaths,
                 fg_min_ratio: float, progress: Progress) -> dict | None:
     """Hook dengan 1 video: diputer nyambung sepanjang semua shot hook, nggak dipotong-potong.
 
-    Titik mulai = detik sample yang bikin rata-rata kemiripan tiap shot (frame di tengah shot vs ref-nya) paling tinggi.
-    None kalau video-nya kependekan, nanti balik ke cara potong per shot.
+    Titik mulai = kolom Mulai, kalau kosong detik 0 (D-042). Skor = rata-rata kemiripan tengah tiap shot vs ref-nya,
+    cuma buat info. None kalau video-nya kependekan, nanti balik ke cara potong per shot.
     """
     first, last = shots[0]["start_s"], shots[-1]["end_s"]
     span = last - first
@@ -181,21 +196,11 @@ def _continuous(group: dict, shots: list[dict], source: Source, paths: RunPaths,
         return None
     if source.entry.get("start_s") is not None:
         start = min(max(0.0, float(source.entry["start_s"])), max(0.0, source.total_s - span - TAIL_S))
-        best = (1.0, start)
+        score = 1.0
     else:
-        times = np.array(source.times)
-        sims = [source.vectors @ _target(shot, paths, encoder)[0] for shot in shots]
-        mids = [(shot["start_s"] + shot["end_s"]) / 2 - first for shot in shots]
-        best: tuple[float, float] | None = None
-        for start in source.times:
-            if start + span + TAIL_S > source.total_s + 1e-6:
-                break
-            score = float(np.mean([sim[int(np.argmin(np.abs(times - (start + mid))))] for sim, mid in zip(sims, mids)]))
-            if best is None or score > best[0]:
-                best = (score, start)
-        if best is None:
-            return None
-    score, start = best
+        start = 0.0
+        score = float(np.mean([_score_at(source, _target(shot, paths, encoder)[0], (shot["start_s"] + shot["end_s"]) / 2 - first)
+                               for shot in shots]))
     source.used.append((start, start + span + TAIL_S))
     head = shots[0]
     out = normalize_local(head["index"], first, last, source.path, "video", start + span / 2, paths, fg_min_ratio)
@@ -376,6 +381,16 @@ def run_fetch(
                             cont_end = cont_start + duration + TAIL_S
                             if cont_end <= prev_source.total_s + 1e-4:
                                 chosen = (prev_source, 1.0, cont_start)
+
+                        # Mulai kosong: video dari detik 0, atau bagian pertama yang belum tampil (D-042, bukan SigLIP)
+                        if chosen is None and sources and sources[0].kind == "video":
+                            video = sources[0]
+                            start = _first_free(video, duration)
+                            if start is None and video.total_s >= duration + TAIL_S:
+                                start = 0.0
+                                warn.append("video-nya udah kepakai semua, diulang dari detik 0")
+                            if start is not None:
+                                chosen = (video, _score_at(video, target, start + duration / 2), start)
 
                         if chosen is None:
                             chosen = _best(sources, target, duration, used_sources=False)

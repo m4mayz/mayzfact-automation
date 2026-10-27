@@ -203,35 +203,39 @@ def same_clip(a: dict, b: dict) -> bool:
     return strip(a) == strip(b)
 
 
-def preview_starts(plan: dict, links: dict, clips: dict | None) -> dict[int, float | None]:
-    """Detik mulai bagian video yang bakal jadi klip per shot (preview brief). None = dipilih otomatis pas fetch.
+PREVIEW_TAIL_S = 0.2  # sama kayak TAIL_S di fetch: tiap potongan ngambil 0,2 detik ekstra
 
-    Urutannya sama kayak fetch: kolom Mulai, lanjutan link yang sama dari shot sebelumnya, terus hasil fetch terakhir
-    (clips.json) kalau link-nya masih sama. Clamp ke panjang video dikerjain di browser (durasinya baru ketahuan di situ).
+
+def preview_starts(plan: dict, links: dict) -> dict[int, float]:
+    """Detik mulai bagian video yang bakal jadi klip per shot (preview brief), aturannya sama kayak fetch (D-042).
+
+    Kolom Mulai, lanjutan link yang sama dari shot sebelumnya, atau detik 0 / bagian pertama link itu yang belum
+    tampil. Clamp ke panjang video dikerjain di browser (durasinya baru ketahuan di situ).
     """
     entries = links.get("shots", {})
-    done = (clips or {}).get("shots", [])
-    out: dict[int, float | None] = {}
-    prev: tuple[dict, float | None, float] | None = None
+    used: dict[str, list[tuple[float, float]]] = {}
+    out: dict[int, float] = {}
+    prev: tuple[dict, float, float] | None = None
     for shot in sorted(plan.get("shots", []), key=lambda s: s["index"]):
         entry = entries.get(str(shot["index"]))
         if not isinstance(entry, dict):
             prev = None
             continue
-        start = None
+        duration = shot["end_s"] - shot["start_s"]
+        windows = used.setdefault(str(entry.get("url") or entry.get("file")), [])
         if entry.get("start_s") is not None:
             start = float(entry["start_s"])
-        elif prev and prev[1] is not None and entry.get("url") and same_clip(prev[0], entry):
+        elif prev and entry.get("url") and same_clip(prev[0], entry):
             start = round(prev[1] + prev[2], 2)
         else:
-            page = entry.get("url") or entry.get("file")
-            for clip in done:
-                if (clip.get("page_url") == page and clip.get("source_s") is not None
-                        and clip["start_s"] - 1e-6 <= shot["start_s"] < clip["end_s"] - 1e-6):
-                    start = round(clip["source_s"] + shot["start_s"] - clip["start_s"], 2)
+            start = 0.0
+            for used_start, used_end in sorted(windows):
+                if start + duration + PREVIEW_TAIL_S <= used_start:
                     break
+                start = round(max(start, used_end), 2)
+        windows.append((start, start + duration + PREVIEW_TAIL_S))
         out[shot["index"]] = start
-        prev = (entry, start, shot["end_s"] - shot["start_s"])
+        prev = (entry, start, duration)
     return out
 
 
