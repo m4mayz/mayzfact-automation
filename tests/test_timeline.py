@@ -196,12 +196,12 @@ def test_hook_cut_adds_one_random_hook_extra_at_low_volume():
                                   "hook_extra_uy": "audio/sfx/uy.mp3", "hook_extra_gasp": "audio/sfx/gasp.mp3"}}
     t = build_timeline(clips, 4.0, 0.5, audio=audio)
     extra = {"audio/sfx/uy.mp3", "audio/sfx/gasp.mp3"}
-    # tiap ganti klip di hook: camera flash + persis 1 SFX tambahan hook (volume 0,3); habis hook nggak ada
+    # tiap ganti klip di hook: camera flash + persis 1 SFX tambahan hook (volume per file); habis hook nggak ada
     for frame in (27, 57):
         at = [x for x in t["sfx"] if x["from"] == frame]
         assert [x["src"] for x in at if x["src"] == "audio/sfx/flash.mp3"] == ["audio/sfx/flash.mp3"]
         picked = [x for x in at if x["src"] in extra]
-        assert len(picked) == 1 and picked[0]["volume"] == 0.3
+        assert len(picked) == 1 and picked[0]["volume"] == {"audio/sfx/uy.mp3": 0.5, "audio/sfx/gasp.mp3": 0.4}[picked[0]["src"]]
     assert not [x for x in t["sfx"] if x["from"] >= 87 and x["src"] in extra]
 
 
@@ -291,7 +291,7 @@ def test_extra_sfx_lines_up_with_click_and_stays_quiet():
     assert oof and punch
     # bunyi tambahan mulai kedengeran barengan klik: digeser lebih awal sebesar selisih heningnya
     assert all(x["from"] + 5 in clicks and x["volume"] == 0.45 for x in oof)  # (0,2 - 0,02) * 30 = 5,4 -> 5 frame
-    assert all(x["from"] + 11 in clicks and x["volume"] == 0.22 for x in punch)  # file punch jauh lebih keras
+    assert all(x["from"] + 11 in clicks and x["volume"] == 0.15 for x in punch)  # file punch ±8 LUFS lebih keras
 
 
 def test_hook_extra_lines_up_with_camera_flash():
@@ -302,7 +302,7 @@ def test_hook_extra_lines_up_with_camera_flash():
              "sfx_onset": {"hook_cut": 0.12, "hook_extra_uy": 0.18}}
     sfx = build_timeline(clips, 3.0, 0.5, audio=audio)["sfx"]
     # flash 3 frame sebelum cut; "uy" hening 0,06 dtk lebih lama di depan -> mulai 2 frame lebih awal (urut per frame)
-    assert [(x["src"], x["from"], x["volume"]) for x in sfx] == [("audio/sfx/uy.mp3", 25, 0.3),
+    assert [(x["src"], x["from"], x["volume"]) for x in sfx] == [("audio/sfx/uy.mp3", 25, 0.5),
                                                                  ("audio/sfx/flash.mp3", 27, 0.4)]
 
 
@@ -505,3 +505,29 @@ def test_custom_sfx_from_brief_play_at_their_second():
     sfx = build_timeline(clips, 4.0, 0.5, audio=audio)["sfx"]
     # bunyinya kedengeran pas di detik yang dipilih: mulai lebih awal sebesar hening di depan file
     assert sfx == [{"src": "audio/sfx/gasp.mp3", "from": 0, "volume": 0.5}, {"src": "audio/sfx/uy.mp3", "from": 27, "volume": 0.5}]
+
+
+def picks_per_cut(sfx, main, extras):
+    """Urutan SFX tambahan per transisi (None = nggak ada), dibaca dari frame SFX utamanya."""
+    frames = sorted(x["from"] for x in sfx if x["src"] == main)
+    return [next((x["src"] for x in sfx if x["src"] in extras and x["from"] == f), None) for f in frames]
+
+
+def test_extra_sfx_never_repeats_back_to_back():
+    clips = {"shots": [shot(f"clips/s{i}.mp4", "video", float(i), 1080, 1920) for i in range(40)]}
+    extras = {"extra_oof": "audio/sfx/oof.mp3", "extra_punch": "audio/sfx/punch.mp3", "extra_alert": "audio/sfx/alert.mp3"}
+    audio = {"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3", **extras}}
+    picks = picks_per_cut(build_timeline(clips, 40.0, 0.5, audio=audio)["sfx"], "audio/sfx/click.mp3", set(extras.values()))
+    assert len(picks) == 39 and len({p for p in picks if p}) == 3
+    # acak, tapi SFX yang sama nggak dipakai 2 transisi berturut-turut (2x tanpa SFX boleh)
+    assert all(a != b for a, b in zip(picks, picks[1:]) if a)
+
+
+def test_hook_extra_never_repeats_back_to_back():
+    clips = {"shots": [{**shot(f"clips/h{i}.mp4", "video", float(i), 1080, 1920), "hook_segment": i} for i in range(12)]
+             + [shot("clips/a.mp4", "video", 12.0, 1080, 1920)]}
+    extras = {"hook_extra_uy": "audio/sfx/uy.mp3", "hook_extra_gasp": "audio/sfx/gasp.mp3"}
+    audio = {"bgm": None, "sfx": {"hook_cut": "audio/sfx/flash.mp3", **extras}}
+    picks = picks_per_cut(build_timeline(clips, 13.0, 0.5, audio=audio)["sfx"], "audio/sfx/flash.mp3", set(extras.values()))
+    assert len(picks) == 11 and all(picks)
+    assert all(a != b for a, b in zip(picks, picks[1:]))

@@ -454,3 +454,13 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   6. **Fix fetch:** shot setelah hook 1 video nyambung yang link-nya sama sekarang lanjut dari ujung hook. Dulu dipilih ulang pakai SigLIP, padahal komentarnya bilang nyambung. Preview brief ngikutin aturan yang sama.
 - **Konsekuensi:** Brief nyajiin file hasil download dari `cache/manual/` lewat `/media/<shot>` (cuma file yang tercatat di `prefetch.json` buat link shot itu) dan SFX lewat `/sfx/<nama>`.
 - **Authority:** Akmal (chat 2026-10-24).
+
+## D-041 — 2026-10-27 — SFX tambahan nggak keulang + volume per file
+
+- **Status:** accepted.
+- **Konteks:** Revisi Akmal: SFX "plus satu" yang sama kepake 2 transisi berturut-turut, SFX tambahan di hook kepelanan, punch kegedean.
+- **Keputusan:**
+  1. SFX tambahan (`extra_*` setelah hook, `hook_extra_*` di hook) tetap acak, tapi nggak boleh sama kayak transisi sebelumnya. Setelah hook, "tanpa SFX" 2x berturut-turut tetap boleh.
+  2. Volume ngikutin loudness file-nya (ebur128, hening depan dibuang): `hook_extra_*` 0,5 (dulu 0,3), `hook_extra_gasp` 0,4, `hook_extra_fahhh` 1,0, `extra_punch` 0,15 (dulu 0,22). Extra lain tetap 0,45.
+- **Konsekuensi:** `fahhh_KcgAXfs.mp3` (-28 LUFS) di volume 1,0 masih ±7 dB lebih pelan dari `uy`/`gasp`. Kalau mau setara, file-nya harus dikerasin, atau Akmal kasih file lain.
+- **Authority:** Akmal (chat 2026-10-27).

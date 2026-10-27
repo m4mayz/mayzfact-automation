@@ -35,10 +35,15 @@ SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.4, "overlay":
 FLASH_FRAMES = 3  # flash putih di pergantian klip hook (barengan camera flash)
 EXTRA_PREFIX = "extra_"  # SFX tambahan acak di transisi klik (sfx.json: extra_oof, extra_punch, ...)
 EXTRA_VOLUME = 0.45  # Akmal: 0,6 kekerasan, 0,3 kepelanan
-EXTRA_VOLUME_BY_EVENT = {"extra_punch": 0.22}  # file punch ±6 dB lebih keras dari yang lain
 HOOK_EXTRA_PREFIX = "hook_extra_"  # 1 SFX acak tambahan tiap ganti klip di hook, barengan camera flash (sfx.json)
+HOOK_EXTRA_VOLUME = 0.5  # Akmal: 0,3 kepelanan
+# Loudness file-nya beda jauh (ebur128, tanpa hening depan): volume per file biar kedengerannya setara.
+VOLUME_BY_EVENT = {
+    "extra_punch": 0.15,  # -7,6 LUFS, ±8 dB lebih keras dari extra lain (±-16); 0,22 kata Akmal kegedean
+    "hook_extra_gasp": 0.4,  # -11,7 LUFS, lebih keras dari uy (-14,2)
+    "hook_extra_fahhh": 1.0,  # -28 LUFS, pelan banget; 1,0 udah mentok
+}
 CUSTOM_SFX_VOLUME = 0.5  # SFX kustom dari brief (dipilih Akmal per shot)
-HOOK_EXTRA_VOLUME = 0.3  # kata Akmal (awalnya 0,4)
 BGM_SWITCH_FADE_FRAMES = 8  # BGM hook pudar cepat pas ganti ke BGM utama (riser nutupin)
 SFX_LEAD_FRAMES = 3  # SFX transisi mulai sedikit sebelum gambar ganti (puncaknya di ±0.1 detik)
 # Pembuka = bagian "masuk" transisi antar scene di source i2xag: scene muncul hampir putih + blur vertikal,
@@ -178,8 +183,9 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
 
     def add(event: str, frame: int, align_to: str | None = None) -> None:
         if event in files:
-            volume = (HOOK_EXTRA_VOLUME if event.startswith(HOOK_EXTRA_PREFIX)
-                      else EXTRA_VOLUME_BY_EVENT.get(event, EXTRA_VOLUME) if event.startswith(EXTRA_PREFIX)
+            volume = (VOLUME_BY_EVENT[event] if event in VOLUME_BY_EVENT
+                      else HOOK_EXTRA_VOLUME if event.startswith(HOOK_EXTRA_PREFIX)
+                      else EXTRA_VOLUME if event.startswith(EXTRA_PREFIX)
                       else SFX_VOLUME[event])
             if align_to:  # SFX tumpukan mulai kedengeran barengan SFX utamanya (contoh punch: hening 0,36 dtk di depan)
                 frame -= round((onset.get(event, 0.0) - onset.get(align_to, 0.0)) * FPS)
@@ -210,6 +216,12 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
     hook_extras = sorted(event for event in files if event.startswith(HOOK_EXTRA_PREFIX))
     rng = random.Random(len(entries))
     hook_rng = random.Random(len(entries) + 1)  # rng sendiri biar pilihan SFX setelah hook nggak ikut geser
+    last = {"hook": None, "main": None}  # SFX tambahan yang sama nggak boleh 2 transisi berturut-turut (Akmal)
+
+    def pick_extra(pool: list, key: str, generator: random.Random):
+        options = [o for o in pool if o is None or o != last[key]] or pool
+        last[key] = generator.choice(options)
+        return last[key]
     since_card = None  # urutan klip sejak card terakhir habis
     for entry in entries[1:]:
         covered = any(c["numberFrom"] <= entry["from"] < c["cardFrom"] + c["cardDuration"] for c in countdown)
@@ -224,7 +236,7 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
             if "hook_cut" in files:
                 add("hook_cut", entry["from"] - SFX_LEAD_FRAMES)
                 if hook_extras:
-                    add(hook_rng.choice(hook_extras), entry["from"] - SFX_LEAD_FRAMES, align_to="hook_cut")
+                    add(pick_extra(hook_extras, "hook", hook_rng), entry["from"] - SFX_LEAD_FRAMES, align_to="hook_cut")
                 flashes.append({"from": entry["from"], "durationInFrames": FLASH_FRAMES})
             continue
         frame = entry["from"] - SFX_LEAD_FRAMES
@@ -233,7 +245,7 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
             reveals.append({"from": entry["from"], "durationInFrames": INTRO_FRAMES})
         else:
             add("cut", frame)
-            pick = rng.choice([None, *extras]) if extras else None
+            pick = pick_extra([None, *extras], "main", rng) if extras else None
             if pick:
                 add(pick, frame, align_to="cut")
     for overlay in overlays:
