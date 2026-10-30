@@ -15,5 +15,10 @@
   "hook_cut": "camera-flash-sound-effect.mp3",
   "hook_extra_uy": "uy.mp3",
   "hook_extra_fahhh": "fahhh_KcgAXfs.mp3",
-  "hook_extra_gasp": "gasp_SJHmiqB.mp3"
+  "hook_extra_gasp": "gasp_SJHmiqB.mp3",
+  "hook_extra_crowd_aww": "crowd-aww.mp3",
+  "hook_extra_that_crowd_gasp": "that-crowd-gasp_MuxiSxq.mp3",
+  "hook_extra_wow_crowd": "wow-crowd-sound-effect.mp3",
+  "hook_extra_crowd_gasp_2_sec": "2-sec-crowd-gasp_Yj5WkFz.mp3",
+  "hook_extra_minions_cry": "minions-cry.mp3"
 }
