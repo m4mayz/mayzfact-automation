@@ -13,3 +13,4 @@ sources/
 remotion/node_modules/
 models/
 .env*.tmp
+out/quality-smoke/

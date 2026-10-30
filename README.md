@@ -40,9 +40,11 @@ Default repo tetap **ElevenLabs**. Buat memakai VoiceStudio hanya di satu PC, co
 ```
 
 - Jalankan backend VoiceStudio dulu. URL hanya boleh HTTP loopback lokal. Tidak perlu GUI terbuka.
-- Pilih nama/ID profil yang unik dan engine terpasang. Provider meminta engine, profil, English, MP3, speed 1.0 dan seed 0 secara eksplisit; tidak mengganti pilihan engine GUI.
+- Pilih nama/ID profil yang unik dan engine terpasang. Provider meminta engine, profil, English, format output terpilih, speed 1.0 dan seed 0 secara eksplisit; tidak mengganti pilihan engine GUI.
 - VoiceStudio perlu ASR dengan word timestamps untuk caption/timing (setup PC ini: WhisperX). Audio di-cache sebelum alignment; kegagalan ASR tidak memaksa sintesis ulang. Kata hasil ASR harus cocok dengan naskah (case/punctuation dan angka ekuivalen 0–10 boleh beda); mismatch menghentikan step, bukan mengarang timestamp.
 - `voice.mp3` + `tts.json` tetap kompatibel dengan pipeline lama. Angka/simbol sebaiknya ditulis sesuai pelafalan. Timing karakter di adapter mewarisi batas kata, bukan timing fonem.
+- `voicestudio_instruct` mengirim arahan delivery ke CosyVoice tanpa menyisipkan tag ke naskah/caption. Kosong = kontrol netral; profil/reference Gen tetap milik user dan tidak diubah otomatis. Jangan kirim `num_step`/temperature OmniVoice sebagai knob kualitas CosyVoice.
+- `voicestudio_audio_format` mendukung `mp3` (default kompatibel) atau `wav` (lossless opt-in). WAV native disimpan sebagai `voice.wav`; `voice.mp3` tetap dibuat hanya untuk brief/marker step lama. Metadata `audio_file` memilih WAV untuk master timeline, bukan MP3 kompatibilitas. Metadata lama tanpa field itu tetap membaca MP3.
 - Mode VoiceStudio tidak membutuhkan key ElevenLabs dan **tidak pernah otomatis fallback ke ElevenLabs**.
 - Kembali ke ElevenLabs: ubah `tts_provider` menjadi `elevenlabs` di file lokal. Run yang sudah punya suara tetap dikunci; tidak di-voice ulang otomatis.
 

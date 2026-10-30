@@ -115,7 +115,8 @@ def real_deps(settings: Settings) -> Deps:
 
             return VoiceStudioTTS(settings.voicestudio_url, settings.voicestudio_voice,
                                   settings.voicestudio_engine, http(), cache_dir=CACHE_DIR / "voicestudio",
-                                  timeout=settings.voicestudio_timeout)
+                                  timeout=settings.voicestudio_timeout, instruct=settings.voicestudio_instruct,
+                                  audio_format=settings.voicestudio_audio_format)
         if settings.tts_provider != "elevenlabs":
             raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
         return ElevenLabsTTS(settings.elevenlabs_api_keys, settings.elevenlabs_voice_id,

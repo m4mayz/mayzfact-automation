@@ -27,6 +27,8 @@ class Settings:
     voicestudio_url: str = "http://127.0.0.1:3900"
     voicestudio_voice: str = "default"  # isi nama/ID profil secara eksplisit di override lokal
     voicestudio_engine: str = "cosyvoice"
+    voicestudio_instruct: str = ""  # arahan delivery, bukan tag di naskah/caption
+    voicestudio_audio_format: str = "mp3"  # WAV opt-in lokal; default lama tetap
     voicestudio_timeout: float = 900.0  # model lokal cold-start bisa lama
     elevenlabs_voice_id: str = "TX3LPaxmHKxFdv7VOQHJ"
     elevenlabs_model: str = "eleven_v3"
@@ -85,18 +87,24 @@ def load_settings(env_file: Path = PROJECT_ROOT / ".env") -> Settings:
         values = json.loads(local_file.read_text(encoding="utf-8"))
         if not isinstance(values, dict):
             raise ValueError("harus object JSON")
-        allowed = {"tts_provider", "voicestudio_url", "voicestudio_voice", "voicestudio_engine", "voicestudio_timeout"}
+        allowed = {"tts_provider", "voicestudio_url", "voicestudio_voice", "voicestudio_engine",
+                   "voicestudio_timeout", "voicestudio_instruct", "voicestudio_audio_format"}
         if values.keys() - allowed:
             raise ValueError("ada field di luar setting TTS yang didukung")
         for name, value in values.items():
             if name == "voicestudio_timeout":
                 if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
                     raise ValueError("voicestudio_timeout harus angka positif")
+            elif name == "voicestudio_instruct":
+                if not isinstance(value, str) or len(value) > 4096:
+                    raise ValueError("voicestudio_instruct harus teks maksimal 4096 karakter")
             elif not isinstance(value, str) or not value.strip():
                 raise ValueError(f"{name} harus teks yang nggak kosong")
         settings = replace(settings, **values)
         if settings.tts_provider not in {"elevenlabs", "voicestudio"}:
             raise ValueError("tts_provider harus elevenlabs atau voicestudio")
+        if settings.voicestudio_audio_format not in {"mp3", "wav"}:
+            raise ValueError("voicestudio_audio_format harus mp3 atau wav")
         url = urlsplit(settings.voicestudio_url)
         if (url.scheme != "http" or url.hostname not in {"127.0.0.1", "localhost", "::1"}
                 or url.username or url.password or url.query or url.fragment or url.path not in {"", "/"}):

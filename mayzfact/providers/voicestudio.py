@@ -1,4 +1,4 @@
-"""VoiceStudio lokal: MP3 + timing kata dipetakan ke kontrak karakter mayzfact."""
+"""VoiceStudio lokal: audio native + timing kata ke kontrak karakter mayzfact."""
 
 from __future__ import annotations
 
@@ -56,15 +56,22 @@ class VoiceStudioTTS:
     provider_name = "voicestudio"
 
     def __init__(self, base_url: str, voice: str, engine: str, client: httpx.Client, *, cache_dir: Path,
-                 timeout: float = 900.0) -> None:
+                 timeout: float = 900.0, instruct: str = "", audio_format: str = "mp3") -> None:
+        if audio_format not in {"mp3", "wav"}:
+            raise PipelineError("tts", "Format audio VoiceStudio harus mp3 atau wav.")
+        if not isinstance(instruct, str) or len(instruct) > 4096:
+            raise PipelineError("tts", "Instruksi VoiceStudio harus teks maksimal 4096 karakter.")
         self.base_url = base_url.rstrip("/")
         self.voice_id = voice
         self.model_id = engine
+        self.instruct = instruct
+        self.audio_format = audio_format
         self._client = client
         self._cache_dir = cache_dir
         self._timeout = timeout
         self.cache_identity = {"provider": self.provider_name, "url": self.base_url,
-                               "voice": voice, "model": engine, "language": "en", "speed": 1.0, "seed": 0}
+                               "voice": voice, "model": engine, "language": "en", "speed": 1.0, "seed": 0,
+                               "instruct": instruct, "audio_format": audio_format}
 
     def _request(self, method: str, path: str, **kwargs) -> httpx.Response:
         try:
@@ -94,11 +101,13 @@ class VoiceStudioTTS:
             raise PipelineError("tts", f"Profil VoiceStudio {self.voice_id!r} nggak ketemu atau namanya duplikat.")
         self.voice_id = matches[0]["id"]
         body = {"model": self.model_id, "input": text, "voice": self.voice_id, "language": "en",
-                "response_format": "mp3", "speed": 1.0, "seed": 0}
+                "response_format": self.audio_format, "speed": 1.0, "seed": 0}
+        if self.instruct:
+            body["instruct"] = self.instruct
         identity = json.dumps({"url": self.base_url, "request": body, "profile": matches[0]}, sort_keys=True)
         key = hashlib.sha256(identity.encode("utf-8")).hexdigest()
         directory = self._cache_dir / key
-        path = directory / "voice.mp3"
+        path = directory / f"voice.{self.audio_format}"
         transcript = directory / "transcript.json"
         if not path.exists():
             response = self._request("POST", "/v1/audio/speech", json=body)
@@ -109,7 +118,8 @@ class VoiceStudioTTS:
             result = read_json(transcript)
         else:
             result = self._request("POST", "/v1/audio/transcriptions",
-                                   files={"file": ("voice.mp3", audio, "audio/mpeg")},
+                                   files={"file": (path.name, audio,
+                                                    "audio/wav" if self.audio_format == "wav" else "audio/mpeg")},
                                    data={"model": "whisper-1", "language": "en", "prompt": text,
                                          "response_format": "verbose_json", "timestamp_granularities[]": "word"}).json()
             write_json_atomic(directory / "transcript.last.json", result)

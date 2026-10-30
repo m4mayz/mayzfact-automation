@@ -116,13 +116,17 @@ def _shot_frames(paths: RunPaths, source: dict, shots: list[dict], voice_total_s
 
 
 def _voiced_words(paths: RunPaths, tts: dict, log: Callable[[str], None]) -> list[dict] | None:
-    """Awal kata yang beneran kedengeran (voice.mp3). Gagal = None, shot countdown pakai awal beat versi alignment."""
-    if not paths.voice_mp3.exists():
+    """Awal kata dari audio native yang dipilih. Gagal = None, shot countdown pakai alignment."""
+    audio_file = tts.get("audio_file", "voice.mp3")
+    if audio_file not in ("voice.mp3", "voice.wav"):
+        return None
+    voice = paths.root / audio_file
+    if not voice.is_file():
         return None
     try:
         from mayzfact.voice_onset import snap_word_starts, voice_envelope
 
-        return snap_word_starts(word_timings(tts["alignment"]), voice_envelope(paths.voice_mp3))
+        return snap_word_starts(word_timings(tts["alignment"]), voice_envelope(voice))
     except Exception as exc:
         log(f"[plan] energi suara gagal dibaca, awal shot countdown pakai alignment: {exc}")
         return None

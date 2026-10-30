@@ -92,5 +92,39 @@ def test_invalid_local_tts_settings_fail_closed(tmp_path, value):
         load_settings(tmp_path / ".env")
 
 
+def test_voice_quality_options_are_local_and_provider_default_is_unchanged(tmp_path):
+    import json
+
+    (tmp_path / "settings.local.json").write_text(json.dumps({
+        "tts_provider": "voicestudio", "voicestudio_voice": "Gen",
+        "voicestudio_instruct": "Speak with lively, natural intonation.", "voicestudio_audio_format": "wav",
+    }), encoding="utf-8")
+    s = load_settings(tmp_path / ".env")
+    assert s.voicestudio_audio_format == "wav"
+    assert s.voicestudio_instruct == "Speak with lively, natural intonation."
+    assert Settings().tts_provider == "elevenlabs"
+    assert Settings().voicestudio_instruct == ""
+    assert Settings().voicestudio_audio_format == "mp3"
+
+
+@pytest.mark.parametrize("value", [
+    {"voicestudio_audio_format": "../../bad"}, {"voicestudio_audio_format": "aac"},
+    {"voicestudio_instruct": 42},
+])
+def test_invalid_voice_quality_options_fail_closed(tmp_path, value):
+    import json
+
+    from mayzfact.errors import PipelineError
+
+    (tmp_path / "settings.local.json").write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(PipelineError):
+        load_settings(tmp_path / ".env")
+
+
+def test_empty_voice_instruction_is_valid_for_a_b_control(tmp_path):
+    (tmp_path / "settings.local.json").write_text('{"voicestudio_instruct": ""}', encoding="utf-8")
+    assert load_settings(tmp_path / ".env").voicestudio_instruct == ""
+
+
 def test_video_speed_defaults_to_1_1():
     assert Settings().video_speed == 1.1  # hasil render dipercepat 1,1x (D-039, awalnya 1,2x di D-038)

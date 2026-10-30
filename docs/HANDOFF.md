@@ -575,3 +575,12 @@
 - **Uji nyata:** `Gen` ID `49a69f8b`, `run_tts` menghasilkan MP3 8,088 detik, 24 kata, 4 beat. Bukti + sampel: `cache/voicestudio-verification/`. ASR menulis `5` untuk `five`; regression test + mapping angka ekuivalen 0–10 ditambahkan, audio asli dipakai ulang.
 - **Batasan:** English; timestamp karakter berbagi batas kata, bukan fonem. ASR yang mengganti/menghilangkan kata ditolak. Estimasi words/s ElevenLabs belum berlaku untuk CosyVoice. Kualitas narasi belum direview Akmal; tidak membuat/render/upload video baru.
 - **Verifikasi kode:** parent menjalankan ulang 461 test (1 skipped, 3 deselected); Ruff F/I bersih. Edge case tanda baca terpisah dan transkripsi non-object dari HTTP/cache punya regression test.
+
+# Handoff — Gen ekspresif + WAV native (D-044)
+
+- **Scope disetujui:** hanya lima saran kualitas/intonasi; tidak mengganti model/reference, naskah, voice/video lama, atau upload.
+- **Lokal aktif:** Gen/CosyVoice, arahan delivery ekspresif lewat `voicestudio_instruct`, `voicestudio_audio_format=wav`; default repo tetap ElevenLabs dan kompatibilitas MP3.
+- **Native:** `voice.wav` byte asli dipertahankan untuk alignment, plan onset, timeline master. `voice.mp3` hanya brief/marker sukses. Metadata lama tetap MP3; native yang dipilih tapi hilang gagal keras. Pending beda format/provider/naskah tidak ditimpa; kegagalan ffmpeg bisa dilanjutkan tanpa sintesis ulang.
+- **Uji nyata:** A/B 35 kata identik, Gen/seed 0/speed 1.0 sama; A kosong 12,427 detik, B arahan 16,165 detik. WAV PCM16 24 kHz mono; profil/reference Gen dan run lama hash-nya sama. File + provenance di `cache/quality-ab/Gen-v1/`.
+- **Jalur renderer:** `run_tts` dari audio B cache menghasilkan WAV byte-identik + MP3 kompatibilitas; `run_timeline.audio=voice.wav`; Remotion benar-benar merender smoke 1,003 detik dengan audio AAC. Bukti `cache/quality-ab/Gen-v1/pipeline-check/verification.json`, artefak `out/quality-smoke/native-wav-1s.mp4`. Bukan rerender video penuh.
+- **Regression parent:** 510 passed, 1 skipped, 3 deselected; Ruff F/I bersih. Intonasi subjektif belum dianggap lebih baik sampai Akmal menilai A/B.

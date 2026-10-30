@@ -417,6 +417,7 @@ def build_timeline(
     marks: dict | None = None,
     voice_envelope: Any = None,
     blurs: dict | None = None,
+    audio_file: str = "voice.mp3",
     log: Callable[[str], None] = print,
 ) -> dict:
     shots = clips["shots"]
@@ -461,7 +462,7 @@ def build_timeline(
         "width": FRAME_W,
         "height": FRAME_H,
         "durationInFrames": total,
-        "audio": "voice.mp3",
+        "audio": audio_file,
         "photoZoom": PHOTO_ZOOM,
         "shots": entries,
         "countdown": countdown,
@@ -480,15 +481,22 @@ def build_timeline(
 def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float, script: dict | None = None,
                  audio: dict | None = None, overlays: dict | None = None, marks: dict | None = None,
                  blurs: dict | None = None, log: Callable[[str], None] = print) -> dict:
+    audio_file = tts.get("audio_file", "voice.mp3")
+    if audio_file not in ("voice.mp3", "voice.wav"):
+        raise PipelineError("timeline", "audio_file di tts.json harus voice.mp3 atau voice.wav.")
+    voice = paths.root / audio_file
+    if "audio_file" in tts and not voice.is_file():
+        raise PipelineError("timeline", f"Audio {audio_file} dari tts.json nggak ditemukan. Pulihkan file aslinya.")
     envelope = None
-    if paths.voice_mp3.exists():
+    if voice.exists():
         from mayzfact.voice_onset import voice_envelope
 
         try:
-            envelope = voice_envelope(paths.voice_mp3)
+            envelope = voice_envelope(voice)
         except Exception as exc:  # cuma buat ngepasin timing caption/card; tanpa ini tetap jalan pakai alignment
             log(f"[timeline] energi suara gagal dibaca, timing pakai alignment: {exc}")
     data = build_timeline(clips, tts["duration_s"], fg_min_ratio, script=script, alignment=tts.get("alignment"),
-                          audio=audio, overlays=overlays, marks=marks, voice_envelope=envelope, blurs=blurs, log=log)
+                          audio=audio, overlays=overlays, marks=marks, voice_envelope=envelope, blurs=blurs,
+                          audio_file=audio_file, log=log)
     write_json_atomic(paths.timeline_json, data)
     return data

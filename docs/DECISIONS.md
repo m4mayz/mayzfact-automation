@@ -486,3 +486,13 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Keamanan audio:** Cache audio berbasis request + profil dibuat sebelum ASR. Gagal alignment tidak menagih ElevenLabs atau memaksa sintesis ulang. Pending audio dari provider/naskah lain tidak boleh ditimpa. Run yang sudah punya `voice.mp3` tetap dikunci.
 - **Verifikasi nyata:** Gen menghasilkan MP3 8,088 detik; 24 kata dan 4 beat berhasil lewat `run_tts`, `word_timings`, `beat_timings`. Bukti lokal: `cache/voicestudio-verification/verification.json`. Sampel bukan run produksi; kualitas subjektif belum direview Akmal. Cold-start membutuhkan model alignment tambahan ±360 MB di storage D: VoiceStudio.
 - **Authority:** Akmal (chat 2026-10-30: default ElevenLabs, aktifkan VoiceStudio di PC ini, gunakan Gen).
+
+## D-044 — 2026-10-30 — Gen: arahan intonasi + WAV native
+
+- **Status:** accepted.
+- **Scope:** Akmal menyetujui lima saran: arahkan delivery, pertahankan reference Gen, lossless sebelum render, abaikan knob OmniVoice yang tidak berlaku pada CosyVoice, A/B sampel sekitar 15 detik pada 1.0x. Tidak mengganti model/reference, naskah atau voice/video lama; tidak render penuh atau upload.
+- **Keputusan:** Default repo tetap ElevenLabs. `voicestudio_instruct` default kosong dan `voicestudio_audio_format` default mp3; override lokal PC memilih arahan narator fakta ekspresif dan WAV. Instruksi dikirim terpisah dari teks, bukan tag dalam caption.
+- **Audio:** WAV native dipertahankan untuk master dan alignment. MP3 hanya kompatibilitas brief/marker lama; `tts.json.audio_file` memilih file native. File native yang dipilih tapi hilang harus gagal, bukan diam-diam memakai MP3.
+- **Cache/resume:** Format dan instruct menjadi bagian identitas cache. Native audio disimpan sebelum konversi MP3; retry tidak memanggil sintesis ulang atau menimpa pending audio dari format/provider/naskah lain.
+- **Verifikasi:** TDD + regression dan A/B nyata; penilaian subjektif intonasi tetap oleh Akmal, bukan disimpulkan dari HTTP 200, seed, bitrate, atau sample rate. A/B naskah identik 35 kata berhasil: A netral 12,427 detik, B arahan ekspresif 16,165 detik; keduanya WAV native, speed 1.0, seed 0, alignment valid. Profil/reference Gen dan run lama terverifikasi tidak berubah. Bukti lokal di `cache/quality-ab/Gen-v1/comparison.json`.
+- **Authority:** Akmal (chat 2026-10-30: "oke gas terapin semua saran lu", "fix ke 5 poin itu ya").
