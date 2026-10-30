@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import Callable, Protocol
 
+from mayzfact.errors import PipelineError
 from mayzfact.ffmpeg import audio_duration
 from mayzfact.store import RunPaths, read_json, write_bytes_atomic, write_json_atomic
 from mayzfact.text import script_text, text_hash
@@ -28,23 +29,34 @@ def run_tts(
 ) -> dict:
     text = script_text(script["beats"])
     stability = getattr(tts, "stability", None)  # provider lama/fake di test boleh nggak punya
+    provider = getattr(tts, "provider_name", "elevenlabs")
+    identity = getattr(tts, "cache_identity", {"provider": provider, "voice_id": tts.voice_id,
+                                              "model_id": tts.model_id, "stability": stability})
     incoming = paths.root / "voice.incoming.mp3"
     incoming_meta = paths.root / "tts.incoming.json"
     # Audio yang udah dibayar disimpan dulu. Kalau langkah setelahnya gagal (mis. ffprobe), run berikutnya
     # pakai ulang file ini selama naskahnya sama, jadi ElevenLabs nggak ditagih dua kali.
     pending = read_json(incoming_meta) if incoming.exists() and incoming_meta.exists() else None
-    if pending is not None and pending["text_sha256"] == text_hash(text):
-        log("[tts] Pakai audio ElevenLabs yang udah dibayar sebelumnya (voice.incoming.mp3)")
+    legacy = pending is not None and "identity" not in pending and provider == "elevenlabs"
+    if (pending is not None and pending["text_sha256"] == text_hash(text)
+            and (pending.get("identity") == identity or legacy)):
+        log(f"[tts] Pakai audio {provider} yang udah tersimpan (voice.incoming.mp3)")
         alignment = pending["alignment"]
     else:
-        log(f"[tts] Kirim {len(text)} karakter ke ElevenLabs (voice {tts.voice_id}, model {tts.model_id}, stability {stability})")
+        if incoming.exists():
+            raise PipelineError("tts", "Audio voice.incoming.mp3 sudah tersimpan untuk naskah/provider lain. "
+                                "Jangan ditimpa; pulihkan setting lama atau pindahkan backup sebelum bikin suara baru.")
+        log(f"[tts] Kirim {len(text)} karakter ke {provider} (voice {tts.voice_id}, model {tts.model_id}, stability {stability})")
         audio, alignment = tts.synthesize(text)
         write_bytes_atomic(incoming, audio)
-        write_json_atomic(incoming_meta, {"text_sha256": text_hash(text), "alignment": alignment})
+        pending = {"text_sha256": text_hash(text), "alignment": alignment, "identity": identity,
+                   "voice_id": tts.voice_id, "model_id": tts.model_id}
+        write_json_atomic(incoming_meta, pending)
     data = {
+        "provider": provider,
         "text_sha256": text_hash(text),
-        "voice_id": tts.voice_id,
-        "model_id": tts.model_id,
+        "voice_id": pending.get("voice_id", tts.voice_id),
+        "model_id": pending.get("model_id", tts.model_id),
         "stability": stability,
         "characters": len(text),
         "duration_s": round(measure(incoming), 3),

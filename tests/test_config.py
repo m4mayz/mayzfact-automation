@@ -61,5 +61,36 @@ def test_elevenlabs_stability_defaults_to_robust():
     assert Settings().elevenlabs_stability == 1.0  # D-036
 
 
+def test_tts_default_stays_elevenlabs():
+    assert Settings().tts_provider == "elevenlabs"
+
+
+def test_local_tts_override_is_not_a_secret(tmp_path):
+    import json
+
+    (tmp_path / "settings.local.json").write_text(json.dumps({
+        "tts_provider": "voicestudio", "voicestudio_voice": "Gen",
+    }), encoding="utf-8")
+    settings = load_settings(tmp_path / ".env")
+    assert settings.tts_provider == "voicestudio"
+    assert settings.voicestudio_voice == "Gen"
+    assert settings.elevenlabs_model == Settings().elevenlabs_model
+
+
+@pytest.mark.parametrize("value", [
+    {"tts_provider": "typo"}, {"voicestudio_url": "https://example.com"},
+    {"voicestudio_timeout": -1}, {"voicestudio_voice": ""},
+    {"elevenlabs_api_keys": ["not-allowed"]}, {"video_speed": 2.0}, [],
+])
+def test_invalid_local_tts_settings_fail_closed(tmp_path, value):
+    import json
+
+    from mayzfact.errors import PipelineError
+
+    (tmp_path / "settings.local.json").write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(PipelineError, match="settings.local.json"):
+        load_settings(tmp_path / ".env")
+
+
 def test_video_speed_defaults_to_1_1():
     assert Settings().video_speed == 1.1  # hasil render dipercepat 1,1x (D-039, awalnya 1,2x di D-038)

@@ -232,6 +232,31 @@ def test_missing_keys_fail_before_any_step(world):
     assert not (world.runs / VIDEO_ID / "source.json").exists()
 
 
+def test_voicestudio_pipeline_does_not_require_elevenlabs_keys(world):
+    with pytest.raises(AwaitingInput):
+        run(world, settings=Settings(tts_provider="voicestudio"))
+    assert (world.runs / VIDEO_ID / "source.json").exists()
+
+
+def test_real_deps_selects_voicestudio_without_paid_fallback():
+    from mayzfact.pipeline import real_deps
+    from mayzfact.providers.voicestudio import VoiceStudioTTS
+
+    deps = real_deps(Settings(tts_provider="voicestudio", voicestudio_voice="Gen"))
+    try:
+        tts = deps.tts()
+        assert isinstance(tts, VoiceStudioTTS)
+        assert tts.voice_id == "Gen"
+    finally:
+        deps.close()
+
+
+def test_unknown_tts_provider_fails_before_source(world):
+    with pytest.raises(PipelineError, match="tts_provider"):
+        run(world, settings=Settings(tts_provider="typo"))
+    assert not (world.runs / VIDEO_ID / "source.json").exists()
+
+
 def test_from_fetch_does_not_need_elevenlabs_keys(world):
     start(world)
     run(world, from_step="fetch", settings=Settings(max_shot_seconds=10.0))

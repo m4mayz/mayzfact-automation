@@ -1,0 +1,7 @@
+{
+  "tts_provider": "voicestudio",
+  "voicestudio_url": "http://127.0.0.1:3900",
+  "voicestudio_voice": "Gen",
+  "voicestudio_engine": "cosyvoice",
+  "voicestudio_timeout": 900
+}

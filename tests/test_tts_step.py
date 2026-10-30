@@ -64,6 +64,37 @@ def test_failed_measure_does_not_bill_elevenlabs_twice(tmp_path, sine_mp3):
     assert sorted(p.name for p in tmp_path.iterdir()) == ["tts.json", "voice.mp3"]
 
 
+def test_tts_records_provider_without_logging_elevenlabs_for_local_voice(tmp_path, sine_mp3):
+    tts = FakeTTS(sine_mp3.read_bytes())
+    tts.provider_name = "voicestudio"
+    logs = []
+    result = run_tts(RunPaths(tmp_path), SCRIPT, tts, log=logs.append)
+    assert result["provider"] == "voicestudio"
+    assert "voicestudio" in logs[0]
+    assert not any("ElevenLabs" in line for line in logs)
+
+
+def test_pending_audio_from_different_provider_is_not_overwritten(tmp_path, sine_mp3):
+    import pytest
+
+    from mayzfact.errors import PipelineError
+
+    paths = RunPaths(tmp_path)
+    old = FakeTTS(sine_mp3.read_bytes())
+
+    def broken_measure(path):
+        raise RuntimeError("ffprobe gagal")
+
+    with pytest.raises(RuntimeError):
+        run_tts(paths, SCRIPT, old, log=lambda m: None, measure=broken_measure)
+    new = FakeTTS(sine_mp3.read_bytes())
+    new.provider_name = "voicestudio"
+    with pytest.raises(PipelineError, match="tersimpan"):
+        run_tts(paths, SCRIPT, new, log=lambda m: None)
+    assert not new.texts
+    assert (tmp_path / "voice.incoming.mp3").read_bytes() == sine_mp3.read_bytes()
+
+
 def test_run_tts_records_voice_stability(tmp_path, sine_mp3):
     tts = FakeTTS(sine_mp3.read_bytes())
     tts.stability = 1.0

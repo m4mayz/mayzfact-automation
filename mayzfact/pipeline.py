@@ -109,6 +109,18 @@ def real_deps(settings: Settings) -> Deps:
             shared["client"] = make_client()
         return shared["client"]
 
+    def tts() -> TTSProvider:
+        if settings.tts_provider == "voicestudio":
+            from mayzfact.providers.voicestudio import VoiceStudioTTS
+
+            return VoiceStudioTTS(settings.voicestudio_url, settings.voicestudio_voice,
+                                  settings.voicestudio_engine, http(), cache_dir=CACHE_DIR / "voicestudio",
+                                  timeout=settings.voicestudio_timeout)
+        if settings.tts_provider != "elevenlabs":
+            raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
+        return ElevenLabsTTS(settings.elevenlabs_api_keys, settings.elevenlabs_voice_id,
+                             settings.elevenlabs_model, http(), stability=settings.elevenlabs_stability)
+
     encoders: dict[str, object] = {}
 
     def encoder():
@@ -193,13 +205,7 @@ def real_deps(settings: Settings) -> Deps:
     return Deps(
         fetch_transcript=youtube_transcript,
         download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
-        tts=lambda: ElevenLabsTTS(
-            settings.elevenlabs_api_keys,
-            settings.elevenlabs_voice_id,
-            settings.elevenlabs_model,
-            http(),
-            stability=settings.elevenlabs_stability,
-        ),
+        tts=tts,
         http=http,
         render=lambda paths: run_render(paths, speed=settings.video_speed),
         plan=plan,
@@ -234,7 +240,12 @@ def run_pipeline(
     if not steps:
         log(f"Semua step {video_id} udah selesai: {paths.final_mp4}. Pakai --from plan/fetch/timeline/render buat bikin ulang.")
         return paths
-    missing = missing_env(settings, [name for step in steps for name in STEP_ENV.get(step, [])])
+    if settings.tts_provider not in {"elevenlabs", "voicestudio"}:
+        raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
+    required = [name for step in steps for name in STEP_ENV.get(step, [])]
+    if settings.tts_provider == "voicestudio":
+        required = [name for name in required if name != "ELEVENLABS_API_KEYS"]
+    missing = missing_env(settings, required)
     if missing:
         raise PipelineError("config", "Isi dulu di .env: " + ", ".join(missing))
     missing_tools = [tool for tool in ("ffmpeg", "ffprobe") if shutil.which(tool) is None]

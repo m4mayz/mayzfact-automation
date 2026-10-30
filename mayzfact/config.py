@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
+import math
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Callable, Mapping
+from urllib.parse import urlsplit
 
 from dotenv import dotenv_values
 
@@ -20,6 +23,11 @@ MODELS_DIR = PROJECT_ROOT / "models"  # cache model ML (SigLIP, OWLv2), di-gitig
 @dataclass(frozen=True)
 class Settings:
     # Setting biasa: ubah langsung di sini (bukan lewat .env), biar harness mana pun bisa ngeditnya.
+    tts_provider: str = "elevenlabs"  # override per-PC lewat settings.local.json, bukan .env
+    voicestudio_url: str = "http://127.0.0.1:3900"
+    voicestudio_voice: str = "default"  # isi nama/ID profil secara eksplisit di override lokal
+    voicestudio_engine: str = "cosyvoice"
+    voicestudio_timeout: float = 900.0  # model lokal cold-start bisa lama
     elevenlabs_voice_id: str = "TX3LPaxmHKxFdv7VOQHJ"
     elevenlabs_model: str = "eleven_v3"
     # 1.0 = "Robust": nada antar kalimat konsisten. Default voice bikin tiap beat kedengeran ganti konteks (D-036).
@@ -69,7 +77,33 @@ def load_settings(env_file: Path = PROJECT_ROOT / ".env") -> Settings:
     """Isi .env jadi default. Environment variable beneran (termasuk yang kosong) menang."""
     merged: dict[str, str | None] = dict(dotenv_values(env_file)) if env_file.exists() else {}
     merged.update({name: os.environ[name] for name in ENV_FIELDS if name in os.environ})
-    return settings_from_env(merged)
+    settings = settings_from_env(merged)
+    local_file = env_file.with_name("settings.local.json")
+    if not local_file.exists():
+        return settings
+    try:
+        values = json.loads(local_file.read_text(encoding="utf-8"))
+        if not isinstance(values, dict):
+            raise ValueError("harus object JSON")
+        allowed = {"tts_provider", "voicestudio_url", "voicestudio_voice", "voicestudio_engine", "voicestudio_timeout"}
+        if values.keys() - allowed:
+            raise ValueError("ada field di luar setting TTS yang didukung")
+        for name, value in values.items():
+            if name == "voicestudio_timeout":
+                if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+                    raise ValueError("voicestudio_timeout harus angka positif")
+            elif not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{name} harus teks yang nggak kosong")
+        settings = replace(settings, **values)
+        if settings.tts_provider not in {"elevenlabs", "voicestudio"}:
+            raise ValueError("tts_provider harus elevenlabs atau voicestudio")
+        url = urlsplit(settings.voicestudio_url)
+        if (url.scheme != "http" or url.hostname not in {"127.0.0.1", "localhost", "::1"}
+                or url.username or url.password or url.query or url.fragment or url.path not in {"", "/"}):
+            raise ValueError("voicestudio_url harus HTTP loopback lokal tanpa path/kredensial")
+        return settings
+    except (OSError, ValueError, TypeError) as exc:
+        raise PipelineError("config", f"settings.local.json nggak valid: {exc}") from exc
 
 
 def missing_env(settings: Settings, names: list[str]) -> list[str]:

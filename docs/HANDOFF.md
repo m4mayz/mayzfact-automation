@@ -562,3 +562,16 @@
 
 1. Video Douyin yang codec-nya HEVC bisa nggak keputer di Chrome. Preview-nya nampilin pesan, fetch tetap jalan.
 2. Suara SFX tambahan 0,45 belum didengar di render beneran.
+
+---
+
+# Handoff — Opsi VoiceStudio TTS (D-043)
+
+- **Updated:** 2026-10-30.
+- **Branch:** `fase-voicestudio-tts`; default repo ElevenLabs, override PC Akmal VoiceStudio/CosyVoice/Gen.
+- **Desain:** `docs/superpowers/specs/2026-10-30-voicestudio-tts-design.md`.
+- **Implementasi:** Pilihan provider + setting lokal tervalidasi; tidak ada fallback berbayar. Profil di-resolve unik; API MP3 + ASR word timestamps, mapping exact script, cache audio sebelum ASR, pending provider lain tidak ditimpa.
+- **Pengaturan lokal:** `settings.local.json` gitignored; contoh tracked `settings.local.example.json`. Backend VoiceStudio harus hidup. Mengubah provider tidak mengubah voice run lama.
+- **Uji nyata:** `Gen` ID `49a69f8b`, `run_tts` menghasilkan MP3 8,088 detik, 24 kata, 4 beat. Bukti + sampel: `cache/voicestudio-verification/`. ASR menulis `5` untuk `five`; regression test + mapping angka ekuivalen 0–10 ditambahkan, audio asli dipakai ulang.
+- **Batasan:** English; timestamp karakter berbagi batas kata, bukan fonem. ASR yang mengganti/menghilangkan kata ditolak. Estimasi words/s ElevenLabs belum berlaku untuk CosyVoice. Kualitas narasi belum direview Akmal; tidak membuat/render/upload video baru.
+- **Verifikasi kode:** parent menjalankan ulang 461 test (1 skipped, 3 deselected); Ruff F/I bersih. Edge case tanda baca terpisah dan transkripsi non-object dari HTTP/cache punya regression test.

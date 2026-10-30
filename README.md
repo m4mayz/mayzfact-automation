@@ -25,6 +25,27 @@ Terus di folder project:
 
 Model SigLIP + OWLv2 (±1,4 GB), emoji Lottie, dan SFX ke-download otomatis pas pertama kali dipakai.
 
+### Pilihan TTS lokal (opsional)
+
+Default repo tetap **ElevenLabs**. Buat memakai VoiceStudio hanya di satu PC, copy `settings.local.example.json` ke `settings.local.json` di root repo. File lokal ini di-gitignore; `.env` tetap cuma rahasia.
+
+```json
+{
+  "tts_provider": "voicestudio",
+  "voicestudio_url": "http://127.0.0.1:3900",
+  "voicestudio_voice": "Gen",
+  "voicestudio_engine": "cosyvoice",
+  "voicestudio_timeout": 900
+}
+```
+
+- Jalankan backend VoiceStudio dulu. URL hanya boleh HTTP loopback lokal. Tidak perlu GUI terbuka.
+- Pilih nama/ID profil yang unik dan engine terpasang. Provider meminta engine, profil, English, MP3, speed 1.0 dan seed 0 secara eksplisit; tidak mengganti pilihan engine GUI.
+- VoiceStudio perlu ASR dengan word timestamps untuk caption/timing (setup PC ini: WhisperX). Audio di-cache sebelum alignment; kegagalan ASR tidak memaksa sintesis ulang. Kata hasil ASR harus cocok dengan naskah (case/punctuation dan angka ekuivalen 0–10 boleh beda); mismatch menghentikan step, bukan mengarang timestamp.
+- `voice.mp3` + `tts.json` tetap kompatibel dengan pipeline lama. Angka/simbol sebaiknya ditulis sesuai pelafalan. Timing karakter di adapter mewarisi batas kata, bukan timing fonem.
+- Mode VoiceStudio tidak membutuhkan key ElevenLabs dan **tidak pernah otomatis fallback ke ElevenLabs**.
+- Kembali ke ElevenLabs: ubah `tts_provider` menjadi `elevenlabs` di file lokal. Run yang sudah punya suara tetap dikunci; tidak di-voice ulang otomatis.
+
 ### Pindah komputer
 
 `git clone` repo ini, terus ikutin Setup di atas. BGM, SFX, emoji, dan `runs/*/youtube.json` (jadwal tayang buat `next-slot`) udah ikut di git.

@@ -476,3 +476,13 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
   4. Preview brief ngikutin aturan yang sama. `clips.json` dari fetch lama nggak dipakai lagi buat preview.
 - **Konsekuensi:** Skor relevansi (`match`) masih dihitung di detik yang dipakai, cuma buat info.
 - **Authority:** Akmal (chat 2026-10-27).
+
+## D-043 — 2026-10-30 — Opsi TTS VoiceStudio, aktif lokal dengan Gen
+
+- **Status:** accepted.
+- **Keputusan:** Default repo tetap `Settings.tts_provider = "elevenlabs"`. Override per-PC di `settings.local.json` (gitignored; bukan `.env`). PC Akmal memakai `voicestudio`, backend `http://127.0.0.1:3900`, engine `cosyvoice`, profil `Gen` (ID terverifikasi `49a69f8b`).
+- **Kontrak:** Tidak ada fallback berbayar otomatis. Pilih profil/engine eksplisit; nama duplikat atau profil hilang menghentikan step. Runtime VoiceStudio terpisah dari environment mayzfact.
+- **Timing:** Speech API menghasilkan MP3; ASR word timestamps dipetakan kembali ke teks naskah asli. Karakter dalam satu kata berbagi batas waktu kata asli (bukan estimasi fonem). Normalisasi case/punctuation dan angka ekuivalen 0–10 (`five` ↔ `5`) boleh; kata hilang/berubah, urutan atau durasi tidak valid ditolak.
+- **Keamanan audio:** Cache audio berbasis request + profil dibuat sebelum ASR. Gagal alignment tidak menagih ElevenLabs atau memaksa sintesis ulang. Pending audio dari provider/naskah lain tidak boleh ditimpa. Run yang sudah punya `voice.mp3` tetap dikunci.
+- **Verifikasi nyata:** Gen menghasilkan MP3 8,088 detik; 24 kata dan 4 beat berhasil lewat `run_tts`, `word_timings`, `beat_timings`. Bukti lokal: `cache/voicestudio-verification/verification.json`. Sampel bukan run produksi; kualitas subjektif belum direview Akmal. Cold-start membutuhkan model alignment tambahan ±360 MB di storage D: VoiceStudio.
+- **Authority:** Akmal (chat 2026-10-30: default ElevenLabs, aktifkan VoiceStudio di PC ini, gunakan Gen).
