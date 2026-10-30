@@ -130,7 +130,7 @@ cd remotion && npx tsc --noEmit -p .
 
 ### Git
 
-- Commit boleh langsung tanpa nanya. Push harus nanya dulu.
+- Commit boleh langsung tanpa nanya. Setelah upload YouTube sukses, langsung commit hasil upload lalu push ke origin tanpa nanya lagi (izin tetap Akmal). Push di luar alur selesai upload tetap harus nanya dulu. Jangan ikutkan perubahan lain yang belum disetujui; kalau push gagal, laporkan, jangan force-push.
 - Pesan commit pakai Conventional Commits, bahasa Inggris, 1 baris, tanpa body.
 - Jangan tambahin trailer `Co-Authored-By` atau atribusi AI dalam bentuk apa pun.
 

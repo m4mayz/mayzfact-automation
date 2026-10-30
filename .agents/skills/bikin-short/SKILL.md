@@ -191,7 +191,8 @@ uv run mayzfact upload <id> --now                         # langsung public, cum
 
 - Kalau error "Belum login YouTube" atau "Token YouTube ditolak": minta Akmal jalanin `uv run mayzfact login youtube` (browser kebuka buat izin akun), terus ulang.
 - Kalau error "udah pernah di-upload": jangan hapus `youtube.json` sendiri, tanya Akmal.
-- Sukses: kabarin Akmal jam tayang, link video, dan link YouTube Studio dari output-nya.
+- Sukses: commit hasil upload lalu langsung push ke origin tanpa nanya lagi (izin tetap Akmal). Jangan ikutkan perubahan lain yang belum disetujui; kalau push gagal, laporkan tanpa force-push. Verifikasi commit ada di remote sebelum bilang sudah ke-push.
+- Kabarin Akmal jam tayang, link video, dan link YouTube Studio dari output-nya.
 
 ## 12. Metadata TikTok
 
