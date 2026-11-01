@@ -55,11 +55,12 @@ def test_top3_requires_exact_original_source_ranks(change):
 
 
 def test_top3_source_headings_accept_normalized_case_spaces_and_chunks():
+    import tempfile
+    from pathlib import Path
+
     from mayzfact.steps.script import check_script_file
     from mayzfact.store import RunPaths, write_json_atomic
     from tests.top3_fixtures import SOURCE_TEXT, top3_script
-    import tempfile
-    from pathlib import Path
 
     with tempfile.TemporaryDirectory() as folder:
         paths = RunPaths(Path(folder))

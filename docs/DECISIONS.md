@@ -496,3 +496,12 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Cache/resume:** Format dan instruct menjadi bagian identitas cache. Native audio disimpan sebelum konversi MP3; retry tidak memanggil sintesis ulang atau menimpa pending audio dari format/provider/naskah lain.
 - **Verifikasi:** TDD + regression dan A/B nyata; penilaian subjektif intonasi tetap oleh Akmal, bukan disimpulkan dari HTTP 200, seed, bitrate, atau sample rate. A/B naskah identik 35 kata berhasil: A netral 12,427 detik, B arahan ekspresif 16,165 detik; keduanya WAV native, speed 1.0, seed 0, alignment valid. Profil/reference Gen dan run lama terverifikasi tidak berubah. Bukti lokal di `cache/quality-ab/Gen-v1/comparison.json`.
 - **Authority:** Akmal (chat 2026-10-30: "oke gas terapin semua saran lu", "fix ke 5 poin itu ya").
+
+## D-045 — 2026-11-01 — Top 3 dan CTA tantangan sebelum nomor satu
+
+- **Status:** accepted, implementasi pada branch `fase-top3-cta`; belum push/merge.
+- **Keputusan:** Video baru mengambil peringkat source asli 3/2/1 dan membuang item 5/4; urutan hook → 3 → 2 → CTA → 1. CTA 1–2 beat berurutan sebelum Number one, wajib like/subscribe/comment, gaya tantangan/pilih kubu yang bervariasi sesuai tema. Contoh acuan: `Subscribe if you'd touch it, like if you'd watch,` / `or comment 'nope' if you'd run.` Tidak memakai ancaman agama, hadiah/janji palsu, atau mengunci nomor satu di balik subscribe.
+- **Durasi:** Target final sesudah speed-up 30–40 detik, anggaran sasaran 80 kata/rentang 76–84 pada 1.1x. Speed berbeda menskalakan anggaran secara deterministik. Estimasi dari audio nyata di luar target hanya memperingatkan; audio dibayar tetap disimpan dan tidak digenerate ulang otomatis.
+- **Kompatibilitas:** Script baru menyatakan `narration_mode: top3`; field hilang berarti source legacy, tanpa migrasi massal. Tidak mengganti voice/provider/stability atau mengubah run upload lama. Like kondisional dideteksi helper bersama; event like/subscribe mode Top 3 mengikuti urutan ucapan dan berakhir sebelum nomor satu. Ajakan comment tetap narasi/caption, tanpa komponen animasi baru.
+- **Plan:** Hanya beat sebelum countdown pertama boleh dipetakan sebagai hook; CTA tidak mewarisi subjek nomor dua. Aturan fakta, hedges, media, keyword, dan semua checkpoint tetap berlaku.
+- **Authority:** Akmal menyetujui source 3/2/1, CTA gaya A, spec tertulis, dan meminta implementasi langsung dengan commit lokal tanpa push (chat 2026-11-01).

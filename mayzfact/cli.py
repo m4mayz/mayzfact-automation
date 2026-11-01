@@ -81,7 +81,12 @@ def main(argv: list[str] | None = None) -> int:
 
 def _check_script(args: argparse.Namespace, settings: Settings) -> int:
     from mayzfact.audio import BGM_DIR, list_bgm
-    from mayzfact.steps.script import check_script_file, load_script, narration_word_range, target_duration
+    from mayzfact.steps.script import (
+        check_script_file,
+        load_script,
+        narration_word_range,
+        target_duration,
+    )
     from mayzfact.steps.source import parse_video_id
     from mayzfact.store import RunPaths, read_json
     from mayzfact.text import words

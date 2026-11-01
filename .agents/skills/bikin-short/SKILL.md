@@ -11,6 +11,18 @@ source → **[agent tulis naskah]** → **[Akmal review naskah]** → suara → 
 
 Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal persis apa yang harus dia lakuin. Aturan umum ada di `AGENTS.md`, terutama bagian Keamanan, Biaya, dan Review video.
 
+## Pola video baru: Top 3 (D-045)
+
+Di branch ini, semua **naskah baru** wajib menulis `"narration_mode": "top3"`. Run lama tanpa field ini berarti `source`: aturan lama tetap berlaku, jangan migrasi atau ubah naskah/audio yang sudah dikunci.
+
+- Source Top 5 → ambil peringkat asli **3, 2, 1**; pembahasan 5/4 dibuang utuh. Jangan pilih ulang atau tukar subjek. Source harus punya heading 3/2/1 yang bisa diverifikasi; kalau tidak, laporkan, jangan mengarang ranking.
+- Urutan **hook → Number three + ≥2 beat penjelasan → Number two + ≥2 beat penjelasan → CTA → Number one + ≥2 beat penjelasan → selesai**. CTA tidak dihitung sebagai penjelasan.
+- Target **final.mp4 30–40 detik setelah speed-up**, bukan 80% durasi source. Pada speed 1.1x: sasaran **80 kata total**, rentang valid **76–84**, termasuk hook, pengumuman, penjelasan, dan CTA. CLI memakai anggaran bersama, disesuaikan jika speed berubah. Jangan ubah speed/provider/stability otomatis untuk mengejar target.
+- CTA satu blok **1–2 beat langsung sebelum Number one**, wajib mengajak **subscribe, like, comment**, dengan tantangan/pilih kubu ringan yang sesuai tema. Variasikan kalimat antarvideo; contoh acuan, bukan template wajib: `Subscribe if you'd touch it, like if you'd watch,` / `or comment 'nope' if you'd run.` Jangan pakai ancaman agama, hadiah/janji palsu, atau menahan nomor satu sampai penonton subscribe.
+- CTA memakai subject kosong, keyword visual CTA sendiri, tanpa point; hook menyebut tiga, bukan lima. Sesudah suara jadi, periksa estimasi final dari durasi nyata / speed. Kalau di luar target, kabarkan dan pertahankan audio; perubahan yang memakai kredit perlu persetujuan. Durasi akhir hanya terverifikasi sesudah ffprobe pada render yang diminta.
+
+Aturan fakta/hedges, ≤10 kata per beat, foto 15–45%, overlap ≤15%, emoji/keyword, serta checkpoint review tetap berlaku.
+
 ## 1. Source
 
 ```bash
@@ -23,7 +35,7 @@ Run pertama bikin `runs/<id>/source.json` (transcript + durasi), `source.mp4`, d
 
 Agent nulis `runs/<id>/script.json`. Ini tanggung jawab agent, nggak ada LLM lain di pipeline. Aturannya:
 
-**Isi.** Nulis ulang source: fakta, urutan item, dan momen-momennya tetap, kata-katanya baru. Jangan nambah fakta dari luar source. Pertahankan kata pembatas source ("some species", "one of the"); jangan dilebih-lebihin. Kalau source ngitung ("Number five…"), urutan dan jumlah item sama, tiap item diumumin "Number N, [subject]." dan dapat minimal 2 beat penjelasan.
+**Isi.** Nulis ulang source: fakta, urutan item terpilih, dan momen-momennya tetap, kata-katanya baru. Jangan nambah fakta dari luar source. Pertahankan kata pembatas source ("some species", "one of the"); jangan dilebih-lebihin. Mode `top3` hanya peringkat asli 3/2/1; mode `source` lama mempertahankan semua item. Tiap item diumumin "Number N, [subject]." dan dapat minimal 2 beat penjelasan non-CTA.
 
 Tiap beat harus bisa ditunjuk kalimat source-nya (kolom "dasar dari source" di langkah 3). Beat yang nggak punya dasar itu rekaan, hapus. Pengecualiannya cuma beat CTA. Kesalahan yang sering kejadian:
 
@@ -33,9 +45,9 @@ Tiap beat harus bisa ditunjuk kalimat source-nya (kolom "dasar dari source" di l
 - Ngerasin klaim. "Can die if kept underwater" ≠ "will suffocate when trapped". "Can/may/some" di source tetap "can/may/some". Jangan pakai "zero", "always", "never", "will" kalau source nggak bilang.
 - Detail source yang dibuang. Kalau source bilang "sit on it and even walk on it", dua-duanya masuk.
 
-**Hook (beat 1–2).** Di sini penonton mutusin nonton atau swipe (±40% swipe di video lama). Urutan source tetap (label kategori → teaser nomor 1 → CTA), kalimatnya yang dipoles:
+**Hook (beat 1–2).** Di sini penonton mutusin nonton atau swipe. Label kategori → teaser nomor 1 tetap dari source; dalam mode `top3`, CTA tidak di hook, melainkan tepat sebelum pengumuman Number one. Mode `source` lama mempertahankan urutan source.
 
-1. Beat 1 kalimat lengkap yang nunjuk ke layar: dibuka "These…" dan ada kata kerjanya. Jangan judul doang: "Top five animals that can disappear in plain sight." → "These five animals can literally vanish in plain sight."
+1. Beat 1 kalimat lengkap yang nunjuk ke layar: dibuka "These…" dan ada kata kerjanya. Jangan judul doang. Dalam mode `top3`, sesuaikan hitungan menjadi three: "These three animals can vanish in plain sight." Pertahankan pembatas source, jangan menambahkan "literally" jika source tidak mengatakannya.
 2. Kata kerja dan kata pembatas source tetap (can, literally, probably, might, some of the).
 3. Kalau source punya teaser nomor 1, jadiin beat 2 dan bagian paling ekstremnya jangan dilemahin: "number one is absolutely terrifying" → beat 1 diakhiri koma, beat 2 "and number one is absolutely terrifying."
 4. Teaser jangan dibuka "Number one" + koma/titik/titik dua/strip, karena itu kebaca jadi card countdown (`mayzfact/countdown.py`). Yang aman: "and number one looks…", "Wait for number one."
@@ -48,18 +60,19 @@ Tiap beat harus bisa ditunjuk kalimat source-nya (kolom "dasar dari source" di l
 2. Titik cuma di akhir CTA, "Number N, [subject].", kalimat penjelasan sebelum celetukan, celetukan, dan beat terakhir.
 3. Jangan pakai tanya retoris atau potongan pendek di tengah item ("Result? …", "Plus wrinkles. …").
 4. Tiap beat tetap ≤ 10 kata dan 1 ide visual; yang berubah cuma tanda baca dan kata sambungnya.
-5. CTA juga disambung, jangan ditempel. "Like and subscribe." yang berdiri sendiri kedengeran tiba-tiba. Masuk ke CTA pakai kata penghubung, terus like/subscribe disambung ke ajakan comment: "So comment which one's most unique," / "and don't forget to like and subscribe." Polanya harus tetap kebaca `mayzfact/cta.py`: "like" diikuti and/or/subscribe/button, atau didahului hit/smash/tap/give/drop/leave. Contoh yang nggak kebaca: "if you like them, subscribe" (cuma subscribe yang kepicu).
+5. CTA juga mengalir, jangan ditempel sebagai "Like and subscribe." Dalam mode `top3`, buat tantangan pilihan sesuai tema, satu atau dua beat tepat sebelum Number one. `like if ...` pada awal klausa sekarang memicu animasi, termasuk sesudah koma; "if you like them, subscribe" tetap bukan ajakan like. Mode `source` lama boleh memakai konektor seperti "So comment which one's most unique," / "and don't forget to like and subscribe."
 
 Contoh: "Number four, Scottish Fold." / "Ears fold forward and down," / "for an adorable round face," / "almost like it's always eavesdropping."
 
-**Panjang.** ±80% durasi source. `check-script` ngasih target kata; tulis **di bawah atau pas target**, jangan di atas, walaupun toleransinya ±15%. `check-script` ngitung 2.2 kata/detik (ElevenLabs v3 aslinya 1.9–2.3; makin banyak titik makin lambat), jadi naskah pas target hasilnya ±77–85% durasi source. Pendekin dengan buang kata hiasan ("actually", "just like", "way", "amazing", "for more"), bukan dengan buang fakta. Intro dipadetin. CTA source dipadetin ke comment + like + subscribe dalam 1–2 beat, dan **harus pakai kata "like" dan "subscribe" beneran** (itu pemicu animasi CTA). Teaser nomor 1 di hook dipertahankan kalau source punya.
+**Panjang.** Mode `top3`: target final **30–40 detik**, sasaran **80 kata** dengan rentang **76–84** pada speed 1.1x. Semua bagian termasuk CTA masuk anggaran. Jangan memotong fakta/hedges item terpilih hanya agar muat; padatkan kalimat, buang hiasan, dan laporkan jika detail penting tidak bisa dipertahankan. Teaser nomor satu dipertahankan kalau source punya. Kata lolos bukan jaminan durasi; TTS nyata / speed memberi estimasi, ffprobe final memberi hasil akhir. Mode `source` lama: target ±80% durasi source, target CLI 2.2 kata/detik, tulis di bawah atau pas target lama.
 
 **Format.** Tiap beat ≤ 10 kata, 1 ide visual:
 
 ```json
 {
+  "narration_mode": "top3",
   "beats": [
-    {"text": "Number five, mantis shrimp.", "media": "video", "queries": ["mantis shrimp close up underwater"],
+    {"text": "Number three, mantis shrimp.", "media": "video", "queries": ["mantis shrimp close up underwater"],
      "queries_zh": ["螳螂虾 特写"], "subject": "mantis shrimp", "point": false, "emoji": "", "emoji_word": ""}
   ],
   "hook_queries": {"0": {"en": ["giant bird on radio tower"], "zh": ["巨鸟 铁塔"]}}
@@ -74,7 +87,9 @@ Contoh: "Number four, Scottish Fold." / "Ears fold forward and down," / "for an 
 
 Contoh beat yang bagus (source: "This tiny marine predator can throw one of the fastest strikes in the animal kingdom, creating a shockwave powerful enough to stun its prey. Bro, that's basically a living underwater punch machine."):
 
-> "Number five, mantis shrimp." / "This little guy throws one of the fastest punches alive." / "The shockwave alone knocks its prey out cold." / "Bro, never pick a fight with this guy."
+> "Number three, mantis shrimp." / "This little guy throws one of the fastest punches alive." / "The shockwave alone knocks its prey out cold." / "Bro, never pick a fight with this guy."
+
+Contoh ini hanya bentuk beat; nama dan nomor wajib cocok dengan peringkat asli source, fakta/hedges tetap diaudit.
 
 Terus:
 

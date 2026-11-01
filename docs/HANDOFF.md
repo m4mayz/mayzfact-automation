@@ -584,3 +584,15 @@
 - **Uji nyata:** A/B 35 kata identik, Gen/seed 0/speed 1.0 sama; A kosong 12,427 detik, B arahan 16,165 detik. WAV PCM16 24 kHz mono; profil/reference Gen dan run lama hash-nya sama. File + provenance di `cache/quality-ab/Gen-v1/`.
 - **Jalur renderer:** `run_tts` dari audio B cache menghasilkan WAV byte-identik + MP3 kompatibilitas; `run_timeline.audio=voice.wav`; Remotion benar-benar merender smoke 1,003 detik dengan audio AAC. Bukti `cache/quality-ab/Gen-v1/pipeline-check/verification.json`, artefak `out/quality-smoke/native-wav-1s.mp4`. Bukan rerender video penuh.
 - **Regression parent:** 510 passed, 1 skipped, 3 deselected; Ruff F/I bersih. Intonasi subjektif belum dianggap lebih baik sampai Akmal menilai A/B.
+
+# Handoff — Top 3 + CTA sebelum nomor satu (D-045)
+
+- **Branch:** `fase-top3-cta`, dari baseline aktif `6cb523f`; commit lokal saja, belum push/merge.
+- **Spec / plan:** `docs/superpowers/specs/2026-11-01-top3-cta-design.md`, `docs/superpowers/plans/2026-11-01-top3-cta.md`.
+- **Naskah baru:** tulis `narration_mode: top3`; ambil peringkat asli source 3/2/1. CTA tantangan 1–2 beat langsung sebelum Number one, minimal dua beat penjelasan per item di luar CTA. Target final 30–40 detik, sasaran 80 kata, valid 76–84 pada speed 1.1x.
+- **Kode:** schema legacy-safe, anggaran bersama CLI/pra-TTS, validasi subjek/ranking/CTA; like kondisional; timeline mengikuti urutan ucapan dan membatasi event sebelum nomor satu; plan tidak mencampur body/CTA ke hook dan tidak mewariskan subject ke CTA.
+- **Durasi nyata:** pipeline melaporkan estimasi final dari metadata audio/speed; di luar target memberi peringatan dan mempertahankan audio. Tidak mengganti speed atau membayar TTS ulang otomatis. Anggaran kata belum membuktikan durasi final; ffprobe diperlukan saat render produksi berikutnya.
+- **Operator PC:** `D:/akmal/_notes/tools/mayzfact_audit.py` disesuaikan ke mode dan helper repo, dengan regression terisolasi di `D:/akmal/_notes/tools/tests/test_top3_audit.py`; file operator ini berada di luar repo, tidak ikut commit/clone.
+- **Batas verifikasi:** test fixture/CLI/pipeline lokal tanpa kredit API; tidak membuat atau meng-upload video produksi baru, tidak mengubah voice/run lama. Default ElevenLabs/voice/stability dan semua checkpoint tetap. Bukti test akhir dicatat pada laporan commit fase ini.
+- **Verifikasi parent:** full suite 551 passed, 1 skipped, 3 deselected; audit operator terisolasi 5 passed; Ruff F/I dan diff-check bersih. CLI fixture valid 80 kata diterima dan CTA awal ditolak; parser source nyata memilih basilisk lizards/immortal jellyfish/tardigrades sebagai 3/2/1. Hash script/voice/tts/final/youtube run `j3uTtxM3vSQ` cocok dengan snapshot sebelum eksperimen suara.
+- **Batas edit:** update opsional `AGENTS.md` tidak dilakukan karena izin tool timeout. Aturan baru lengkap berada di skill bikin-short dan D-045; file protected tetap utuh.
