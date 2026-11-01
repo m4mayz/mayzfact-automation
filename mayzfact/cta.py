@@ -21,8 +21,10 @@ def is_like_cta(tokens: list[str], j: int) -> bool:
     before = clean(tokens[j - 1]) if j else ""
     after = tokens[j + 1].strip() if j + 1 < len(tokens) else ""
     after_2 = (clean(after), clean(tokens[j + 2])) if j + 2 < len(tokens) else ("", "")
+    conditional = clean(after) == "if" and (
+        j == 0 or tokens[j - 1].rstrip().endswith((",", ";", ".", "!", "?")) or before in {"and", "then"})
     return clean(tokens[j]) == "like" and (
-        tokens[j].rstrip().endswith(",") or before in LIKE_BEFORE or (clean(after) or after) in LIKE_AFTER
+        conditional or tokens[j].rstrip().endswith(",") or before in LIKE_BEFORE or (clean(after) or after) in LIKE_AFTER
         or after_2 in LIKE_AFTER_2)
 
 

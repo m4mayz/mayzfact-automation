@@ -359,6 +359,29 @@ def _cta(words: list[dict], beat_of: list[int], total: int) -> list[dict]:
     return out
 
 
+def _top3_cta(words: list[dict], beat_of: list[int], beats: list[dict], countdown: list[dict], total: int) -> list[dict]:
+    """CTA Top 3 mengikuti urutan ucapan, dan selesai sebelum kartu nomor satu."""
+    from mayzfact.narration import cta_beat_indices
+
+    allowed = set(cta_beat_indices(beats))
+    tokens = [w["text"] for w in words]
+    stop = next((c["numberFrom"] for c in countdown if c["number"] == 1), total)
+    actions = []
+    for i, w in enumerate(words):
+        if beat_of[i] not in allowed:
+            continue
+        kind = "subscribe" if _clean(w["text"]) in SUBSCRIBE else "like" if is_like_cta(tokens, i) else None
+        if kind and (start := to_frame(w["start_s"])) < stop:
+            actions.append((kind, max(0, start)))
+    out = []
+    for i, (kind, start) in enumerate(actions):
+        end = min(stop, actions[i + 1][1] if i + 1 < len(actions) else stop, start + CTA_FRAMES[kind])
+        if end > start:
+            out.append({"kind": kind, "from": start, "durationInFrames": end - start,
+                        "clickAt": min(CTA_CLICK[kind], end - start - 1)})
+    return out
+
+
 def _emojis(words: list[dict], beat_of: list[int], marks: dict | None, cta: list[dict], countdown: list[dict],
             total: int) -> list[dict]:
     """Emoji muncul di kata pemicunya dan boleh nyebrang ke beat berikutnya (kayak 🍀 di source), maksimal 2.5 detik.
@@ -443,7 +466,8 @@ def build_timeline(
             captions = _captions(words, audio_duration_s, spans, subject_words, total)
             timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
             beat_of = _beat_of(words, script["beats"])
-            cta = _cta(words, beat_of, total)
+            cta = (_top3_cta(words, beat_of, script["beats"], countdown, total)
+                   if script.get("narration_mode") == "top3" else _cta(words, beat_of, total))
             emojis = _emojis(words, beat_of, marks, cta, countdown, total)
         except (PipelineError, IndexError, KeyError) as exc:  # caption/card cuma hiasan: timeline tetap jadi tanpa itu
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
