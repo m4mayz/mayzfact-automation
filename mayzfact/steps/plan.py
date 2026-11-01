@@ -150,8 +150,17 @@ def run_plan(
     by_alignment = tighten_countdown(slots, beats, tts["alignment"])
     slots = tighten_countdown(slots, beats, tts["alignment"], voiced_words=_voiced_words(paths, tts, log))
     subjects = beat_subjects(beats)
+    if script.get("narration_mode") == "top3":
+        from mayzfact.narration import cta_beat_indices
+
+        for i in cta_beat_indices(beats):
+            subjects[i] = ""
     segs = prepare_source_segments(paths, source, download_source, hook_seconds, paths.plan_dir, retry_step="plan") if hook_seconds > 0 else []
-    mapping = hook_slot_map(by_alignment, len(segs), hook_seconds)
+    eligible = by_alignment
+    if script.get("narration_mode") == "top3":
+        first = next((i for i, b in enumerate(beats) if parse_countdown(b["text"])), len(beats))
+        eligible = [slot for slot in by_alignment if slot.beat < first]
+    mapping = hook_slot_map(eligible, len(segs), hook_seconds)
     hook_queries = script.get("hook_queries", {})  # ditulis agent sambil lihat frame plan/seg_*.jpg
 
     def rel(path: Path) -> str:

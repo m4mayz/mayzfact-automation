@@ -139,5 +139,8 @@ def check_script_file(paths: RunPaths, source: dict, *, ratio: float, minimum_s:
     script = load_script(paths)
     duration_s = target_duration(source["duration_s"], ratio, minimum_s)
     source_text = " ".join(s["text"] for s in source["transcript"])
-    problems, _ = check_script(script, source_text, duration_s, bgm_choices, video_speed=video_speed)
+    try:
+        problems, _ = check_script(script, source_text, duration_s, bgm_choices, video_speed=video_speed)
+    except ValueError as exc:
+        raise PipelineError("script", str(exc)) from exc
     return problems

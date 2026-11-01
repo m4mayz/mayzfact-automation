@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -70,7 +71,7 @@ def plan_steps(done: dict[str, bool], voice_exists: bool, from_step: str | None,
     return []
 
 
-def check_voice(paths: RunPaths) -> dict:
+def check_voice(paths: RunPaths, *, video_speed: float = 1.1, log: Callable[[str], None] = print) -> dict:
     """Dicek tiap run sebelum plan: naskah masih sama dengan suara, dan suaranya cukup panjang."""
     tts = read_json(paths.tts_json)
     script = read_json(paths.script_json)
@@ -78,7 +79,18 @@ def check_voice(paths: RunPaths) -> dict:
         raise PipelineError(
             "tts", f"script.json beda sama naskah yang dipakai buat voice.mp3. Balikin script.json. {NEW_SCRIPT_HINT}"
         )
-    if tts["duration_s"] < MIN_AUDIO_SECONDS:
+    if script.get("narration_mode") == "top3":
+        from mayzfact.narration import validate_video_speed
+
+        validate_video_speed(video_speed)
+        if not math.isfinite(tts["duration_s"]) or tts["duration_s"] <= 0:
+            raise PipelineError("tts", "Durasi audio harus positif dan finite; pulihkan metadata audio asli.")
+        estimated = tts["duration_s"] / video_speed
+        log(f"[tts] Top 3 estimasi final {estimated:.1f} detik dari audio nyata {tts['duration_s']:.1f} detik / {video_speed:g}x.")
+        if not 30 <= estimated <= 40:
+            log("[tts] PERINGATAN: estimasi final di luar target 30-40 detik. Audio tetap disimpan; "
+                "jangan regenerate atau ubah speed otomatis tanpa persetujuan.")
+    elif tts["duration_s"] < MIN_AUDIO_SECONDS:
         raise PipelineError(
             "tts", f"Audio cuma {tts['duration_s']:.1f} detik (minimal {MIN_AUDIO_SECONDS:.0f}). {NEW_SCRIPT_HINT}"
         )
@@ -229,6 +241,12 @@ def run_pipeline(
     runs_dir: Path = RUNS_DIR,
     log: Callable[[str], None] = print,
 ) -> RunPaths:
+    from mayzfact.narration import validate_video_speed
+
+    try:
+        validate_video_speed(settings.video_speed)
+    except ValueError as exc:
+        raise PipelineError("config", str(exc)) from exc
     video_id = parse_video_id(video)
     paths = RunPaths(runs_dir / video_id)
     done = {step: step_done(step, paths) for step in STEPS}
@@ -265,7 +283,7 @@ def run_pipeline(
             if step == "tts":
                 _require_script(paths, settings)  # naskah dari agent: harus ada + lolos cek sebelum bayar TTS
             if step in AFTER_VOICE and not voice_checked:
-                check_voice(paths)
+                check_voice(paths, video_speed=settings.video_speed, log=log)
                 voice_checked = True
             log(f"[{step}] mulai")
             _run_step(step, paths, settings, deps, log)
