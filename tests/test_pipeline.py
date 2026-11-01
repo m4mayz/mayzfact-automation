@@ -518,3 +518,27 @@ def test_real_audio_dep_passes_custom_sfx_from_brief(tmp_path, monkeypatch):
     monkeypatch.setattr(audio_mod, "prepare_audio", lambda *a, **kw: seen.update(kw) or {})
     real_deps(Settings(**KEYS)).audio(paths, lambda m: None)
     assert seen["custom"] == [{"file": "uy.mp3", "at_s": 2.5}]
+
+
+def test_top3_rejects_wrong_structure_before_paid_tts(world):
+    from tests.top3_fixtures import SOURCE_TEXT, top3_script
+
+    paths = RunPaths(world.runs / VIDEO_ID)
+    write_json_atomic(paths.source_json, dict(duration_s=90, transcript=[dict(text=SOURCE_TEXT)]))
+    script = top3_script()
+    script.beats[1].text = 'Number five, basilisk lizards.'
+    write_json_atomic(paths.script_json, script.model_dump())
+    with pytest.raises(PipelineError, match='Top 3'):
+        run(world)
+    assert world.tts.calls == 0
+
+
+def test_top3_pipeline_uses_configured_speed_before_tts(world):
+    from tests.top3_fixtures import SOURCE_TEXT, top3_script
+
+    paths = RunPaths(world.runs / VIDEO_ID)
+    write_json_atomic(paths.source_json, dict(duration_s=90, transcript=[dict(text=SOURCE_TEXT)]))
+    write_json_atomic(paths.script_json, top3_script().model_dump())
+    with pytest.raises(PipelineError, match='between 70 and 76'):
+        run(world, settings=Settings(**KEYS, video_speed=1.0))
+    assert world.tts.calls == 0

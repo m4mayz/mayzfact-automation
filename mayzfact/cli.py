@@ -81,7 +81,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _check_script(args: argparse.Namespace, settings: Settings) -> int:
     from mayzfact.audio import BGM_DIR, list_bgm
-    from mayzfact.steps.script import check_script_file, target_duration, word_range
+    from mayzfact.steps.script import check_script_file, load_script, narration_word_range, target_duration
     from mayzfact.steps.source import parse_video_id
     from mayzfact.store import RunPaths, read_json
     from mayzfact.text import words
@@ -91,13 +91,14 @@ def _check_script(args: argparse.Namespace, settings: Settings) -> int:
         raise PipelineError("check-script", f"{paths.source_json} belum ada. Jalanin dulu: mayzfact run {paths.root.name}")
     source = read_json(paths.source_json)
     problems = check_script_file(paths, source, ratio=settings.target_duration_ratio, minimum_s=settings.min_duration_seconds,
-                                 bgm_choices=list_bgm(BGM_DIR))
+                                 bgm_choices=list_bgm(BGM_DIR), video_speed=settings.video_speed)
     if problems:
         print("\n".join(f"- {p}" for p in problems))
         return 1
     script = read_json(paths.script_json)
     count = len(words(" ".join(b["text"] for b in script["beats"])))
-    target, _, _ = word_range(target_duration(source["duration_s"], settings.target_duration_ratio, settings.min_duration_seconds))
+    target, _, _ = narration_word_range(load_script(paths), target_duration(
+        source["duration_s"], settings.target_duration_ratio, settings.min_duration_seconds), settings.video_speed)
     print(f"OK: naskah lolos cek ({count} kata, target {target})")
     return 0
 

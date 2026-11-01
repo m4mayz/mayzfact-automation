@@ -22,6 +22,7 @@ class HookQuery(BaseModel):
 
 
 class Script(BaseModel):
+    narration_mode: Literal["source", "top3"] = "source"  # run lama tanpa field ini tetap pakai aturan source
     beats: list[Beat]
     bgm: str = ""  # sisa lama, nggak dipakai: BGM selalu mystery.mp3 (hook) + main.mp3 (D-038)
     hook_queries: dict[str, HookQuery] = {}  # per index segmen hook (plan/seg_XX), ditulis agent
