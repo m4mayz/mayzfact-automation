@@ -364,15 +364,15 @@ def _top3_cta(words: list[dict], beat_of: list[int], beats: list[dict], countdow
     from mayzfact.narration import cta_beat_indices
 
     allowed = set(cta_beat_indices(beats))
-    tokens = [w["text"] for w in words]
     stop = next((c["numberFrom"] for c in countdown if c["number"] == 1), total)
     actions = []
-    for i, w in enumerate(words):
-        if beat_of[i] not in allowed:
-            continue
-        kind = "subscribe" if _clean(w["text"]) in SUBSCRIBE else "like" if is_like_cta(tokens, i) else None
-        if kind and (start := to_frame(w["start_s"])) < stop:
-            actions.append((kind, max(0, start)))
+    for beat in sorted(allowed):
+        local = [w for w, b in zip(words, beat_of) if b == beat]
+        tokens = [w["text"] for w in local]
+        for i, w in enumerate(local):
+            kind = "subscribe" if _clean(w["text"]) in SUBSCRIBE else "like" if is_like_cta(tokens, i) else None
+            if kind and (start := to_frame(w["start_s"])) < stop:
+                actions.append((kind, max(0, start)))
     out = []
     for i, (kind, start) in enumerate(actions):
         end = min(stop, actions[i + 1][1] if i + 1 < len(actions) else stop, start + CTA_FRAMES[kind])

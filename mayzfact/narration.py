@@ -4,7 +4,7 @@ from __future__ import annotations
 import math
 import re
 
-from mayzfact.countdown import Countdown, parse_countdown
+from mayzfact.countdown import COUNTDOWN_DELIMITER, Countdown, parse_countdown
 from mayzfact.cta import cta_kinds
 from mayzfact.models import Script
 from mayzfact.text import clean_text
@@ -21,11 +21,15 @@ def top3_word_range(video_speed: float) -> tuple[int, int, int]:
     return round(80 * scale), math.ceil(76 * scale), math.floor(84 * scale)
 
 
-def source_countdowns(source_text: str) -> list[Countdown]:
-    """Baca heading dari transcript yang sudah digabung, termasuk heading lintas chunk."""
+def source_countdown_entries(source_text: str) -> list[tuple[Countdown, int]]:
+    """Heading dan offset di teks clean, termasuk heading lintas chunk."""
     text = clean_text(source_text)
-    headings = re.finditer(r"\bnumber\s+(\w+)\s*[,：:]\s*([^.!?]+)[.!?]?(?=\s|$)", text, re.I)
-    return [c for m in headings if (c := parse_countdown(f"Number {m[1]}, {m[2]}.")) and c.number is not None]
+    headings = re.finditer(rf"\bnumber\s+(\w+)\s*{COUNTDOWN_DELIMITER}\s*([^.!?]+)[.!?]?(?=\s|$)", text, re.I)
+    return [(c, m.start()) for m in headings if (c := parse_countdown(f"Number {m[1]}, {m[2]}.")) and c.number is not None]
+
+
+def source_countdowns(source_text: str) -> list[Countdown]:
+    return [c for c, _ in source_countdown_entries(source_text)]
 
 
 def top3_problems(script: Script, source_text: str) -> list[str]:
@@ -52,7 +56,7 @@ def top3_problems(script: Script, source_text: str) -> list[str]:
     one = next((i for i, c in indices if c.number == 1), None)
     if one is None or not 1 <= len(ctas) <= 2 or ctas != list(range(one - len(ctas), one)):
         problems.append('Top 3 CTA must be one contiguous block of 1-2 beats immediately before Number one.')
-    have = cta_kinds(' '.join(script.beats[i].text for i in ctas))
+    have = cta_kinds_for_beats([script.beats[i] for i in ctas])
     if have != {'like', 'subscribe', 'comment'}:
         problems.append('Top 3 CTA must invite viewers to like, subscribe, and comment.')
     first = indices[0][0] if indices else len(script.beats)
@@ -65,3 +69,7 @@ def top3_problems(script: Script, source_text: str) -> list[str]:
 def cta_beat_indices(beats: list) -> list[int]:
     """Beat CTA eksplisit; dipakai bersama oleh validasi, plan, dan audit operator."""
     return [i for i, b in enumerate(beats) if cta_kinds(b['text'] if isinstance(b, dict) else b.text)]
+
+
+def cta_kinds_for_beats(beats: list) -> set[str]:
+    return set().union(*(cta_kinds(b['text'] if isinstance(b, dict) else b.text) for b in beats))

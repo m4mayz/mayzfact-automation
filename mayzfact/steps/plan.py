@@ -13,7 +13,7 @@ from mayzfact.matching import hook_slot_map
 from mayzfact.shots import beat_subjects, split_shots, tighten_countdown
 from mayzfact.source_frames import prepare_source_segments
 from mayzfact.store import RunPaths, write_json_atomic
-from mayzfact.text import beat_texts, words
+from mayzfact.text import beat_texts, clean_text, words
 from mayzfact.timing import beat_timings, word_timings
 
 SOURCE_FRAMES = (0.25, 0.5, 0.75)
@@ -83,8 +83,29 @@ def _groups(shots: list[dict]) -> list[dict]:
     return list(groups.values())
 
 
+def _source_rank_ranges(transcript: list[dict], total_s: float) -> dict[int, tuple[float, float]]:
+    """Rentang referensi dari heading asli, bukan alias subject visual atau durasi naskah baru."""
+    from mayzfact.narration import source_countdown_entries
+
+    chunks = [(clean_text(s['text']), s) for s in transcript if clean_text(s['text'])]
+    offsets, cursor = [], 0
+    for text, _ in chunks:
+        offsets.append(cursor)
+        cursor += len(text) + 1
+    timed = []
+    for c, offset in source_countdown_entries(' '.join(text for text, _ in chunks)):
+        i = next(i for i in range(len(chunks) - 1, -1, -1) if offsets[i] <= offset)
+        text, chunk = chunks[i]
+        # Hanya perkiraan posisi frame referensi; timing ucapan tetap memakai alignment audio asli.
+        at = chunk['start'] + chunk['duration'] * (offset - offsets[i]) / max(len(text), 1)
+        timed.append((c.number, at))
+    return {number: (max(0.0, start), min(total_s, timed[i+1][1] if i+1 < len(timed) else total_s))
+            for i, (number, start) in enumerate(timed) if number is not None}
+
+
 def _shot_frames(paths: RunPaths, source: dict, shots: list[dict], voice_total_s: float,
-                 download_source: Callable[[str, Path], Path], log: Callable[[str], None] = print) -> None:
+                 download_source: Callable[[str, Path], Path], log: Callable[[str], None] = print,
+                 *, ranked: bool = False) -> None:
     """3 frame source per shot buat referensi nyari klip: rentang subjeknya di transcript, atau posisi proporsional."""
     todo = [s for s in shots if not s["ref_frames"]]
     if not todo:
@@ -99,8 +120,12 @@ def _shot_frames(paths: RunPaths, source: dict, shots: list[dict], voice_total_s
     order = sorted(names, key=lambda name: next((s["index"] for s in shots if s.get("subject") == name and s.get("countdown")),
                                                  next(s["index"] for s in shots if s.get("subject") == name)))
     ranges = subject_ranges(source["transcript"], order, total)
+    ranks = _source_rank_ranges(source['transcript'], total) if ranked else {}
     for shot in todo:
-        span = ranges.get(shot.get("subject") or "")
+        rank = shot.get('source_rank') if ranked else None
+        span = ranks.get(rank) if rank is not None else ranges.get(shot.get("subject") or "")
+        if rank is not None and (span is None or span[0] >= span[1]):
+            raise PipelineError('plan', f'Referensi source untuk Number {rank} tidak bisa dipetakan; periksa heading/timestamp source.')
         if span is None:  # CTA/intro/subjek nggak ketemu: posisi beat di naskah dipetain ke durasi source
             scale = total / voice_total_s if voice_total_s else 0.0
             span = (shot["start_s"] * scale, shot["end_s"] * scale)
@@ -167,8 +192,15 @@ def run_plan(
         return path.relative_to(paths.root).as_posix()
 
     shots = []
+    current_rank = None
+    from mayzfact.narration import cta_beat_indices
+
+    ctas = set(cta_beat_indices(beats)) if script.get('narration_mode') == 'top3' else set()
     for slot in slots:
         beat = beats[slot.beat]
+        countdown = parse_countdown(beat['text'])
+        if countdown and countdown.number is not None:
+            current_rank = countdown.number
         segment = mapping.get(slot.index)
         if segment is not None:
             given = hook_queries.get(str(segment))
@@ -185,9 +217,12 @@ def run_plan(
             "index": slot.index, "beat": slot.beat, "start_s": slot.start_s, "end_s": slot.end_s, "media": slot.media,
             "text": beat["text"], "subject": subjects[slot.beat], "hook_segment": segment,
             "ref_frames": ref_frames, "keywords": keywords,
-            "countdown": (parse_countdown(beat["text"]) or _NO_COUNTDOWN).number,
+            "countdown": (countdown or _NO_COUNTDOWN).number,
         })
-    _shot_frames(paths, source, shots, tts["duration_s"], download_source, log)
+        if script.get('narration_mode') == 'top3':
+            shots[-1]['source_rank'] = None if slot.beat in ctas else current_rank
+    _shot_frames(paths, source, shots, tts["duration_s"], download_source, log,
+                 ranked=script.get('narration_mode') == 'top3')
     groups = _groups(shots)
     data = {
         "hook_seconds": hook_seconds,

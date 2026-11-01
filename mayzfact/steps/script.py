@@ -102,7 +102,13 @@ def check_script(script: Script, source_text: str, duration_s: float,
                 f"each item must have at least 2 beats describing it."
             )
     # Aturan pemicunya sama persis dengan animasi CTA di timeline (mayzfact.cta), biar yang lolos cek beneran kepicu.
-    missing_cta = sorted(cta_kinds(source_text) - cta_kinds(full_text))
+    if script.narration_mode == "top3":
+        from mayzfact.narration import cta_kinds_for_beats
+
+        present_cta = cta_kinds_for_beats(script.beats)
+    else:
+        present_cta = cta_kinds(full_text)
+    missing_cta = sorted(cta_kinds(source_text) - present_cta)
     if missing_cta:
         hint = {"like": 'an inviting "like" (hit like / like and subscribe)', "subscribe": '"subscribe"', "comment": '"comment"'}
         problems.append("The source asks viewers to " + " and ".join(missing_cta) + "; the script must say "

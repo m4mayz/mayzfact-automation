@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from mayzfact.text import clean_text
 
 # Titik cuma dianggap pemisah kalau diikutin spasi, biar "Number 1.5 million…" nggak kebaca countdown.
-_PATTERN = re.compile(r"^\s*number\s+(\w+)\s*(?:[,:\-–]|\.(?=\s))\s*(?:the\s+)?(.+?)\s*[.!?]*\s*$", re.IGNORECASE)
+COUNTDOWN_DELIMITER = r"(?:[,:\-–]|\.(?=\s))"
+_PATTERN = re.compile(rf"^\s*number\s+(\w+)\s*{COUNTDOWN_DELIMITER}\s*(?:the\s+)?(.+?)\s*[.!?]*\s*$", re.IGNORECASE)
 _WORDS = {w: i for i, w in enumerate(["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"], 1)}
 
 

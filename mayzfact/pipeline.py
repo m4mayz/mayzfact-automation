@@ -74,7 +74,7 @@ def plan_steps(done: dict[str, bool], voice_exists: bool, from_step: str | None,
 def check_voice(paths: RunPaths, *, video_speed: float = 1.1, log: Callable[[str], None] = print) -> dict:
     """Dicek tiap run sebelum plan: naskah masih sama dengan suara, dan suaranya cukup panjang."""
     tts = read_json(paths.tts_json)
-    script = read_json(paths.script_json)
+    script = load_script(paths).model_dump()
     if text_hash(script_text(script["beats"])) != tts["text_sha256"]:
         raise PipelineError(
             "tts", f"script.json beda sama naskah yang dipakai buat voice.mp3. Balikin script.json. {NEW_SCRIPT_HINT}"
@@ -251,6 +251,8 @@ def run_pipeline(
     paths = RunPaths(runs_dir / video_id)
     done = {step: step_done(step, paths) for step in STEPS}
     steps = plan_steps(done, paths.voice_mp3.exists(), from_step)
+    if paths.voice_mp3.exists():
+        load_script(paths)  # schema/mode dicek sebelum output resume lama dihapus; tanpa cek anggaran baru
     if no_render:
         # Review lewat Remotion Studio dulu. final.mp4 lama jadi basi kalau step sebelumnya diulang.
         if any(step in steps for step in ("plan", "fetch", "timeline")):
