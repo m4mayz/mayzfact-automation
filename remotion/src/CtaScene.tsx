@@ -1,6 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, interpolate, Sequence, useCurrentFrame} from 'remotion';
 import {Cursor, Thumb} from './Cta';
+import {Celebration, ClickRipple, motionForStage} from './CtaMotion';
 import {MONTSERRAT} from './fonts';
 import type {CtaSceneData, CtaStage} from './types';
 
@@ -10,7 +11,7 @@ const center: React.CSSProperties = {position: 'absolute', left: 540, top: 810, 
 
 // SVG buatan sendiri: gunung, lava, asap dan lontaran bergerak dari frame, bukan timer browser.
 const Volcano: React.FC<{frame: number}> = ({frame}) => (
-  <svg data-volcano="true" width={880} height={840} viewBox="0 0 900 860" style={{overflow: 'visible', filter: 'drop-shadow(0 20px 30px #0008)'}}>
+  <svg data-volcano="true" width={880} height={840} viewBox="0 0 900 860" style={{overflow: 'visible', filter: 'drop-shadow(0 20px 30px #0008)', translate: `${Math.sin(frame * 1.5) * interpolate(frame, [0, 8, 20], [0, 5, 0], clamp)}px 0`}}>
     <defs>
       <linearGradient id="cta-rock" x2=".8" y2="1"><stop stopColor="#9b5345"/><stop offset="1" stopColor="#322c42"/></linearGradient>
       <linearGradient id="cta-lava" x2="0" y2="1"><stop stopColor="#fff6ae"/><stop offset=".35" stopColor="#ffb02e"/><stop offset="1" stopColor="#ef3e2e"/></linearGradient>
@@ -39,20 +40,24 @@ const Volcano: React.FC<{frame: number}> = ({frame}) => (
 
 // Frame eksplisit bikin markup dapat dites tanpa Studio; cuma satu stage dominan pada satu waktu.
 export const CtaSceneVisual: React.FC<{scene: CtaSceneData; stage: CtaStage; frame: number}> = ({scene, stage, frame}) => {
-  const pressed = stage.triggerAt !== undefined && frame >= stage.triggerAt;
-  const pulse = stage.triggerAt === undefined ? 1 : interpolate(frame - stage.triggerAt, [0, 3, 8], [1, 1.1, 1], clamp);
+  const clickAt = stage.kind === 'subscribe' ? Math.min(Math.max(stage.triggerAt ?? 0, 10), Math.floor(stage.durationInFrames * .45)) : stage.triggerAt ?? 0;
+  const pressed = stage.triggerAt !== undefined && frame >= clickAt;
+  const pulse = stage.triggerAt === undefined ? 1 : interpolate(frame - clickAt, [0, 3, 8], [1, 1.1, 1], clamp);
+  const typed = Math.floor(interpolate(frame, [3, Math.min(21, Math.max(6, stage.durationInFrames - 8))], [0, scene.commentText.length], clamp));
+  const done = pressed && frame > clickAt + 6;
   const morph = interpolate(frame, [0, 8], [0, 1], clamp);
   const textStyle: React.CSSProperties = {fontFamily: MONTSERRAT, fontWeight: 800, color: 'white', textAlign: 'center'};
-  return <div data-cta-stage={stage.kind} style={{position: 'absolute', inset: 0, pointerEvents: 'none'}}>
-    {stage.kind === 'like' ? <div style={{...center, width: 600, height: 640, ...textStyle, scale: pulse}}>
+  return <div data-cta-stage={stage.kind} style={{position: 'absolute', inset: 0, pointerEvents: 'none', ...motionForStage(stage, frame)}}>
+    {stage.kind === 'like' ? <div style={{...center, width: 600, height: 640, ...textStyle, scale: pulse, rotate: `${Math.sin(frame / 10) * 1.3}deg`}}>
       <div style={{margin: '0 auto', width: 540, height: 540, borderRadius: '50%', background: 'radial-gradient(circle at 35% 25%, #639eff, #2563eb 65%, #183dad)', boxShadow: shadow, display: 'grid', placeItems: 'center'}}>
         <Thumb size={320} color="white"/>
       </div>
-      <div style={{fontSize: 96, marginTop: 24, textShadow: '0 8px 20px #0009'}}>LIKE</div>
-      {stage.triggerAt !== undefined ? <Cursor x={460} y={350 + interpolate(frame - stage.triggerAt, [-8, 0], [120, 0], clamp)} pressed={pressed}/> : null}
+      <div style={{fontSize: 96, marginTop: 24, textShadow: '0 8px 20px #0009', opacity: interpolate(frame, [2, 7], [0, 1], clamp), translate: `0 ${interpolate(frame, [2, 9], [28, 0], clamp)}px`}}>LIKE</div>
+      {stage.triggerAt !== undefined ? <Cursor x={460} y={350 + interpolate(frame - clickAt, [-8, 0], [120, 0], clamp)} opacity={interpolate(frame, [2, 7], [0, 1], clamp)} pressed={pressed}/> : null}
     </div> : null}
+    {stage.kind === 'like' && stage.triggerAt !== undefined ? <><ClickRipple frame={frame} at={clickAt}/><Celebration frame={frame} at={clickAt} thumbs/></> : null}
     {stage.kind === 'transform' ? <>
-      {frame < 8 ? <div style={{...center, opacity: 1-morph, scale: 1-morph * .55}}><Thumb size={400} color="#4b8bff"/></div> : null}
+      {frame < 8 ? <div style={{...center, opacity: 1-morph, scale: 1-morph * .55, rotate: `${morph * 22}deg`, width: 540, height: 540, borderRadius: '50%', background: '#2563eb', display: 'grid', placeItems: 'center', boxShadow: shadow}}><Thumb size={320} color="white"/></div> : null}
       <div style={{...center, opacity: morph, scale: interpolate(frame, [0, 5, 10], [.45, 1.06, 1], clamp)}}>
         {scene.theme === 'volcano' ? <Volcano frame={frame}/> :
           <div style={{...textStyle, width: 840, padding: '110px 36px', boxSizing: 'border-box', border: '8px solid #9adeff', borderRadius: 70,
@@ -61,15 +66,18 @@ export const CtaSceneVisual: React.FC<{scene: CtaSceneData; stage: CtaStage; fra
       </div>
     </> : null}
     {stage.kind === 'subscribe' ? <div style={{...center, ...textStyle, width: 860, height: 220, borderRadius: 40,
-      background: pressed && frame > (stage.triggerAt ?? 0)+6 ? '#e3262c' : 'white', color: pressed && frame > (stage.triggerAt ?? 0)+6 ? 'white' : '#e3262c',
-      display: 'grid', placeItems: 'center', fontSize: 96, boxShadow: shadow, scale: pulse}}>
-      {pressed && frame > (stage.triggerAt ?? 0)+6 ? 'SUBSCRIBED' : 'SUBSCRIBE'}
-      {stage.triggerAt !== undefined ? <Cursor x={735} y={165} pressed={pressed}/> : null}
+      background: done ? '#e3262c' : 'white', color: done ? 'white' : '#e3262c',
+      display: 'grid', placeItems: 'center', fontSize: 96, boxShadow: shadow, scale: pulse,
+      transform: `scaleX(${interpolate(frame, [0, 4, 8], [.2, 1.06, 1], clamp)})`,
+      rotate: `${interpolate(frame - clickAt, [0, 2, 4, 6, 10], [0, -3, 3, -1, 0], clamp)}deg`}} aria-label={done ? 'SUBSCRIBED' : 'SUBSCRIBE'}>
+      <div style={{whiteSpace: 'nowrap'}}>{(done ? 'SUBSCRIBED' : 'SUBSCRIBE').split('').map((letter, i) => <span key={i} style={{display: 'inline-block', opacity: done ? 1 : interpolate(frame, [i * .45, i * .45 + 3], [0, 1], clamp), translate: `0 ${done ? 0 : interpolate(frame, [i * .45, i * .45 + 5], [18, 0], clamp)}px`}}>{letter}</span>)}</div>
+      {stage.triggerAt !== undefined ? <Cursor x={735 + interpolate(frame, [0, clickAt], [110, 0], clamp)} y={165 + interpolate(frame, [0, clickAt], [80, 0], clamp)} opacity={interpolate(frame, [2, 7], [0, 1], clamp)} pressed={pressed}/> : null}
     </div> : null}
+    {stage.kind === 'subscribe' && stage.triggerAt !== undefined ? <Celebration frame={frame} at={clickAt}/> : null}
     {stage.kind === 'comment' ? <div style={{...center, ...textStyle, width: 860, minHeight: 400, boxSizing: 'border-box', padding: '58px 40px',
       borderRadius: 48, background: '#f7f9ff', color: '#15233d', boxShadow: shadow, scale: interpolate(frame, [0, 5, 10], [.85, 1.04, 1], clamp)}}>
       <div style={{fontSize: 42, letterSpacing: 7, color: '#56708f', marginBottom: 38}}>COMMENT</div>
-      <div style={{fontSize: Math.min(112, 1120/Math.max(1, scene.commentText.length)), overflowWrap: 'anywhere'}}>{scene.commentText}</div>
+      <div style={{fontSize: Math.min(112, 1120/Math.max(1, scene.commentText.length)), overflowWrap: 'anywhere', minHeight: 135}}>{scene.commentText.slice(0, typed)}<span style={{display: 'inline-block', marginLeft: 7, width: 5, height: '1em', verticalAlign: 'middle', background: '#2563eb', opacity: typed < scene.commentText.length || frame % 16 < 8 ? 1 : 0}}/></div>
       <svg width={90} height={55} viewBox="0 0 90 55" style={{position: 'absolute', bottom: -48, left: 90}}><path d="M0 0 H90 L0 55 Z" fill="#f7f9ff"/></svg>
     </div> : null}
   </div>;

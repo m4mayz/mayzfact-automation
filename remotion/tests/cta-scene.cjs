@@ -38,6 +38,21 @@ assert.doesNotMatch(comment, /data-volcano|SUBSCRIBE/);
 const word = markup('transform', 25, {theme: 'word', label: 'CRYSTAL'});
 assert.match(word, /CRYSTAL/);
 assert.doesNotMatch(word, /data-volcano/);
+// Semua stage harus masuk/keluar halus, bukan muncul penuh pada frame pertama.
+function rootOpacity(html) {
+  const style = html.match(/^<div[^>]*style="([^"]+)"/)[1];
+  const match = style.match(/(?:^|;)opacity:([\d.]+)/);
+  return match ? Number(match[1]) : 1;
+}
+for (const kind of ['like', 'transform', 'subscribe', 'comment']) {
+  assert.equal(rootOpacity(markup(kind, 0)), 0, `${kind} must enter from invisible`);
+  assert.ok(rootOpacity(markup(kind, 18)) > .9, `${kind} must reach readable hold`);
+  assert.ok(rootOpacity(markup(kind, 89)) < .05, `${kind} must exit before stage ends`);
+}
+assert.doesNotMatch(markup('comment', 1), /ERUPTED/, 'Comment must type in, not appear whole');
+assert.match(markup('comment', 30), /ERUPTED/, 'Comment must finish typing');
+assert.match(markup('like', 20), /data-cta-ripple/, 'Like click must have ripple');
+assert.match(markup('subscribe', 25), /data-cta-confetti/, 'Subscribe click must have confetti');
 const shotSource = fs.readFileSync(path.join(__dirname, '../src/ShotView.tsx'), 'utf8');
 const decorative = shotSource.split('if (shot.decorative)')[1].split("if (shot.layout === 'full')")[0];
 const blur = Number(decorative.match(/blur\(([\d.]+)px\)/)[1]);

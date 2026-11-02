@@ -630,3 +630,7 @@
 ## Koreksi preview CTA
 - Repro produksi: like stage dari frame740 (awal CTA), padahal try mulai26.035detik; blur58px + brightness0.38 menutup footage. Test baru gagal persis: stage387 !=407 pada fixture dan blur58px melewati batas12px.
 - Fix: like mulai kata try/tapping/hit yang benar-benar ada pada alignment, klik tetap kata like; lead-in tetap background/caption. Scene tidak harus memiliki stage selama lead-in. Background blur10px/brightness0.78/saturate0.95/scale1.06 dan vignette lebih ringan. Focused19passed + TypeScript lolos. Voice diperbaiki terpisah, hook harus byte-identik dan link manual tetap terlindungi.
+
+## CTA motion — bounded revision
+- Alex terakhir dipilih; tidak ada perubahan audio/timing/klip. RED markup `like must enter from invisible` berhasil mereproduksi kemunculan mendadak. Shared CtaMotion memberi entrance spring/fade/slide, exit shrink/fade, click ripple dan partikel deterministik. Subscribe punya huruf stagger/cursor/click delay visual dan confetti; comment diketik. Semua efek dibatasi durasi stage, tanpa SFX tambahan.
+- Node markup memeriksa empat stage awal transparan/hold terbaca/akhir transparan, typewriter completion, ripple/confetti dan glass limits; TypeScript lolos. Spec+plan `docs/superpowers/specs/2026-11-02-cta-motion-design.md`. Full suite dan hasil render dilaporkan pada eksekusi parent.
