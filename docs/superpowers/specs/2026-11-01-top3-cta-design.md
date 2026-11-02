@@ -1,5 +1,7 @@
 # Top 3, CTA sebelum nomor satu, target final 30–40 detik
 
+> Riwayat D-045. Bagian style/batas CTA dan anggaran total disupersede oleh [revisi bounded D-046](2026-11-02-top3-playful-cta-design.md): CTA 1–4 beat dan delta kata CTA aktual di atas 10; aturan non-CTA/legacy tetap. Gunakan skill repo terbaru untuk authoring.
+
 ## Status dan tujuan
 
 Desain percakapan disetujui Akmal; dokumen ini menunggu review tertulis sebelum plan implementasi.

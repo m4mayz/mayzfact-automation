@@ -42,9 +42,14 @@ def normalize_script(script: Script) -> Script:
 
 
 def narration_word_range(script: Script, duration_s: float, video_speed: float = 1.1) -> tuple[int, int, int]:
-    from mayzfact.narration import top3_word_range
+    from mayzfact.narration import cta_beat_indices, top3_word_range
 
-    return top3_word_range(video_speed) if script.narration_mode == "top3" else word_range(duration_s)
+    if script.narration_mode != "top3":
+        return word_range(duration_s)
+    # Anggaran isi tetap; hanya kata CTA di atas allowance lama yang ditambahkan.
+    extra = max(0, sum(len(words(script.beats[i].text)) for i in cta_beat_indices(script.beats)) - 10)
+    target, low, high = top3_word_range(video_speed)
+    return target + extra, low + extra, high + extra
 
 
 def check_script(script: Script, source_text: str, duration_s: float,

@@ -18,8 +18,8 @@ def top3_script(total_words=80):
         'Number two, immortal jellyfish.',
         'Under certain conditions they reverse development,',
         'potentially repeating an earlier stage.',
-        "Subscribe if you'd touch it, hit like if you'd watch,",
-        "or comment 'nope' if you'd run.",
+        "Subscribe if you'd touch it, hit like,",
+        "or comment 'nope'.",
         'Number one, tardigrades.',
         'They can endure radiation and dehydration while dormant,',
         "even space's vacuum under certain conditions.",
@@ -36,3 +36,18 @@ def top3_script(total_words=80):
              subject='lizard' if i in [1,2,3] else 'jellyfish' if i in [4,5,6] else 'tardigrade' if i >= 9 else '')
         for i,t in enumerate(texts)
     ])
+
+
+APPROVED_CTA = [
+    'But before number one, try tapping like.',
+    'Did the button turn into a volcano?',
+    'Subscribe if it worked,',
+    "and comment 'erupted'.",
+]
+
+
+def playful_script(base_words=80):
+    script = top3_script(base_words)
+    script.beats[7:9] = [Beat(media='video', text=text, queries=['phone button close up', 'hand tapping phone'])
+                         for text in APPROVED_CTA]
+    return script

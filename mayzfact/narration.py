@@ -54,8 +54,13 @@ def top3_problems(script: Script, source_text: str) -> list[str]:
             problems.append('Top 3 announcements must use Number N, [subject]. with the number spelled out.')
     ctas = cta_beat_indices(script.beats)
     one = next((i for i, c in indices if c.number == 1), None)
-    if one is None or not 1 <= len(ctas) <= 2 or ctas != list(range(one - len(ctas), one)):
-        problems.append('Top 3 CTA must be one contiguous block of 1-2 beats immediately before Number one.')
+    if one is None or not 1 <= len(ctas) <= 4 or ctas != list(range(one - len(ctas), one)):
+        problems.append('Top 3 CTA must be one contiguous block of 1-4 beats immediately before Number one.')
+    for i in ctas:
+        if script.beats[i].subject:
+            problems.append(f'Top 3 CTA beat {i + 1} must have an empty subject.')
+        if script.beats[i].point:
+            problems.append(f'Top 3 CTA beat {i + 1} must have point=false.')
     have = cta_kinds_for_beats([script.beats[i] for i in ctas])
     if have != {'like', 'subscribe', 'comment'}:
         problems.append('Top 3 CTA must invite viewers to like, subscribe, and comment.')
@@ -67,8 +72,26 @@ def top3_problems(script: Script, source_text: str) -> list[str]:
 
 
 def cta_beat_indices(beats: list) -> list[int]:
-    """Beat CTA eksplisit; dipakai bersama oleh validasi, plan, dan audit operator."""
-    return [i for i, b in enumerate(beats) if cta_kinds(b['text'] if isinstance(b, dict) else b.text)]
+    """Rentang antar-anchor CTA per bagian countdown; satu aturan buat semua consumer.
+
+    Lead-in struktural ikut jadi anchor walau belum ada ajakan. Beat di antara
+    anchor (misalnya pertanyaan gimmick) ikut CTA, bukan penjelasan item.
+    Anchor terpisah tetap dikembalikan supaya validator menolak posisi salah.
+    """
+    texts = [b['text'] if isinstance(b, dict) else b.text for b in beats]
+    result: list[int] = []
+    anchors: list[int] = []
+    for i, text in enumerate(texts):
+        countdown = parse_countdown(text)
+        if countdown and countdown.number is not None:
+            if anchors:
+                result.extend(range(anchors[0], anchors[-1] + 1))
+                anchors = []
+        elif cta_kinds(text) or re.match(r'^(?:but\s+)?before\s+number\s+one\b', text.strip(), re.I):
+            anchors.append(i)
+    if anchors:
+        result.extend(range(anchors[0], anchors[-1] + 1))
+    return result
 
 
 def cta_kinds_for_beats(beats: list) -> set[str]:

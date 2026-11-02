@@ -83,7 +83,7 @@ def test_top3_enforces_cta_block_and_editorial_structure(change):
     elif change == 'gap':
         s.beats.insert(9, s.beats.pop(6))
     elif change == 'too_many':
-        s.beats.insert(8, s.beats[8].model_copy())
+        s.beats[8:8] = [s.beats[8].model_copy() for _ in range(3)]
     elif change == 'missing_like':
         s.beats[7].text = "Subscribe if you'd touch it or watch,"
     elif change == 'no_cta':

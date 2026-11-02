@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 SUBSCRIBE = {"subscribe", "subscribed", "subscribing"}  # bukan "subscribers"/"subscription"
-LIKE_BEFORE = {"hit", "smash", "tap", "press", "drop", "leave", "give", "a"}  # "hit like", "drop a like"
+LIKE_BEFORE = {"hit", "smash", "tap", "tapping", "press", "drop", "leave", "give", "a"}  # "hit like", "drop a like"
 LIKE_AFTER = {"and", "&", "or", "comment", "share", "button"} | SUBSCRIBE  # "like and subscribe"
 LIKE_AFTER_2 = {("the", "video"), ("this", "video")}  # "like the video"
 COMMENT = {"comment", "comments", "commenting"}
