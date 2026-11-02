@@ -8,6 +8,7 @@ from typing import Any, Callable
 
 import numpy as np
 
+from mayzfact.cta_background import reuse_backgrounds
 from mayzfact.embed import Encoder, mean_unit
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.ffmpeg import normalize_video, probe, sample_frames
@@ -316,6 +317,8 @@ def run_fetch(
             for group in plan["groups"]:
                 gid = group["id"]
                 g_shots = [shots[i] for i in group["shots"]]
+                if group.get('auto_cta'):
+                    continue  # background diisi dari hasil non-CTA, bukan input manual
                 g_missing = [s for s in g_shots if s["index"] in missing]
                 if g_missing:
                     for s in g_missing:
@@ -434,6 +437,14 @@ def run_fetch(
                 else:
                     group_status[gid] = {"state": "ok", "message": "; ".join(group_warnings)}
 
+            automatic = reuse_backgrounds([s for s in plan['shots'] if s.get('auto_cta')], clips, paths)
+            clips += automatic
+            progress.data['shots_done'] += len(automatic)
+            for s in automatic:
+                shot_status[str(s['index'])] = {'state': 'auto', 'message': 'background video sebelumnya / fallback warna'}
+            for g in plan['groups']:
+                if g.get('auto_cta'):
+                    group_status[g['id']] = {'state': 'auto', 'message': 'tanpa link baru'}
             write_json_atomic(paths.links_status_json, {"groups": group_status, "shots": shot_status})
             if problems:
                 progress.update(state="awaiting", current="")
@@ -460,6 +471,9 @@ def run_fetch(
                 status[gid] = {"state": "missing", "message": "belum diisi"}
                 problems.append(group["label"])
                 continue
+            if group.get('auto_cta'):
+                status[gid] = {'state': 'auto', 'message': 'tanpa link baru'}
+                continue
             try:
                 group_clips, warnings = _run_group(group, [shots[i] for i in group["shots"]], links["groups"][gid],
                                                    obtain, paths, encoder, fg_min_ratio, progress, shown)
@@ -470,6 +484,9 @@ def run_fetch(
                 continue
             clips += group_clips
             status[gid] = {"state": "ok", "message": "; ".join(warnings)}
+        automatic = reuse_backgrounds([s for s in plan['shots'] if s.get('auto_cta')], clips, paths)
+        clips += automatic
+        progress.data['shots_done'] += len(automatic)
         for shot in plan["shots"]:
             s_gid = shot.get("group")
             shot_status[str(shot["index"])] = status.get(s_gid, {"state": "ok", "message": ""})

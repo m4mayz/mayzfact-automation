@@ -175,7 +175,8 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
     if not paths.shots_plan_json.exists():
         raise PipelineError("brief", f"Plan belum ada. Jalanin dulu: mayzfact run {paths.root.name} --no-render")
-    missing = missing_frames(paths, read_json(paths.shots_plan_json))
+    plan = read_json(paths.shots_plan_json)
+    missing = missing_frames(paths, plan)
     if missing:
         raise PipelineError("brief", f"Shot {', '.join(str(i + 1) for i in missing)} belum punya frame referensi. "
                             f"Jalanin: mayzfact run {paths.root.name} --from plan --no-render")
@@ -185,7 +186,7 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
     server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0", prefetcher=prefetcher,
                          sfx_dir=SFX_DIR, media_dir=CACHE_DIR / "manual")  # port bentrok = berhenti di sini
     prefetcher.start()
-    prefetcher.enqueue(link_urls(load_links(paths.links_json)), retry_failed=True)  # link lama yang belum siap, termasuk yang gagal
+    prefetcher.enqueue(link_urls(load_links(paths.links_json), plan), retry_failed=True)  # CTA otomatis nggak butuh download
     port = server.server_address[1]
     lan_ip = _lan_ip()
     link = None

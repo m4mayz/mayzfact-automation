@@ -62,6 +62,8 @@ def subject_ranges(transcript: list[dict], subjects: list[str], total_s: float) 
 
 def group_of(shot: dict) -> tuple[str, str]:
     """(id, label) kelompok konteks shot: semua hook jadi 1, sisanya per subjek, atau per beat kalau subjeknya kosong."""
+    if shot.get("auto_cta"):
+        return "auto-cta", "AUTO CTA · background video sebelumnya"
     if shot["hook_segment"] is not None:
         return "hook", "HOOK"
     subject = (shot["subject"] or "").strip()
@@ -78,6 +80,8 @@ def _groups(shots: list[dict]) -> list[dict]:
         shot["group"] = gid
         group = groups.setdefault(gid, {"id": gid, "label": label, "shots": [], "keywords": {"en": [], "zh": []}})
         group["shots"].append(shot["index"])
+        if shot.get("auto_cta"):
+            group["auto_cta"] = True
         for lang in ("en", "zh"):
             group["keywords"][lang] += [k for k in shot["keywords"][lang] if k not in group["keywords"][lang]]
     return list(groups.values())
@@ -107,7 +111,7 @@ def _shot_frames(paths: RunPaths, source: dict, shots: list[dict], voice_total_s
                  download_source: Callable[[str, Path], Path], log: Callable[[str], None] = print,
                  *, ranked: bool = False) -> None:
     """3 frame source per shot buat referensi nyari klip: rentang subjeknya di transcript, atau posisi proporsional."""
-    todo = [s for s in shots if not s["ref_frames"]]
+    todo = [s for s in shots if not s["ref_frames"] and not s.get("auto_cta")]
     if not todo:
         return
     src = paths.source_mp4
@@ -221,6 +225,9 @@ def run_plan(
         })
         if script.get('narration_mode') == 'top3':
             shots[-1]['source_rank'] = None if slot.beat in ctas else current_rank
+            if script.get('cta_scene') and slot.beat in ctas:
+                shots[-1]['auto_cta'] = True
+                shots[-1]['keywords'] = {'en': [], 'zh': []}
     _shot_frames(paths, source, shots, tts["duration_s"], download_source, log,
                  ranked=script.get('narration_mode') == 'top3')
     groups = _groups(shots)
@@ -230,6 +237,8 @@ def run_plan(
         "groups": groups,
         "shots": shots,
     }
+    if script.get('cta_scene') and script.get('narration_mode') == 'top3':
+        data['cta_scene'] = script['cta_scene']
     write_json_atomic(paths.shots_plan_json, data)
     log(f"[plan] {len(shots)} shot ({len(mapping)} hook), {len(data['groups'])} kelompok. Isi link: mayzfact brief {paths.root.name}")
     return data

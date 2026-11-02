@@ -32,17 +32,20 @@ PORT_TRIES = 10
 def missing_frames(paths: RunPaths, plan: dict) -> list[int]:
     """Shot yang belum punya frame referensi (atau file-nya hilang). Brief nolak jalan kalau ada."""
     return [s["index"] for s in plan.get("shots", [])
-            if not s.get("ref_frames") or not all((paths.root / f).exists() for f in s["ref_frames"])]
+            if not s.get("auto_cta") and (not s.get("ref_frames") or not all((paths.root / f).exists() for f in s["ref_frames"]))]
 
 
-def link_urls(links: dict) -> list[str]:
+def link_urls(links: dict, plan: dict | None = None) -> list[str]:
     """Semua URL di links.json (per shot atau per kelompok), urut, tanpa dobel. Upload file nggak ikut."""
     entries: list = []
+    auto = {str(s['index']) for s in (plan or {}).get('shots', []) if s.get('auto_cta')}
+    auto_groups = {g['id'] for g in (plan or {}).get('groups', []) if g.get('auto_cta')}
     if "shots" in links:
-        entries = list(links["shots"].values())
+        entries = [v for k, v in links['shots'].items() if str(k) not in auto]
     else:
-        for group in links.get("groups", {}).values():
-            entries.extend(group)
+        for gid, group in links.get("groups", {}).items():
+            if gid not in auto_groups:
+                entries.extend(group)
     return list(dict.fromkeys(e["url"] for e in entries if isinstance(e, dict) and e.get("url")))
 
 
@@ -178,7 +181,7 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 if prefetcher:
                     # Download link udah pindah ke brief, jadi angka "Links Downloaded" diambil dari sini, bukan dari fetch.
                     snap = prefetcher.snapshot()
-                    urls = link_urls(load_links(paths.links_json))  # link yang udah diganti/dihapus nggak dihitung
+                    urls = link_urls(load_links(paths.links_json), plan())  # CTA otomatis bukan input download
                     payload["prefetch"] = snap
                     payload["links_total"] = len(urls)
                     payload["links_done"] = sum(1 for u in urls if snap.get(u, {}).get("state") == "siap")
@@ -232,7 +235,16 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             if url.path == "/api/links":
                 try:
                     body = json.loads(self.rfile.read(length) or b"{}")
-                    data = normalize_links(body, group_ids(), shot_count=len(plan().get("shots", [])))
+                    current = plan()
+                    auto = {str(s['index']) for s in current['shots'] if s.get('auto_cta')}
+                    auto_groups = {g['id'] for g in current['groups'] if g.get('auto_cta')}
+                    # Input CTA lama nggak boleh ikut antre download setelah scene diaktifkan.
+                    body = dict(body)
+                    if 'shots' in body:
+                        body['shots'] = {k: v for k, v in (body['shots'] or {}).items() if str(k) not in auto}
+                    if 'groups' in body:
+                        body['groups'] = {k: v for k, v in (body['groups'] or {}).items() if k not in auto_groups}
+                    data = normalize_links(body, group_ids(), shot_count=len(current.get("shots", [])))
                     if "shots" in data and "sfx" in body:
                         attach_sfx(data, body["sfx"], set(sfx_names()), plan())
                     elif "shots" in data:  # request tanpa sfx (lama / upload): SFX yang udah kesimpen dibawa
@@ -272,6 +284,8 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                         return self._reject(400, f"shot index '{shot_param}' nggak valid", length)
                     if shot_idx < 0 or shot_idx >= total_shots:
                         return self._reject(400, f"shot {shot_idx + 1} nggak ada di plan", length)
+                    if any(s['index'] == shot_idx and s.get('auto_cta') for s in plan()['shots']):
+                        return self._reject(400, "AUTO CTA tidak perlu upload", length)
                     dest = paths.manual_dir / f"shot_{shot_idx + 1}{suffix}"
                     part = dest.with_name(dest.name + ".part")
                     with part.open("wb") as fh:
@@ -296,6 +310,8 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                     return self._json(200, {"file": rel})
 
                 if group:
+                    if any(g['id'] == group and g.get('auto_cta') for g in plan()['groups']):
+                        return self._reject(400, "AUTO CTA tidak perlu upload", length)
                     if group not in group_ids():  # id kelompok cuma [a-z0-9-], aman dipakai di nama file
                         return self._reject(400, f"kelompok {group or '?'} nggak ada di plan", length)
                     taken = [int(p.stem.rsplit("_", 1)[1]) for p in paths.manual_dir.glob(f"{group}_*.*") if p.stem.rsplit("_", 1)[1].isdigit()]

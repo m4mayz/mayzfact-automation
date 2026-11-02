@@ -1,6 +1,6 @@
 import React from 'react';
 import {Video} from '@remotion/media';
-import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Img, interpolate, Sequence, staticFile, useCurrentFrame} from 'remotion';
 import {TextBlurs} from './TextBlurs';
 import type {Shot} from './types';
 
@@ -26,6 +26,20 @@ export const ShotView: React.FC<{shot: Shot; photoZoom: number}> = ({shot, photo
         })
       : 1;
   const zoomStyle: React.CSSProperties = {transform: `scale(${zoom})`};
+
+  if (shot.decorative) {
+    const offset = shot.loopFrames ? (shot.clipOffset ?? 0) % shot.loopFrames : 0;
+    return <AbsoluteFill style={{overflow: 'hidden', backgroundColor: '#172239'}}>
+      {shot.generated ? <AbsoluteFill style={{
+        background: `radial-gradient(ellipse at ${35 + Math.sin((frame + (shot.clipOffset ?? 0))/50)*20}% 45%, #315778, #151c38 70%)`,
+      }}/> : <AbsoluteFill style={{filter: 'blur(58px) brightness(0.38) saturate(0.65)', scale: 1.2}}>
+        <Sequence from={-offset} layout="none">
+          <Video src={staticFile(shot.src)} muted loop={Boolean(shot.loopFrames)} trimAfter={shot.loopFrames}
+            objectFit="cover" style={{width: '100%', height: '100%'}}/>
+        </Sequence>
+      </AbsoluteFill>}
+    </AbsoluteFill>;
+  }
 
   if (shot.layout === 'full') {
     return (

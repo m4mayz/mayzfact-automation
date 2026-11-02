@@ -23,6 +23,20 @@ Di branch ini, semua **naskah baru** wajib menulis `"narration_mode": "top3"`. R
 
 Aturan fakta/hedges, ≤10 kata per beat, foto 15–45%, overlap ≤15%, emoji/keyword, serta checkpoint review tetap berlaku.
 
+### Visual CTA baru: opt-in scene (D-048)
+
+Semua naskah Top 3 **baru** menulis metadata visual `cta_scene` di root. Run lama tanpa metadata tetap legacy; jangan migrasi naskah/audio berbayar otomatis. Revisi visual saja tidak mengubah teks atau hash suara.
+
+```json
+"cta_scene": {"theme": "volcano", "transform_word": "turn", "comment_text": "ERUPTED"}
+```
+
+`transform_word` harus kata tunggal yang benar-benar ada di pertanyaan. Untuk contoh `Did the button turn into a volcano?`, mulai morph saat **turn**, sehingga gunung sudah utuh saat **volcano**. Like besar sejak transisi; klik pada ajakan like; subscribe dan comment pada kata aslinya. Semua stage selesai sebelum Number one, caption tetap di bawah. Jika alignment event tidak ada, batas struktural dilabeli `structure`, tidak boleh mengarang timestamp kata.
+
+Tema video lain jangan selalu volcano: pakai `{"theme":"word","transform_word":"turn","label":"CRYSTAL","comment_text":"SPARKLED"}` untuk transformasi kartu kata, sesuaikan label/ucapan/comment dengan topik. `theme` hanya `volcano` atau `word`; word wajib label, field metadata yang tidak dikenal ditolak. Tidak mengubah voice/ASR/speed/BGM/SFX.
+
+Plan tetap menyimpan shot/durasi blok detector bersama, tapi kelompok **AUTO CTA** tidak membutuhkan frame referensi, keyword pencarian manual, link, upload, trim atau SFX baru. Brief menandainya otomatis, tidak menampilkan kontrol input. Fetch meminjam hanya video lokal non-CTA yang sudah tampil sebelum scene, dipilih seeded deterministik; pemakaian berulang meneruskan offset dan loop klip pendek. Tidak memakai footage item satu atau meminta link CTA baru. Kalau belum ada video sebelumnya, fallback warna bergerak. `reused=true` dan `match=null` adalah dekorasi yang disengaja, bukan kegagalan relevansi/duplikasi. Link/timestamp non-CTA milik Akmal jangan diubah.
+
 ## 1. Source
 
 ```bash
@@ -60,7 +74,7 @@ Tiap beat harus bisa ditunjuk kalimat source-nya (kolom "dasar dari source" di l
 2. Titik cuma di akhir CTA, "Number N, [subject].", kalimat penjelasan sebelum celetukan, celetukan, dan beat terakhir. Pengecualian CTA hiburan Top 3 (D-046): transisi ajakan dan pertanyaan transformasi boleh berupa kalimat utuh seperti contoh di atas.
 3. Jangan pakai tanya retoris atau potongan pendek di tengah item ("Result? …", "Plus wrinkles. …").
 4. Tiap beat tetap ≤ 10 kata dan 1 ide visual; yang berubah cuma tanda baca dan kata sambungnya.
-5. CTA juga mengalir, jangan ditempel sebagai "Like and subscribe." Dalam mode `top3`, pakai transisi → ajakan like → pertanyaan gimmick sesuai tema → subscribe jika berhasil + comment, maksimal empat beat tepat sebelum Number one. `try tapping like` dan `like if ...` pada awal klausa memicu animasi, termasuk sesudah koma; "if you like them, subscribe" tetap bukan ajakan like. Animasi like/subscribe mengikuti kata ajakan sebenarnya; pertanyaan transformasi dan comment tetap narasi/caption, tanpa fitur/animasi transformasi baru. Mode `source` lama boleh memakai konektor seperti "So comment which one's most unique," / "and don't forget to like and subscribe."
+5. CTA juga mengalir, jangan ditempel sebagai "Like and subscribe." Dalam mode `top3`, pakai transisi → ajakan like → pertanyaan gimmick sesuai tema → subscribe jika berhasil + comment, maksimal empat beat tepat sebelum Number one. `try tapping like` dan `like if ...` pada awal klausa memicu animasi, termasuk sesudah koma; "if you like them, subscribe" tetap bukan ajakan like. Naskah baru memakai scene D-048 di atas; tanpa metadata, animasi legacy hanya like/subscribe. Mode `source` lama boleh memakai konektor seperti "So comment which one's most unique," / "and don't forget to like and subscribe."
 
 Contoh: "Number four, Scottish Fold." / "Ears fold forward and down," / "for an adorable round face," / "almost like it's always eavesdropping."
 

@@ -6,6 +6,10 @@ export type Shot = {
   durationInFrames: number;
   fgHeight?: number;
   blurs?: BlurBox[]; // kotak blur teks, piksel layar
+  decorative?: boolean; // CTA: full-screen blur kuat, tanpa foreground tajam
+  clipOffset?: number; // frame yang sudah dipakai dari background ini; boleh lebih dari satu loop
+  loopFrames?: number;
+  generated?: boolean; // fallback warna bergerak kalau belum ada video sebelumnya
 };
 
 export type Caption = {
@@ -85,6 +89,24 @@ export type CtaAction = {
   clickAt: number;
 };
 
+export type CtaStage = {
+  kind: 'like' | 'transform' | 'subscribe' | 'comment';
+  from: number;
+  durationInFrames: number;
+  timing: 'word' | 'structure';
+  triggerAt?: number;
+};
+
+export type CtaSceneData = {
+  theme: 'volcano' | 'word';
+  label: string;
+  commentText: string;
+  from: number;
+  durationInFrames: number;
+  stages: CtaStage[];
+  cues: {kind: CtaStage['kind']; from: number; word: string}[];
+};
+
 export type Intro = {
   durationInFrames: number;
 };
@@ -108,4 +130,5 @@ export type TimelineProps = {
   overlays?: Overlay[];
   emojis?: EmojiOverlay[];
   cta?: CtaAction[];
+  ctaScene?: CtaSceneData;
 };

@@ -1386,7 +1386,7 @@ function updateLiveCounts() {
     const tokenEl = box.querySelector(`[data-token-badge="${idx}"]`);
     const chip = document.getElementById(`timeline-chip-${idx}`);
     const val = inp ? inp.value.trim() : '';
-    const hasVal = val.length > 0;
+    const hasVal = box.dataset.autoCta === 'true' || val.length > 0;
     const rawStatus = box.dataset.status || '';
 
     if (tokenEl) {
@@ -1455,7 +1455,7 @@ function filterShots(mode, btn) {
     card.querySelectorAll('.shot-box[data-shot-box]').forEach(box => {
       const idx = box.dataset.shotBox;
       const inp = box.querySelector(`input[data-shot="${idx}"]`);
-      const hasVal = inp && inp.value.trim().length > 0;
+      const hasVal = box.dataset.autoCta === 'true' || (inp && inp.value.trim().length > 0);
       const st = box.dataset.status || '';
 
       let show = true;
@@ -2037,6 +2037,13 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
     s_idx = shot["index"]
     pill_attr = (f'onclick="playBeat(this, {shot["start_s"]:.1f}, {shot["end_s"]:.1f})"' if voice_ok
                  else 'disabled title="suara belum ada"')
+    if shot.get("auto_cta"):
+        return f'''<div class="shot-box is-filled" data-shot-box="{s_idx}" data-auto-cta="true" data-status="auto">
+          <div class="shot-top-bar"><span class="shot-num">Shot {s_idx + 1:02d}</span>
+          <button type="button" class="time-seek-pill" {pill_attr}>{shot['start_s']:.1f}s – {shot['end_s']:.1f}s</button>
+          <span class="state ok">AUTO CTA</span></div>
+          <div class="shot-script">{escape(shot.get('text', ''))}</div>
+          <p>Background bergerak dari video sebelumnya, diblur + diredupkan. Tidak perlu link atau upload baru.</p></div>'''
     refs = "".join(f'<img src="/files/{escape(f)}" onclick="openLightbox(this.src)" loading="lazy">' for f in shot.get("ref_frames", []))
 
     kw_list = []
@@ -2186,14 +2193,16 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
                 previews: dict | None = None) -> str:
     shots = {shot["index"]: shot for shot in plan["shots"]}
     groups = plan["groups"]
+    auto = {s['index'] for s in plan['shots'] if s.get('auto_cta')}
 
     if "shots" in links:
-        filled_shots = sum(1 for shot in plan["shots"] if str(shot["index"]) in links["shots"] and links["shots"][str(shot["index"])])
-        filled_groups = sum(1 for g in groups if all(str(i) in links["shots"] and links["shots"][str(i)] for i in g["shots"]))
+        filled_shots = sum(1 for shot in plan["shots"] if shot['index'] in auto or
+                           (str(shot["index"]) in links["shots"] and links["shots"][str(shot["index"])]))
+        filled_groups = sum(1 for g in groups if all(i in auto or (str(i) in links["shots"] and links["shots"][str(i)]) for i in g["shots"]))
     else:
         entries = links.get("groups", {})
-        filled_groups = sum(1 for group in groups if entries.get(group["id"]))
-        filled_shots = sum(min(len(g["shots"]), len(entries.get(g["id"], []))) for g in groups)
+        filled_groups = sum(1 for group in groups if group.get('auto_cta') or entries.get(group["id"]))
+        filled_shots = sum(len(g['shots']) if g.get('auto_cta') else min(len(g["shots"]), len(entries.get(g["id"], []))) for g in groups)
 
     total_shots = len(plan["shots"])
     total_duration = plan["shots"][-1]["end_s"] if plan["shots"] else 0.0
@@ -2215,6 +2224,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
                 if s_idx in g_shots and len(links["groups"][g_id]) > g_shots.index(s_idx):
                     has_val = bool(links["groups"][g_id][g_shots.index(s_idx)])
 
+        has_val = has_val or s_idx in auto
         filled_cls = "is-filled" if has_val else ""
         timeline_chips.append(f"""
         <div class="timeline-shot-chip {filled_cls}" id="timeline-chip-{s_idx}" onclick="scrollToShot({s_idx})">
@@ -2228,7 +2238,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
     group_metrics_html = []
     for idx, g in enumerate(groups):
         g_shots = g["shots"]
-        g_filled = sum(1 for i in g_shots if (str(i) in links.get("shots", {}) and links["shots"][str(i)]))
+        g_filled = sum(1 for i in g_shots if i in auto or (str(i) in links.get("shots", {}) and links["shots"][str(i)]))
         g_pct = round(100 * g_filled / len(g_shots)) if g_shots else 0
         color = colors[idx % len(colors)]
         group_metrics_html.append(f"""

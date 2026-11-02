@@ -10,6 +10,7 @@ from typing import Any, Callable
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import _EDGE_PUNCT, SUBSCRIBE, is_like_cta
 from mayzfact.cta import clean as _clean
+from mayzfact.cta_scene import build_scene
 from mayzfact.errors import PipelineError
 from mayzfact.media import (
     FRAME_H,
@@ -90,6 +91,11 @@ def _shot_entries(shots: list[dict], total: int, fg_min_ratio: float) -> list[di
         }
         if layout == "blur":
             entry["fgHeight"] = fg_height(shot["width"], shot["height"], fg_min_ratio)
+        if shot.get('auto_cta'):
+            entry['decorative'] = True
+            for key in ('clipOffset', 'loopFrames', 'generated'):
+                if key in shot:
+                    entry[key] = shot[key]
         entries.append(entry)
     return entries
 
@@ -453,6 +459,8 @@ def build_timeline(
     emojis: list[dict] = []
     cta: list[dict] = []
     timings: list[dict] = []
+    words: list[dict] = []
+    beat_of: list[int] = []
     if script and alignment:
         try:
             words = word_timings(alignment)
@@ -473,15 +481,27 @@ def build_timeline(
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
             log(f"[timeline] caption & countdown dilewat: {reason}")
             countdown, captions, emojis, cta, timings = [], [], [], [], []
+            words, beat_of = [], []
+    scene = build_scene(script, shots, entries, words, beat_of, countdown, total) if script else None
+    sound_cta = cta
+    if scene:
+        begin, end = scene['from'], scene['from'] + scene['durationInFrames']
+        cta = []  # scene besar menggantikan overlay CTA legacy, bukan menumpuknya
+        emojis = [e for e in emojis if e['from'] + e['durationInFrames'] <= begin or e['from'] >= end]
+        for e in entries:
+            if begin <= e['from'] < end:
+                e['decorative'] = True
     _add_blurs(blurs or {}, shots, entries, countdown, fg_min_ratio)
     shown = _overlays(overlays, entries, countdown, _point_ranges(timings, marks))
+    if scene:
+        shown = [e for e in shown if e['from'] + e['durationInFrames'] <= begin or e['from'] >= end]
     hook_end = max((e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None),
                    default=0)
     # shot yang ngelanjutin link/klip yang sama kayak shot sebelumnya nggak dapat bunyi/efek transisi
     same_clip = {e["from"] for i, (e, s) in enumerate(zip(entries, shots))
                  if i and s.get("page_url") and s.get("page_url") == shots[i - 1].get("page_url")}
-    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total, same_clip)
-    return {
+    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, sound_cta, hook_end, total, same_clip)
+    data = {
         "fps": FPS,
         "width": FRAME_W,
         "height": FRAME_H,
@@ -500,6 +520,9 @@ def build_timeline(
         "transitions": reveals,
         "flashes": flashes,
     }
+    if scene:
+        data['ctaScene'] = scene
+    return data
 
 
 def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float, script: dict | None = None,
