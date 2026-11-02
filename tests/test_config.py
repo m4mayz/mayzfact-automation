@@ -57,8 +57,12 @@ def test_secrets_are_hidden_from_repr():
     assert not any(v in text for v in ("KEYVAL", "TOKVAL", "SECVAL", "NGROKVAL"))
 
 
-def test_elevenlabs_stability_defaults_to_robust():
-    assert Settings().elevenlabs_stability == 1.0  # D-036
+def test_elevenlabs_defaults_to_approved_calm_natural_delivery():
+    settings = Settings()
+    assert settings.elevenlabs_stability == 0.5  # D-047, sample 2
+    assert settings.elevenlabs_delivery_tag == "calm"
+    assert settings.elevenlabs_voice_id == "TX3LPaxmHKxFdv7VOQHJ"
+    assert settings.elevenlabs_model == "eleven_v3"
 
 
 def test_tts_default_stays_elevenlabs():
@@ -128,3 +132,36 @@ def test_empty_voice_instruction_is_valid_for_a_b_control(tmp_path):
 
 def test_video_speed_defaults_to_1_1():
     assert Settings().video_speed == 1.1  # hasil render dipercepat 1,1x (D-039, awalnya 1,2x di D-038)
+
+
+@pytest.mark.parametrize("tag,stability", [("", 1.0), ("calm", 0.5), ("soft spoken", 0.0)])
+def test_elevenlabs_delivery_settings_can_be_overridden_locally(tmp_path, tag, stability):
+    import json
+
+    (tmp_path / "settings.local.json").write_text(json.dumps({
+        "elevenlabs_delivery_tag": tag, "elevenlabs_stability": stability,
+    }), encoding="utf-8")
+    settings = load_settings(tmp_path / ".env")
+    assert settings.elevenlabs_delivery_tag == tag
+    assert settings.elevenlabs_stability == stability
+    assert settings.elevenlabs_voice_id == "TX3LPaxmHKxFdv7VOQHJ"
+    assert settings.elevenlabs_model == "eleven_v3"
+
+
+@pytest.mark.parametrize("field,value", [
+    ("elevenlabs_delivery_tag", "[calm]"), ("elevenlabs_delivery_tag", "calm\nexcited"),
+    ("elevenlabs_delivery_tag", " "), ("elevenlabs_delivery_tag", " calm"),
+    ("elevenlabs_delivery_tag", "x" * 65), ("elevenlabs_delivery_tag", 42),
+    ("elevenlabs_delivery_tag", None), ("elevenlabs_stability", -0.1),
+    ("elevenlabs_stability", 1.1), ("elevenlabs_stability", float("nan")),
+    ("elevenlabs_stability", float("inf")), ("elevenlabs_stability", True),
+    ("elevenlabs_stability", "0.5"),
+])
+def test_invalid_elevenlabs_delivery_overrides_fail_closed(tmp_path, field, value):
+    import json
+
+    from mayzfact.errors import PipelineError
+
+    (tmp_path / "settings.local.json").write_text(json.dumps({field: value}), encoding="utf-8")
+    with pytest.raises(PipelineError, match=field):
+        load_settings(tmp_path / ".env")

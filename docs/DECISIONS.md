@@ -515,3 +515,13 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Kompatibilitas/scope:** mode source, peringkat 3/2/1, fakta/hedges, dan jalur resume audio dibayar tidak berubah; bentuk CTA lama tetap didukung. Implementasi/test tanpa TTS/render/upload atau perubahan run produksi. Parent menangani backup/update Q0zEnOUT3mM, revoice dengan audio lama dipertahankan, plan dan brief secara terpisah.
 - **Spec / plan:** [desain](superpowers/specs/2026-11-02-top3-playful-cta-design.md), [plan](superpowers/plans/2026-11-02-top3-playful-cta.md).
 - **Authority:** Akmal menyetujui contoh baru, fiksi transformasi tombol sebagai hiburan, dan implementasi pipeline CTA saja; tanpa commit, parent review/commit (chat 2026-11-02).
+
+## D-047 — 2026-11-02 — ElevenLabs calm delivery, sample 2 sebagai default
+
+- **Status:** accepted; implementasi uncommitted untuk parent review.
+- **Pilihan Akmal:** sample 2 `2-kalem-natural`: prefix request `[calm] ` + stability `0.5`; voice `TX3LPaxmHKxFdv7VOQHJ`, model `eleven_v3` tetap. Berlaku untuk seluruh revoice video saat ini dan short baru berikutnya; menggantikan default stability D-036, bukan aturan alur/wording.
+- **Implementasi:** `Settings.elevenlabs_delivery_tag="calm"`, stability `0.5`, override lokal tervalidasi; tag kosong mematikan prefix. Tag hanya di request provider, tidak masuk script/hash/karakter/caption. Provider tetap mengembalikan audio/raw alignment; run_tts menyimpannya sebelum normalisasi. Buang entri prefix persis dari characters/start/end dengan slicing seragam, tanpa retiming. Provider yang menghilangkan tag atau spasi pemisah didukung jika suffix persis sama dengan teks asli. Mismatch/panjang array tidak cocok gagal sesudah save; retry tidak sintesis ulang. Metadata sukses menyimpan delivery tag dan raw alignment.
+- **Cache/scope:** identity menambah tag hanya saat digunakan; pending legacy/tanpa tag/tag lain tidak dipakai untuk request calm dan tidak ditimpa. No-tag/fake tetap kompatibel. Voice historis tetap terkunci. Tidak ada API TTS, render, brief, perubahan run/settings lokal, commit atau push dalam implementasi ini; parent menangani produksi dan backup.
+- **Verifikasi:** strict RED→GREEN untuk setiap slice; focused `160 passed`; full offline `639 passed, 1 skipped, 3 deselected in 57.94s`; Ruff F/I dan diff check bersih. Caption/timing fixture memakai teks asli dan timestamp provider tidak berubah. Tidak mengklaim audio produksi baru sudah dibuat.
+- **Spec / plan:** [desain](superpowers/specs/2026-11-02-elevenlabs-calm-design.md), [plan](superpowers/plans/2026-11-02-elevenlabs-calm.md).
+- **Authority:** persetujuan eksplisit Akmal atas sample 2 untuk video penuh saat ini dan default berikutnya (chat 2026-11-02); parent review/commit.

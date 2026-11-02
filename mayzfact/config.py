@@ -32,8 +32,9 @@ class Settings:
     voicestudio_timeout: float = 900.0  # model lokal cold-start bisa lama
     elevenlabs_voice_id: str = "TX3LPaxmHKxFdv7VOQHJ"
     elevenlabs_model: str = "eleven_v3"
-    # 1.0 = "Robust": nada antar kalimat konsisten. Default voice bikin tiap beat kedengeran ganti konteks (D-036).
-    elevenlabs_stability: float = 1.0
+    # D-047: sample 2 disetujui, Natural + tag delivery hanya di request provider.
+    elevenlabs_stability: float = 0.5
+    elevenlabs_delivery_tag: str = "calm"  # kosong = tanpa prefix, bukan isi naskah/caption
     video_speed: float = 1.1  # hasil render dipercepat (gambar + suara, nada tetap); 1.0 = normal (D-039, dulu 1,2)
     target_duration_ratio: float = 0.8
     min_duration_seconds: float = 32.0
@@ -88,11 +89,20 @@ def load_settings(env_file: Path = PROJECT_ROOT / ".env") -> Settings:
         if not isinstance(values, dict):
             raise ValueError("harus object JSON")
         allowed = {"tts_provider", "voicestudio_url", "voicestudio_voice", "voicestudio_engine",
-                   "voicestudio_timeout", "voicestudio_instruct", "voicestudio_audio_format"}
+                   "voicestudio_timeout", "voicestudio_instruct", "voicestudio_audio_format",
+                   "elevenlabs_delivery_tag", "elevenlabs_stability"}
         if values.keys() - allowed:
             raise ValueError("ada field di luar setting TTS yang didukung")
         for name, value in values.items():
-            if name == "voicestudio_timeout":
+            if name == "elevenlabs_delivery_tag":
+                if (not isinstance(value, str) or len(value) > 64 or value != value.strip()
+                        or any(char in "[]" or not char.isprintable() for char in value)):
+                    raise ValueError("elevenlabs_delivery_tag harus kosong atau nama tag maksimal 64 karakter, "
+                                     "tanpa bracket, control character atau spasi tepi")
+            elif name == "elevenlabs_stability":
+                if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
+                    raise ValueError("elevenlabs_stability harus angka finite antara 0 dan 1")
+            elif name == "voicestudio_timeout":
                 if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
                     raise ValueError("voicestudio_timeout harus angka positif")
             elif name == "voicestudio_instruct":

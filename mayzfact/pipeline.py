@@ -132,7 +132,8 @@ def real_deps(settings: Settings) -> Deps:
         if settings.tts_provider != "elevenlabs":
             raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
         return ElevenLabsTTS(settings.elevenlabs_api_keys, settings.elevenlabs_voice_id,
-                             settings.elevenlabs_model, http(), stability=settings.elevenlabs_stability)
+                             settings.elevenlabs_model, http(), stability=settings.elevenlabs_stability,
+                             delivery_tag=settings.elevenlabs_delivery_tag)
 
     encoders: dict[str, object] = {}
 

@@ -35,6 +35,7 @@ def run_tts(
 ) -> dict:
     text = script_text(script["beats"])
     stability = getattr(tts, "stability", None)  # provider lama/fake di test boleh nggak punya
+    delivery_tag = getattr(tts, "delivery_tag", "")
     provider = getattr(tts, "provider_name", "elevenlabs")
     identity = getattr(tts, "cache_identity", {"provider": provider, "voice_id": tts.voice_id,
                                               "model_id": tts.model_id, "stability": stability})
@@ -58,7 +59,7 @@ def run_tts(
     # Audio yang udah dibayar disimpan dulu. Kalau langkah setelahnya gagal (mis. ffprobe), run berikutnya
     # pakai ulang file ini selama naskahnya sama, jadi ElevenLabs nggak ditagih dua kali.
     pending = read_json(incoming_meta) if incoming.exists() and incoming_meta.exists() else None
-    legacy = pending is not None and "identity" not in pending and provider == "elevenlabs"
+    legacy = pending is not None and "identity" not in pending and provider == "elevenlabs" and not delivery_tag
     if (pending is not None and pending["text_sha256"] == text_hash(text)
             and pending.get("audio_format", "mp3") == audio_format
             and (pending.get("identity") == identity or legacy)):
@@ -74,6 +75,10 @@ def run_tts(
         pending = {"text_sha256": text_hash(text), "alignment": alignment, "identity": identity,
                    "voice_id": tts.voice_id, "model_id": tts.model_id, "audio_format": audio_format}
         write_json_atomic(incoming_meta, pending)
+    raw_alignment = alignment
+    normalize = getattr(tts, "normalize_alignment", None)
+    if normalize is not None:
+        alignment = normalize(text, raw_alignment)
     data = {
         "provider": provider,
         "text_sha256": text_hash(text),
@@ -85,6 +90,9 @@ def run_tts(
         "alignment": alignment,
         "audio_file": audio_file,
     }
+    if delivery_tag:
+        data["delivery_tag"] = delivery_tag
+        data["raw_alignment"] = raw_alignment
     # tts.json duluan, voice.mp3 terakhir. Keberadaan voice.mp3 = step selesai + naskah dikunci.
     write_json_atomic(paths.tts_json, data)
     if audio_format == "wav":

@@ -107,6 +107,8 @@ Tunjukin ke Akmal di chat, per beat: teks baru | kalimat source yang jadi dasarn
 
 ## 4. Suara dan plan
 
+**Delivery default (D-047):** Akmal memilih sample 2 `2-kalem-natural`: ElevenLabs `eleven_v3`, voice `TX3LPaxmHKxFdv7VOQHJ`, stability **0.5**, prefix request **`[calm] `**. Berlaku untuk short baru dan revoice penuh video saat ini yang sudah disetujui. Jangan tulis tag ke `script.json`, beat atau caption, dan jangan mengubah wording untuk delivery. `Settings.elevenlabs_delivery_tag="calm"`; string kosong menonaktifkan prefix untuk request baru saja. Override nonrahasia lewat `settings.local.json`, bukan `.env`. Voice lama tetap terkunci; revoice perlu backup + izin, bukan generate ulang otomatis. `run_tts` menyimpan audio/raw alignment sebelum validasi; mismatch menghentikan step dengan pending tetap aman, jangan bayar ulang atau mengarang timestamp. Timestamp ucapan tidak digeser saat entri prefix dibuang.
+
 ```bash
 uv run mayzfact run <id> --no-render
 ```
