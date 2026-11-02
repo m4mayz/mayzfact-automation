@@ -32,7 +32,7 @@ export const ShotView: React.FC<{shot: Shot; photoZoom: number}> = ({shot, photo
     return <AbsoluteFill style={{overflow: 'hidden', backgroundColor: '#172239'}}>
       {shot.generated ? <AbsoluteFill style={{
         background: `radial-gradient(ellipse at ${35 + Math.sin((frame + (shot.clipOffset ?? 0))/50)*20}% 45%, #315778, #151c38 70%)`,
-      }}/> : <AbsoluteFill style={{filter: 'blur(58px) brightness(0.38) saturate(0.65)', scale: 1.2}}>
+      }}/> : <AbsoluteFill style={{filter: 'blur(10px) brightness(0.78) saturate(0.95)', scale: 1.06}}>
         <Sequence from={-offset} layout="none">
           <Video src={staticFile(shot.src)} muted loop={Boolean(shot.loopFrames)} trimAfter={shot.loopFrames}
             objectFit="cover" style={{width: '100%', height: '100%'}}/>

@@ -82,7 +82,7 @@ const Stage: React.FC<{scene: CtaSceneData; stage: CtaStage}> = ({scene, stage})
 
 export const CtaScene: React.FC<{scene: CtaSceneData}> = ({scene}) => (
   <Sequence from={scene.from} durationInFrames={scene.durationInFrames} layout="none">
-    <AbsoluteFill style={{background: 'radial-gradient(ellipse at 50% 42%, transparent 10%, rgba(4,8,18,.42) 85%)', pointerEvents: 'none'}}/>
+    <AbsoluteFill style={{background: 'radial-gradient(ellipse at 50% 42%, transparent 10%, rgba(4,8,18,.16) 85%)', pointerEvents: 'none'}}/>
     {scene.stages.map((stage) => <Sequence key={`${stage.kind}-${stage.from}`} from={stage.from-scene.from} durationInFrames={stage.durationInFrames} layout="none">
       <Stage scene={scene} stage={stage}/>
     </Sequence>)}

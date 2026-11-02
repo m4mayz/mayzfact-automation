@@ -196,12 +196,28 @@ def test_scene_stages_cover_cta_follow_actual_words_and_end_before_one():
     assert scene['from'] == to_frame(clips['shots'][min(cta_beat_indices(script['beats']))]['start_s'])
     stop = scene['from'] + scene['durationInFrames']
     assert stop == timeline['countdown'][-1]['numberFrom']
-    assert sum(s['durationInFrames'] for s in scene['stages']) == scene['durationInFrames']
+    assert sum(s['durationInFrames'] for s in scene['stages']) == stop - scene['stages'][0]['from']
     assert timeline['cta'] == []
     for key in ['emojis', 'overlays']:
         assert all(x['from'] + x['durationInFrames'] <= scene['from'] or x['from'] >= stop for x in timeline[key])
     assert any(c['text'] == 'VOLCANO' for c in timeline['captions'])
     assert any(c['text'] == 'COMMENT' for c in timeline['captions'])
+
+
+def test_like_appears_only_when_try_tapping_is_spoken_not_during_leadin():
+    from mayzfact.steps.timeline import build_timeline, to_frame
+    from mayzfact.timing import word_timings
+    script, alignment, clips = timeline_fixture()
+    timeline = build_timeline(clips, 20, .5, script=script, alignment=alignment)
+    scene = timeline['ctaScene']
+    words = word_timings(alignment)
+    invitation = to_frame(next(w for w in words if w['text'].lower().strip('.,?') == 'try')['start_s'])
+    click = to_frame(next(w for w in words if w['text'].lower().strip('.,?') == 'like')['start_s'])
+    stage = next(s for s in scene['stages'] if s['kind'] == 'like')
+    assert stage['from'] == invitation
+    assert stage['from'] > scene['from']
+    assert stage['triggerAt'] == click - invitation
+    assert all(s['from'] >= invitation for s in scene['stages'])
 
 
 def test_scene_without_word_events_uses_structural_bounds_not_fake_spoken_cues():

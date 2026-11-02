@@ -26,6 +26,7 @@ def build_scene(script: dict, shots: list[dict], entries: list[dict], words: lis
     if stop <= start:
         return None
     cues = {}
+    like_begin = None
     for beat in sorted(allowed):
         local = [w for w, b in zip(words, beat_of) if b == beat]
         for i, w in enumerate(local):
@@ -36,7 +37,15 @@ def build_scene(script: dict, shots: list[dict], entries: list[dict], words: lis
             frame = int(math.floor(w['start_s'] * 30 + .5))
             if kind and start <= frame < stop and kind not in cues:
                 cues[kind] = dict(kind=kind, word=w['text'], **{'from': frame})
-    bounds = {'like': start}
+                if kind == 'like':
+                    # Mulai saat frasa ajakan terdengar; klik tetap di kata like.
+                    begin = i
+                    if i >= 1 and clean(local[i-1]['text']) in {'tap', 'tapping', 'hit', 'press', 'smash'}:
+                        begin = i-1
+                        if i >= 2 and clean(local[i-2]['text']) == 'try':
+                            begin = i-2
+                    like_begin = max(start, int(math.floor(local[begin]['start_s'] * 30 + .5)))
+    bounds = {}
     for beat in sorted(allowed):
         text = beats[beat]['text']
         kinds = cta_kinds(text)
@@ -49,13 +58,15 @@ def build_scene(script: dict, shots: list[dict], entries: list[dict], words: lis
     for kind, cue in cues.items():
         if kind != 'like':
             bounds[kind] = cue['from']
+    if like_begin is not None:
+        bounds['like'] = like_begin
     ordered = sorted(bounds.items(), key=lambda item: (item[1], ['like', 'transform', 'subscribe', 'comment'].index(item[0])))
     stages = []
     for i, (kind, begin) in enumerate(ordered):
         end = min(stop, ordered[i + 1][1] if i + 1 < len(ordered) else stop)
         if end <= begin:
             continue
-        stage = dict(kind=kind, durationInFrames=end-begin, timing='word' if kind in cues and begin == cues[kind]['from'] else 'structure',
+        stage = dict(kind=kind, durationInFrames=end-begin, timing='word' if kind in cues and (begin == cues[kind]['from'] or kind == 'like' and begin == like_begin) else 'structure',
                      **{'from': begin})
         if kind in cues:
             stage['triggerAt'] = cues[kind]['from'] - begin
