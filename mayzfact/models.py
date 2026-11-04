@@ -6,10 +6,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class CtaScene(BaseModel):
-    """Visual CTA dipilih penulis; tema lain pakai kartu kata, bukan selalu gunung."""
+    """Visual CTA dipilih penulis: gunung, unicorn animasi, atau kartu kata."""
 
     model_config = ConfigDict(extra="forbid")
-    theme: Literal["volcano", "word"]
+    theme: Literal["volcano", "word", "unicorn"]
     transform_word: str = Field(min_length=1, max_length=40, pattern=r"^\w+$")
     comment_text: str = Field(min_length=1, max_length=24, pattern=r"\S")
     label: str = Field(default="", max_length=24)
@@ -39,6 +39,7 @@ class HookQuery(BaseModel):
 
 class Script(BaseModel):
     narration_mode: Literal["source", "top3"] = "source"  # run lama tanpa field ini tetap pakai aturan source
+    approved_word_count: int | None = Field(default=None, strict=True, ge=1, le=500)
     cta_scene: CtaScene | None = None  # opt-in visual saja; nggak masuk hash teks/audio
     beats: list[Beat]
 

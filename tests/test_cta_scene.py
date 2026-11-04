@@ -290,7 +290,7 @@ def test_cta_visual_markup_cases_run_in_node():
     root = Path(__file__).resolve().parents[1]/'remotion'
     result = subprocess.run([node, 'tests/cta-scene.cjs'], cwd=root, capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert '5 CTA visual cases passed' in result.stdout
+    assert '6 CTA visual cases passed' in result.stdout
 
 
 def test_operator_summary_exempts_explicit_reuse_from_overlap_warnings(tmp_path, monkeypatch):
@@ -334,6 +334,19 @@ def test_missing_transform_word_event_uses_beat_start_without_invented_cue():
     assert stage['timing'] == 'structure'
     assert 'triggerAt' not in stage
     assert 'transform' not in {c['kind'] for c in scene['cues']}
+
+
+def test_unicorn_theme_schema_needs_no_label_and_preserves_voice_hash():
+    raw = scene_script()
+    raw['cta_scene'] = dict(theme='unicorn', transform_word='turn', comment_text='MAGIC')
+    parsed = Script.model_validate(raw)
+    assert parsed.cta_scene is not None
+    assert parsed.cta_scene.theme == 'unicorn'
+    assert parsed.cta_scene.label == ''
+    assert parsed.cta_scene.transform_word == 'turn'
+    assert text_hash(script_text(parsed.model_dump()['beats'])) == text_hash(script_text(raw['beats']))
+    with pytest.raises(ValidationError):
+        Script.model_validate({**raw, 'cta_scene': {**raw['cta_scene'], 'sparkle_speed': 2}})
 
 
 def test_scene_metadata_survives_schema_without_changing_voice_hash():

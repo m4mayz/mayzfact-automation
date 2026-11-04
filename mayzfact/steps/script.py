@@ -46,6 +46,10 @@ def narration_word_range(script: Script, duration_s: float, video_speed: float =
 
     if script.narration_mode != "top3":
         return word_range(duration_s)
+    # Persetujuan panjang per-run mengunci jumlah kata, bukan melewati cek lain.
+    if script.approved_word_count is not None:
+        count = script.approved_word_count
+        return count, count, count
     # Anggaran isi tetap; hanya kata CTA di atas allowance lama yang ditambahkan.
     extra = max(0, sum(len(words(script.beats[i].text)) for i in cta_beat_indices(script.beats)) - 10)
     target, low, high = top3_word_range(video_speed)

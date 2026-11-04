@@ -3,6 +3,7 @@ import {AbsoluteFill, interpolate, Sequence, useCurrentFrame} from 'remotion';
 import {Cursor, Thumb} from './Cta';
 import {Celebration, ClickRipple, motionForStage} from './CtaMotion';
 import {MONTSERRAT} from './fonts';
+import {Unicorn} from './Unicorn';
 import type {CtaSceneData, CtaStage} from './types';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
@@ -59,7 +60,7 @@ export const CtaSceneVisual: React.FC<{scene: CtaSceneData; stage: CtaStage; fra
     {stage.kind === 'transform' ? <>
       {frame < 8 ? <div style={{...center, opacity: 1-morph, scale: 1-morph * .55, rotate: `${morph * 22}deg`, width: 540, height: 540, borderRadius: '50%', background: '#2563eb', display: 'grid', placeItems: 'center', boxShadow: shadow}}><Thumb size={320} color="white"/></div> : null}
       <div style={{...center, opacity: morph, scale: interpolate(frame, [0, 5, 10], [.45, 1.06, 1], clamp)}}>
-        {scene.theme === 'volcano' ? <Volcano frame={frame}/> :
+        {scene.theme === 'volcano' ? <Volcano frame={frame}/> : scene.theme === 'unicorn' ? <Unicorn frame={frame}/> :
           <div style={{...textStyle, width: 840, padding: '110px 36px', boxSizing: 'border-box', border: '8px solid #9adeff', borderRadius: 70,
             background: 'linear-gradient(135deg, #2563eb, #783bd2)', fontSize: Math.min(108, 1050/Math.max(1, scene.label.length)), boxShadow: shadow,
             rotate: `${Math.sin(frame / 12) * 2}deg`}}>{scene.label}</div>}

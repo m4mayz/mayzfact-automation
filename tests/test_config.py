@@ -131,7 +131,18 @@ def test_empty_voice_instruction_is_valid_for_a_b_control(tmp_path):
 
 
 def test_video_speed_defaults_to_1_1():
-    assert Settings().video_speed == 1.1  # hasil render dipercepat 1,1x (D-039, awalnya 1,2x di D-038)
+    assert Settings().video_speed == 1.1  # ElevenLabs tetap 1,1x.
+
+
+def test_voicestudio_always_keeps_native_speed(tmp_path):
+    import json
+    from dataclasses import replace
+
+    assert Settings(tts_provider="voicestudio").video_speed == 1.0
+    assert replace(Settings(), tts_provider="voicestudio").video_speed == 1.0
+    (tmp_path / "settings.local.json").write_text(
+        json.dumps({"tts_provider": "voicestudio"}), encoding="utf-8")
+    assert load_settings(tmp_path / ".env").video_speed == 1.0
 
 
 @pytest.mark.parametrize("tag,stability", [("", 1.0), ("calm", 0.5), ("soft spoken", 0.0)])

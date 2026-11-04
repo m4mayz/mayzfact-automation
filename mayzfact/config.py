@@ -42,7 +42,12 @@ class Settings:
     fg_min_height_ratio: float = 0.5
     hook_seconds: float = 10.0
     brief_port: int = 3100
-    # Rahasia: cuma dari .env, jangan pernah di-print.
+    def __post_init__(self) -> None:
+        # VoiceStudio tetap native; percepatan ElevenLabs jangan ikut ke voice lokal.
+        if self.tts_provider == "voicestudio":
+            object.__setattr__(self, "video_speed", 1.0)
+
+    # Rahasia: cuma dari .env + environment, jangan pernah di-print.
     elevenlabs_api_keys: tuple[str, ...] = field(default=(), repr=False)
     youtube_client_secret_json: str = field(default="", repr=False)  # JSON OAuth client
     youtube_token_json: str = field(default="", repr=False)

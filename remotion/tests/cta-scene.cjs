@@ -59,4 +59,27 @@ const blur = Number(decorative.match(/blur\(([\d.]+)px\)/)[1]);
 const brightness = Number(decorative.match(/brightness\(([\d.]+)\)/)[1]);
 assert.ok(blur <= 12, `Glass blur must retain visible footage, got ${blur}px`);
 assert.ok(brightness >= 0.7, `Glass footage must remain visible, got brightness ${brightness}`);
-console.log('5 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, alternate word theme)');
+const unicornOptions = {theme: 'unicorn', label: 'NOT A WORD CARD', commentText: 'MAGIC'};
+const unicorn = markup('transform', 25, unicornOptions);
+assert.match(unicorn, /<svg[^>]*data-unicorn="true"[^>]*width="880"[^>]*height="840"/);
+for (const part of ['horn', 'mane', 'head', 'sparkles']) {
+  assert.match(unicorn, new RegExp(`data-unicorn-${part}="true"`));
+}
+assert.doesNotMatch(unicorn, /NOT A WORD CARD|data-volcano|<text/);
+assert.notEqual(unicorn, markup('transform', 26, unicornOptions));
+assert.equal(unicorn, markup('transform', 25, unicornOptions));
+// Kepala dan sparkle masing-masing bergerak, bukan sekadar wrapper yang bergoyang.
+for (const part of ['head', 'sparkles']) {
+  const partTag = new RegExp(`<g[^>]*data-unicorn-${part}="true"[^>]*>`);
+  assert.notEqual(unicorn.match(partTag)[0], markup('transform', 26, unicornOptions).match(partTag)[0]);
+}
+assert.equal(rootOpacity(markup('transform', 0, unicornOptions)), 0);
+assert.ok(rootOpacity(markup('transform', 18, unicornOptions)) > .9);
+assert.ok(rootOpacity(markup('transform', 89, unicornOptions)) < .05);
+const thumbMarkup = renderToStaticMarkup(React.createElement(require('../src/Cta.tsx').Thumb, {size: 320, color: 'white'}));
+assert.ok(markup('transform', 0, unicornOptions).includes(thumbMarkup), 'Like thumb must remain during morph entrance');
+assert.ok(!unicorn.includes(thumbMarkup), 'Like thumb must disappear once unicorn is fully transformed');
+assert.equal(markup('like', 20, unicornOptions), markup('like', 20, {...unicornOptions, theme: 'word'}));
+assert.equal(markup('subscribe', 25, unicornOptions), markup('subscribe', 25, {...unicornOptions, theme: 'word'}));
+assert.equal(markup('comment', 25, unicornOptions), markup('comment', 25, {...unicornOptions, theme: 'word'}));
+console.log('6 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, alternate word theme, animated deterministic unicorn)');
