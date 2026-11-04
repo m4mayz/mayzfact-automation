@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import re
 
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import cta_kinds
@@ -66,6 +67,24 @@ def check_script(script: Script, source_text: str, duration_s: float,
         from mayzfact.narration import top3_problems
 
         problems.extend(top3_problems(script, source_text))
+        # Cek pra-TTS: objek wajib ilustrasi; word hanya untuk membaca run legacy.
+        if script.cta_scene is not None and script.cta_scene.theme == "word":
+            problems.append("CTA object requires an illustration; theme word is legacy-only. "
+                            "Add the matching illustration before generating voice or rendering a new script.")
+        elif script.cta_scene is not None:
+            from mayzfact.narration import cta_beat_indices
+
+            theme = script.cta_scene.theme
+            # Pakai clause transformasi asli, bukan instruksi comment atau teks kutipannya.
+            cta_text = " ".join(script.beats[i].text for i in cta_beat_indices(script.beats))
+            cta_text = re.sub(r'''"[^"]*"|“[^”]*”|(?<!\w)'.*?'(?!\w)|‘.*?’(?!\w)''', " ", cta_text)
+            cta_text = re.split(r"\bcomment\b", cta_text, maxsplit=1, flags=re.I)[0]
+            transform_text = next((clause for clause in re.split(r"[.!?;]", cta_text)
+                                   if re.search(rf"\b{re.escape(script.cta_scene.transform_word)}\b", clause, re.I)
+                                   and re.search(r"\binto\b", clause, re.I)), "")
+            if not re.search(rf"\binto\s+(?:(?:a|an|the)\s+)?{re.escape(theme)}\b", transform_text, re.I):
+                problems.append(f"CTA illustration {theme!r} does not match the narrated transformation object. "
+                                "Use the matching supported illustration; unsupported objects need an illustration first.")
     full_text = " ".join(b.text for b in script.beats)
     count = len(words(full_text))
     _, low, high = narration_word_range(script, duration_s, video_speed)

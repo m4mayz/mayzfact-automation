@@ -6,10 +6,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class CtaScene(BaseModel):
-    """Visual CTA dipilih penulis: gunung, unicorn animasi, atau kartu kata."""
+    """Ilustrasi CTA; kartu kata hanya tetap terbaca untuk run legacy."""
 
     model_config = ConfigDict(extra="forbid")
-    theme: Literal["volcano", "word", "unicorn"]
+    theme: Literal["volcano", "word", "unicorn", "honey"]
     transform_word: str = Field(min_length=1, max_length=40, pattern=r"^\w+$")
     comment_text: str = Field(min_length=1, max_length=24, pattern=r"\S")
     label: str = Field(default="", max_length=24)

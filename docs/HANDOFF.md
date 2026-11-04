@@ -1,3 +1,12 @@
+# Handoff — Honey illustration + guard objek CTA (D-049)
+
+- Desain bounded disetujui Akmal: honey harus ilustrasi, bukan teks; guard berlaku untuk naskah baru. Root cause: script memilih word dan renderer menjadikan tema tak dikenal fallback ke kartu kata.
+- Schema menambah honey; validator pra-TTS menolak word dan mencocokkan objek pertanyaan transformasi dengan tema. Legacy word tetap terbaca. Renderer memakai switch exhaustive dan error pada tema tak dikenal. Skill penulisan repo diperbarui supaya objek belum didukung harus dibuat ilustrasinya sebelum suara.
+- Honey SVG memakai dipper, stream, drops, jar kaca, riak deterministik; like/subscribe/comment tidak berubah. Strict RED→GREEN guard, schema honey, object mismatch serta renderer honey/unknown theme dijalankan. Full offline suite: 671 passed, 1 skipped, 4 deselected. Node SSR 8 kasus dan TypeScript dilaporkan subagent; parent mengulang lewat launcher native sebelum menerima fixture.
+- Fixture produksi terisolasi `out/honey-cta-fixture/` hanya mengubah theme pada salinan timeline. Transform frame1034–1069, 1.2detik. Hash sumber tersimpan di verification.json; belum berarti produksi sudah dipromosikan atau render penuh selesai. Launcher Git Bash background node/npx memunculkan `stdin is not a tty`; gunakan Python subprocess dengan node.exe native dan CREATE_NO_WINDOW.
+- Final guard menolak instruksi comment dan quoted text sebagai dasar objek; RED 9failed/15passed →24passed. Review independen ulang lolos, enam repro langsung juga lolos. Full suite final: **689 passed, 1 skipped, 4 deselected**, check-script produksi 131kata lolos. Hasil ini menggantikan hitungan tes awal di atas.
+- Promosi metadata sudah dijalankan: theme saja word→honey pada script/plan/timeline. Hash voice.wav, voice.mp3, tts.json, links.json, clips.json identik; seluruh timestamp/cue/stage/shot tidak berubah. Backup: `D:/akmal/_notes/runs/pG-Y-ICCAXQ/backups/pre-honey-20261104-223340`. Audit `SEMUA OK`, check-script 131kata lolos. Fixture native sukses: TypeScript + 8 node cases; H.264 1080×1920, 1.216detik. Contact sheet diperiksa: dipper/aliran/jar terlihat besar, bukan kartu HONEY; caption terpisah. Preview penuh belum dirender ulang pada saat catatan ini. Output fixture tidak ikut Git.
+
 # Handoff — Fase 1 pipeline
 
 - **Updated:** 2026-10-01 ±11:00 WIB, Claude Code (Opus 5.5)

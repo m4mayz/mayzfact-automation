@@ -3,6 +3,7 @@ import {AbsoluteFill, interpolate, Sequence, useCurrentFrame} from 'remotion';
 import {Cursor, Thumb} from './Cta';
 import {Celebration, ClickRipple, motionForStage} from './CtaMotion';
 import {MONTSERRAT} from './fonts';
+import {Honey} from './Honey';
 import {Unicorn} from './Unicorn';
 import type {CtaSceneData, CtaStage} from './types';
 
@@ -48,6 +49,24 @@ export const CtaSceneVisual: React.FC<{scene: CtaSceneData; stage: CtaStage; fra
   const done = pressed && frame > clickAt + 6;
   const morph = interpolate(frame, [0, 8], [0, 1], clamp);
   const textStyle: React.CSSProperties = {fontFamily: MONTSERRAT, fontWeight: 800, color: 'white', textAlign: 'center'};
+  let transformVisual: React.ReactNode = null;
+  if (stage.kind === 'transform') {
+    switch (scene.theme) {
+      case 'volcano': transformVisual = <Volcano frame={frame}/>; break;
+      case 'unicorn': transformVisual = <Unicorn frame={frame}/>; break;
+      case 'honey': transformVisual = <Honey frame={frame}/>; break;
+      // Kartu kata cuma untuk props legacy yang minta word secara eksplisit.
+      case 'word':
+        transformVisual = <div style={{...textStyle, width: 840, padding: '110px 36px', boxSizing: 'border-box', border: '8px solid #9adeff', borderRadius: 70,
+          background: 'linear-gradient(135deg, #2563eb, #783bd2)', fontSize: Math.min(108, 1050/Math.max(1, scene.label.length)), boxShadow: shadow,
+          rotate: `${Math.sin(frame / 12) * 2}deg`}}>{scene.label}</div>;
+        break;
+      default: {
+        const unsupportedTheme: never = scene.theme;
+        throw new Error(`Unsupported CTA transform theme: ${String(unsupportedTheme)}`);
+      }
+    }
+  }
   return <div data-cta-stage={stage.kind} style={{position: 'absolute', inset: 0, pointerEvents: 'none', ...motionForStage(stage, frame)}}>
     {stage.kind === 'like' ? <div style={{...center, width: 600, height: 640, ...textStyle, scale: pulse, rotate: `${Math.sin(frame / 10) * 1.3}deg`}}>
       <div style={{margin: '0 auto', width: 540, height: 540, borderRadius: '50%', background: 'radial-gradient(circle at 35% 25%, #639eff, #2563eb 65%, #183dad)', boxShadow: shadow, display: 'grid', placeItems: 'center'}}>
@@ -60,10 +79,7 @@ export const CtaSceneVisual: React.FC<{scene: CtaSceneData; stage: CtaStage; fra
     {stage.kind === 'transform' ? <>
       {frame < 8 ? <div style={{...center, opacity: 1-morph, scale: 1-morph * .55, rotate: `${morph * 22}deg`, width: 540, height: 540, borderRadius: '50%', background: '#2563eb', display: 'grid', placeItems: 'center', boxShadow: shadow}}><Thumb size={320} color="white"/></div> : null}
       <div style={{...center, opacity: morph, scale: interpolate(frame, [0, 5, 10], [.45, 1.06, 1], clamp)}}>
-        {scene.theme === 'volcano' ? <Volcano frame={frame}/> : scene.theme === 'unicorn' ? <Unicorn frame={frame}/> :
-          <div style={{...textStyle, width: 840, padding: '110px 36px', boxSizing: 'border-box', border: '8px solid #9adeff', borderRadius: 70,
-            background: 'linear-gradient(135deg, #2563eb, #783bd2)', fontSize: Math.min(108, 1050/Math.max(1, scene.label.length)), boxShadow: shadow,
-            rotate: `${Math.sin(frame / 12) * 2}deg`}}>{scene.label}</div>}
+        {transformVisual}
       </div>
     </> : null}
     {stage.kind === 'subscribe' ? <div style={{...center, ...textStyle, width: 860, height: 220, borderRadius: 40,

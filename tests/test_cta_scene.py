@@ -290,7 +290,7 @@ def test_cta_visual_markup_cases_run_in_node():
     root = Path(__file__).resolve().parents[1]/'remotion'
     result = subprocess.run([node, 'tests/cta-scene.cjs'], cwd=root, capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert '6 CTA visual cases passed' in result.stdout
+    assert '8 CTA visual cases passed' in result.stdout
 
 
 def test_operator_summary_exempts_explicit_reuse_from_overlap_warnings(tmp_path, monkeypatch):

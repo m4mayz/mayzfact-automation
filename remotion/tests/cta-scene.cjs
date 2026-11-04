@@ -82,4 +82,37 @@ assert.ok(!unicorn.includes(thumbMarkup), 'Like thumb must disappear once unicor
 assert.equal(markup('like', 20, unicornOptions), markup('like', 20, {...unicornOptions, theme: 'word'}));
 assert.equal(markup('subscribe', 25, unicornOptions), markup('subscribe', 25, {...unicornOptions, theme: 'word'}));
 assert.equal(markup('comment', 25, unicornOptions), markup('comment', 25, {...unicornOptions, theme: 'word'}));
-console.log('6 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, alternate word theme, animated deterministic unicorn)');
+const honeyOptions = {theme: 'honey', label: 'HONEY', commentText: 'SWEET'};
+const honey = markup('transform', 25, honeyOptions);
+assert.match(honey, /<svg[^>]*data-honey="true"[^>]*width="880"[^>]*height="840"/);
+for (const part of ['dipper', 'grooves', 'stream', 'drops', 'jar', 'fill']) {
+  assert.match(honey, new RegExp(`data-honey-${part}="true"`));
+}
+assert.doesNotMatch(honey, /HONEY|data-volcano|data-unicorn|<text/);
+assert.equal(honey, markup('transform', 25, honeyOptions), 'Honey must repeat identically at the same frame');
+assert.notEqual(honey, markup('transform', 26, honeyOptions), 'Honey must animate between frames');
+// Aliran dan tetesan harus bergerak sendiri, bukan cuma wrapper yang bergoyang.
+for (const part of ['stream', 'drops']) {
+  const partTag = new RegExp(`<[^>]*data-honey-${part}="true"[^>]*>`);
+  assert.notEqual(honey.match(partTag)[0], markup('transform', 26, honeyOptions).match(partTag)[0]);
+}
+assert.equal(rootOpacity(markup('transform', 0, honeyOptions)), 0);
+assert.ok(rootOpacity(markup('transform', 18, honeyOptions)) > .9);
+assert.ok(rootOpacity(markup('transform', 89, honeyOptions)) < .05);
+assert.ok(markup('transform', 0, honeyOptions).includes(thumbMarkup), 'Like thumb must remain during honey morph entrance');
+assert.ok(!honey.includes(thumbMarkup), 'Like thumb must disappear once honey is fully transformed');
+for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
+  assert.equal(markup(kind, frame, honeyOptions), markup(kind, frame, {...honeyOptions, theme: 'word'}), `${kind} must not depend on honey theme`);
+}
+// Props JSON lama tetap boleh word, tapi theme asing tidak boleh diam-diam jadi kartu teks.
+for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__']) {
+  for (const frame of [0, 25]) {
+    assert.throws(() => markup('transform', frame, {theme, label: 'DO NOT RENDER'}), {
+      name: 'Error', message: `Unsupported CTA transform theme: ${String(theme)}`,
+    });
+  }
+  for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
+    assert.equal(markup(kind, frame, {theme}), markup(kind, frame, {theme: 'word'}));
+  }
+}
+console.log('8 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, alternate word theme, animated deterministic unicorn, animated deterministic honey, unknown transform theme rejection)');
