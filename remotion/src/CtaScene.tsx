@@ -4,6 +4,7 @@ import {Cursor, Thumb} from './Cta';
 import {Celebration, ClickRipple, motionForStage} from './CtaMotion';
 import {MONTSERRAT} from './fonts';
 import {Honey} from './Honey';
+import {Puppy} from './Puppy';
 import {Unicorn} from './Unicorn';
 import type {CtaSceneData, CtaStage} from './types';
 
@@ -55,6 +56,7 @@ export const CtaSceneVisual: React.FC<{scene: CtaSceneData; stage: CtaStage; fra
       case 'volcano': transformVisual = <Volcano frame={frame}/>; break;
       case 'unicorn': transformVisual = <Unicorn frame={frame}/>; break;
       case 'honey': transformVisual = <Honey frame={frame}/>; break;
+      case 'puppy': transformVisual = <Puppy frame={frame}/>; break;
       // Kartu kata cuma untuk props legacy yang minta word secara eksplisit.
       case 'word':
         transformVisual = <div style={{...textStyle, width: 840, padding: '110px 36px', boxSizing: 'border-box', border: '8px solid #9adeff', borderRadius: 70,

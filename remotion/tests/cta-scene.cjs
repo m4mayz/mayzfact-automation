@@ -104,6 +104,27 @@ assert.ok(!honey.includes(thumbMarkup), 'Like thumb must disappear once honey is
 for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
   assert.equal(markup(kind, frame, honeyOptions), markup(kind, frame, {...honeyOptions, theme: 'word'}), `${kind} must not depend on honey theme`);
 }
+const puppyOptions = {theme: 'puppy', label: 'PUPPY', commentText: 'WOOF'};
+const puppy = markup('transform', 25, puppyOptions);
+assert.match(puppy, /<svg[^>]*data-puppy="true"[^>]*width="880"[^>]*height="840"/);
+for (const part of ['head', 'ears', 'tail', 'tongue', 'collar', 'paws']) {
+  assert.match(puppy, new RegExp(`data-puppy-${part}="true"`));
+}
+assert.doesNotMatch(puppy, /PUPPY|WOOF|data-volcano|data-unicorn|data-honey|<text/);
+assert.equal(puppy, markup('transform', 25, puppyOptions), 'Puppy must repeat identically at the same frame');
+assert.notEqual(puppy, markup('transform', 26, puppyOptions), 'Puppy must animate between frames');
+for (const part of ['head', 'ears', 'tail']) {
+  const partTag = new RegExp(`<[^>]*data-puppy-${part}="true"[^>]*>`);
+  assert.notEqual(puppy.match(partTag)[0], markup('transform', 26, puppyOptions).match(partTag)[0]);
+}
+assert.equal(rootOpacity(markup('transform', 0, puppyOptions)), 0);
+assert.ok(rootOpacity(markup('transform', 18, puppyOptions)) > .9);
+assert.ok(rootOpacity(markup('transform', 89, puppyOptions)) < .05);
+assert.ok(markup('transform', 0, puppyOptions).includes(thumbMarkup), 'Like thumb must remain during puppy morph entrance');
+assert.ok(!puppy.includes(thumbMarkup), 'Like thumb must disappear once puppy is fully transformed');
+for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
+  assert.equal(markup(kind, frame, puppyOptions), markup(kind, frame, {...puppyOptions, theme: 'word'}), `${kind} must not depend on puppy theme`);
+}
 // Props JSON lama tetap boleh word, tapi theme asing tidak boleh diam-diam jadi kartu teks.
 for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__']) {
   for (const frame of [0, 25]) {
@@ -115,4 +136,4 @@ for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__']) {
     assert.equal(markup(kind, frame, {theme}), markup(kind, frame, {theme: 'word'}));
   }
 }
-console.log('8 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, alternate word theme, animated deterministic unicorn, animated deterministic honey, unknown transform theme rejection)');
+console.log('9 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, alternate word theme, animated deterministic unicorn, animated deterministic honey, animated deterministic puppy, unknown transform theme rejection)');
