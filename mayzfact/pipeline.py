@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -70,15 +71,26 @@ def plan_steps(done: dict[str, bool], voice_exists: bool, from_step: str | None,
     return []
 
 
-def check_voice(paths: RunPaths) -> dict:
+def check_voice(paths: RunPaths, *, video_speed: float = 1.1, log: Callable[[str], None] = print) -> dict:
     """Dicek tiap run sebelum plan: naskah masih sama dengan suara, dan suaranya cukup panjang."""
     tts = read_json(paths.tts_json)
-    script = read_json(paths.script_json)
+    script = load_script(paths).model_dump()
     if text_hash(script_text(script["beats"])) != tts["text_sha256"]:
         raise PipelineError(
             "tts", f"script.json beda sama naskah yang dipakai buat voice.mp3. Balikin script.json. {NEW_SCRIPT_HINT}"
         )
-    if tts["duration_s"] < MIN_AUDIO_SECONDS:
+    if script.get("narration_mode") == "top3":
+        from mayzfact.narration import validate_video_speed
+
+        validate_video_speed(video_speed)
+        if not math.isfinite(tts["duration_s"]) or tts["duration_s"] <= 0:
+            raise PipelineError("tts", "Durasi audio harus positif dan finite; pulihkan metadata audio asli.")
+        estimated = tts["duration_s"] / video_speed
+        log(f"[tts] Top 3 estimasi final {estimated:.1f} detik dari audio nyata {tts['duration_s']:.1f} detik / {video_speed:g}x.")
+        if not 30 <= estimated <= 40:
+            log("[tts] PERINGATAN: estimasi final di luar target 30-40 detik. Audio tetap disimpan; "
+                "jangan regenerate atau ubah speed otomatis tanpa persetujuan.")
+    elif tts["duration_s"] < MIN_AUDIO_SECONDS:
         raise PipelineError(
             "tts", f"Audio cuma {tts['duration_s']:.1f} detik (minimal {MIN_AUDIO_SECONDS:.0f}). {NEW_SCRIPT_HINT}"
         )
@@ -108,6 +120,20 @@ def real_deps(settings: Settings) -> Deps:
         if "client" not in shared:
             shared["client"] = make_client()
         return shared["client"]
+
+    def tts() -> TTSProvider:
+        if settings.tts_provider == "voicestudio":
+            from mayzfact.providers.voicestudio import VoiceStudioTTS
+
+            return VoiceStudioTTS(settings.voicestudio_url, settings.voicestudio_voice,
+                                  settings.voicestudio_engine, http(), cache_dir=CACHE_DIR / "voicestudio",
+                                  timeout=settings.voicestudio_timeout, instruct=settings.voicestudio_instruct,
+                                  audio_format=settings.voicestudio_audio_format)
+        if settings.tts_provider != "elevenlabs":
+            raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
+        return ElevenLabsTTS(settings.elevenlabs_api_keys, settings.elevenlabs_voice_id,
+                             settings.elevenlabs_model, http(), stability=settings.elevenlabs_stability,
+                             delivery_tag=settings.elevenlabs_delivery_tag)
 
     encoders: dict[str, object] = {}
 
@@ -193,13 +219,7 @@ def real_deps(settings: Settings) -> Deps:
     return Deps(
         fetch_transcript=youtube_transcript,
         download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
-        tts=lambda: ElevenLabsTTS(
-            settings.elevenlabs_api_keys,
-            settings.elevenlabs_voice_id,
-            settings.elevenlabs_model,
-            http(),
-            stability=settings.elevenlabs_stability,
-        ),
+        tts=tts,
         http=http,
         render=lambda paths: run_render(paths, speed=settings.video_speed),
         plan=plan,
@@ -222,10 +242,18 @@ def run_pipeline(
     runs_dir: Path = RUNS_DIR,
     log: Callable[[str], None] = print,
 ) -> RunPaths:
+    from mayzfact.narration import validate_video_speed
+
+    try:
+        validate_video_speed(settings.video_speed)
+    except ValueError as exc:
+        raise PipelineError("config", str(exc)) from exc
     video_id = parse_video_id(video)
     paths = RunPaths(runs_dir / video_id)
     done = {step: step_done(step, paths) for step in STEPS}
     steps = plan_steps(done, paths.voice_mp3.exists(), from_step)
+    if paths.voice_mp3.exists():
+        load_script(paths)  # schema/mode dicek sebelum output resume lama dihapus; tanpa cek anggaran baru
     if no_render:
         # Review lewat Remotion Studio dulu. final.mp4 lama jadi basi kalau step sebelumnya diulang.
         if any(step in steps for step in ("plan", "fetch", "timeline")):
@@ -234,7 +262,12 @@ def run_pipeline(
     if not steps:
         log(f"Semua step {video_id} udah selesai: {paths.final_mp4}. Pakai --from plan/fetch/timeline/render buat bikin ulang.")
         return paths
-    missing = missing_env(settings, [name for step in steps for name in STEP_ENV.get(step, [])])
+    if settings.tts_provider not in {"elevenlabs", "voicestudio"}:
+        raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
+    required = [name for step in steps for name in STEP_ENV.get(step, [])]
+    if settings.tts_provider == "voicestudio":
+        required = [name for name in required if name != "ELEVENLABS_API_KEYS"]
+    missing = missing_env(settings, required)
     if missing:
         raise PipelineError("config", "Isi dulu di .env: " + ", ".join(missing))
     missing_tools = [tool for tool in ("ffmpeg", "ffprobe") if shutil.which(tool) is None]
@@ -253,7 +286,7 @@ def run_pipeline(
             if step == "tts":
                 _require_script(paths, settings)  # naskah dari agent: harus ada + lolos cek sebelum bayar TTS
             if step in AFTER_VOICE and not voice_checked:
-                check_voice(paths)
+                check_voice(paths, video_speed=settings.video_speed, log=log)
                 voice_checked = True
             log(f"[{step}] mulai")
             _run_step(step, paths, settings, deps, log)
@@ -269,7 +302,8 @@ def _require_script(paths: RunPaths, settings: Settings) -> None:
 
     load_script(paths)
     problems = check_script_file(paths, read_json(paths.source_json), ratio=settings.target_duration_ratio,
-                                 minimum_s=settings.min_duration_seconds, bgm_choices=list_bgm(BGM_DIR))
+                                 minimum_s=settings.min_duration_seconds, bgm_choices=list_bgm(BGM_DIR),
+                                 video_speed=settings.video_speed)
     if problems:
         raise PipelineError("script", "Naskah belum lolos cek: " + " ".join(problems))
 

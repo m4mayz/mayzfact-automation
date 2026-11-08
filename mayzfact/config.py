@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
+import math
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Callable, Mapping
+from urllib.parse import urlsplit
 
 from dotenv import dotenv_values
 
@@ -20,10 +23,18 @@ MODELS_DIR = PROJECT_ROOT / "models"  # cache model ML (SigLIP, OWLv2), di-gitig
 @dataclass(frozen=True)
 class Settings:
     # Setting biasa: ubah langsung di sini (bukan lewat .env), biar harness mana pun bisa ngeditnya.
+    tts_provider: str = "elevenlabs"  # override per-PC lewat settings.local.json, bukan .env
+    voicestudio_url: str = "http://127.0.0.1:3900"
+    voicestudio_voice: str = "default"  # isi nama/ID profil secara eksplisit di override lokal
+    voicestudio_engine: str = "cosyvoice"
+    voicestudio_instruct: str = ""  # arahan delivery, bukan tag di naskah/caption
+    voicestudio_audio_format: str = "mp3"  # WAV opt-in lokal; default lama tetap
+    voicestudio_timeout: float = 900.0  # model lokal cold-start bisa lama
     elevenlabs_voice_id: str = "TX3LPaxmHKxFdv7VOQHJ"
     elevenlabs_model: str = "eleven_v3"
-    # 1.0 = "Robust": nada antar kalimat konsisten. Default voice bikin tiap beat kedengeran ganti konteks (D-036).
-    elevenlabs_stability: float = 1.0
+    # D-047: sample 2 disetujui, Natural + tag delivery hanya di request provider.
+    elevenlabs_stability: float = 0.5
+    elevenlabs_delivery_tag: str = "calm"  # kosong = tanpa prefix, bukan isi naskah/caption
     video_speed: float = 1.1  # hasil render dipercepat (gambar + suara, nada tetap); 1.0 = normal (D-039, dulu 1,2)
     target_duration_ratio: float = 0.8
     min_duration_seconds: float = 32.0
@@ -31,7 +42,12 @@ class Settings:
     fg_min_height_ratio: float = 0.5
     hook_seconds: float = 10.0
     brief_port: int = 3100
-    # Rahasia: cuma dari .env, jangan pernah di-print.
+    def __post_init__(self) -> None:
+        # VoiceStudio tetap native; percepatan ElevenLabs jangan ikut ke voice lokal.
+        if self.tts_provider == "voicestudio":
+            object.__setattr__(self, "video_speed", 1.0)
+
+    # Rahasia: cuma dari .env + environment, jangan pernah di-print.
     elevenlabs_api_keys: tuple[str, ...] = field(default=(), repr=False)
     youtube_client_secret_json: str = field(default="", repr=False)  # JSON OAuth client
     youtube_token_json: str = field(default="", repr=False)
@@ -69,7 +85,48 @@ def load_settings(env_file: Path = PROJECT_ROOT / ".env") -> Settings:
     """Isi .env jadi default. Environment variable beneran (termasuk yang kosong) menang."""
     merged: dict[str, str | None] = dict(dotenv_values(env_file)) if env_file.exists() else {}
     merged.update({name: os.environ[name] for name in ENV_FIELDS if name in os.environ})
-    return settings_from_env(merged)
+    settings = settings_from_env(merged)
+    local_file = env_file.with_name("settings.local.json")
+    if not local_file.exists():
+        return settings
+    try:
+        values = json.loads(local_file.read_text(encoding="utf-8"))
+        if not isinstance(values, dict):
+            raise ValueError("harus object JSON")
+        allowed = {"tts_provider", "voicestudio_url", "voicestudio_voice", "voicestudio_engine",
+                   "voicestudio_timeout", "voicestudio_instruct", "voicestudio_audio_format",
+                   "elevenlabs_delivery_tag", "elevenlabs_stability"}
+        if values.keys() - allowed:
+            raise ValueError("ada field di luar setting TTS yang didukung")
+        for name, value in values.items():
+            if name == "elevenlabs_delivery_tag":
+                if (not isinstance(value, str) or len(value) > 64 or value != value.strip()
+                        or any(char in "[]" or not char.isprintable() for char in value)):
+                    raise ValueError("elevenlabs_delivery_tag harus kosong atau nama tag maksimal 64 karakter, "
+                                     "tanpa bracket, control character atau spasi tepi")
+            elif name == "elevenlabs_stability":
+                if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
+                    raise ValueError("elevenlabs_stability harus angka finite antara 0 dan 1")
+            elif name == "voicestudio_timeout":
+                if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+                    raise ValueError("voicestudio_timeout harus angka positif")
+            elif name == "voicestudio_instruct":
+                if not isinstance(value, str) or len(value) > 4096:
+                    raise ValueError("voicestudio_instruct harus teks maksimal 4096 karakter")
+            elif not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{name} harus teks yang nggak kosong")
+        settings = replace(settings, **values)
+        if settings.tts_provider not in {"elevenlabs", "voicestudio"}:
+            raise ValueError("tts_provider harus elevenlabs atau voicestudio")
+        if settings.voicestudio_audio_format not in {"mp3", "wav"}:
+            raise ValueError("voicestudio_audio_format harus mp3 atau wav")
+        url = urlsplit(settings.voicestudio_url)
+        if (url.scheme != "http" or url.hostname not in {"127.0.0.1", "localhost", "::1"}
+                or url.username or url.password or url.query or url.fragment or url.path not in {"", "/"}):
+            raise ValueError("voicestudio_url harus HTTP loopback lokal tanpa path/kredensial")
+        return settings
+    except (OSError, ValueError, TypeError) as exc:
+        raise PipelineError("config", f"settings.local.json nggak valid: {exc}") from exc
 
 
 def missing_env(settings: Settings, names: list[str]) -> list[str]:

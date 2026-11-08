@@ -57,9 +57,122 @@ def test_secrets_are_hidden_from_repr():
     assert not any(v in text for v in ("KEYVAL", "TOKVAL", "SECVAL", "NGROKVAL"))
 
 
-def test_elevenlabs_stability_defaults_to_robust():
-    assert Settings().elevenlabs_stability == 1.0  # D-036
+def test_elevenlabs_defaults_to_approved_calm_natural_delivery():
+    settings = Settings()
+    assert settings.elevenlabs_stability == 0.5  # D-047, sample 2
+    assert settings.elevenlabs_delivery_tag == "calm"
+    assert settings.elevenlabs_voice_id == "TX3LPaxmHKxFdv7VOQHJ"
+    assert settings.elevenlabs_model == "eleven_v3"
+
+
+def test_tts_default_stays_elevenlabs():
+    assert Settings().tts_provider == "elevenlabs"
+
+
+def test_local_tts_override_is_not_a_secret(tmp_path):
+    import json
+
+    (tmp_path / "settings.local.json").write_text(json.dumps({
+        "tts_provider": "voicestudio", "voicestudio_voice": "Gen",
+    }), encoding="utf-8")
+    settings = load_settings(tmp_path / ".env")
+    assert settings.tts_provider == "voicestudio"
+    assert settings.voicestudio_voice == "Gen"
+    assert settings.elevenlabs_model == Settings().elevenlabs_model
+
+
+@pytest.mark.parametrize("value", [
+    {"tts_provider": "typo"}, {"voicestudio_url": "https://example.com"},
+    {"voicestudio_timeout": -1}, {"voicestudio_voice": ""},
+    {"elevenlabs_api_keys": ["not-allowed"]}, {"video_speed": 2.0}, [],
+])
+def test_invalid_local_tts_settings_fail_closed(tmp_path, value):
+    import json
+
+    from mayzfact.errors import PipelineError
+
+    (tmp_path / "settings.local.json").write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(PipelineError, match="settings.local.json"):
+        load_settings(tmp_path / ".env")
+
+
+def test_voice_quality_options_are_local_and_provider_default_is_unchanged(tmp_path):
+    import json
+
+    (tmp_path / "settings.local.json").write_text(json.dumps({
+        "tts_provider": "voicestudio", "voicestudio_voice": "Gen",
+        "voicestudio_instruct": "Speak with lively, natural intonation.", "voicestudio_audio_format": "wav",
+    }), encoding="utf-8")
+    s = load_settings(tmp_path / ".env")
+    assert s.voicestudio_audio_format == "wav"
+    assert s.voicestudio_instruct == "Speak with lively, natural intonation."
+    assert Settings().tts_provider == "elevenlabs"
+    assert Settings().voicestudio_instruct == ""
+    assert Settings().voicestudio_audio_format == "mp3"
+
+
+@pytest.mark.parametrize("value", [
+    {"voicestudio_audio_format": "../../bad"}, {"voicestudio_audio_format": "aac"},
+    {"voicestudio_instruct": 42},
+])
+def test_invalid_voice_quality_options_fail_closed(tmp_path, value):
+    import json
+
+    from mayzfact.errors import PipelineError
+
+    (tmp_path / "settings.local.json").write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(PipelineError):
+        load_settings(tmp_path / ".env")
+
+
+def test_empty_voice_instruction_is_valid_for_a_b_control(tmp_path):
+    (tmp_path / "settings.local.json").write_text('{"voicestudio_instruct": ""}', encoding="utf-8")
+    assert load_settings(tmp_path / ".env").voicestudio_instruct == ""
 
 
 def test_video_speed_defaults_to_1_1():
-    assert Settings().video_speed == 1.1  # hasil render dipercepat 1,1x (D-039, awalnya 1,2x di D-038)
+    assert Settings().video_speed == 1.1  # ElevenLabs tetap 1,1x.
+
+
+def test_voicestudio_always_keeps_native_speed(tmp_path):
+    import json
+    from dataclasses import replace
+
+    assert Settings(tts_provider="voicestudio").video_speed == 1.0
+    assert replace(Settings(), tts_provider="voicestudio").video_speed == 1.0
+    (tmp_path / "settings.local.json").write_text(
+        json.dumps({"tts_provider": "voicestudio"}), encoding="utf-8")
+    assert load_settings(tmp_path / ".env").video_speed == 1.0
+
+
+@pytest.mark.parametrize("tag,stability", [("", 1.0), ("calm", 0.5), ("soft spoken", 0.0)])
+def test_elevenlabs_delivery_settings_can_be_overridden_locally(tmp_path, tag, stability):
+    import json
+
+    (tmp_path / "settings.local.json").write_text(json.dumps({
+        "elevenlabs_delivery_tag": tag, "elevenlabs_stability": stability,
+    }), encoding="utf-8")
+    settings = load_settings(tmp_path / ".env")
+    assert settings.elevenlabs_delivery_tag == tag
+    assert settings.elevenlabs_stability == stability
+    assert settings.elevenlabs_voice_id == "TX3LPaxmHKxFdv7VOQHJ"
+    assert settings.elevenlabs_model == "eleven_v3"
+
+
+@pytest.mark.parametrize("field,value", [
+    ("elevenlabs_delivery_tag", "[calm]"), ("elevenlabs_delivery_tag", "calm\nexcited"),
+    ("elevenlabs_delivery_tag", " "), ("elevenlabs_delivery_tag", " calm"),
+    ("elevenlabs_delivery_tag", "x" * 65), ("elevenlabs_delivery_tag", 42),
+    ("elevenlabs_delivery_tag", None), ("elevenlabs_stability", -0.1),
+    ("elevenlabs_stability", 1.1), ("elevenlabs_stability", float("nan")),
+    ("elevenlabs_stability", float("inf")), ("elevenlabs_stability", True),
+    ("elevenlabs_stability", "0.5"),
+])
+def test_invalid_elevenlabs_delivery_overrides_fail_closed(tmp_path, field, value):
+    import json
+
+    from mayzfact.errors import PipelineError
+
+    (tmp_path / "settings.local.json").write_text(json.dumps({field: value}), encoding="utf-8")
+    with pytest.raises(PipelineError, match=field):
+        load_settings(tmp_path / ".env")

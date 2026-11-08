@@ -13,14 +13,14 @@ const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 // Ikon jempol (path Material Icons "thumb_up", Apache-2.0), viewBox 24x24.
 const THUMB = 'M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z';
 
-const Thumb: React.FC<{size: number; color: string; style?: React.CSSProperties}> = ({size, color, style}) => (
+export const Thumb: React.FC<{size: number; color: string; style?: React.CSSProperties}> = ({size, color, style}) => (
   <svg width={size} height={size} viewBox="0 0 24 24" style={{overflow: 'visible', ...style}}>
     <path d={THUMB} fill={color} />
   </svg>
 );
 
 // Kursor tangan putih ber-outline hitam; ujung telunjuk di titik (0,0).
-const Cursor: React.FC<{x: number; y: number; opacity?: number; pressed?: boolean}> = ({x, y, opacity = 1, pressed = false}) => (
+export const Cursor: React.FC<{x: number; y: number; opacity?: number; pressed?: boolean}> = ({x, y, opacity = 1, pressed = false}) => (
   <svg
     width={70}
     height={90}

@@ -1,3 +1,12 @@
+# Handoff — Honey illustration + guard objek CTA (D-049)
+
+- Desain bounded disetujui Akmal: honey harus ilustrasi, bukan teks; guard berlaku untuk naskah baru. Root cause: script memilih word dan renderer menjadikan tema tak dikenal fallback ke kartu kata.
+- Schema menambah honey; validator pra-TTS menolak word dan mencocokkan objek pertanyaan transformasi dengan tema. Legacy word tetap terbaca. Renderer memakai switch exhaustive dan error pada tema tak dikenal. Skill penulisan repo diperbarui supaya objek belum didukung harus dibuat ilustrasinya sebelum suara.
+- Honey SVG memakai dipper, stream, drops, jar kaca, riak deterministik; like/subscribe/comment tidak berubah. Strict RED→GREEN guard, schema honey, object mismatch serta renderer honey/unknown theme dijalankan. Full offline suite: 671 passed, 1 skipped, 4 deselected. Node SSR 8 kasus dan TypeScript dilaporkan subagent; parent mengulang lewat launcher native sebelum menerima fixture.
+- Fixture produksi terisolasi `out/honey-cta-fixture/` hanya mengubah theme pada salinan timeline. Transform frame1034–1069, 1.2detik. Hash sumber tersimpan di verification.json; belum berarti produksi sudah dipromosikan atau render penuh selesai. Launcher Git Bash background node/npx memunculkan `stdin is not a tty`; gunakan Python subprocess dengan node.exe native dan CREATE_NO_WINDOW.
+- Final guard menolak instruksi comment dan quoted text sebagai dasar objek; RED 9failed/15passed →24passed. Review independen ulang lolos, enam repro langsung juga lolos. Full suite final: **689 passed, 1 skipped, 4 deselected**, check-script produksi 131kata lolos. Hasil ini menggantikan hitungan tes awal di atas.
+- Promosi metadata sudah dijalankan: theme saja word→honey pada script/plan/timeline. Hash voice.wav, voice.mp3, tts.json, links.json, clips.json identik; seluruh timestamp/cue/stage/shot tidak berubah. Backup: `D:/akmal/_notes/runs/pG-Y-ICCAXQ/backups/pre-honey-20261104-223340`. Audit `SEMUA OK`, check-script 131kata lolos. Fixture native sukses: TypeScript + 8 node cases; H.264 1080×1920, 1.216detik. Contact sheet diperiksa: dipper/aliran/jar terlihat besar, bukan kartu HONEY; caption terpisah. Preview penuh belum dirender ulang pada saat catatan ini. Output fixture tidak ikut Git.
+
 # Handoff — Fase 1 pipeline
 
 - **Updated:** 2026-10-01 ±11:00 WIB, Claude Code (Opus 5.5)
@@ -562,3 +571,75 @@
 
 1. Video Douyin yang codec-nya HEVC bisa nggak keputer di Chrome. Preview-nya nampilin pesan, fetch tetap jalan.
 2. Suara SFX tambahan 0,45 belum didengar di render beneran.
+
+---
+
+# Handoff — Opsi VoiceStudio TTS (D-043)
+
+- **Updated:** 2026-10-30.
+- **Branch:** `fase-voicestudio-tts`; default repo ElevenLabs, override PC Akmal VoiceStudio/CosyVoice/Gen.
+- **Desain:** `docs/superpowers/specs/2026-10-30-voicestudio-tts-design.md`.
+- **Implementasi:** Pilihan provider + setting lokal tervalidasi; tidak ada fallback berbayar. Profil di-resolve unik; API MP3 + ASR word timestamps, mapping exact script, cache audio sebelum ASR, pending provider lain tidak ditimpa.
+- **Pengaturan lokal:** `settings.local.json` gitignored; contoh tracked `settings.local.example.json`. Backend VoiceStudio harus hidup. Mengubah provider tidak mengubah voice run lama.
+- **Uji nyata:** `Gen` ID `49a69f8b`, `run_tts` menghasilkan MP3 8,088 detik, 24 kata, 4 beat. Bukti + sampel: `cache/voicestudio-verification/`. ASR menulis `5` untuk `five`; regression test + mapping angka ekuivalen 0–10 ditambahkan, audio asli dipakai ulang.
+- **Batasan:** English; timestamp karakter berbagi batas kata, bukan fonem. ASR yang mengganti/menghilangkan kata ditolak. Estimasi words/s ElevenLabs belum berlaku untuk CosyVoice. Kualitas narasi belum direview Akmal; tidak membuat/render/upload video baru.
+- **Verifikasi kode:** parent menjalankan ulang 461 test (1 skipped, 3 deselected); Ruff F/I bersih. Edge case tanda baca terpisah dan transkripsi non-object dari HTTP/cache punya regression test.
+
+# Handoff — Gen ekspresif + WAV native (D-044)
+
+- **Scope disetujui:** hanya lima saran kualitas/intonasi; tidak mengganti model/reference, naskah, voice/video lama, atau upload.
+- **Lokal aktif:** Gen/CosyVoice, arahan delivery ekspresif lewat `voicestudio_instruct`, `voicestudio_audio_format=wav`; default repo tetap ElevenLabs dan kompatibilitas MP3.
+- **Native:** `voice.wav` byte asli dipertahankan untuk alignment, plan onset, timeline master. `voice.mp3` hanya brief/marker sukses. Metadata lama tetap MP3; native yang dipilih tapi hilang gagal keras. Pending beda format/provider/naskah tidak ditimpa; kegagalan ffmpeg bisa dilanjutkan tanpa sintesis ulang.
+- **Uji nyata:** A/B 35 kata identik, Gen/seed 0/speed 1.0 sama; A kosong 12,427 detik, B arahan 16,165 detik. WAV PCM16 24 kHz mono; profil/reference Gen dan run lama hash-nya sama. File + provenance di `cache/quality-ab/Gen-v1/`.
+- **Jalur renderer:** `run_tts` dari audio B cache menghasilkan WAV byte-identik + MP3 kompatibilitas; `run_timeline.audio=voice.wav`; Remotion benar-benar merender smoke 1,003 detik dengan audio AAC. Bukti `cache/quality-ab/Gen-v1/pipeline-check/verification.json`, artefak `out/quality-smoke/native-wav-1s.mp4`. Bukan rerender video penuh.
+- **Regression parent:** 510 passed, 1 skipped, 3 deselected; Ruff F/I bersih. Intonasi subjektif belum dianggap lebih baik sampai Akmal menilai A/B.
+
+# Handoff — Top 3 + CTA sebelum nomor satu (D-045)
+
+- **Branch:** `fase-top3-cta`, dari baseline aktif `6cb523f`; commit lokal saja, belum push/merge.
+- **Spec / plan:** `docs/superpowers/specs/2026-11-01-top3-cta-design.md`, `docs/superpowers/plans/2026-11-01-top3-cta.md`.
+- **Naskah baru:** tulis `narration_mode: top3`; ambil peringkat asli source 3/2/1. CTA tantangan 1–2 beat langsung sebelum Number one, minimal dua beat penjelasan per item di luar CTA. Target final 30–40 detik, sasaran 80 kata, valid 76–84 pada speed 1.1x.
+- **Kode:** schema legacy-safe, anggaran bersama CLI/pra-TTS, validasi subjek/ranking/CTA; like kondisional; timeline mengikuti urutan ucapan dan membatasi event sebelum nomor satu; plan tidak mencampur body/CTA ke hook dan tidak mewariskan subject ke CTA.
+- **Durasi nyata:** pipeline melaporkan estimasi final dari metadata audio/speed; di luar target memberi peringatan dan mempertahankan audio. Tidak mengganti speed atau membayar TTS ulang otomatis. Anggaran kata belum membuktikan durasi final; ffprobe diperlukan saat render produksi berikutnya.
+- **Operator PC:** `D:/akmal/_notes/tools/mayzfact_audit.py` disesuaikan ke mode dan helper repo, dengan regression terisolasi di `D:/akmal/_notes/tools/tests/test_top3_audit.py`; file operator ini berada di luar repo, tidak ikut commit/clone.
+- **Batas verifikasi:** test fixture/CLI/pipeline lokal tanpa kredit API; tidak membuat atau meng-upload video produksi baru, tidak mengubah voice/run lama. Default ElevenLabs/voice/stability dan semua checkpoint tetap. Bukti test akhir dicatat pada laporan commit fase ini.
+- **Verifikasi parent setelah review:** full suite 562 passed, 1 skipped, 3 deselected; audit operator terisolasi 7 passed; Ruff F/I dan diff-check bersih. CLI fixture valid 80 kata diterima dan CTA awal ditolak; parser source nyata memilih basilisk lizards/immortal jellyfish/tardigrades sebagai 3/2/1. Hash script/voice/tts/final/youtube run `j3uTtxM3vSQ` cocok dengan snapshot sebelum eksperimen suara.
+- **Final review:** empat temuan Important direproduksi dan diperbaiki RED→GREEN: delimiter heading source memakai grammar bersama; validasi/timeline CTA memakai batas token per beat; frame isi dipetakan ke rentang peringkat asli, bukan alias subject/proposional source penuh; schema mode dicek saat resume sebelum output lama dihapus. Tidak ada temuan Minor yang ditunda. Helper operator juga diuji dengan source validator/schema Git versi sebelum Top 3 agar checkout branch lama tidak rusak; naskah Top 3 pada kode lama ditolak jelas, bukan diam-diam dianggap legacy.
+- **Batas edit:** update opsional `AGENTS.md` tidak dilakukan karena izin tool timeout. Aturan baru lengkap berada di skill bikin-short dan D-045; file protected tetap utuh.
+
+# Handoff — Revisi CTA playful Top 3 (D-046)
+
+- **Branch/base:** `fase-top3-cta`, `ce609fe`; perubahan dibiarkan uncommitted untuk parent review. D-046 menggantikan batas/style CTA dan anggaran total D-045 saja.
+- **Hasil:** contoh empat beat persis yang disetujui diterima (21 kata). Satu detektor blok bersama mencakup transisi/pertanyaan tanpa trigger; CTA 1–4 beat, ≤10 kata/beat, subject kosong/point=false, langsung sebelum Number one. Plan tidak mewariskan subject/rank/hook item dua ke pertanyaan. Timeline mengikuti kata like lalu subscribe, bukan pertanyaan; tidak ada fitur/animasi transformasi tombol.
+- **Budget:** base `(80,76,84)` pada 1.1x + `max(0, actual CTA words - 10)`, contoh `(91,87,95)`. Baseline body dan source legacy tidak dilonggarkan. Kata CTA aktual tidak ikut diskala ulang. CTA ekstra boleh melewati target baseline final 30–40 detik: parent melaporkan audio nyata / speed setelah TTS yang diizinkan, tanpa mengganti speed/provider.
+- **Verifikasi:** RED invitational tapping `1 failed, 9 passed` → `10 passed`; RED shared detector `4 failed` → `14 passed` bersama CTA; RED struktur/marks `9 failed, 10 passed` → `66 passed` bersama script/CTA; RED budget `7 failed, 19 passed` → `73 passed` bersama script/CTA. Integrasi CLI/plan/timeline + audit operator pada root sementara `81 passed`. Full offline suite `600 passed, 1 skipped, 3 deselected in 58.96s`; audit operator terpisah `12 passed in 1.08s`; Ruff F/I dan `git diff --check` lolos (Git hanya memberi notice konversi LF→CRLF). Test render/ML asli sengaja tidak dijalankan; review inline tanpa subagent, parent tetap reviewer independen sebelum commit.
+- **Operator di luar Git:** `D:/akmal/_notes/tools/mayzfact_audit.py` tidak perlu diubah karena sudah memakai detector/budget bersama; `D:/akmal/_notes/tools/tests/test_top3_audit.py` ditambah kasus CTA baru/budget/marks/explanation. Fallback pre-Top3 memakai kode Git lama tetap lolos.
+- **Batas deteksi:** rentang antar-anchor struktural, bukan penilaian makna. Body ber-annotasi di tengah CTA ditolak lewat subject/point/cap; prose tanpa anotasi di antara anchor dianggap bagian kandidat CTA dan masih perlu review manusia. Gaya transisi/tema/subscribe kondisional ada di skill, tidak dikunci semantic regex.
+- **Scope produksi:** tidak generate TTS, render, upload, push, commit, start brief, atau mengubah runs/audio/settings/provider. Parent berikutnya review diff, lalu backup/update script Q0zEnOUT3mM, revoice dengan paid audio lama tetap disimpan, bangun plan dan restart brief. Durasi/audio baru belum diukur; tidak ada klaim fitur platform bekerja nyata.
+
+# Handoff — ElevenLabs calm delivery (D-047)
+
+- **Branch/base:** `fase-top3-cta`, `61ae374`; semua perubahan uncommitted. Scope hanya delivery yang disetujui: default calm + stability 0.5; voice/model/wording/speed tetap.
+- **Hasil:** tag disisipkan satu kali pada request, tidak pada script/hash/caption. run_tts menyimpan raw alignment + paid audio sebelum mapping; exact prefix `[calm] ` atau `[calm]` dihapus dengan slicing ketiga array yang sama. Alignment tanpa tag didukung jika persis teks asli. Tidak retiming/interpolasi; mismatch/panjang array invalid gagal setelah save dan dapat diulang tanpa tagihan.
+- **Cache/provenance:** identity memasukkan `delivery_tag` hanya saat dipakai, menolak pending legacy/untagged/tag berbeda untuk calm. Metadata sukses mencatat tag/raw alignment; incoming tetap raw agar retry tidak memotong dua kali. Jalur fake/no-tag tetap kompatibel dan audio historis dilindungi.
+- **TDD/verifikasi:** default RED 1→32 config passed; provider prefix RED 1→40 focused passed; integrasi alignment RED 1→40 passed; separator RED 1→44 passed; mismatch RED 7→51 passed; identity RED 2→46 passed; legacy pending RED 1→51 passed; override RED 3→35 config passed; validation RED 9→106 focused passed; factory RED 2→**160 focused passed in 7.84s**. Full offline **639 passed, 1 skipped, 3 deselected in 57.94s**; Ruff F/I bersih, diff check lolos. Tidak menjalankan API/render/ML asli.
+- **Dokumen:** spec/plan `2026-11-02-elevenlabs-calm*`, D-047 dan skill authoring langkah 4 diperbarui. Review inline; parent tetap reviewer sebelum commit.
+- **Produksi belum disentuh:** tidak menulis `settings.local.json`, runs, script/audio, render, brief, commit/push. Parent memegang backup produksi terverifikasi `D:/akmal/_notes/runs/Q0zEnOUT3mM/backups/pre-calm-20261102-173209`, setting lokal dan revoice/plan/brief. Jalankan produksi melalui Settings/real_deps; constructor ElevenLabsTTS langsung tetap default no-tag untuk kompatibilitas pemanggil lama. Durasi/kualitas full audio baru belum diuji.
+
+# Handoff — Scene CTA opt-in (D-048)
+
+- **Branch:** `fase-top3-cta`; tetap uncommitted, tanpa checkout/commit/push. Spec/plan `2026-11-02-cta-scene*`; authoring skill diperbarui untuk naskah Top3 baru. Parent memegang audio Alex dan run produksi, subagent tidak menyentuhnya.
+- **Parent:** tambahkan `"cta_scene":{"theme":"volcano","transform_word":"turn","comment_text":"ERUPTED"}` ke root script lalu rebuild plan. Ini metadata visual saja, hash teks tetap. Jangan ubah beat/voice/link non-CTA. AUTO CTA tidak butuh link baru, frame referensi atau upload; brief/API/prefetch/completeness sudah diuji. Buka brief produksi di parent, bukan melalui subagent ini.
+- **Hasil:** stage sepanjang blok detector bersama, cue kata nyata, fallback struktur dilabeli, berhenti sebelum satu; caption di bawah, tanpa panah/emoji/CTA legacy ganda. SVG volcano animasi frame-based; tema word+label mendukung video lain. Background hanya video lokal sebelumnya, seed deterministik, offset lanjut dan loop; fallback warna bergerak jika belum ada video. Footage masa depan tidak dipakai. Non-CTA manual tetap jalur lama.
+- **TDD:** schema RED KeyError→1 passed; plan RED set kosong→4 passed bersama legacy plan; manual/brief RED 2→43 passed; API/operator RED 2→6 passed; fetch RED 3→31 passed bersama fetch lama; timing RED 3→76 passed bersama timeline; detector/prefetch RED 2→64 passed (termasuk fix regression CLI NameError); operator overlap RED 1→18 CTA tests passed. SSR visual RED missing CtaScene→5 visual cases passed. Review inline, parent reviewer independen.
+- **Artefak nyata:** `D:/akmal/mayzfact-automation/out/cta-scene-fixture/cta.mp4`, `contact-sheet.png`, `render-verification.json`, `verification.json`, `timeline.json`. H.264 1080×1920 30fps 5.533333 detik, tanpa audio (fixture synthetic berlabel, tidak memakai run/voice produksi). Sembilan frame diperiksa visual: like/morph/volcano/subscribe/comment/tail/one, caption terpisah dan tidak terpotong; background bergerak (mean pixel delta 0.2316108843537415). Output di-ignore, tidak distage.
+- **Final verification:** full offline `657 passed, 1 skipped, 4 deselected in 64.70s`; real render integration `1 passed in 64.26s`; TypeScript `npx tsc --noEmit -p .`, lima node SSR visual cases, Ruff F/I dan `git diff --check` lolos. `git check-ignore out/cta-scene-fixture/cta.mp4` mengonfirmasi output fixture tidak masuk perubahan Git.
+- **Helper luar Git:** `D:/akmal/_notes/tools/short_ops.py` memakai completeness plan bersama, menampilkan stage scene, mengecualikan reused dari overlap warning. Diuji via import pada temp root, tanpa memulai/mematikan server. Tidak ikut commit/clone.
+
+## Koreksi preview CTA
+- Repro produksi: like stage dari frame740 (awal CTA), padahal try mulai26.035detik; blur58px + brightness0.38 menutup footage. Test baru gagal persis: stage387 !=407 pada fixture dan blur58px melewati batas12px.
+- Fix: like mulai kata try/tapping/hit yang benar-benar ada pada alignment, klik tetap kata like; lead-in tetap background/caption. Scene tidak harus memiliki stage selama lead-in. Background blur10px/brightness0.78/saturate0.95/scale1.06 dan vignette lebih ringan. Focused19passed + TypeScript lolos. Voice diperbaiki terpisah, hook harus byte-identik dan link manual tetap terlindungi.
+
+## CTA motion — bounded revision
+- Alex terakhir dipilih; tidak ada perubahan audio/timing/klip. RED markup `like must enter from invisible` berhasil mereproduksi kemunculan mendadak. Shared CtaMotion memberi entrance spring/fade/slide, exit shrink/fade, click ripple dan partikel deterministik. Subscribe punya huruf stagger/cursor/click delay visual dan confetti; comment diketik. Semua efek dibatasi durasi stage, tanpa SFX tambahan.
+- Node markup memeriksa empat stage awal transparan/hold terbaca/akhir transparan, typewriter completion, ripple/confetti dan glass limits; TypeScript lolos. Spec+plan `docs/superpowers/specs/2026-11-02-cta-motion-design.md`. Full suite dan hasil render dilaporkan pada eksekusi parent.

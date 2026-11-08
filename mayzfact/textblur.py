@@ -92,6 +92,8 @@ def prepare_text_blurs(paths: RunPaths, clips: dict, detector: TextDetector, *,
     cache = read_json(cache_path) if cache_path.exists() else {}
     out: dict[str, list[Box]] = {}
     for clip in clips["shots"]:
+        if clip.get('auto_cta'):
+            continue  # seluruh background scene sudah diblur kuat
         source = paths.root / clip["file"]
         if not source.exists():
             continue

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import re
 
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import cta_kinds
@@ -41,15 +42,52 @@ def normalize_script(script: Script) -> Script:
     return script.model_copy(update={"beats": beats})
 
 
+def narration_word_range(script: Script, duration_s: float, video_speed: float = 1.1) -> tuple[int, int, int]:
+    from mayzfact.narration import cta_beat_indices, top3_word_range
+
+    if script.narration_mode != "top3":
+        return word_range(duration_s)
+    # Persetujuan panjang per-run mengunci jumlah kata, bukan melewati cek lain.
+    if script.approved_word_count is not None:
+        count = script.approved_word_count
+        return count, count, count
+    # Anggaran isi tetap; hanya kata CTA di atas allowance lama yang ditambahkan.
+    extra = max(0, sum(len(words(script.beats[i].text)) for i in cta_beat_indices(script.beats)) - 10)
+    target, low, high = top3_word_range(video_speed)
+    return target + extra, low + extra, high + extra
+
+
 def check_script(script: Script, source_text: str, duration_s: float,
-                 bgm_choices: list[str] | None = None) -> tuple[list[str], float]:
+                 bgm_choices: list[str] | None = None, *, video_speed: float = 1.1) -> tuple[list[str], float]:
     """Balikin (daftar masalah, overlap). Pesan pakai English biar bisa ditempel balik ke agent mana pun."""
     if not script.beats:
         return ["The script has no beats."], 0.0
     problems: list[str] = []
+    if script.narration_mode == "top3":
+        from mayzfact.narration import top3_problems
+
+        problems.extend(top3_problems(script, source_text))
+        # Cek pra-TTS: objek wajib ilustrasi; word hanya untuk membaca run legacy.
+        if script.cta_scene is not None and script.cta_scene.theme == "word":
+            problems.append("CTA object requires an illustration; theme word is legacy-only. "
+                            "Add the matching illustration before generating voice or rendering a new script.")
+        elif script.cta_scene is not None:
+            from mayzfact.narration import cta_beat_indices
+
+            theme = script.cta_scene.theme
+            # Pakai clause transformasi asli, bukan instruksi comment atau teks kutipannya.
+            cta_text = " ".join(script.beats[i].text for i in cta_beat_indices(script.beats))
+            cta_text = re.sub(r'''"[^"]*"|“[^”]*”|(?<!\w)'.*?'(?!\w)|‘.*?’(?!\w)''', " ", cta_text)
+            cta_text = re.split(r"\bcomment\b", cta_text, maxsplit=1, flags=re.I)[0]
+            transform_text = next((clause for clause in re.split(r"[.!?;]", cta_text)
+                                   if re.search(rf"\b{re.escape(script.cta_scene.transform_word)}\b", clause, re.I)
+                                   and re.search(r"\binto\b", clause, re.I)), "")
+            if not re.search(rf"\binto\s+(?:(?:a|an|the)\s+)?{re.escape(theme)}\b", transform_text, re.I):
+                problems.append(f"CTA illustration {theme!r} does not match the narrated transformation object. "
+                                "Use the matching supported illustration; unsupported objects need an illustration first.")
     full_text = " ".join(b.text for b in script.beats)
     count = len(words(full_text))
-    _, low, high = word_range(duration_s)
+    _, low, high = narration_word_range(script, duration_s, video_speed)
     if not low <= count <= high:
         problems.append(f"The narration has {count} words; it must have between {low} and {high}.")
     share = sum(b.media == "photo" for b in script.beats) / len(script.beats)
@@ -79,14 +117,26 @@ def check_script(script: Script, source_text: str, duration_s: float,
             if idx_in_list + 1 < len(countdown_indices)
             else len(script.beats)
         )
-        explanation_count = next_beat_idx - (beat_idx + 1)
+        if script.narration_mode == "top3":
+            from mayzfact.narration import cta_beat_indices
+
+            ctas = set(cta_beat_indices(script.beats))
+            explanation_count = sum(i not in ctas for i in range(beat_idx + 1, next_beat_idx))
+        else:
+            explanation_count = next_beat_idx - (beat_idx + 1)
         if explanation_count < 2:
             problems.append(
                 f"Countdown item '{script.beats[beat_idx].text.strip()}' has only {explanation_count} explanation beat(s); "
                 f"each item must have at least 2 beats describing it."
             )
     # Aturan pemicunya sama persis dengan animasi CTA di timeline (mayzfact.cta), biar yang lolos cek beneran kepicu.
-    missing_cta = sorted(cta_kinds(source_text) - cta_kinds(full_text))
+    if script.narration_mode == "top3":
+        from mayzfact.narration import cta_kinds_for_beats
+
+        present_cta = cta_kinds_for_beats(script.beats)
+    else:
+        present_cta = cta_kinds(full_text)
+    missing_cta = sorted(cta_kinds(source_text) - present_cta)
     if missing_cta:
         hint = {"like": 'an inviting "like" (hit like / like and subscribe)', "subscribe": '"subscribe"', "comment": '"comment"'}
         problems.append("The source asks viewers to " + " and ".join(missing_cta) + "; the script must say "
@@ -118,10 +168,13 @@ def load_script(paths: RunPaths) -> Script:
 
 
 def check_script_file(paths: RunPaths, source: dict, *, ratio: float, minimum_s: float,
-                      bgm_choices: list[str] | None) -> list[str]:
+                      bgm_choices: list[str] | None, video_speed: float = 1.1) -> list[str]:
     """Cek runs/<id>/script.json yang ditulis agent pakai aturan yang sama kayak check_script."""
     script = load_script(paths)
     duration_s = target_duration(source["duration_s"], ratio, minimum_s)
     source_text = " ".join(s["text"] for s in source["transcript"])
-    problems, _ = check_script(script, source_text, duration_s, bgm_choices)
+    try:
+        problems, _ = check_script(script, source_text, duration_s, bgm_choices, video_speed=video_speed)
+    except ValueError as exc:
+        raise PipelineError("script", str(exc)) from exc
     return problems

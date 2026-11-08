@@ -91,6 +91,8 @@ def prepare_overlays(
     out: dict[str, dict] = {}
     shots = clips["shots"]
     for position, clip in enumerate(shots):
+        if clip.get('auto_cta'):
+            continue  # background sudah diblur penuh; nggak ada subject pointer
         if point_beats is not None:  # cuma klip yang nutup beat point (D-023 #4); klip panjang bisa nutup beberapa beat
             next_beat = shots[position + 1]["beat"] if position + 1 < len(shots) else len(beats)
             if not point_beats.intersection(range(clip["beat"], max(clip["beat"] + 1, next_beat))):

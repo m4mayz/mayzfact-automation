@@ -241,9 +241,11 @@ def preview_starts(plan: dict, links: dict) -> dict[int, float]:
 
 def missing_groups(plan: dict, links: dict) -> list[str]:
     filled = links.get("groups", {})
-    return [group["id"] for group in plan["groups"] if not filled.get(group["id"])]
+    return [group["id"] for group in plan["groups"] if not group.get("auto_cta") and not filled.get(group["id"])]
 
 
 def missing_shots(plan: dict, links: dict) -> list[int]:
     filled = links.get("shots", {})
-    return [s["index"] for s in plan.get("shots", []) if str(s["index"]) not in filled]
+    return [s["index"] for s in plan.get("shots", []) if not s.get("auto_cta")
+            and not (isinstance(filled.get(str(s["index"])), dict)
+                     and (filled[str(s["index"])].get("url") or filled[str(s["index"])].get("file")))]

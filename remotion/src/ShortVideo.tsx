@@ -3,6 +3,7 @@ import {AbsoluteFill, Sequence, staticFile, useVideoConfig} from 'remotion';
 import {Audio} from '@remotion/media';
 import {Captions} from './Captions';
 import {Cta} from './Cta';
+import {CtaScene} from './CtaScene';
 import {Emojis} from './Emojis';
 import {IntroWhip} from './Intro';
 import {NumberCard} from './NumberCard';
@@ -12,7 +13,7 @@ import {SoundLayer} from './SoundLayer';
 import {SubjectCard} from './SubjectCard';
 import type {TimelineProps} from './types';
 
-export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null, flashes = [], overlays = [], emojis = [], cta = []}) => {
+export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null, flashes = [], overlays = [], emojis = [], cta = [], ctaScene}) => {
   const {fps} = useVideoConfig();
   // Shot yang seluruh durasinya ketutup card countdown nggak dirender, biar videonya nggak tembus di belakang card.
   // Klip shot itu tetap tampil di dalam subject card.
@@ -23,7 +24,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
       <IntroWhip intro={intro} cuts={flashes}>
       {shots.filter((shot) => !coveredByCard(shot.from, shot.durationInFrames)).map((shot) => (
         // premountFor: shot dimuat 1 detik sebelum tayang, biar preview Studio nggak kedip hitam.
-        <Sequence key={shot.src} from={shot.from} durationInFrames={shot.durationInFrames} premountFor={fps}>
+        <Sequence key={`${shot.src}-${shot.from}`} from={shot.from} durationInFrames={shot.durationInFrames} premountFor={fps}>
           <ShotView shot={shot} photoZoom={photoZoom} />
         </Sequence>
       ))}
@@ -41,6 +42,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
       </IntroWhip>
       <Overlays overlays={overlays} />
       <Emojis emojis={emojis} />
+      {ctaScene ? <CtaScene scene={ctaScene}/> : null}
       <Captions captions={captions} />
       <Cta actions={cta} />
       {audio ? <Audio src={staticFile(audio)} /> : null}

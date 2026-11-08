@@ -232,6 +232,31 @@ def test_missing_keys_fail_before_any_step(world):
     assert not (world.runs / VIDEO_ID / "source.json").exists()
 
 
+def test_voicestudio_pipeline_does_not_require_elevenlabs_keys(world):
+    with pytest.raises(AwaitingInput):
+        run(world, settings=Settings(tts_provider="voicestudio"))
+    assert (world.runs / VIDEO_ID / "source.json").exists()
+
+
+def test_real_deps_selects_voicestudio_without_paid_fallback():
+    from mayzfact.pipeline import real_deps
+    from mayzfact.providers.voicestudio import VoiceStudioTTS
+
+    deps = real_deps(Settings(tts_provider="voicestudio", voicestudio_voice="Gen"))
+    try:
+        tts = deps.tts()
+        assert isinstance(tts, VoiceStudioTTS)
+        assert tts.voice_id == "Gen"
+    finally:
+        deps.close()
+
+
+def test_unknown_tts_provider_fails_before_source(world):
+    with pytest.raises(PipelineError, match="tts_provider"):
+        run(world, settings=Settings(tts_provider="typo"))
+    assert not (world.runs / VIDEO_ID / "source.json").exists()
+
+
 def test_from_fetch_does_not_need_elevenlabs_keys(world):
     start(world)
     run(world, from_step="fetch", settings=Settings(max_shot_seconds=10.0))
@@ -493,3 +518,75 @@ def test_real_audio_dep_passes_custom_sfx_from_brief(tmp_path, monkeypatch):
     monkeypatch.setattr(audio_mod, "prepare_audio", lambda *a, **kw: seen.update(kw) or {})
     real_deps(Settings(**KEYS)).audio(paths, lambda m: None)
     assert seen["custom"] == [{"file": "uy.mp3", "at_s": 2.5}]
+
+
+def test_top3_rejects_wrong_structure_before_paid_tts(world):
+    from tests.top3_fixtures import SOURCE_TEXT, top3_script
+
+    paths = RunPaths(world.runs / VIDEO_ID)
+    write_json_atomic(paths.source_json, dict(duration_s=90, transcript=[dict(text=SOURCE_TEXT)]))
+    script = top3_script()
+    script.beats[1].text = 'Number five, basilisk lizards.'
+    write_json_atomic(paths.script_json, script.model_dump())
+    with pytest.raises(PipelineError, match='Top 3'):
+        run(world)
+    assert world.tts.calls == 0
+
+
+def test_top3_pipeline_uses_configured_speed_before_tts(world):
+    from tests.top3_fixtures import SOURCE_TEXT, top3_script
+
+    paths = RunPaths(world.runs / VIDEO_ID)
+    write_json_atomic(paths.source_json, dict(duration_s=90, transcript=[dict(text=SOURCE_TEXT)]))
+    write_json_atomic(paths.script_json, top3_script().model_dump())
+    with pytest.raises(PipelineError, match='between 70 and 76'):
+        run(world, settings=Settings(**KEYS, video_speed=1.0))
+    assert world.tts.calls == 0
+
+
+@pytest.mark.parametrize('duration,estimate,warn', [(55, '50.0', True), (38.5, '35.0', False), (20, '18.2', True)])
+def test_top3_reports_measured_duration_without_touching_paid_audio(tmp_path, duration, estimate, warn):
+    paths = RunPaths(tmp_path)
+    write_voice_state(paths, ['Short text for validation.'], duration)
+    script = read_json(paths.script_json)
+    script['narration_mode'] = 'top3'
+    write_json_atomic(paths.script_json, script)
+    paths.voice_mp3.write_bytes(b'paid-audio-do-not-touch')
+    before = {p.name: p.read_bytes() for p in tmp_path.iterdir()}
+    logs = []
+    assert check_voice(paths, video_speed=1.1, log=logs.append)['duration_s'] == duration
+    assert any(estimate in message for message in logs)
+    assert any('30-40' in message for message in logs) == warn
+    assert before == {p.name: p.read_bytes() for p in tmp_path.iterdir()}
+
+
+@pytest.mark.parametrize('speed', [0, -1, float('nan'), float('inf')])
+def test_top3_invalid_speed_stops_before_paid_tts(world, speed):
+    from tests.top3_fixtures import SOURCE_TEXT, top3_script
+
+    paths = RunPaths(world.runs / VIDEO_ID)
+    write_json_atomic(paths.source_json, dict(duration_s=90, transcript=[dict(text=SOURCE_TEXT)]))
+    write_json_atomic(paths.script_json, top3_script().model_dump())
+    with pytest.raises(PipelineError, match='video_speed'):
+        run(world, settings=Settings(**KEYS, video_speed=speed))
+    assert world.tts.calls == 0
+
+
+def test_top3_out_of_target_resume_reuses_existing_voice(world):
+    from tests.top3_fixtures import SOURCE_TEXT, top3_script
+
+    paths = RunPaths(world.runs / VIDEO_ID)
+    script = top3_script().model_dump()
+    write_json_atomic(paths.source_json, dict(duration_s=90, transcript=[dict(text=SOURCE_TEXT)]))
+    write_json_atomic(paths.script_json, script)
+    paths.voice_mp3.write_bytes(world.tts.audio)
+    write_json_atomic(paths.tts_json, dict(duration_s=55, text_sha256=text_hash(script_text(script['beats'])),
+                      alignment=fake_alignment(script_text(script['beats']),55)))
+    before = paths.voice_mp3.read_bytes()
+    logs = []
+    for _ in range(2):
+        run_pipeline(VIDEO_ID, settings=SETTINGS, deps=world.deps, runs_dir=world.runs,
+                     from_step='plan', no_render=True, log=logs.append)
+    assert world.tts.calls == 0
+    assert paths.voice_mp3.read_bytes() == before
+    assert any('30-40' in m for m in logs)

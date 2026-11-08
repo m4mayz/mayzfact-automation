@@ -13,7 +13,7 @@ from mayzfact.matching import hook_slot_map
 from mayzfact.shots import beat_subjects, split_shots, tighten_countdown
 from mayzfact.source_frames import prepare_source_segments
 from mayzfact.store import RunPaths, write_json_atomic
-from mayzfact.text import beat_texts, words
+from mayzfact.text import beat_texts, clean_text, words
 from mayzfact.timing import beat_timings, word_timings
 
 SOURCE_FRAMES = (0.25, 0.5, 0.75)
@@ -62,6 +62,8 @@ def subject_ranges(transcript: list[dict], subjects: list[str], total_s: float) 
 
 def group_of(shot: dict) -> tuple[str, str]:
     """(id, label) kelompok konteks shot: semua hook jadi 1, sisanya per subjek, atau per beat kalau subjeknya kosong."""
+    if shot.get("auto_cta"):
+        return "auto-cta", "AUTO CTA · background video sebelumnya"
     if shot["hook_segment"] is not None:
         return "hook", "HOOK"
     subject = (shot["subject"] or "").strip()
@@ -78,15 +80,38 @@ def _groups(shots: list[dict]) -> list[dict]:
         shot["group"] = gid
         group = groups.setdefault(gid, {"id": gid, "label": label, "shots": [], "keywords": {"en": [], "zh": []}})
         group["shots"].append(shot["index"])
+        if shot.get("auto_cta"):
+            group["auto_cta"] = True
         for lang in ("en", "zh"):
             group["keywords"][lang] += [k for k in shot["keywords"][lang] if k not in group["keywords"][lang]]
     return list(groups.values())
 
 
+def _source_rank_ranges(transcript: list[dict], total_s: float) -> dict[int, tuple[float, float]]:
+    """Rentang referensi dari heading asli, bukan alias subject visual atau durasi naskah baru."""
+    from mayzfact.narration import source_countdown_entries
+
+    chunks = [(clean_text(s['text']), s) for s in transcript if clean_text(s['text'])]
+    offsets, cursor = [], 0
+    for text, _ in chunks:
+        offsets.append(cursor)
+        cursor += len(text) + 1
+    timed = []
+    for c, offset in source_countdown_entries(' '.join(text for text, _ in chunks)):
+        i = next(i for i in range(len(chunks) - 1, -1, -1) if offsets[i] <= offset)
+        text, chunk = chunks[i]
+        # Hanya perkiraan posisi frame referensi; timing ucapan tetap memakai alignment audio asli.
+        at = chunk['start'] + chunk['duration'] * (offset - offsets[i]) / max(len(text), 1)
+        timed.append((c.number, at))
+    return {number: (max(0.0, start), min(total_s, timed[i+1][1] if i+1 < len(timed) else total_s))
+            for i, (number, start) in enumerate(timed) if number is not None}
+
+
 def _shot_frames(paths: RunPaths, source: dict, shots: list[dict], voice_total_s: float,
-                 download_source: Callable[[str, Path], Path], log: Callable[[str], None] = print) -> None:
+                 download_source: Callable[[str, Path], Path], log: Callable[[str], None] = print,
+                 *, ranked: bool = False) -> None:
     """3 frame source per shot buat referensi nyari klip: rentang subjeknya di transcript, atau posisi proporsional."""
-    todo = [s for s in shots if not s["ref_frames"]]
+    todo = [s for s in shots if not s["ref_frames"] and not s.get("auto_cta")]
     if not todo:
         return
     src = paths.source_mp4
@@ -99,8 +124,12 @@ def _shot_frames(paths: RunPaths, source: dict, shots: list[dict], voice_total_s
     order = sorted(names, key=lambda name: next((s["index"] for s in shots if s.get("subject") == name and s.get("countdown")),
                                                  next(s["index"] for s in shots if s.get("subject") == name)))
     ranges = subject_ranges(source["transcript"], order, total)
+    ranks = _source_rank_ranges(source['transcript'], total) if ranked else {}
     for shot in todo:
-        span = ranges.get(shot.get("subject") or "")
+        rank = shot.get('source_rank') if ranked else None
+        span = ranks.get(rank) if rank is not None else ranges.get(shot.get("subject") or "")
+        if rank is not None and (span is None or span[0] >= span[1]):
+            raise PipelineError('plan', f'Referensi source untuk Number {rank} tidak bisa dipetakan; periksa heading/timestamp source.')
         if span is None:  # CTA/intro/subjek nggak ketemu: posisi beat di naskah dipetain ke durasi source
             scale = total / voice_total_s if voice_total_s else 0.0
             span = (shot["start_s"] * scale, shot["end_s"] * scale)
@@ -116,13 +145,17 @@ def _shot_frames(paths: RunPaths, source: dict, shots: list[dict], voice_total_s
 
 
 def _voiced_words(paths: RunPaths, tts: dict, log: Callable[[str], None]) -> list[dict] | None:
-    """Awal kata yang beneran kedengeran (voice.mp3). Gagal = None, shot countdown pakai awal beat versi alignment."""
-    if not paths.voice_mp3.exists():
+    """Awal kata dari audio native yang dipilih. Gagal = None, shot countdown pakai alignment."""
+    audio_file = tts.get("audio_file", "voice.mp3")
+    if audio_file not in ("voice.mp3", "voice.wav"):
+        return None
+    voice = paths.root / audio_file
+    if not voice.is_file():
         return None
     try:
         from mayzfact.voice_onset import snap_word_starts, voice_envelope
 
-        return snap_word_starts(word_timings(tts["alignment"]), voice_envelope(paths.voice_mp3))
+        return snap_word_starts(word_timings(tts["alignment"]), voice_envelope(voice))
     except Exception as exc:
         log(f"[plan] energi suara gagal dibaca, awal shot countdown pakai alignment: {exc}")
         return None
@@ -146,16 +179,32 @@ def run_plan(
     by_alignment = tighten_countdown(slots, beats, tts["alignment"])
     slots = tighten_countdown(slots, beats, tts["alignment"], voiced_words=_voiced_words(paths, tts, log))
     subjects = beat_subjects(beats)
+    if script.get("narration_mode") == "top3":
+        from mayzfact.narration import cta_beat_indices
+
+        for i in cta_beat_indices(beats):
+            subjects[i] = ""
     segs = prepare_source_segments(paths, source, download_source, hook_seconds, paths.plan_dir, retry_step="plan") if hook_seconds > 0 else []
-    mapping = hook_slot_map(by_alignment, len(segs), hook_seconds)
+    eligible = by_alignment
+    if script.get("narration_mode") == "top3":
+        first = next((i for i, b in enumerate(beats) if parse_countdown(b["text"])), len(beats))
+        eligible = [slot for slot in by_alignment if slot.beat < first]
+    mapping = hook_slot_map(eligible, len(segs), hook_seconds)
     hook_queries = script.get("hook_queries", {})  # ditulis agent sambil lihat frame plan/seg_*.jpg
 
     def rel(path: Path) -> str:
         return path.relative_to(paths.root).as_posix()
 
     shots = []
+    current_rank = None
+    from mayzfact.narration import cta_beat_indices
+
+    ctas = set(cta_beat_indices(beats)) if script.get('narration_mode') == 'top3' else set()
     for slot in slots:
         beat = beats[slot.beat]
+        countdown = parse_countdown(beat['text'])
+        if countdown and countdown.number is not None:
+            current_rank = countdown.number
         segment = mapping.get(slot.index)
         if segment is not None:
             given = hook_queries.get(str(segment))
@@ -172,9 +221,15 @@ def run_plan(
             "index": slot.index, "beat": slot.beat, "start_s": slot.start_s, "end_s": slot.end_s, "media": slot.media,
             "text": beat["text"], "subject": subjects[slot.beat], "hook_segment": segment,
             "ref_frames": ref_frames, "keywords": keywords,
-            "countdown": (parse_countdown(beat["text"]) or _NO_COUNTDOWN).number,
+            "countdown": (countdown or _NO_COUNTDOWN).number,
         })
-    _shot_frames(paths, source, shots, tts["duration_s"], download_source, log)
+        if script.get('narration_mode') == 'top3':
+            shots[-1]['source_rank'] = None if slot.beat in ctas else current_rank
+            if script.get('cta_scene') and slot.beat in ctas:
+                shots[-1]['auto_cta'] = True
+                shots[-1]['keywords'] = {'en': [], 'zh': []}
+    _shot_frames(paths, source, shots, tts["duration_s"], download_source, log,
+                 ranked=script.get('narration_mode') == 'top3')
     groups = _groups(shots)
     data = {
         "hook_seconds": hook_seconds,
@@ -182,6 +237,8 @@ def run_plan(
         "groups": groups,
         "shots": shots,
     }
+    if script.get('cta_scene') and script.get('narration_mode') == 'top3':
+        data['cta_scene'] = script['cta_scene']
     write_json_atomic(paths.shots_plan_json, data)
     log(f"[plan] {len(shots)} shot ({len(mapping)} hook), {len(data['groups'])} kelompok. Isi link: mayzfact brief {paths.root.name}")
     return data

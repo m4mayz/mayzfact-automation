@@ -10,6 +10,7 @@ from typing import Any, Callable
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import _EDGE_PUNCT, SUBSCRIBE, is_like_cta
 from mayzfact.cta import clean as _clean
+from mayzfact.cta_scene import build_scene
 from mayzfact.errors import PipelineError
 from mayzfact.media import (
     FRAME_H,
@@ -90,6 +91,11 @@ def _shot_entries(shots: list[dict], total: int, fg_min_ratio: float) -> list[di
         }
         if layout == "blur":
             entry["fgHeight"] = fg_height(shot["width"], shot["height"], fg_min_ratio)
+        if shot.get('auto_cta'):
+            entry['decorative'] = True
+            for key in ('clipOffset', 'loopFrames', 'generated'):
+                if key in shot:
+                    entry[key] = shot[key]
         entries.append(entry)
     return entries
 
@@ -359,6 +365,29 @@ def _cta(words: list[dict], beat_of: list[int], total: int) -> list[dict]:
     return out
 
 
+def _top3_cta(words: list[dict], beat_of: list[int], beats: list[dict], countdown: list[dict], total: int) -> list[dict]:
+    """CTA Top 3 mengikuti urutan ucapan, dan selesai sebelum kartu nomor satu."""
+    from mayzfact.narration import cta_beat_indices
+
+    allowed = set(cta_beat_indices(beats))
+    stop = next((c["numberFrom"] for c in countdown if c["number"] == 1), total)
+    actions = []
+    for beat in sorted(allowed):
+        local = [w for w, b in zip(words, beat_of) if b == beat]
+        tokens = [w["text"] for w in local]
+        for i, w in enumerate(local):
+            kind = "subscribe" if _clean(w["text"]) in SUBSCRIBE else "like" if is_like_cta(tokens, i) else None
+            if kind and (start := to_frame(w["start_s"])) < stop:
+                actions.append((kind, max(0, start)))
+    out = []
+    for i, (kind, start) in enumerate(actions):
+        end = min(stop, actions[i + 1][1] if i + 1 < len(actions) else stop, start + CTA_FRAMES[kind])
+        if end > start:
+            out.append({"kind": kind, "from": start, "durationInFrames": end - start,
+                        "clickAt": min(CTA_CLICK[kind], end - start - 1)})
+    return out
+
+
 def _emojis(words: list[dict], beat_of: list[int], marks: dict | None, cta: list[dict], countdown: list[dict],
             total: int) -> list[dict]:
     """Emoji muncul di kata pemicunya dan boleh nyebrang ke beat berikutnya (kayak 🍀 di source), maksimal 2.5 detik.
@@ -417,6 +446,7 @@ def build_timeline(
     marks: dict | None = None,
     voice_envelope: Any = None,
     blurs: dict | None = None,
+    audio_file: str = "voice.mp3",
     log: Callable[[str], None] = print,
 ) -> dict:
     shots = clips["shots"]
@@ -429,6 +459,8 @@ def build_timeline(
     emojis: list[dict] = []
     cta: list[dict] = []
     timings: list[dict] = []
+    words: list[dict] = []
+    beat_of: list[int] = []
     if script and alignment:
         try:
             words = word_timings(alignment)
@@ -442,26 +474,39 @@ def build_timeline(
             captions = _captions(words, audio_duration_s, spans, subject_words, total)
             timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
             beat_of = _beat_of(words, script["beats"])
-            cta = _cta(words, beat_of, total)
+            cta = (_top3_cta(words, beat_of, script["beats"], countdown, total)
+                   if script.get("narration_mode") == "top3" else _cta(words, beat_of, total))
             emojis = _emojis(words, beat_of, marks, cta, countdown, total)
         except (PipelineError, IndexError, KeyError) as exc:  # caption/card cuma hiasan: timeline tetap jadi tanpa itu
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
             log(f"[timeline] caption & countdown dilewat: {reason}")
             countdown, captions, emojis, cta, timings = [], [], [], [], []
+            words, beat_of = [], []
+    scene = build_scene(script, shots, entries, words, beat_of, countdown, total) if script else None
+    sound_cta = cta
+    if scene:
+        begin, end = scene['from'], scene['from'] + scene['durationInFrames']
+        cta = []  # scene besar menggantikan overlay CTA legacy, bukan menumpuknya
+        emojis = [e for e in emojis if e['from'] + e['durationInFrames'] <= begin or e['from'] >= end]
+        for e in entries:
+            if begin <= e['from'] < end:
+                e['decorative'] = True
     _add_blurs(blurs or {}, shots, entries, countdown, fg_min_ratio)
     shown = _overlays(overlays, entries, countdown, _point_ranges(timings, marks))
+    if scene:
+        shown = [e for e in shown if e['from'] + e['durationInFrames'] <= begin or e['from'] >= end]
     hook_end = max((e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None),
                    default=0)
     # shot yang ngelanjutin link/klip yang sama kayak shot sebelumnya nggak dapat bunyi/efek transisi
     same_clip = {e["from"] for i, (e, s) in enumerate(zip(entries, shots))
                  if i and s.get("page_url") and s.get("page_url") == shots[i - 1].get("page_url")}
-    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total, same_clip)
-    return {
+    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, sound_cta, hook_end, total, same_clip)
+    data = {
         "fps": FPS,
         "width": FRAME_W,
         "height": FRAME_H,
         "durationInFrames": total,
-        "audio": "voice.mp3",
+        "audio": audio_file,
         "photoZoom": PHOTO_ZOOM,
         "shots": entries,
         "countdown": countdown,
@@ -475,20 +520,30 @@ def build_timeline(
         "transitions": reveals,
         "flashes": flashes,
     }
+    if scene:
+        data['ctaScene'] = scene
+    return data
 
 
 def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float, script: dict | None = None,
                  audio: dict | None = None, overlays: dict | None = None, marks: dict | None = None,
                  blurs: dict | None = None, log: Callable[[str], None] = print) -> dict:
+    audio_file = tts.get("audio_file", "voice.mp3")
+    if audio_file not in ("voice.mp3", "voice.wav"):
+        raise PipelineError("timeline", "audio_file di tts.json harus voice.mp3 atau voice.wav.")
+    voice = paths.root / audio_file
+    if "audio_file" in tts and not voice.is_file():
+        raise PipelineError("timeline", f"Audio {audio_file} dari tts.json nggak ditemukan. Pulihkan file aslinya.")
     envelope = None
-    if paths.voice_mp3.exists():
+    if voice.exists():
         from mayzfact.voice_onset import voice_envelope
 
         try:
-            envelope = voice_envelope(paths.voice_mp3)
+            envelope = voice_envelope(voice)
         except Exception as exc:  # cuma buat ngepasin timing caption/card; tanpa ini tetap jalan pakai alignment
             log(f"[timeline] energi suara gagal dibaca, timing pakai alignment: {exc}")
     data = build_timeline(clips, tts["duration_s"], fg_min_ratio, script=script, alignment=tts.get("alignment"),
-                          audio=audio, overlays=overlays, marks=marks, voice_envelope=envelope, blurs=blurs, log=log)
+                          audio=audio, overlays=overlays, marks=marks, voice_envelope=envelope, blurs=blurs,
+                          audio_file=audio_file, log=log)
     write_json_atomic(paths.timeline_json, data)
     return data

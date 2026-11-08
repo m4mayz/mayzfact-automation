@@ -55,6 +55,58 @@ def test_run_timeline_writes_json(tmp_path):
     assert read_json(paths.timeline_json) == data
 
 
+@pytest.mark.parametrize("selection,expected", [(None, "voice.mp3"), ("voice.mp3", "voice.mp3"), ("voice.wav", "voice.wav")])
+def test_run_timeline_uses_selected_audio_for_master_and_voice_onset(tmp_path, sine_mp3, monkeypatch, selection, expected):
+    import math
+    import struct
+    import wave
+
+    import mayzfact.voice_onset as onset
+
+    native = tmp_path / "voice.wav"
+    with wave.open(str(native), "wb") as wav:
+        wav.setparams((1, 2, 24000, 0, "NONE", "not compressed"))
+        wav.writeframes(b"".join(struct.pack("<h", int(12000 * math.sin(2 * math.pi * 440 * i / 24000)))
+                                 for i in range(72000)))
+    paths = RunPaths(tmp_path)
+    paths.voice_mp3.write_bytes(sine_mp3.read_bytes())
+    read_paths = []
+
+    def envelope(path):
+        read_paths.append(path)
+        return None
+
+    monkeypatch.setattr(onset, "voice_envelope", envelope)
+    metadata = {"duration_s": 6.5}
+    if selection is not None:
+        metadata["audio_file"] = selection
+    data = run_timeline(paths, CLIPS, metadata, fg_min_ratio=0.5)
+    assert data["audio"] == expected
+    assert read_paths == [tmp_path / expected]
+    assert read_json(paths.timeline_json)["audio"] == expected
+
+
+@pytest.mark.parametrize("audio_file", ["voice.wav", "voice.mp3"])
+@pytest.mark.parametrize("directory_only", [False, True])
+def test_missing_selected_audio_fails_before_timeline_ready(tmp_path, sine_mp3, audio_file, directory_only):
+    paths = RunPaths(tmp_path)
+    if audio_file == "voice.wav":
+        paths.voice_mp3.write_bytes(sine_mp3.read_bytes())
+    if directory_only:
+        (tmp_path / audio_file).mkdir()
+    with pytest.raises(PipelineError, match=audio_file):
+        run_timeline(paths, CLIPS, {"duration_s": 6.5, "audio_file": audio_file}, fg_min_ratio=0.5)
+    assert not paths.timeline_json.exists()
+
+
+@pytest.mark.parametrize("audio_file", ["../voice.wav", "D:/outside.wav", "voice.flac", "", None, ["voice.wav"]])
+def test_timeline_rejects_audio_filename_outside_allowlist(tmp_path, audio_file):
+    paths = RunPaths(tmp_path)
+    with pytest.raises(PipelineError, match="audio_file"):
+        run_timeline(paths, CLIPS, {"duration_s": 6.5, "audio_file": audio_file}, fg_min_ratio=0.5)
+    assert not paths.timeline_json.exists()
+
+
 SCRIPT = {"beats": [{"text": "Look at this creature."}, {"text": "Number five, horseshoe crab."}, {"text": "It is old."}]}
 ALIGN = fake_alignment("Look at this creature. Number five, horseshoe crab. It is old.", 6.2)
 CD_CLIPS = {"shots": [shot("clips/shot_01.mp4", "video", 0.0, 1080, 1920), shot("clips/shot_02.mp4", "video", 2.3, 1080, 1920),
