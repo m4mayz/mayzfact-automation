@@ -98,7 +98,7 @@ export type CtaStage = {
 };
 
 export type CtaSceneData = {
-  theme: 'volcano' | 'word' | 'unicorn' | 'honey' | 'puppy';
+  theme: 'volcano' | 'word' | 'unicorn' | 'honey' | 'puppy' | 'lion';
   label: string;
   commentText: string;
   from: number;
