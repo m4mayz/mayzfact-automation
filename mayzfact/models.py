@@ -9,7 +9,7 @@ class CtaScene(BaseModel):
     """Ilustrasi CTA; kartu kata hanya tetap terbaca untuk run legacy."""
 
     model_config = ConfigDict(extra="forbid")
-    theme: Literal["volcano", "word", "unicorn", "honey", "puppy", "lion"]
+    theme: Literal["volcano", "word", "unicorn", "honey", "puppy", "lion", "shark"]
     transform_word: str = Field(min_length=1, max_length=40, pattern=r"^\w+$")
     comment_text: str = Field(min_length=1, max_length=24, pattern=r"\S")
     label: str = Field(default="", max_length=24)

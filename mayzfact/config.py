@@ -43,9 +43,9 @@ class Settings:
     hook_seconds: float = 10.0
     brief_port: int = 3100
     def __post_init__(self) -> None:
-        # VoiceStudio tetap native; percepatan ElevenLabs jangan ikut ke voice lokal.
-        if self.tts_provider == "voicestudio":
-            object.__setattr__(self, "video_speed", 1.0)
+        # VoiceStudio default 1.15x (tetap hormati override eksplisit kalau bukan default 1.1).
+        if self.tts_provider == "voicestudio" and self.video_speed == 1.1:
+            object.__setattr__(self, "video_speed", 1.15)
 
     # Rahasia: cuma dari .env + environment, jangan pernah di-print.
     elevenlabs_api_keys: tuple[str, ...] = field(default=(), repr=False)
@@ -95,7 +95,7 @@ def load_settings(env_file: Path = PROJECT_ROOT / ".env") -> Settings:
             raise ValueError("harus object JSON")
         allowed = {"tts_provider", "voicestudio_url", "voicestudio_voice", "voicestudio_engine",
                    "voicestudio_timeout", "voicestudio_instruct", "voicestudio_audio_format",
-                   "elevenlabs_delivery_tag", "elevenlabs_stability"}
+                   "elevenlabs_delivery_tag", "elevenlabs_stability", "video_speed"}
         if values.keys() - allowed:
             raise ValueError("ada field di luar setting TTS yang didukung")
         for name, value in values.items():
@@ -107,6 +107,9 @@ def load_settings(env_file: Path = PROJECT_ROOT / ".env") -> Settings:
             elif name == "elevenlabs_stability":
                 if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
                     raise ValueError("elevenlabs_stability harus angka finite antara 0 dan 1")
+            elif name == "video_speed":
+                if type(value) not in (int, float) or not math.isfinite(value) or not 0.5 <= value <= 1.5:
+                    raise ValueError("video_speed harus angka finite antara 0.5 dan 1.5")
             elif name == "voicestudio_timeout":
                 if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
                     raise ValueError("voicestudio_timeout harus angka positif")

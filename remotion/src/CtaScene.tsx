@@ -6,6 +6,7 @@ import {MONTSERRAT} from './fonts';
 import {Honey} from './Honey';
 import {Lion} from './Lion';
 import {Puppy} from './Puppy';
+import {Shark} from './Shark';
 import {Unicorn} from './Unicorn';
 import type {CtaSceneData, CtaStage} from './types';
 
@@ -59,6 +60,7 @@ export const CtaSceneVisual: React.FC<{scene: CtaSceneData; stage: CtaStage; fra
       case 'honey': transformVisual = <Honey frame={frame}/>; break;
       case 'puppy': transformVisual = <Puppy frame={frame}/>; break;
       case 'lion': transformVisual = <Lion frame={frame}/>; break;
+      case 'shark': transformVisual = <Shark frame={frame}/>; break;
       // Kartu kata cuma untuk props legacy yang minta word secara eksplisit.
       case 'word':
         transformVisual = <div style={{...textStyle, width: 840, padding: '110px 36px', boxSizing: 'border-box', border: '8px solid #9adeff', borderRadius: 70,
