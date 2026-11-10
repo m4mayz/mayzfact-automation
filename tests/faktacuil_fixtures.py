@@ -34,7 +34,7 @@ def faktacuil_script(total_words: int = 69) -> Script:
         cta_scene=CtaScene(theme="honey", transform_word="berubah", comment_text="MADU"),
         beats=[
             Beat(text=t, media="photo" if i in [1, 3, 7] else "video",
-                 queries=["cat in box", "cat cardboard box"], subject="cat", keyword=keywords.get(i, ""))
+                 queries=["cat in box", "cat cardboard box"], subject="" if i in (4, 5) else "cat", keyword=keywords.get(i, ""))
             for i, t in enumerate(texts)
         ],
     )

@@ -7,6 +7,7 @@ import re
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import cta_kinds
 from mayzfact.errors import PipelineError
+from mayzfact.faktacuil import faktacuil_problems, faktacuil_word_range
 from mayzfact.models import Script
 from mayzfact.store import RunPaths, read_json
 from mayzfact.text import clean_text, ngram_overlap, words
@@ -37,10 +38,33 @@ def narration_word_range(script: Script, video_speed: float = 1.1) -> tuple[int,
     if script.approved_word_count is not None:
         count = script.approved_word_count
         return count, count, count
+    if script.narration_mode == "faktacuil":
+        return faktacuil_word_range(video_speed)
     # Anggaran isi tetap; hanya kata CTA di atas allowance lama yang ditambahkan.
     extra = max(0, sum(len(words(script.beats[i].text)) for i in cta_beat_indices(script.beats)) - 10)
     target, low, high = top3_word_range(video_speed)
     return target + extra, low + extra, high + extra
+
+
+def _beat_problems(script: Script) -> list[str]:
+    problems: list[str] = []
+    share = sum(b.media == "photo" for b in script.beats) / len(script.beats)
+    share_low, share_high = PHOTO_SHARE_RANGE
+    if not share_low <= share <= share_high:
+        problems.append(
+            f"{share:.0%} of the beats use a photo; it must be between {share_low:.0%} and {share_high:.0%}."
+        )
+    for number, beat in enumerate(script.beats, start=1):
+        if not beat.text:
+            problems.append(f"Beat {number} has empty text.")
+        beat_words = len(words(beat.text))
+        if beat_words > MAX_BEAT_WORDS:
+            problems.append(
+                f"Beat {number} has {beat_words} words; split it so every beat has at most {MAX_BEAT_WORDS} words."
+            )
+        if not beat.queries:
+            problems.append(f"Beat {number} has no search queries.")
+    return problems
 
 
 def check_script(script: Script, source_text: str,
@@ -49,6 +73,8 @@ def check_script(script: Script, source_text: str,
     if not script.beats:
         return ["The script has no beats."], 0.0
     problems: list[str] = []
+    if script.narration_mode == "faktacuil":
+        return _faktacuil_check(script, source_text, video_speed)
     from mayzfact.narration import cta_beat_indices, cta_kinds_for_beats, top3_problems
 
     problems.extend(top3_problems(script, source_text))
@@ -68,22 +94,7 @@ def check_script(script: Script, source_text: str,
     _, low, high = narration_word_range(script, video_speed)
     if not low <= count <= high:
         problems.append(f"The narration has {count} words; it must have between {low} and {high}.")
-    share = sum(b.media == "photo" for b in script.beats) / len(script.beats)
-    share_low, share_high = PHOTO_SHARE_RANGE
-    if not share_low <= share <= share_high:
-        problems.append(
-            f"{share:.0%} of the beats use a photo; it must be between {share_low:.0%} and {share_high:.0%}."
-        )
-    for number, beat in enumerate(script.beats, start=1):
-        if not beat.text:
-            problems.append(f"Beat {number} has empty text.")
-        beat_words = len(words(beat.text))
-        if beat_words > MAX_BEAT_WORDS:
-            problems.append(
-                f"Beat {number} has {beat_words} words; split it so every beat has at most {MAX_BEAT_WORDS} words."
-            )
-        if not beat.queries:
-            problems.append(f"Beat {number} has no search queries.")
+    problems.extend(_beat_problems(script))
     countdown_indices = [
         (i, parse_countdown(b.text))
         for i, b in enumerate(script.beats)
@@ -114,6 +125,24 @@ def check_script(script: Script, source_text: str,
     # Beat "Number N, subject" wajib sama persis dengan source, jadi nggak ikut dihitung sebagai jiplakan.
     prose = " ".join(b.text for b in script.beats if not (parse_countdown(b.text) and parse_countdown(b.text).number is not None))
     overlap = ngram_overlap(prose, source_text)
+    if overlap > MAX_NGRAM_OVERLAP:
+        problems.append(
+            f"{overlap:.0%} of the 4-word phrases are copied from the source; "
+            f"keep it at or below {MAX_NGRAM_OVERLAP:.0%}. Rephrase more."
+        )
+    if any(b.keyword for b in script.beats):
+        problems.append("Top 3 beats must not set keyword.")
+    return problems, overlap
+
+
+def _faktacuil_check(script: Script, source_text: str, video_speed: float) -> tuple[list[str], float]:
+    problems = faktacuil_problems(script)
+    count = len(words(" ".join(b.text for b in script.beats)))
+    _, low, high = narration_word_range(script, video_speed)
+    if not low <= count <= high:
+        problems.append(f"The narration has {count} words; it must have between {low} and {high}.")
+    problems.extend(_beat_problems(script))
+    overlap = ngram_overlap(" ".join(b.text for b in script.beats), source_text)
     if overlap > MAX_NGRAM_OVERLAP:
         problems.append(
             f"{overlap:.0%} of the 4-word phrases are copied from the source; "
