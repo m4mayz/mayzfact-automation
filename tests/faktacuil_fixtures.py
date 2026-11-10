@@ -38,3 +38,17 @@ def faktacuil_script(total_words: int = 69) -> Script:
             for i, t in enumerate(texts)
         ],
     )
+
+
+def faktacuil_timeline_fixture(duration: float = 25, script: dict | None = None):
+    """(script, alignment, clips) dengan 1 shot per beat, pola timeline_fixture di test_cta_scene."""
+    from mayzfact.text import script_text
+    from mayzfact.timing import beat_timings
+    from tests.factories import fake_alignment
+
+    script = script or faktacuil_script().model_dump()
+    alignment = fake_alignment(script_text(script["beats"]), duration)
+    times = beat_timings([b["text"] for b in script["beats"]], alignment, duration)
+    clips = {"shots": [dict(file=f"clips/shot_{i}.mp4", kind="video", start_s=t["start_s"], end_s=t["end_s"],
+                            width=1080, height=1920, beat=i) for i, t in enumerate(times)]}
+    return script, alignment, clips
