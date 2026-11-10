@@ -14,10 +14,10 @@ def test_env_holds_only_secrets():
 
 
 def test_non_secret_settings_live_in_code():
-    s = settings_from_env({"TARGET_DURATION_RATIO": "0.5", "MAX_SHOT_SECONDS": "2", "ELEVENLABS_VOICE_ID": "lain"})
-    assert (s.elevenlabs_voice_id, s.elevenlabs_model, s.target_duration_ratio, s.min_duration_seconds,
-            s.max_shot_seconds, s.fg_min_height_ratio, s.hook_seconds, s.brief_port) == (
-        "TX3LPaxmHKxFdv7VOQHJ", "eleven_v3", 0.8, 32.0, 4.0, 0.5, 10.0, 3100)
+    s = settings_from_env({"MAX_SHOT_SECONDS": "2", "ELEVENLABS_VOICE_ID": "lain"})
+    assert (s.elevenlabs_voice_id, s.elevenlabs_model, s.max_shot_seconds,
+            s.fg_min_height_ratio, s.hook_seconds, s.brief_port) == (
+        "TX3LPaxmHKxFdv7VOQHJ", "eleven_v3", 4.0, 0.5, 10.0, 3100)
 
 
 @pytest.mark.parametrize("name", ["clip_source", "pexels_api_key", "pixabay_api_key", "hook_platforms", "clip_platforms",

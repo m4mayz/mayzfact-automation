@@ -6,14 +6,19 @@ from mayzfact.steps.plan import run_plan, subject_ranges
 from mayzfact.store import RunPaths, read_json
 from tests.factories import fake_alignment
 
+CTA_SCENE = {"theme": "volcano", "transform_word": "turn", "comment_text": "NOPE"}
 SCRIPT = {
+    "cta_scene": CTA_SCENE,
     "beats": [
         {"text": "Look at this.", "media": "video", "queries": ["crab"], "subject": ""},
         {"text": "Number five, horseshoe crab.", "media": "photo", "queries": ["fossil", "crab"]},
     ],
 }
 TTS = {"duration_s": 3.0, "alignment": fake_alignment("Look at this. Number five, horseshoe crab.", 2.4)}
-SOURCE = {"video_id": "abc", "duration_s": 2.0, "transcript": [{"text": "five ancient creatures", "start": 0.0, "duration": 2.0}]}
+SOURCE = {"video_id": "abc", "duration_s": 2.0, "transcript": [
+    {"text": "five ancient creatures", "start": 0.0, "duration": 1.8},
+    {"text": "Number five, horseshoe crab.", "start": 1.8, "duration": 0.2},
+]}
 
 
 def plan_with(tmp_path, cut_video, hook_seconds, source=SOURCE, script=SCRIPT):
@@ -48,7 +53,8 @@ def test_hook_shot_stays_hook_when_number_is_heard_late(tmp_path, cut_video, mon
         return [dict(w, start_s=1.9) if w["text"] == "Number" else w for w in word_timings(tts["alignment"])]
 
     monkeypatch.setattr("mayzfact.steps.plan._voiced_words", late_number)
-    script = {"beats": [*SCRIPT["beats"], {"text": "It is old and lives in the deep sea.", "media": "video",
+    script = {"cta_scene": CTA_SCENE,
+              "beats": [*SCRIPT["beats"], {"text": "It is old and lives in the deep sea.", "media": "video",
                                            "queries": ["sea"]}]}
     text = " ".join(b["text"] for b in script["beats"])
     tts = {"duration_s": 4.0, "alignment": fake_alignment(text, 3.8)}
@@ -106,10 +112,12 @@ def test_every_shot_gets_three_reference_frames(tmp_path, cut_video):
 
 
 def test_shot_without_subject_match_gets_proportional_frames(tmp_path, cut_video):
-    script = {"beats": [{"text": "Smash like and subscribe!", "media": "video", "queries": ["phone"], "subject": ""},
+    script = {"cta_scene": CTA_SCENE,
+              "beats": [{"text": "Look at this ancient creature!", "media": "video", "queries": ["phone"], "subject": ""},
                         {"text": "Number five, horseshoe crab.", "media": "photo", "queries": ["crab"]}]}
-    source = {**SOURCE, "transcript": [{"text": "unrelated opening", "start": 0.0, "duration": 2.0}]}  # subjek nggak ketemu
-    tts = {"duration_s": 3.0, "alignment": fake_alignment("Smash like and subscribe! Number five, horseshoe crab.", 2.4)}
+    source = {**SOURCE, "transcript": [{"text": "unrelated opening", "start": 0.0, "duration": 1.8},
+                                       {"text": "Number five, horseshoe crab.", "start": 1.8, "duration": 0.2}]}
+    tts = {"duration_s": 3.0, "alignment": fake_alignment("Look at this ancient creature! Number five, horseshoe crab.", 2.4)}
     paths = RunPaths(tmp_path / "run")
     data = run_plan(paths, script, tts, source, max_shot_s=2.5, hook_seconds=0.0,
                     download_source=lambda vid, dest: shutil.copyfile(cut_video, dest) or dest, log=lambda m: None)
@@ -121,7 +129,8 @@ def test_teaser_about_number_one_does_not_hide_other_source_frames(tmp_path, cut
     # Beat pembuka nyebut subjek nomor 1 duluan, jadi kelompok kestrel paling awal. Di source, kestrel baru dibahas
     # paling akhir, jadi frame source harus dicari urut card countdown, bukan urut shot pertama tiap kelompok.
     text = "Number one is wild. Number two, shrike. Number one, kestrel."
-    script = {"beats": [{"text": "Number one is wild.", "media": "video", "queries": ["kestrel"], "subject": "kestrel"},
+    script = {"cta_scene": CTA_SCENE,
+              "beats": [{"text": "Number one is wild.", "media": "video", "queries": ["kestrel"], "subject": "kestrel"},
                         {"text": "Number two, shrike.", "media": "video", "queries": ["shrike"], "subject": "shrike"},
                         {"text": "Number one, kestrel.", "media": "video", "queries": ["kestrel"], "subject": "kestrel"}]}
     source = {**SOURCE, "transcript": [{"text": "Number two, shrike.", "start": 0.2, "duration": 0.6},

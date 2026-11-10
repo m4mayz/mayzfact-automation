@@ -18,7 +18,6 @@ const defaultProps: TimelineProps = {
   intro: null,
   overlays: [],
   emojis: [],
-  cta: [],
 };
 
 const calculateMetadata: CalculateMetadataFunction<TimelineProps> = async ({props}) => ({

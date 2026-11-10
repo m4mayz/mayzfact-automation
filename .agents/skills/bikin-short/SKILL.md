@@ -13,7 +13,7 @@ Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal per
 
 ## Pola video baru: Top 3 (D-045, revisi CTA D-046)
 
-Di branch ini, semua **naskah baru** wajib menulis `"narration_mode": "top3"`. Run lama tanpa field ini berarti `source`: aturan lama tetap berlaku, jangan migrasi atau ubah naskah/audio yang sudah dikunci.
+Semua naskah wajib menulis `"narration_mode": "top3"`. Run tanpa field ini format lama, pipeline nolak dengan error D-050; jangan migrasi atau ubah naskah/audio-nya.
 
 - Source Top 5 → ambil peringkat asli **3, 2, 1**; pembahasan 5/4 dibuang utuh. Jangan pilih ulang atau tukar subjek. Source harus punya heading 3/2/1 yang bisa diverifikasi; kalau tidak, laporkan, jangan mengarang ranking.
 - Urutan **hook → Number three + ≥2 beat penjelasan → Number two + ≥2 beat penjelasan → CTA → Number one + ≥2 beat penjelasan → selesai**. CTA tidak dihitung sebagai penjelasan.
@@ -25,7 +25,7 @@ Aturan fakta/hedges, ≤10 kata per beat, foto 15–45%, overlap ≤15%, emoji/k
 
 ### Visual CTA baru: opt-in scene (D-048)
 
-Semua naskah Top 3 **baru** menulis metadata visual `cta_scene` di root. Run lama tanpa metadata tetap legacy; jangan migrasi naskah/audio berbayar otomatis. Revisi visual saja tidak mengubah teks atau hash suara.
+`cta_scene` wajib di semua naskah. Jangan migrasi naskah/audio berbayar otomatis. Revisi visual saja tidak mengubah teks atau hash suara.
 
 ```json
 "cta_scene": {"theme": "volcano", "transform_word": "turn", "comment_text": "ERUPTED"}
@@ -33,7 +33,7 @@ Semua naskah Top 3 **baru** menulis metadata visual `cta_scene` di root. Run lam
 
 `transform_word` harus kata tunggal yang benar-benar ada di pertanyaan. Untuk contoh `Did the button turn into a volcano?`, mulai morph saat **turn**, sehingga gunung sudah utuh saat **volcano**. Background CTA memakai blur kaca ringan (10px, brightness 0.78), sehingga footage masih terlihat. Setiap elemen CTA wajib entrance/exit halus dalam durasi stage: like spring+klik/ripple/partikel, morph volcano, subscribe melebar+huruf stagger/klik/confetti, comment diketik lalu fade-out. Jangan muncul penuh pada frame pertama; jangan ubah cue/audio demi memperpanjang animasi. Like baru muncul saat frasa ajakan `try tapping like` mulai terdengar, bukan sejak transisi `But before number one`; klik tetap pada kata like. Subscribe dan comment pada kata aslinya. Semua stage selesai sebelum Number one, caption tetap di bawah. Jika alignment event tidak ada, batas struktural dilabeli `structure`, tidak boleh mengarang timestamp kata.
 
-Tema CTA baru wajib ilustrasi objek yang benar-benar disebut dalam pertanyaan transformasi, bukan kartu kata. Tema ilustrasi yang didukung: `volcano`, `unicorn`, `honey`, `puppy`, `lion`, `shark`. Contoh madu: `{"theme":"honey","transform_word":"turn","comment_text":"HONEY"}` dengan narasi `Did the button turn into honey?`; gambar madu menetes dari honey dipper ke jar, bukan teks HONEY. `theme: "word"` hanya untuk membaca run legacy, ditolak `check-script` untuk naskah baru. Kalau objek belum didukung, STOP dan tambahkan ilustrasi + tes fixture sebelum TTS; jangan pilih tema lain atau kartu teks sebagai pengganti. Validator mencocokkan nama tema dengan objek frasa `into [a/an/the] <objek>` dalam beat transformasi. Renderer harus menolak tema tak dikenal, bukan fallback ke teks. Field metadata tak dikenal tetap ditolak. Revisi visual mempertahankan voice/ASR/speed/BGM/SFX, timing dan link; backup metadata, ubah tema di script/plan/timeline saja, lalu cocokkan hash dan diff sebelum render fixture terisolasi.
+Tema CTA baru wajib ilustrasi objek yang benar-benar disebut dalam pertanyaan transformasi, bukan kartu kata. Tema ilustrasi yang didukung: `volcano`, `unicorn`, `honey`, `puppy`, `lion`, `shark`. Contoh madu: `{"theme":"honey","transform_word":"turn","comment_text":"HONEY"}` dengan narasi `Did the button turn into honey?`; gambar madu menetes dari honey dipper ke jar, bukan teks HONEY. Kalau objek belum didukung, STOP dan tambahkan ilustrasi + tes fixture sebelum TTS; jangan pilih tema lain atau kartu teks sebagai pengganti. Validator mencocokkan nama tema dengan objek frasa `into [a/an/the] <objek>` dalam beat transformasi. Renderer harus menolak tema tak dikenal, bukan fallback ke teks. Field metadata tak dikenal tetap ditolak. Revisi visual mempertahankan voice/ASR/speed/BGM/SFX, timing dan link; backup metadata, ubah tema di script/plan/timeline saja, lalu cocokkan hash dan diff sebelum render fixture terisolasi.
 
 Plan tetap menyimpan shot/durasi blok detector bersama, tapi kelompok **AUTO CTA** tidak membutuhkan frame referensi, keyword pencarian manual, link, upload, trim atau SFX baru. Brief menandainya otomatis, tidak menampilkan kontrol input. Fetch meminjam hanya video lokal non-CTA yang sudah tampil sebelum scene, dipilih seeded deterministik; pemakaian berulang meneruskan offset dan loop klip pendek. Tidak memakai footage item satu atau meminta link CTA baru. Kalau belum ada video sebelumnya, fallback warna bergerak. `reused=true` dan `match=null` adalah dekorasi yang disengaja, bukan kegagalan relevansi/duplikasi. Link/timestamp non-CTA milik Akmal jangan diubah.
 
@@ -74,7 +74,7 @@ Tiap beat harus bisa ditunjuk kalimat source-nya (kolom "dasar dari source" di l
 2. Titik cuma di akhir CTA, "Number N, [subject].", kalimat penjelasan sebelum celetukan, celetukan, dan beat terakhir. Pengecualian CTA hiburan Top 3 (D-046): transisi ajakan dan pertanyaan transformasi boleh berupa kalimat utuh seperti contoh di atas.
 3. Jangan pakai tanya retoris atau potongan pendek di tengah item ("Result? …", "Plus wrinkles. …").
 4. Tiap beat tetap ≤ 10 kata dan 1 ide visual; yang berubah cuma tanda baca dan kata sambungnya.
-5. CTA juga mengalir, jangan ditempel sebagai "Like and subscribe." Dalam mode `top3`, pakai transisi → ajakan like → pertanyaan gimmick sesuai tema → subscribe jika berhasil + comment, maksimal empat beat tepat sebelum Number one. `try tapping like` dan `like if ...` pada awal klausa memicu animasi, termasuk sesudah koma; "if you like them, subscribe" tetap bukan ajakan like. Naskah baru memakai scene D-048 di atas; tanpa metadata, animasi legacy hanya like/subscribe. Mode `source` lama boleh memakai konektor seperti "So comment which one's most unique," / "and don't forget to like and subscribe."
+5. CTA juga mengalir, jangan ditempel sebagai "Like and subscribe." Dalam mode `top3`, pakai transisi → ajakan like → pertanyaan gimmick sesuai tema → subscribe jika berhasil + comment, maksimal empat beat tepat sebelum Number one. `try tapping like` dan `like if ...` pada awal klausa memicu animasi, termasuk sesudah koma; "if you like them, subscribe" tetap bukan ajakan like. Naskah baru memakai scene D-048 di atas.
 
 Contoh: "Number four, Scottish Fold." / "Ears fold forward and down," / "for an adorable round face," / "almost like it's always eavesdropping."
 
@@ -85,6 +85,11 @@ Contoh: "Number four, Scottish Fold." / "Ears fold forward and down," / "for an 
 ```json
 {
   "narration_mode": "top3",
+  "cta_scene": {
+    "theme": "volcano",
+    "transform_word": "turn",
+    "comment_text": "ERUPTED"
+  },
   "beats": [
     {"text": "Number three, mantis shrimp.", "media": "video", "queries": ["mantis shrimp close up underwater"],
      "queries_zh": ["螳螂虾 特写"], "subject": "mantis shrimp", "point": false, "emoji": "", "emoji_word": ""}

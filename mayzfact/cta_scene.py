@@ -12,7 +12,7 @@ from mayzfact.narration import cta_beat_indices
 def build_scene(script: dict, shots: list[dict], entries: list[dict], words: list[dict], beat_of: list[int],
                 countdown: list[dict], total: int) -> dict | None:
     config = script.get('cta_scene')
-    if not config or script.get('narration_mode') != 'top3':
+    if not config:
         return None
     beats = script['beats']
     allowed = set(cta_beat_indices(beats))
@@ -71,6 +71,6 @@ def build_scene(script: dict, shots: list[dict], entries: list[dict], words: lis
         if kind in cues:
             stage['triggerAt'] = cues[kind]['from'] - begin
         stages.append(stage)
-    return dict(theme=config['theme'], label=config.get('label', ''), commentText=config['comment_text'],
+    return dict(theme=config['theme'], commentText=config['comment_text'],
                 durationInFrames=stop-start, stages=stages,
                 cues=sorted(cues.values(), key=lambda c: c['from']), **{'from': start})

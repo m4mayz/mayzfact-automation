@@ -2,6 +2,7 @@ import shutil
 
 import pytest
 
+from mayzfact.narration import cta_beat_indices
 from mayzfact.steps.plan import run_plan
 from mayzfact.store import RunPaths
 from mayzfact.text import script_text
@@ -25,9 +26,33 @@ def test_top3_short_hook_never_steals_countdown_or_body_keywords(tmp_path, cut_v
     for shot in data['shots']:
         if shot['beat'] >= 1:
             assert shot['hook_segment'] is None
-            assert shot['keywords']['en'] == script['beats'][shot['beat']]['queries']
         if shot['beat'] in ctas:
+            assert shot['auto_cta'] is True
             assert shot['subject'] == ''
             assert shot['source_rank'] is None
-            assert shot['group'].startswith('beat-')
-        assert len(shot['ref_frames']) == 3
+            assert shot['group'] == 'auto-cta'
+            assert shot['keywords'] == {'en': [], 'zh': []}
+            assert shot['ref_frames'] == []
+        else:
+            if shot['beat'] >= 1:
+                assert shot['keywords']['en'] == script['beats'][shot['beat']]['queries']
+            assert len(shot['ref_frames']) == 3
+
+
+def test_plan_uses_top3_scene_without_narration_mode(tmp_path, cut_video):
+    script = playful_script().model_dump()
+    script.pop('narration_mode')
+    source = dict(video_id='abcdefghijk',duration_s=2,transcript=[dict(text='intro',start=0,duration=.2),
+                  dict(text='Number three, basilisk lizards.',start=.2,duration=.4),
+                  dict(text='Number two, immortal jellyfish.',start=.7,duration=.4),
+                  dict(text='Number one, tardigrades.',start=1.3,duration=.4)])
+    tts = dict(duration_s=20,alignment=fake_alignment(script_text(script['beats']),20))
+    data = run_plan(RunPaths(tmp_path/'run'),script,tts,source,max_shot_s=4,hook_seconds=10,
+                    download_source=lambda vid,dest: shutil.copyfile(cut_video,dest),log=lambda m:None)
+    ctas = set(cta_beat_indices(script['beats']))
+    for shot in data['shots']:
+        if shot['beat'] in ctas:
+            assert shot['auto_cta'] is True
+            assert shot['subject'] == ''
+            assert shot['keywords'] == {'en': [], 'zh': []}
+    assert data['cta_scene'] == script['cta_scene']

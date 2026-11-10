@@ -26,7 +26,6 @@ STEPS = ["source", "tts", "plan", "fetch", "timeline", "render"]
 ALL_STEPS = STEPS
 VOICE_LOCKED = ("source", "tts")
 AFTER_VOICE = ("plan", "fetch", "timeline", "render")
-MIN_AUDIO_SECONDS = 30.0
 STEP_ENV = {
     "tts": ["ELEVENLABS_API_KEYS"],
 }
@@ -79,21 +78,16 @@ def check_voice(paths: RunPaths, *, video_speed: float = 1.1, log: Callable[[str
         raise PipelineError(
             "tts", f"script.json beda sama naskah yang dipakai buat voice.mp3. Balikin script.json. {NEW_SCRIPT_HINT}"
         )
-    if script.get("narration_mode") == "top3":
-        from mayzfact.narration import validate_video_speed
+    from mayzfact.narration import validate_video_speed
 
-        validate_video_speed(video_speed)
-        if not math.isfinite(tts["duration_s"]) or tts["duration_s"] <= 0:
-            raise PipelineError("tts", "Durasi audio harus positif dan finite; pulihkan metadata audio asli.")
-        estimated = tts["duration_s"] / video_speed
-        log(f"[tts] Top 3 estimasi final {estimated:.1f} detik dari audio nyata {tts['duration_s']:.1f} detik / {video_speed:g}x.")
-        if not 30 <= estimated <= 40:
-            log("[tts] PERINGATAN: estimasi final di luar target 30-40 detik. Audio tetap disimpan; "
-                "jangan regenerate atau ubah speed otomatis tanpa persetujuan.")
-    elif tts["duration_s"] < MIN_AUDIO_SECONDS:
-        raise PipelineError(
-            "tts", f"Audio cuma {tts['duration_s']:.1f} detik (minimal {MIN_AUDIO_SECONDS:.0f}). {NEW_SCRIPT_HINT}"
-        )
+    validate_video_speed(video_speed)
+    if not math.isfinite(tts["duration_s"]) or tts["duration_s"] <= 0:
+        raise PipelineError("tts", "Durasi audio harus positif dan finite; pulihkan metadata audio asli.")
+    estimated = tts["duration_s"] / video_speed
+    log(f"[tts] Top 3 estimasi final {estimated:.1f} detik dari audio nyata {tts['duration_s']:.1f} detik / {video_speed:g}x.")
+    if not 30 <= estimated <= 40:
+        log("[tts] PERINGATAN: estimasi final di luar target 30-40 detik. Audio tetap disimpan; "
+            "jangan regenerate atau ubah speed otomatis tanpa persetujuan.")
     return tts
 
 
@@ -252,7 +246,7 @@ def run_pipeline(
     paths = RunPaths(runs_dir / video_id)
     done = {step: step_done(step, paths) for step in STEPS}
     steps = plan_steps(done, paths.voice_mp3.exists(), from_step)
-    if paths.voice_mp3.exists():
+    if paths.script_json.exists():
         load_script(paths)  # schema/mode dicek sebelum output resume lama dihapus; tanpa cek anggaran baru
     if no_render:
         # Review lewat Remotion Studio dulu. final.mp4 lama jadi basi kalau step sebelumnya diulang.
@@ -301,8 +295,7 @@ def _require_script(paths: RunPaths, settings: Settings) -> None:
     from mayzfact.audio import BGM_DIR, list_bgm
 
     load_script(paths)
-    problems = check_script_file(paths, read_json(paths.source_json), ratio=settings.target_duration_ratio,
-                                 minimum_s=settings.min_duration_seconds, bgm_choices=list_bgm(BGM_DIR),
+    problems = check_script_file(paths, read_json(paths.source_json), bgm_choices=list_bgm(BGM_DIR),
                                  video_speed=settings.video_speed)
     if problems:
         raise PipelineError("script", "Naskah belum lolos cek: " + " ".join(problems))

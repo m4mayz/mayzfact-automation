@@ -488,39 +488,6 @@ CTA_SCRIPT = {"beats": [{"text": "Tap like and subscribe now."}, {"text": "It lo
 CTA_CLIPS = {"shots": [shot("clips/a.mp4", "video", 0.0, 1080, 1920)]}
 
 
-def test_cta_like_then_subscribe_with_clicks():
-    timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script=CTA_SCRIPT, alignment=fake_alignment(CTA_TEXT, 4.9),
-                              audio={"bgm": None, "sfx": {"click": "audio/sfx/click.mp3"}})
-    # "like" di beat ke-2 artinya "mirip", bukan CTA.
-    assert timeline["cta"] == [{"kind": "like", "from": 12, "durationInFrames": 16, "clickAt": 4},
-                               {"kind": "subscribe", "from": 39, "durationInFrames": 27, "clickAt": 14}]
-    assert timeline["sfx"] == [{"src": "audio/sfx/click.mp3", "from": 13, "volume": 0.8},
-                               {"src": "audio/sfx/click.mp3", "from": 50, "volume": 0.8}]
-
-
-def test_subscribe_waits_until_like_finishes():
-    text = "Like, subscribe."
-    timeline = build_timeline(CTA_CLIPS, 1.5, 0.5, script={"beats": [{"text": text}]}, alignment=fake_alignment(text, 1.0))
-    # "subscribe" cuma 11 frame setelah "like": animasi subscribe nunggu like selesai, kayak di source
-    assert timeline["cta"] == [{"kind": "like", "from": 0, "durationInFrames": 16, "clickAt": 4},
-                               {"kind": "subscribe", "from": 16, "durationInFrames": 27, "clickAt": 14}]
-
-
-def test_cta_ignores_like_meaning_similar_and_subscribers():
-    for text, kinds in [("For more creatures like this, subscribe now!", ["subscribe"]),
-                        ("Hit like and subscribe, subscribers get facts first!", ["like", "subscribe"])]:
-        timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script={"beats": [{"text": text}]}, alignment=fake_alignment(text, 4.9))
-        assert [c["kind"] for c in timeline["cta"]] == kinds, text
-
-
-def test_cta_fits_before_the_video_ends():
-    text = "It is old. Like and subscribe!"
-    timeline = build_timeline(CTA_CLIPS, 2.5, 0.5, script={"beats": [{"text": text}]}, alignment=fake_alignment(text, 2.5))
-    # subscribe di frame 50 bakal kepotong di frame 75, jadi dimajuin ke 48 biar flip terakhirnya kelihatan
-    assert timeline["cta"] == [{"kind": "like", "from": 28, "durationInFrames": 16, "clickAt": 4},
-                               {"kind": "subscribe", "from": 48, "durationInFrames": 27, "clickAt": 14}]
-
-
 def test_emoji_word_inside_a_hyphenated_word():
     text = "Look at this prehistoric-looking fish."
     marks = {"beats": [{"point": False, "emoji": "🧐", "emoji_word": "looking"}], "emoji": {"🧐": "emoji/1f9d0.json"}}
@@ -532,7 +499,7 @@ def test_emoji_word_inside_a_hyphenated_word():
 def test_emoji_that_collides_with_cta_starts_after_it():
     marks = {"beats": [{"point": False, "emoji": "🍀", "emoji_word": "subscribe"}, NO_MARK], "emoji": {"🍀": "emoji/1f340.json"}}
     timeline = build_timeline(CTA_CLIPS, 5.0, 0.5, script=CTA_SCRIPT, alignment=fake_alignment(CTA_TEXT, 4.9), marks=marks)
-    # subscribe 39-66 → 🍀 mulai di 66, maksimal 75 frame tapi berhenti di akhir video (150)
+    # _top3_cta: subscribe 39-66, jadi 🍀 mulai di 66 dan berhenti di akhir video (150).
     assert timeline["emojis"] == [{"src": "emoji/1f340.json", "from": 66, "durationInFrames": 75}]
 
 

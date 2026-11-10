@@ -60,16 +60,14 @@ def test_playful_cta_rejects_wrong_placement_and_body_intrusion(change):
 
 
 def test_cta_extra_words_shift_only_top3_shared_total_budget():
-    from mayzfact.steps.script import narration_word_range, word_range
+    from mayzfact.steps.script import narration_word_range
     from mayzfact.text import words
 
     script = playful_script()
     assert sum(len(words(script.beats[i].text)) for i in cta_beat_indices(script.beats)) == 21
-    assert narration_word_range(script, 120, 1.1) == (91, 87, 95)
-    assert narration_word_range(script, 120, 1.0) == (84, 81, 87)
-    assert narration_word_range(top3_script(), 120, 1.1) == (80, 76, 84)
-    script.narration_mode = 'source'
-    assert narration_word_range(script, 120, 1.1) == word_range(120)
+    assert narration_word_range(script, 1.1) == (91, 87, 95)
+    assert narration_word_range(script, 1.0) == (84, 81, 87)
+    assert narration_word_range(top3_script(), 1.1) == (80, 76, 84)
 
 
 @pytest.mark.parametrize('base_words,valid', [(75, False), (76, True), (80, True), (84, True), (85, False)])
@@ -82,7 +80,7 @@ def test_approved_cta_keeps_body_budget_bounded(base_words, valid):
     assert [b.model_dump() for i, b in enumerate(script.beats) if i not in cta_beat_indices(script.beats)] == [
         b.model_dump() for i, b in enumerate(original.beats) if i not in cta_beat_indices(original.beats)]
     assert sum(len(words(b.text)) for b in script.beats) == base_words + 11
-    problems, _ = check_script(script, SOURCE_TEXT, 120)
+    problems, _ = check_script(script, SOURCE_TEXT)
     assert (problems == []) is valid
     if not valid:
         assert any('between 87 and 95' in p for p in problems)
@@ -92,11 +90,11 @@ def test_old_two_beat_cta_wording_stays_supported_with_shared_delta():
     from mayzfact.steps.script import check_script, narration_word_range
 
     script = top3_script()
-    script.beats[7].text = "Subscribe if you'd touch it, hit like if you'd watch,"
+    script.beats[7].text = "Subscribe, it turns into a volcano, like if you'd watch,"
     script.beats[8].text = "or comment 'nope' if you'd run."
     assert cta_beat_indices(script.beats) == [7, 8]
-    assert narration_word_range(script, 120) == (86, 82, 90)
-    assert check_script(script, SOURCE_TEXT, 120)[0] == []
+    assert narration_word_range(script) == (86, 82, 90)
+    assert check_script(script, SOURCE_TEXT)[0] == []
 
 
 def test_triggerless_question_does_not_replace_item_two_explanation():
@@ -104,7 +102,7 @@ def test_triggerless_question_does_not_replace_item_two_explanation():
 
     script = playful_script()
     del script.beats[6]
-    problems, _ = check_script(script, SOURCE_TEXT, 120)
+    problems, _ = check_script(script, SOURCE_TEXT)
     assert any('Number two' in p and 'only 1 explanation' in p for p in problems)
 
 
@@ -113,7 +111,7 @@ def test_cta_with_eleven_words_is_rejected_despite_total_allowance():
 
     script = playful_script()
     script.beats[8].text = 'Did the little button really turn into a giant erupting volcano?'
-    problems, _ = check_script(script, SOURCE_TEXT, 120)
+    problems, _ = check_script(script, SOURCE_TEXT)
     assert any('Beat 9 has 11 words' in p and 'at most 10' in p for p in problems)
 
 
@@ -125,8 +123,8 @@ def test_maximum_four_ten_word_cta_beats_still_have_a_finite_budget():
     for i in range(7, 11):
         n = len(words(script.beats[i].text))
         script.beats[i].text += ' extra' * (10 - n)
-    assert narration_word_range(script, 120) == (110, 106, 114)
-    assert check_script(script, SOURCE_TEXT, 120)[0] == []
+    assert narration_word_range(script) == (110, 106, 114)
+    assert check_script(script, SOURCE_TEXT)[0] == []
 
 
 def test_short_legacy_cta_does_not_reduce_base_word_budget():
@@ -135,7 +133,7 @@ def test_short_legacy_cta_does_not_reduce_base_word_budget():
     script = top3_script()
     script.beats[7:9] = [script.beats[7].model_copy(update={'text': 'Subscribe, hit like, and comment.'})]
     assert top3_problems(script, SOURCE_TEXT) == []
-    assert narration_word_range(script, 120) == (80, 76, 84)
+    assert narration_word_range(script) == (80, 76, 84)
 
 
 def test_cli_reports_same_cta_adjusted_budget(tmp_path, monkeypatch, capsys):

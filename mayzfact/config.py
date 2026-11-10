@@ -36,8 +36,6 @@ class Settings:
     elevenlabs_stability: float = 0.5
     elevenlabs_delivery_tag: str = "calm"  # kosong = tanpa prefix, bukan isi naskah/caption
     video_speed: float = 1.1  # hasil render dipercepat (gambar + suara, nada tetap); 1.0 = normal (D-039, dulu 1,2)
-    target_duration_ratio: float = 0.8
-    min_duration_seconds: float = 32.0
     max_shot_seconds: float = 4.0
     fg_min_height_ratio: float = 0.5
     hook_seconds: float = 10.0

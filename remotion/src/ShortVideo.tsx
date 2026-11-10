@@ -2,7 +2,6 @@ import React from 'react';
 import {AbsoluteFill, Sequence, staticFile, useVideoConfig} from 'remotion';
 import {Audio} from '@remotion/media';
 import {Captions} from './Captions';
-import {Cta} from './Cta';
 import {CtaScene} from './CtaScene';
 import {Emojis} from './Emojis';
 import {IntroWhip} from './Intro';
@@ -13,7 +12,7 @@ import {SoundLayer} from './SoundLayer';
 import {SubjectCard} from './SubjectCard';
 import type {TimelineProps} from './types';
 
-export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null, flashes = [], overlays = [], emojis = [], cta = [], ctaScene}) => {
+export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null, flashes = [], overlays = [], emojis = [], ctaScene}) => {
   const {fps} = useVideoConfig();
   // Shot yang seluruh durasinya ketutup card countdown nggak dirender, biar videonya nggak tembus di belakang card.
   // Klip shot itu tetap tampil di dalam subject card.
@@ -44,7 +43,6 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
       <Emojis emojis={emojis} />
       {ctaScene ? <CtaScene scene={ctaScene}/> : null}
       <Captions captions={captions} />
-      <Cta actions={cta} />
       {audio ? <Audio src={staticFile(audio)} /> : null}
       <SoundLayer bgm={bgm} sfx={sfx} />
     </AbsoluteFill>

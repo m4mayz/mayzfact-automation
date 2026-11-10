@@ -243,25 +243,14 @@ def test_check_script_reports_problems_and_exit_code(monkeypatch, tmp_path, caps
     paths.script_json.write_text("{not json", encoding="utf-8")
     assert cli.main(["check-script", "abcdefghijk"]) == 1
     assert "JSON" in capsys.readouterr().err
-    write_json_atomic(paths.script_json, {"beats": [{"text": "Hello there.", "media": "video", "queries": ["q"]}]})
+    from tests.top3_fixtures import top3_script
+
+    raw = top3_script().model_dump()
+    raw["beats"] = [{"text": "Hello there.", "media": "video", "queries": ["q"]}]
+    write_json_atomic(paths.script_json, raw)
     assert cli.main(["check-script", "abcdefghijk"]) == 1
     out = capsys.readouterr().out
     assert "subscribe" in out and "words" in out
-
-
-def test_check_script_passes_a_good_script(monkeypatch, tmp_path, capsys):
-    from mayzfact.store import write_json_atomic
-    from tests.factories import make_script
-
-    paths = RunPaths(tmp_path / "abcdefghijk")
-    paths.root.mkdir()
-    write_json_atomic(paths.source_json, {"video_id": "abcdefghijk", "duration_s": 62.5,
-                                          "transcript": [{"text": "unique source words only here", "start": 0.0, "duration": 62.5}]})
-    write_json_atomic(paths.script_json, make_script().model_dump())  # 110 kata = 0.8 * 62.5 * 2.2
-    monkeypatch.setattr(cli, "load_settings", lambda: Settings())
-    monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
-    assert cli.main(["check-script", "abcdefghijk"]) == 0
-    assert "OK" in capsys.readouterr().out
 
 
 def test_brief_refuses_shots_without_reference_frames(monkeypatch, tmp_path, capsys):

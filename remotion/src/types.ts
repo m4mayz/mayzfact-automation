@@ -82,13 +82,6 @@ export type EmojiOverlay = {
   x?: number; // pusat horizontal; default 540 (tengah)
 };
 
-export type CtaAction = {
-  kind: 'like' | 'subscribe';
-  from: number;
-  durationInFrames: number;
-  clickAt: number;
-};
-
 export type CtaStage = {
   kind: 'like' | 'transform' | 'subscribe' | 'comment';
   from: number;
@@ -98,8 +91,7 @@ export type CtaStage = {
 };
 
 export type CtaSceneData = {
-  theme: 'volcano' | 'word' | 'unicorn' | 'honey' | 'puppy' | 'lion' | 'shark';
-  label: string;
+  theme: 'volcano' | 'unicorn' | 'honey' | 'puppy' | 'lion' | 'shark';
   commentText: string;
   from: number;
   durationInFrames: number;
@@ -129,6 +121,5 @@ export type TimelineProps = {
   flashes?: Transition[];
   overlays?: Overlay[];
   emojis?: EmojiOverlay[];
-  cta?: CtaAction[];
   ctaScene?: CtaSceneData;
 };

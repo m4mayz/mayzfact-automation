@@ -344,27 +344,6 @@ def _beat_of(words: list[dict], beats: list[dict]) -> list[int]:
     return out
 
 
-def _cta(words: list[dict], beat_of: list[int], total: int) -> list[dict]:
-    """Like/subscribe pas narasinya ngajak. Subscribe nunggu like selesai, dan dua-duanya muat sebelum video habis."""
-    out: list[dict] = []
-    used: set[int] = set()
-    for k, word in enumerate(words):
-        start = to_frame(word["start_s"])
-        if _clean(word["text"]) not in SUBSCRIBE or (out and start < out[-1]["from"] + out[-1]["durationInFrames"]):
-            continue
-        likes = [j for j in range(k) if beat_of[j] == beat_of[k] and j not in used and is_like_cta([w["text"] for w in words], j)]
-        like_from = to_frame(words[likes[-1]]["start_s"]) if likes else None
-        sub_from = start if like_from is None else max(start, like_from + CTA_FRAMES["like"])
-        sub_from = min(sub_from, total - CTA_FRAMES["subscribe"])  # flip terakhirnya jangan kepotong akhir video
-        if like_from is not None:
-            used.add(likes[-1])
-            out.append({"kind": "like", "from": min(like_from, sub_from - CTA_FRAMES["like"]),
-                        "durationInFrames": CTA_FRAMES["like"], "clickAt": CTA_CLICK["like"]})
-        out.append({"kind": "subscribe", "from": sub_from, "durationInFrames": CTA_FRAMES["subscribe"],
-                    "clickAt": CTA_CLICK["subscribe"]})
-    return out
-
-
 def _top3_cta(words: list[dict], beat_of: list[int], beats: list[dict], countdown: list[dict], total: int) -> list[dict]:
     """CTA Top 3 mengikuti urutan ucapan, dan selesai sebelum kartu nomor satu."""
     from mayzfact.narration import cta_beat_indices
@@ -474,8 +453,7 @@ def build_timeline(
             captions = _captions(words, audio_duration_s, spans, subject_words, total)
             timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
             beat_of = _beat_of(words, script["beats"])
-            cta = (_top3_cta(words, beat_of, script["beats"], countdown, total)
-                   if script.get("narration_mode") == "top3" else _cta(words, beat_of, total))
+            cta = _top3_cta(words, beat_of, script["beats"], countdown, total)
             emojis = _emojis(words, beat_of, marks, cta, countdown, total)
         except (PipelineError, IndexError, KeyError) as exc:  # caption/card cuma hiasan: timeline tetap jadi tanpa itu
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
@@ -483,10 +461,11 @@ def build_timeline(
             countdown, captions, emojis, cta, timings = [], [], [], [], []
             words, beat_of = [], []
     scene = build_scene(script, shots, entries, words, beat_of, countdown, total) if script else None
-    sound_cta = cta
+    if script and script.get('cta_scene') and not scene:
+        log("[timeline] scene CTA dilewat: blok CTA nggak kebentuk")
+        cta = []
     if scene:
         begin, end = scene['from'], scene['from'] + scene['durationInFrames']
-        cta = []  # scene besar menggantikan overlay CTA legacy, bukan menumpuknya
         emojis = [e for e in emojis if e['from'] + e['durationInFrames'] <= begin or e['from'] >= end]
         for e in entries:
             if begin <= e['from'] < end:
@@ -500,7 +479,7 @@ def build_timeline(
     # shot yang ngelanjutin link/klip yang sama kayak shot sebelumnya nggak dapat bunyi/efek transisi
     same_clip = {e["from"] for i, (e, s) in enumerate(zip(entries, shots))
                  if i and s.get("page_url") and s.get("page_url") == shots[i - 1].get("page_url")}
-    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, sound_cta, hook_end, total, same_clip)
+    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total, same_clip)
     data = {
         "fps": FPS,
         "width": FRAME_W,
@@ -513,7 +492,6 @@ def build_timeline(
         "captions": captions,
         "overlays": shown,
         "emojis": emojis,
-        "cta": cta,
         "bgm": bgm,
         "sfx": sfx,
         "intro": {"durationInFrames": INTRO_FRAMES} if audio and "hook" in audio.get("sfx", {}) else None,

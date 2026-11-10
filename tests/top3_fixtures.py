@@ -1,5 +1,5 @@
 """Naskah terkontrol buat test Top 3; bukan output TTS/API produksi."""
-from mayzfact.models import Beat, Script
+from mayzfact.models import Beat, CtaScene, Script
 
 SOURCE_TEXT = (
     'Number five, wood frogs. Frozen winter. Number four, archerfish. Water jets. '
@@ -18,7 +18,7 @@ def top3_script(total_words=80):
         'Number two, immortal jellyfish.',
         'Under certain conditions they reverse development,',
         'potentially repeating an earlier stage.',
-        "Subscribe if you'd touch it, hit like,",
+        "Subscribe, it turns into a volcano, like,",
         "or comment 'nope'.",
         'Number one, tardigrades.',
         'They can endure radiation and dehydration while dormant,',
@@ -31,7 +31,9 @@ def top3_script(total_words=80):
             texts[i] = texts[i].rstrip(',.') + f' fixture{i}x{delta},'
             delta -= 1
     assert delta == 0
-    return Script(narration_mode='top3', beats=[
+    return Script(narration_mode='top3',
+                  cta_scene=CtaScene(theme='volcano', transform_word='turns', comment_text='NOPE'),
+                  beats=[
         Beat(text=t, media='photo' if i in [1, 4, 9] else 'video', queries=['animal close up', 'animal behavior'],
              subject='lizard' if i in [1,2,3] else 'jellyfish' if i in [4,5,6] else 'tardigrade' if i >= 9 else '')
         for i,t in enumerate(texts)
@@ -50,4 +52,5 @@ def playful_script(base_words=80):
     script = top3_script(base_words)
     script.beats[7:9] = [Beat(media='video', text=text, queries=['phone button close up', 'hand tapping phone'])
                          for text in APPROVED_CTA]
+    script.cta_scene = CtaScene(theme='volcano', transform_word='turn', comment_text='ERUPTED')
     return script

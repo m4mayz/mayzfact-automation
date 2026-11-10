@@ -197,7 +197,7 @@ def test_scene_stages_cover_cta_follow_actual_words_and_end_before_one():
     stop = scene['from'] + scene['durationInFrames']
     assert stop == timeline['countdown'][-1]['numberFrom']
     assert sum(s['durationInFrames'] for s in scene['stages']) == stop - scene['stages'][0]['from']
-    assert timeline['cta'] == []
+    assert 'cta' not in timeline
     for key in ['emojis', 'overlays']:
         assert all(x['from'] + x['durationInFrames'] <= scene['from'] or x['from'] >= stop for x in timeline[key])
     assert any(c['text'] == 'VOLCANO' for c in timeline['captions'])
@@ -229,17 +229,6 @@ def test_scene_without_word_events_uses_structural_bounds_not_fake_spoken_cues()
     assert [s['kind'] for s in scene['stages']] == ['like', 'transform', 'subscribe', 'comment']
     assert all(s['timing'] == 'structure' for s in scene['stages'])
     assert scene['from'] + scene['durationInFrames'] <= round(clips['shots'][11]['start_s'] * 30)
-
-
-def test_scene_absence_keeps_legacy_top3_and_source_timeline_unchanged():
-    from mayzfact.steps.timeline import build_timeline
-    script, alignment, clips = timeline_fixture()
-    script.pop('cta_scene')
-    top3 = build_timeline(clips, 20, .5, script=script, alignment=alignment)
-    assert 'ctaScene' not in top3 and len(top3['cta']) == 2
-    script.pop('narration_mode')
-    source = build_timeline(clips, 20, .5, script=script, alignment=alignment)
-    assert 'ctaScene' not in source
 
 
 def test_scene_reuse_entries_retain_loop_and_offset_metadata():
@@ -290,7 +279,7 @@ def test_cta_visual_markup_cases_run_in_node():
     root = Path(__file__).resolve().parents[1]/'remotion'
     result = subprocess.run([node, 'tests/cta-scene.cjs'], cwd=root, capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert '11 CTA visual cases passed' in result.stdout
+    assert '10 CTA visual cases passed' in result.stdout
 
 
 def test_operator_summary_exempts_explicit_reuse_from_overlap_warnings(tmp_path, monkeypatch):
@@ -342,7 +331,6 @@ def test_unicorn_theme_schema_needs_no_label_and_preserves_voice_hash():
     parsed = Script.model_validate(raw)
     assert parsed.cta_scene is not None
     assert parsed.cta_scene.theme == 'unicorn'
-    assert parsed.cta_scene.label == ''
     assert parsed.cta_scene.transform_word == 'turn'
     assert text_hash(script_text(parsed.model_dump()['beats'])) == text_hash(script_text(raw['beats']))
     with pytest.raises(ValidationError):
@@ -354,7 +342,6 @@ def test_scene_metadata_survives_schema_without_changing_voice_hash():
     parsed = Script.model_validate(raw).model_dump()
     assert parsed['cta_scene']['transform_word'] == 'volcano'
     assert text_hash(script_text(parsed['beats'])) == text_hash(script_text(raw['beats']))
-    assert Script.model_validate(playful_script().model_dump()).cta_scene is None
     for bad in [{**CONFIG, 'typo': True}, {**CONFIG, 'theme': 'unknown'},
                 {**CONFIG, 'transform_word': ''}, {**CONFIG, 'theme': 'word'}]:
         with pytest.raises(ValidationError):
