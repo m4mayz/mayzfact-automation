@@ -21,6 +21,7 @@
   - Run FaktaCuil baru menjalankan step `source` sebelum naskah ada, jadi memakai `hook_seconds` 10 dan men-download `source.mp4` + frame `seg_*` yang tidak dipakai. Belum diperbaiki (dicatat lead).
   - ~~Hint login `youtube.service` tanpa `--channel`~~: beres di fix review T13 (`service(token, channel="faktacuil")` nyebut `--channel faktacuil`).
   - 1,15 yang di-set eksplisit sebagai `video_speed` MayzFact voicestudio ikut turun ke 1,1 untuk FaktaCuil ElevenLabs (tidak bisa dibedakan dari auto-bump).
+  - Beat jawaban yang nempel ke CTA dan punya "like" + `transform_word` sekaligus (contoh "warnanya berubah, rasanya like permen." dengan `transform_word` "berubah") masih lolos `check-script` (`mayzfact/faktacuil.py:122-124`, `has_trigger`). Saran: trigger transform cuma dihitung kalau beat-nya juga pola gimmick (diakhiri `?` dan ada `jadi <noun>`).
   - `FAKTACUIL_RAW_WPS` dari satu sampel; kalibrasi ulang kalau naskah asli jauh beda tempo.
 - **Pertanyaan spec yang belum dijawab Akmal (pakai default):** Q2 `video_speed` khusus FaktaCuil (tetap 1.1), Q3 source listicle (boleh 1 item), Q5 TikTok (tidak dibuat), Q7 SFX click CTA (sama). Q1, Q4, Q8 sudah dijawab; Q6 menunggu langkah 3 di atas.
 - **Spec/plan:** `docs/superpowers/specs/2026-11-10-faktacuil-format-design.md` (bagian 13 = deviasi), `docs/superpowers/plans/2026-11-10-faktacuil-format.md`.
