@@ -643,3 +643,24 @@
 ## CTA motion — bounded revision
 - Alex terakhir dipilih; tidak ada perubahan audio/timing/klip. RED markup `like must enter from invisible` berhasil mereproduksi kemunculan mendadak. Shared CtaMotion memberi entrance spring/fade/slide, exit shrink/fade, click ripple dan partikel deterministik. Subscribe punya huruf stagger/cursor/click delay visual dan confetti; comment diketik. Semua efek dibatasi durasi stage, tanpa SFX tambahan.
 - Node markup memeriksa empat stage awal transparan/hold terbaca/akhir transparan, typewriter completion, ripple/confetti dan glass limits; TypeScript lolos. Spec+plan `docs/superpowers/specs/2026-11-02-cta-motion-design.md`. Full suite dan hasil render dilaporkan pada eksekusi parent.
+
+# Handoff — Top3-only (D-050)
+
+- **Updated:** 2026-11-10.
+- **Branch:** `fase-top3-only`.
+- **Goal & scope:** Spec `docs/superpowers/specs/2026-11-10-top3-only-design.md`, plan `docs/superpowers/plans/2026-11-10-top3-only.md`, keputusan D-050. Pipeline hanya mendukung format Top 3 (`narration_mode: "top3"`) dengan `cta_scene` wajib; mode source legacy dan varian CTA legacy dihapus.
+- **Selesai:**
+  - `Script`: `narration_mode` wajib literal `"top3"`, `cta_scene` wajib dengan tema ilustrasi (`volcano`, `unicorn`, `honey`, `puppy`, `lion`, `shark`). Tema `word` dan field `label` dihapus dari model.
+  - Guard run lama: `load_script` menolak script format lama (`narration_mode` tidak ada/bukan `"top3"`, atau tanpa `cta_scene`) sebelum output resume dihapus. Lima run lama di disk (`4735ZE89GXQ`, `NSua7RPoFJg`, `i2xag_1OJfM`, `piD9Fjp-mG8`, `ydA5gOdKvfc`) aman dibiarkan.
+  - Budget kata: `WORDS_PER_SECOND`, `WORD_TOLERANCE`, `target_duration`, `word_range`, serta config `target_duration_ratio`/`min_duration_seconds` dihapus. Budget selalu berbasis formula top3 (`narration_word_range`).
+  - Plan: `run_plan` selalu ranked, `source_rank` selalu diisi, kelompok CTA otomatis diisi `cta_scene`.
+  - Timeline & Remotion: overlay legacy `Cta` dan `timeline.cta` dihapus. `ShortVideo` hanya merender `CtaScene`. `Cta.tsx` hanya mengekspor `Thumb` dan `Cursor` untuk kebutuhan `CtaScene`. Click SFX dan sinkronisasi tabrakan emoji tetap aman dihitung via `_top3_cta`.
+  - Node markup test di Remotion: 10 CTA visual cases passed tanpa tema `word`.
+- **Verifikasi:**
+  - `uv run pytest -q`: 685 passed, 3 skipped, 4 deselected (termasuk 10 node SSR visual markup cases).
+  - Ruff `uvx ruff check --select F,I`: bersih.
+  - TypeScript `cd remotion && npx tsc --noEmit -p .`: bersih.
+  - 10 CTA visual cases passed di Node (`node tests/cta-scene.cjs`).
+  - Belum dites: render video penuh (`uv run pytest -m render` belum dijalanin karena berat, 5–8 menit).
+- **Masalah terbuka:**
+  - Spec R6: Jika ada `script.json` Top 3 di luar `runs/` (misalnya backup/mesin lain) yang masih memiliki field `"label": ""`, file tersebut akan ditolak oleh `extra="forbid"`. Solusinya cukup hapus key `label` dari file JSON tersebut (tidak mengubah hash suara).

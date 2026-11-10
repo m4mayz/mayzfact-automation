@@ -544,3 +544,12 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Kontrak baru:** naskah baru memakai ilustrasi objek yang disebut pada pertanyaan transformasi. `volcano`, `unicorn`, `honey` didukung. `word` tetap dapat dibaca untuk run legacy, tetapi ditolak validasi naskah baru. Tema lain ditolak schema/renderer; tidak ada fallback diam-diam ke kartu kata. Nama tema harus cocok dengan objek frasa `into [a/an/the] <objek>` di beat transformasi; objek baru memerlukan implementasi ilustrasi sebelum TTS.
 - **Honey:** SVG dipper kayu, aliran/tetes madu emas, jar kaca dan riak deterministik berdasarkan frame. Bukan teks HONEY. Entrance/morph/exit dan stage like/subscribe/comment tetap.
 - **Perlindungan produksi:** revisi pG-Y-ICCAXQ hanya metadata visual script/plan/timeline setelah fixture diperiksa. Jangan ubah ucapan, timing, audio, klip atau link; simpan backup dan verifikasi hash. Tes mencakup larangan word, mismatch objek, unknown theme, determinisme dan legacy. Hasil eksekusi final dicatat di handoff.
+
+## D-050 — 2026-11-10 — Pipeline cuma format top3
+
+- **Status:** accepted, diimplementasi pada branch `fase-top3-only`.
+- **Authority:** Akmal lewat lead (2026-11-10).
+- **Kontrak:** `narration_mode` wajib `"top3"`, `cta_scene` wajib dengan tema ilustrasi (`volcano`, `unicorn`, `honey`, `puppy`, `lion`, `shark`). Tema `word`, field `label`, overlay `Cta` legacy di Remotion, dan prop `timeline.cta` dihapus. Scene CTA jadi satu-satunya representasi visual CTA; click SFX dan detector CTA bersama tetap dipertahankan.
+- **Alasan field tetap ada:** `narration_mode` tetap dipertahankan di schema sebagai pemilih format karena nantinya ada format untuk channel lain; tidak membuat abstraksi prematur (registry/strategy) sebelum format berikutnya ada.
+- **Run lama:** 5 run format lama tanpa `narration_mode` (`4735ZE89GXQ`, `NSua7RPoFJg`, `i2xag_1OJfM`, `piD9Fjp-mG8`, `ydA5gOdKvfc`) dibiarkan apa adanya di disk; pipeline menolak run ini lewat `load_script` sebelum menghapus output resume apa pun (`shots_plan.json`, `clips.json`, `timeline.json`, `final.mp4`).
+- **Hubungan dengan keputusan lama:** menggantikan cabang mode `source` dan varian CTA legacy dari D-045, D-046, D-048 (scene tidak lagi opt-in melainkan wajib; tema `word` dan `label` dihapus), dan D-049 (kompatibilitas baca tema `word` dihapus). D-045 s/d D-049 tetap dipertahankan sebagai riwayat keputusan.
