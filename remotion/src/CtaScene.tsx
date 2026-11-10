@@ -61,12 +61,6 @@ export const CtaSceneVisual: React.FC<{scene: CtaSceneData; stage: CtaStage; fra
       case 'puppy': transformVisual = <Puppy frame={frame}/>; break;
       case 'lion': transformVisual = <Lion frame={frame}/>; break;
       case 'shark': transformVisual = <Shark frame={frame}/>; break;
-      // Kartu kata cuma untuk props legacy yang minta word secara eksplisit.
-      case 'word':
-        transformVisual = <div style={{...textStyle, width: 840, padding: '110px 36px', boxSizing: 'border-box', border: '8px solid #9adeff', borderRadius: 70,
-          background: 'linear-gradient(135deg, #2563eb, #783bd2)', fontSize: Math.min(108, 1050/Math.max(1, scene.label.length)), boxShadow: shadow,
-          rotate: `${Math.sin(frame / 12) * 2}deg`}}>{scene.label}</div>;
-        break;
       default: {
         const unsupportedTheme: never = scene.theme;
         throw new Error(`Unsupported CTA transform theme: ${String(unsupportedTheme)}`);

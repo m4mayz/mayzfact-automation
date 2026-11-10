@@ -22,7 +22,7 @@ from tests.top3_fixtures import SOURCE_TEXT, playful_script
 
 VIDEO_ID = "i2xag_1OJfM"
 KEYS = {"elevenlabs_api_keys": ("e",), "elevenlabs_voice_id": "v"}
-SETTINGS = Settings(**KEYS, max_shot_seconds=10.0, target_duration_ratio=0.6, min_duration_seconds=32.0)
+SETTINGS = Settings(**KEYS, max_shot_seconds=10.0)
 TRANSCRIPT = [{"text": SOURCE_TEXT, "start": 0.0, "duration": 53.3}]
 NONE_DONE = {step: False for step in STEPS}
 ALL_DONE = {step: True for step in STEPS}

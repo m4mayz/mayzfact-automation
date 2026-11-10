@@ -41,7 +41,7 @@ def test_shark_scene_is_supported_without_text_label():
 def test_illustration_must_match_named_object_in_cta():
     raw = playful_script().model_dump()
     raw['cta_scene'] = dict(theme='unicorn', transform_word='turn', comment_text='MAGIC')
-    issues, _ = check_script(Script.model_validate(raw), '', 40)
+    issues, _ = check_script(Script.model_validate(raw), '')
     assert any('does not match' in issue for issue in issues)
 
 
@@ -53,7 +53,7 @@ def test_supported_illustration_matches_transform_without_changing_text_hash():
         before = text_hash(script_text(raw['beats']))
         raw['cta_scene'] = dict(theme=theme, transform_word='turn', comment_text='DONE')
         parsed = Script.model_validate(raw)
-        issues, _ = check_script(parsed, '', 40)
+        issues, _ = check_script(parsed, '')
         assert not any('illustration' in issue.lower() for issue in issues), issues
         assert text_hash(script_text(parsed.model_dump()['beats'])) == before
 
@@ -78,7 +78,7 @@ def test_comment_transformation_cannot_override_actual_honey_question(comment, t
     raw['beats'][8]['text'] = 'Did the button turn into honey?'
     raw['beats'][10]['text'] = comment
     raw['cta_scene'] = dict(theme=theme, transform_word='turn', comment_text='UNICORN')
-    issues, _ = check_script(Script.model_validate(raw), '', 40)
+    issues, _ = check_script(Script.model_validate(raw), '')
     assert any('does not match' in issue for issue in issues) is not matches, issues
 
 
@@ -91,7 +91,7 @@ def test_quoted_transformation_is_not_the_actual_question(quote, theme, matches)
         f'{quote}Did the button turn into a unicorn?{closing} Did the button turn into honey?'
     )
     raw['cta_scene'] = dict(theme=theme, transform_word='turn', comment_text='DONE')
-    issues, _ = check_script(Script.model_validate(raw), '', 40)
+    issues, _ = check_script(Script.model_validate(raw), '')
     assert any('does not match' in issue for issue in issues) is not matches, issues
 
 
@@ -100,7 +100,7 @@ def test_comment_in_question_beat_does_not_override_transformation(theme, matche
     raw = playful_script().model_dump()
     raw['beats'][8]['text'] = 'Did the button turn into honey? Comment turn into a unicorn.'
     raw['cta_scene'] = dict(theme=theme, transform_word='turn', comment_text='DONE')
-    issues, _ = check_script(Script.model_validate(raw), '', 40)
+    issues, _ = check_script(Script.model_validate(raw), '')
     assert any('does not match' in issue for issue in issues) is not matches, issues
 
 
@@ -108,5 +108,5 @@ def test_mention_in_comment_does_not_validate_wrong_transformation():
     raw = playful_script().model_dump()
     raw['beats'][10]['text'] = "and comment 'unicorn'."
     raw['cta_scene'] = dict(theme='unicorn', transform_word='turn', comment_text='UNICORN')
-    issues, _ = check_script(Script.model_validate(raw), '', 40)
+    issues, _ = check_script(Script.model_validate(raw), '')
     assert any('does not match' in issue for issue in issues)

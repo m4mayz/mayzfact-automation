@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 import re
 
 from mayzfact.countdown import parse_countdown
@@ -12,20 +11,9 @@ from mayzfact.models import Script
 from mayzfact.store import RunPaths, read_json
 from mayzfact.text import clean_text, ngram_overlap, words
 
-WORDS_PER_SECOND = 2.2  # ElevenLabs v3 aslinya 2.07–2.28 kata/detik; dulu 2.6 bikin video 90%+ durasi source (D-033)
-WORD_TOLERANCE = 0.15
 PHOTO_SHARE_RANGE = (0.15, 0.45)
 MAX_NGRAM_OVERLAP = 0.15
 MAX_BEAT_WORDS = 10  # ±4.5 detik dengan 2.2 kata/detik
-
-
-def target_duration(source_duration_s: float, ratio: float, minimum_s: float) -> float:
-    return max(minimum_s, ratio * source_duration_s)
-
-
-def word_range(duration_s: float) -> tuple[int, int, int]:
-    target = round(duration_s * WORDS_PER_SECOND)
-    return target, math.ceil(target * (1 - WORD_TOLERANCE)), math.floor(target * (1 + WORD_TOLERANCE))
 
 
 def normalize_script(script: Script) -> Script:
@@ -42,7 +30,7 @@ def normalize_script(script: Script) -> Script:
     return script.model_copy(update={"beats": beats})
 
 
-def narration_word_range(script: Script, duration_s: float, video_speed: float = 1.1) -> tuple[int, int, int]:
+def narration_word_range(script: Script, video_speed: float = 1.1) -> tuple[int, int, int]:
     from mayzfact.narration import cta_beat_indices, top3_word_range
 
     # Persetujuan panjang per-run mengunci jumlah kata, bukan melewati cek lain.
@@ -55,7 +43,7 @@ def narration_word_range(script: Script, duration_s: float, video_speed: float =
     return target + extra, low + extra, high + extra
 
 
-def check_script(script: Script, source_text: str, duration_s: float,
+def check_script(script: Script, source_text: str,
                  bgm_choices: list[str] | None = None, *, video_speed: float = 1.1) -> tuple[list[str], float]:
     """Balikin (daftar masalah, overlap). Pesan pakai English biar bisa ditempel balik ke agent mana pun."""
     if not script.beats:
@@ -77,7 +65,7 @@ def check_script(script: Script, source_text: str, duration_s: float,
                         "Use the matching supported illustration; unsupported objects need an illustration first.")
     full_text = " ".join(b.text for b in script.beats)
     count = len(words(full_text))
-    _, low, high = narration_word_range(script, duration_s, video_speed)
+    _, low, high = narration_word_range(script, video_speed)
     if not low <= count <= high:
         problems.append(f"The narration has {count} words; it must have between {low} and {high}.")
     share = sum(b.media == "photo" for b in script.beats) / len(script.beats)
@@ -158,14 +146,13 @@ def load_script(paths: RunPaths) -> Script:
         raise PipelineError("script", f"script.json nggak valid (cek JSON/field-nya): {str(exc)[:300]}") from exc
 
 
-def check_script_file(paths: RunPaths, source: dict, *, ratio: float, minimum_s: float,
+def check_script_file(paths: RunPaths, source: dict, *,
                       bgm_choices: list[str] | None, video_speed: float = 1.1) -> list[str]:
     """Cek runs/<id>/script.json yang ditulis agent pakai aturan yang sama kayak check_script."""
     script = load_script(paths)
-    duration_s = target_duration(source["duration_s"], ratio, minimum_s)
     source_text = " ".join(s["text"] for s in source["transcript"])
     try:
-        problems, _ = check_script(script, source_text, duration_s, bgm_choices, video_speed=video_speed)
+        problems, _ = check_script(script, source_text, bgm_choices, video_speed=video_speed)
     except ValueError as exc:
         raise PipelineError("script", str(exc)) from exc
     return problems

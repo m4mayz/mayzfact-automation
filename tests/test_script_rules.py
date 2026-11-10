@@ -1,41 +1,26 @@
 from mayzfact.models import Beat, Script
-from mayzfact.steps.script import (
-    check_script,
-    normalize_script,
-    target_duration,
-    word_range,
-)
+from mayzfact.steps.script import check_script, normalize_script
 from tests.top3_fixtures import SOURCE_TEXT, top3_script
-
-DURATION = target_duration(83.4, 0.6, 32)  # 50.04 detik
-
-
-def test_target_duration_and_word_range():
-    assert round(target_duration(70.8, 0.6, 32), 2) == 42.48
-    assert target_duration(40, 0.6, 32) == 32
-    # 2.2 kata/detik, bukan 2.6: ElevenLabs v3 aslinya cuma 2.07–2.28 (D-033)
-    assert word_range(42.48) == (93, 80, 106)
-    assert word_range(DURATION) == (110, 94, 126)
 
 
 def test_old_script_with_fallback_query_still_loads_and_passes():
     raw = {**top3_script().model_dump(), "fallback_query": "animals"}  # naskah lama sebelum field ini dicabut
     script = Script.model_validate(raw)
     assert not hasattr(script, "fallback_query")
-    assert check_script(script, SOURCE_TEXT, 120)[0] == []
+    assert check_script(script, SOURCE_TEXT)[0] == []
 
 
 def test_script_without_fallback_query_is_valid():
     raw = top3_script().model_dump()
     raw.pop("fallback_query", None)
-    assert check_script(Script.model_validate(raw), SOURCE_TEXT, 120)[0] == []
+    assert check_script(Script.model_validate(raw), SOURCE_TEXT)[0] == []
 
 
 def test_photo_share_outside_range_is_reported():
     script = top3_script()
     for beat in script.beats[1:]:
         beat.media = "photo"
-    problems, _ = check_script(script, SOURCE_TEXT, 120)
+    problems, _ = check_script(script, SOURCE_TEXT)
     assert any("photo" in p for p in problems)
 
 
@@ -44,7 +29,7 @@ def test_copied_phrases_are_reported():
     script.beats[2].text = "Frozen winter Number four archerfish Water jets Number three basilisk lizards"
     script.beats[3].text = "jets Number three basilisk lizards They sprint over water Number two"
     script.beats[5].text = "They sprint over water Number two immortal jellyfish Their life cycle"
-    problems, overlap = check_script(script, SOURCE_TEXT, 120)
+    problems, overlap = check_script(script, SOURCE_TEXT)
     assert overlap > 0.15
     assert any("copied" in p for p in problems)
 
@@ -56,7 +41,7 @@ def test_empty_queries_are_reported():
             "beats": [script.beats[0].model_copy(update={"queries": []}), *script.beats[1:]],
         }
     )
-    problems, _ = check_script(script, SOURCE_TEXT, 120)
+    problems, _ = check_script(script, SOURCE_TEXT)
     assert "Beat 1 has no search queries." in problems
 
 
@@ -78,7 +63,7 @@ def test_long_beat_is_reported():
     script = top3_script()
     long_beat = script.beats[1].model_copy(update={"text": " ".join(f"x{j}" for j in range(12)) + "."})
     script = script.model_copy(update={"beats": [script.beats[0], long_beat, *script.beats[2:]]})
-    problems, _ = check_script(script, SOURCE_TEXT, 120)
+    problems, _ = check_script(script, SOURCE_TEXT)
     assert any(p.startswith("Beat 2 has 12 words") for p in problems)
 
 
@@ -93,7 +78,7 @@ def test_normalize_script_keeps_subject_trimmed():
 def test_countdown_item_with_fewer_than_two_explanation_beats_is_reported():
     script = top3_script()
     del script.beats[6]
-    problems, _ = check_script(script, SOURCE_TEXT, 120)
+    problems, _ = check_script(script, SOURCE_TEXT)
     assert any("Number two" in p and "explanation beat" in p for p in problems)
 
 
@@ -101,16 +86,16 @@ def test_cta_words_from_source_must_survive():
     script = top3_script()
     script.beats[8].text = "or say 'nope'."
     source = SOURCE_TEXT + " Comment below, then like the video and subscribe."
-    problems, _ = check_script(script, source, 120)
+    problems, _ = check_script(script, source)
     assert any("The source asks viewers to" in p and "comment" in p for p in problems)
 
 
 def test_bgm_must_exist_when_choices_known():
     script = top3_script().model_copy(update={"bgm": "epic.mp3"})
-    problems, _ = check_script(script, SOURCE_TEXT, 120, bgm_choices=["mystery.mp3"])
+    problems, _ = check_script(script, SOURCE_TEXT, bgm_choices=["mystery.mp3"])
     assert any("epic.mp3" in p for p in problems)
-    assert not [p for p in check_script(script, SOURCE_TEXT, 120, bgm_choices=["epic.mp3"])[0] if "bgm" in p.lower()]
-    assert not [p for p in check_script(script, SOURCE_TEXT, 120)[0] if "bgm" in p.lower()]  # choices None = nggak dicek
+    assert not [p for p in check_script(script, SOURCE_TEXT, bgm_choices=["epic.mp3"])[0] if "bgm" in p.lower()]
+    assert not [p for p in check_script(script, SOURCE_TEXT)[0] if "bgm" in p.lower()]  # choices None = nggak dicek
 
 
 def test_script_accepts_new_optional_fields():
@@ -130,5 +115,5 @@ def test_normalize_script_keeps_bgm_and_hook_queries():
 
 
 def test_countdown_announcements_do_not_count_as_copied():
-    _, overlap = check_script(top3_script(), SOURCE_TEXT, 120)
+    _, overlap = check_script(top3_script(), SOURCE_TEXT)
     assert overlap == 0.0  # "Number N, subject" wajib sama persis, jadi nggak dihitung sebagai jiplakan

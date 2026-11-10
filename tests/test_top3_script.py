@@ -5,16 +5,16 @@ def test_top3_word_budget_ignores_source_length_and_honors_speed():
     from mayzfact.steps.script import check_script
     from tests.top3_fixtures import SOURCE_TEXT, top3_script
 
-    assert check_script(top3_script(), SOURCE_TEXT, 120)[0] == []
+    assert check_script(top3_script(), SOURCE_TEXT)[0] == []
     for count in [75, 85]:
-        problems, _ = check_script(top3_script(count), SOURCE_TEXT, 120)
+        problems, _ = check_script(top3_script(count), SOURCE_TEXT)
         assert any('words' in p for p in problems)
     from mayzfact.steps.script import narration_word_range
-    assert narration_word_range(top3_script(), 120, 1.1) == (80, 76, 84)
-    assert narration_word_range(top3_script(), 120, 1.0) == (73, 70, 76)
+    assert narration_word_range(top3_script(), 1.1) == (80, 76, 84)
+    assert narration_word_range(top3_script(), 1.0) == (73, 70, 76)
     for speed in [0, -1, float('nan'), float('inf')]:
         with pytest.raises(ValueError, match='speed'):
-            narration_word_range(top3_script(), 120, speed)
+            narration_word_range(top3_script(), speed)
 
 
 @pytest.mark.parametrize('change', ['extra', 'missing', 'duplicate', 'swapped_subject', 'source_missing', 'source_duplicate'])
@@ -35,7 +35,7 @@ def test_top3_requires_exact_original_source_ranks(change):
         source = source.replace('Number three,', 'Third place is')
     else:
         source += ' Number three, basilisk lizards.'
-    problems, _ = check_script(script, source, 45)
+    problems, _ = check_script(script, source)
     assert any('Top 3' in p for p in problems)
 
 
@@ -52,7 +52,7 @@ def test_top3_source_headings_accept_normalized_case_spaces_and_chunks():
         write_json_atomic(paths.script_json, top3_script().model_dump())
         text = SOURCE_TEXT.replace('Number three, basilisk lizards.', 'NUMBER 3:  BASILISK   LIZARDS.')
         source = dict(duration_s=90, transcript=[dict(text=p) for p in text.split(' ', 7)])
-        assert check_script_file(paths, source, ratio=.8, minimum_s=32, bgm_choices=None) == []
+        assert check_script_file(paths, source, bgm_choices=None) == []
 
 
 @pytest.mark.parametrize('change', ['early', 'late', 'gap', 'too_many', 'missing_like', 'no_cta', 'one_explanation', 'five_hook', 'bad_announcement'])
@@ -79,7 +79,7 @@ def test_top3_enforces_cta_block_and_editorial_structure(change):
         s.beats[0].text = s.beats[0].text.replace('three', 'five')
     else:
         s.beats[1].text = 'number 3: basilisk lizards!'
-    problems, _ = check_script(s, SOURCE_TEXT, 45)
+    problems, _ = check_script(s, SOURCE_TEXT)
     assert any('Top 3' in p or 'explanation' in p for p in problems)
 
 

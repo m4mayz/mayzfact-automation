@@ -15,7 +15,7 @@ for (const ext of ['.ts', '.tsx']) {
 const React = require('react');
 const {renderToStaticMarkup} = require('react-dom/server');
 const {CtaSceneVisual} = require('../src/CtaScene.tsx');
-const scene = {theme: 'volcano', commentText: 'ERUPTED', label: '', from: 0, durationInFrames: 300, stages: [], cues: []};
+const scene = {theme: 'volcano', commentText: 'ERUPTED', from: 0, durationInFrames: 300, stages: [], cues: []};
 function markup(kind, frame, options = {}) {
   return renderToStaticMarkup(React.createElement(CtaSceneVisual, {scene: {...scene, ...options},
     stage: {kind, from: 0, durationInFrames: 90, triggerAt: 15, timing: 'word'}, frame}));
@@ -35,9 +35,6 @@ const comment = markup('comment', 25);
 assert.match(comment, /ERUPTED/);
 assert.match(comment, /COMMENT/);
 assert.doesNotMatch(comment, /data-volcano|SUBSCRIBE/);
-const word = markup('transform', 25, {theme: 'word', label: 'CRYSTAL'});
-assert.match(word, /CRYSTAL/);
-assert.doesNotMatch(word, /data-volcano/);
 // Semua stage harus masuk/keluar halus, bukan muncul penuh pada frame pertama.
 function rootOpacity(html) {
   const style = html.match(/^<div[^>]*style="([^"]+)"/)[1];
@@ -59,7 +56,7 @@ const blur = Number(decorative.match(/blur\(([\d.]+)px\)/)[1]);
 const brightness = Number(decorative.match(/brightness\(([\d.]+)\)/)[1]);
 assert.ok(blur <= 12, `Glass blur must retain visible footage, got ${blur}px`);
 assert.ok(brightness >= 0.7, `Glass footage must remain visible, got brightness ${brightness}`);
-const unicornOptions = {theme: 'unicorn', label: 'NOT A WORD CARD', commentText: 'MAGIC'};
+const unicornOptions = {theme: 'unicorn', commentText: 'MAGIC'};
 const unicorn = markup('transform', 25, unicornOptions);
 assert.match(unicorn, /<svg[^>]*data-unicorn="true"[^>]*width="880"[^>]*height="840"/);
 for (const part of ['horn', 'mane', 'head', 'sparkles']) {
@@ -76,13 +73,14 @@ for (const part of ['head', 'sparkles']) {
 assert.equal(rootOpacity(markup('transform', 0, unicornOptions)), 0);
 assert.ok(rootOpacity(markup('transform', 18, unicornOptions)) > .9);
 assert.ok(rootOpacity(markup('transform', 89, unicornOptions)) < .05);
+assert.deepEqual(Object.keys(require('../src/Cta.tsx')).sort(), ['Cursor', 'Thumb']);
 const thumbMarkup = renderToStaticMarkup(React.createElement(require('../src/Cta.tsx').Thumb, {size: 320, color: 'white'}));
 assert.ok(markup('transform', 0, unicornOptions).includes(thumbMarkup), 'Like thumb must remain during morph entrance');
 assert.ok(!unicorn.includes(thumbMarkup), 'Like thumb must disappear once unicorn is fully transformed');
-assert.equal(markup('like', 20, unicornOptions), markup('like', 20, {...unicornOptions, theme: 'word'}));
-assert.equal(markup('subscribe', 25, unicornOptions), markup('subscribe', 25, {...unicornOptions, theme: 'word'}));
-assert.equal(markup('comment', 25, unicornOptions), markup('comment', 25, {...unicornOptions, theme: 'word'}));
-const honeyOptions = {theme: 'honey', label: 'HONEY', commentText: 'SWEET'};
+assert.equal(markup('like', 20, unicornOptions), markup('like', 20, {...unicornOptions, theme: 'volcano'}));
+assert.equal(markup('subscribe', 25, unicornOptions), markup('subscribe', 25, {...unicornOptions, theme: 'volcano'}));
+assert.equal(markup('comment', 25, unicornOptions), markup('comment', 25, {...unicornOptions, theme: 'volcano'}));
+const honeyOptions = {theme: 'honey', commentText: 'SWEET'};
 const honey = markup('transform', 25, honeyOptions);
 assert.match(honey, /<svg[^>]*data-honey="true"[^>]*width="880"[^>]*height="840"/);
 for (const part of ['dipper', 'grooves', 'stream', 'drops', 'jar', 'fill']) {
@@ -102,9 +100,9 @@ assert.ok(rootOpacity(markup('transform', 89, honeyOptions)) < .05);
 assert.ok(markup('transform', 0, honeyOptions).includes(thumbMarkup), 'Like thumb must remain during honey morph entrance');
 assert.ok(!honey.includes(thumbMarkup), 'Like thumb must disappear once honey is fully transformed');
 for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
-  assert.equal(markup(kind, frame, honeyOptions), markup(kind, frame, {...honeyOptions, theme: 'word'}), `${kind} must not depend on honey theme`);
+  assert.equal(markup(kind, frame, honeyOptions), markup(kind, frame, {...honeyOptions, theme: 'volcano'}), `${kind} must not depend on honey theme`);
 }
-const puppyOptions = {theme: 'puppy', label: 'PUPPY', commentText: 'WOOF'};
+const puppyOptions = {theme: 'puppy', commentText: 'WOOF'};
 const puppy = markup('transform', 25, puppyOptions);
 assert.match(puppy, /<svg[^>]*data-puppy="true"[^>]*width="880"[^>]*height="840"/);
 for (const part of ['head', 'ears', 'tail', 'tongue', 'collar', 'paws']) {
@@ -123,9 +121,9 @@ assert.ok(rootOpacity(markup('transform', 89, puppyOptions)) < .05);
 assert.ok(markup('transform', 0, puppyOptions).includes(thumbMarkup), 'Like thumb must remain during puppy morph entrance');
 assert.ok(!puppy.includes(thumbMarkup), 'Like thumb must disappear once puppy is fully transformed');
 for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
-  assert.equal(markup(kind, frame, puppyOptions), markup(kind, frame, {...puppyOptions, theme: 'word'}), `${kind} must not depend on puppy theme`);
+  assert.equal(markup(kind, frame, puppyOptions), markup(kind, frame, {...puppyOptions, theme: 'volcano'}), `${kind} must not depend on puppy theme`);
 }
-const lionOptions = {theme: 'lion', label: 'LION', commentText: 'ROAR'};
+const lionOptions = {theme: 'lion', commentText: 'ROAR'};
 const lion = markup('transform', 25, lionOptions);
 assert.match(lion, /<svg[^>]*data-lion="true"[^>]*width="880"[^>]*height="840"/);
 for (const part of ['head', 'mane', 'ears', 'jaw', 'whiskers', 'roar-waves']) {
@@ -144,9 +142,9 @@ assert.ok(rootOpacity(markup('transform', 89, lionOptions)) < .05);
 assert.ok(markup('transform', 0, lionOptions).includes(thumbMarkup), 'Like thumb must remain during lion morph entrance');
 assert.ok(!lion.includes(thumbMarkup), 'Like thumb must disappear once lion is fully transformed');
 for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
-  assert.equal(markup(kind, frame, lionOptions), markup(kind, frame, {...lionOptions, theme: 'word'}), `${kind} must not depend on lion theme`);
+  assert.equal(markup(kind, frame, lionOptions), markup(kind, frame, {...lionOptions, theme: 'volcano'}), `${kind} must not depend on lion theme`);
 }
-const sharkOptions = {theme: 'shark', label: 'SHARK', commentText: 'SHARK'};
+const sharkOptions = {theme: 'shark', commentText: 'SHARK'};
 const shark = markup('transform', 25, sharkOptions);
 assert.match(shark, /<svg[^>]*data-shark="true"[^>]*width="880"[^>]*height="840"/);
 for (const part of ['body', 'fin', 'tail', 'jaw', 'bubbles']) {
@@ -165,17 +163,17 @@ assert.ok(rootOpacity(markup('transform', 89, sharkOptions)) < .05);
 assert.ok(markup('transform', 0, sharkOptions).includes(thumbMarkup), 'Like thumb must remain during shark morph entrance');
 assert.ok(!shark.includes(thumbMarkup), 'Like thumb must disappear once shark is fully transformed');
 for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
-  assert.equal(markup(kind, frame, sharkOptions), markup(kind, frame, {...sharkOptions, theme: 'word'}), `${kind} must not depend on shark theme`);
+  assert.equal(markup(kind, frame, sharkOptions), markup(kind, frame, {...sharkOptions, theme: 'volcano'}), `${kind} must not depend on shark theme`);
 }
-// Props JSON lama tetap boleh word, tapi theme asing tidak boleh diam-diam jadi kartu teks.
-for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__']) {
+// Theme asing dan word legacy harus ditolak, bukan diam-diam jadi kartu teks.
+for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__', 'word']) {
   for (const frame of [0, 25]) {
-    assert.throws(() => markup('transform', frame, {theme, label: 'DO NOT RENDER'}), {
+    assert.throws(() => markup('transform', frame, {theme}), {
       name: 'Error', message: `Unsupported CTA transform theme: ${String(theme)}`,
     });
   }
   for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
-    assert.equal(markup(kind, frame, {theme}), markup(kind, frame, {theme: 'word'}));
+    assert.equal(markup(kind, frame, {theme}), markup(kind, frame, {theme: 'volcano'}));
   }
 }
-console.log('11 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, alternate word theme, animated deterministic unicorn, animated deterministic honey, animated deterministic puppy, animated deterministic lion, animated deterministic shark, unknown transform theme rejection)');
+console.log('10 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, animated deterministic unicorn, animated deterministic honey, animated deterministic puppy, animated deterministic lion, animated deterministic shark, unknown transform theme rejection)');

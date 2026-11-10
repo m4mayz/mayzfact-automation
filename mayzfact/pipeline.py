@@ -295,8 +295,7 @@ def _require_script(paths: RunPaths, settings: Settings) -> None:
     from mayzfact.audio import BGM_DIR, list_bgm
 
     load_script(paths)
-    problems = check_script_file(paths, read_json(paths.source_json), ratio=settings.target_duration_ratio,
-                                 minimum_s=settings.min_duration_seconds, bgm_choices=list_bgm(BGM_DIR),
+    problems = check_script_file(paths, read_json(paths.source_json), bgm_choices=list_bgm(BGM_DIR),
                                  video_speed=settings.video_speed)
     if problems:
         raise PipelineError("script", "Naskah belum lolos cek: " + " ".join(problems))

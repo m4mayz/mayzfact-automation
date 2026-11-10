@@ -8,7 +8,7 @@ from tests.top3_fixtures import SOURCE_TEXT, top3_script
 @pytest.mark.parametrize('delimiter', ['. ', ' - ', ' – ', ' — '])
 def test_source_heading_delimiters_match_shared_countdown_grammar(delimiter):
     source = SOURCE_TEXT.replace(', ', delimiter)
-    assert check_script(top3_script(), source, 90)[0] == []
+    assert check_script(top3_script(), source)[0] == []
 
 
 @pytest.mark.parametrize('layout', ['same_beat', 'split_beats'])
@@ -27,7 +27,7 @@ def test_cta_token_boundaries_match_validation_and_timeline(layout):
         s.beats[7].text = "Subscribe, it turns into a volcano, see for yourself"
         s.beats[8].text = "Like if you'd watch, or comment 'nope' if you'd run."
         expected = ['subscribe', 'like']
-    assert check_script(s, SOURCE_TEXT, 90)[0] == []
+    assert check_script(s, SOURCE_TEXT)[0] == []
     script = s.model_dump()
     alignment = fake_alignment(script_text(script['beats']),38.5)
     times = beat_timings([b['text'] for b in script['beats']],alignment,38.5)

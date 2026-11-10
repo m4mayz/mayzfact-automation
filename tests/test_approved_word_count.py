@@ -9,13 +9,13 @@ def test_approved_word_count_survives_json_and_sets_exact_budget():
         'cta_scene': CtaScene(theme='volcano', transform_word='turns', comment_text='NOPE'),
     })
     restored = Script.model_validate_json(script.model_dump_json())
-    assert narration_word_range(restored, 77.345, 1.0) == (131, 131, 131)
+    assert narration_word_range(restored, 1.0) == (131, 131, 131)
 
 
 def test_default_budget_stays_unchanged():
     script = Script(narration_mode='top3', beats=[],
                     cta_scene=CtaScene(theme='volcano', transform_word='turns', comment_text='NOPE'))
-    assert narration_word_range(script, 77.345, 1.0) == (73, 70, 76)
+    assert narration_word_range(script, 1.0) == (73, 70, 76)
 
 
 def test_invalid_approved_counts_are_rejected():
@@ -32,7 +32,7 @@ def test_approval_does_not_disable_other_script_checks():
     script = Script(narration_mode='top3', approved_word_count=1, beats=[{
         'text': 'Wrong.', 'media': 'video', 'queries': [],
     }], cta_scene=CtaScene(theme='volcano', transform_word='turns', comment_text='NOPE'))
-    issues, _ = check_script(script, '', 77.345, video_speed=1.0)
+    issues, _ = check_script(script, '', video_speed=1.0)
     assert not any('The narration has' in issue for issue in issues)
     assert any('Top 3 requires exactly' in issue for issue in issues)
     assert any('no search queries' in issue for issue in issues)
