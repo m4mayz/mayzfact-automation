@@ -122,4 +122,5 @@ export type TimelineProps = {
   overlays?: Overlay[];
   emojis?: EmojiOverlay[];
   ctaScene?: CtaSceneData;
+  captionStyle?: 'faktacuil';
 };

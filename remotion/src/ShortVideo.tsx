@@ -12,7 +12,7 @@ import {SoundLayer} from './SoundLayer';
 import {SubjectCard} from './SubjectCard';
 import type {TimelineProps} from './types';
 
-export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null, flashes = [], overlays = [], emojis = [], ctaScene}) => {
+export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, countdown = [], captions = [], bgm = null, sfx = [], intro = null, flashes = [], overlays = [], emojis = [], ctaScene, captionStyle}) => {
   const {fps} = useVideoConfig();
   // Shot yang seluruh durasinya ketutup card countdown nggak dirender, biar videonya nggak tembus di belakang card.
   // Klip shot itu tetap tampil di dalam subject card.
@@ -42,7 +42,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
       <Overlays overlays={overlays} />
       <Emojis emojis={emojis} />
       {ctaScene ? <CtaScene scene={ctaScene}/> : null}
-      <Captions captions={captions} />
+      <Captions captions={captions} style={captionStyle} />
       {audio ? <Audio src={staticFile(audio)} /> : null}
       <SoundLayer bgm={bgm} sfx={sfx} />
     </AbsoluteFill>
