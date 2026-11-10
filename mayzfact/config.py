@@ -40,6 +40,14 @@ class Settings:
     fg_min_height_ratio: float = 0.5
     hook_seconds: float = 10.0
     brief_port: int = 3100
+    # Format FaktaCuil: voice, TTS, hook, dan panjang shot sendiri; settings_for_mode nuker ke field biasa.
+    faktacuil_elevenlabs_voice_id: str = "cjVigY5qzO86Huf0OWal"  # Eric (premade, bisa lewat API akun free)
+    faktacuil_elevenlabs_delivery_tag: str = ""
+    faktacuil_tts_provider: str = "elevenlabs"  # override lewat settings.local.json
+    faktacuil_voicestudio_voice: str = ""  # profil bahasa Indonesia, diisi Akmal di settings.local.json
+    faktacuil_voicestudio_instruct: str = ""
+    faktacuil_max_shot_seconds: float = 2.0  # ikut referensi, ±2 detik per klip
+
     def __post_init__(self) -> None:
         # VoiceStudio default 1.15x (tetap hormati override eksplisit kalau bukan default 1.1).
         if self.tts_provider == "voicestudio" and self.video_speed == 1.1:
@@ -93,7 +101,8 @@ def load_settings(env_file: Path = PROJECT_ROOT / ".env") -> Settings:
             raise ValueError("harus object JSON")
         allowed = {"tts_provider", "voicestudio_url", "voicestudio_voice", "voicestudio_engine",
                    "voicestudio_timeout", "voicestudio_instruct", "voicestudio_audio_format",
-                   "elevenlabs_delivery_tag", "elevenlabs_stability", "video_speed"}
+                   "elevenlabs_delivery_tag", "elevenlabs_stability", "video_speed",
+                   "faktacuil_tts_provider", "faktacuil_voicestudio_voice", "faktacuil_voicestudio_instruct"}
         if values.keys() - allowed:
             raise ValueError("ada field di luar setting TTS yang didukung")
         for name, value in values.items():
@@ -111,14 +120,16 @@ def load_settings(env_file: Path = PROJECT_ROOT / ".env") -> Settings:
             elif name == "voicestudio_timeout":
                 if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
                     raise ValueError("voicestudio_timeout harus angka positif")
-            elif name == "voicestudio_instruct":
+            elif name in ("voicestudio_instruct", "faktacuil_voicestudio_instruct"):
                 if not isinstance(value, str) or len(value) > 4096:
-                    raise ValueError("voicestudio_instruct harus teks maksimal 4096 karakter")
+                    raise ValueError(f"{name} harus teks maksimal 4096 karakter")
             elif not isinstance(value, str) or not value.strip():
                 raise ValueError(f"{name} harus teks yang nggak kosong")
         settings = replace(settings, **values)
         if settings.tts_provider not in {"elevenlabs", "voicestudio"}:
             raise ValueError("tts_provider harus elevenlabs atau voicestudio")
+        if settings.faktacuil_tts_provider not in {"elevenlabs", "voicestudio"}:
+            raise ValueError("faktacuil_tts_provider harus elevenlabs atau voicestudio")
         if settings.voicestudio_audio_format not in {"mp3", "wav"}:
             raise ValueError("voicestudio_audio_format harus mp3 atau wav")
         url = urlsplit(settings.voicestudio_url)
@@ -137,3 +148,23 @@ def missing_env(settings: Settings, names: list[str]) -> list[str]:
         if not getattr(settings, field_name) and name not in missing:
             missing.append(name)
     return missing
+
+
+def settings_for_mode(settings: Settings, mode: str) -> Settings:
+    """Setting efektif per format naskah. top3 balik apa adanya; FaktaCuil pakai field faktacuil_* sendiri."""
+    if mode != "faktacuil":
+        return settings
+    changed = replace(
+        settings,
+        tts_provider=settings.faktacuil_tts_provider,
+        voicestudio_voice=settings.faktacuil_voicestudio_voice,
+        voicestudio_instruct=settings.faktacuil_voicestudio_instruct,
+        elevenlabs_voice_id=settings.faktacuil_elevenlabs_voice_id,
+        elevenlabs_delivery_tag=settings.faktacuil_elevenlabs_delivery_tag,
+        hook_seconds=0.0,
+        max_shot_seconds=settings.faktacuil_max_shot_seconds,
+    )
+    # 1.15 dari auto-bump voicestudio MayzFact jangan kebawa ke FaktaCuil yang pakai ElevenLabs.
+    if settings.tts_provider == "voicestudio" and changed.tts_provider != "voicestudio" and settings.video_speed == 1.15:
+        changed = replace(changed, video_speed=1.1)
+    return changed

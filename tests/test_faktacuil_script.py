@@ -39,7 +39,7 @@ def test_valid_faktacuil_script_passes():
 
 
 def test_word_range_at_default_speed():
-    assert faktacuil_word_range(1.1) == (69, 55, 82)
+    assert faktacuil_word_range(1.1) == (62, 50, 74)  # 25 * 1.1 * 2.27 = 62,4
 
 
 @pytest.mark.parametrize("mutate,needle", [
@@ -106,5 +106,6 @@ def test_approved_word_count_overrides_faktacuil_range():
     assert any("between 50 and 50" in p for p in check_script(Script(**data), SOURCE_TEXT_EN)[0])
 
 
-def test_word_range_ignores_float_noise():
+def test_word_range_ignores_float_noise(monkeypatch):
+    monkeypatch.setattr("mayzfact.faktacuil.FAKTACUIL_RAW_WPS", 2.5)
     assert faktacuil_word_range(0.56) == (35, 28, 42)  # 20 * 1.4 = 28.000000000000004

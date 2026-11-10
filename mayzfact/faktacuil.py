@@ -13,8 +13,8 @@ VOICE_SAMPLE_TEXT_ID: str = (
     "merasa lebih aman, jadi dia bisa santai tanpa takut diganggu."
 )
 
-# Asumsi awal; dikalibrasi dari sampel yang dipilih Akmal.
-FAKTACUIL_RAW_WPS: float = 2.5
+# Sampel Eric: 40 kata / 17,60 detik, eleven_v3, stability 0.5, tanpa delivery tag.
+FAKTACUIL_RAW_WPS: float = 2.27
 
 
 ID_LIKE_VERBS = {"tekan", "pencet", "klik", "kasih", "tekanlah"}

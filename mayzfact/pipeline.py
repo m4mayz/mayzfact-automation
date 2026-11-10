@@ -10,7 +10,13 @@ from typing import Callable
 
 import httpx
 
-from mayzfact.config import CACHE_DIR, RUNS_DIR, Settings, missing_env
+from mayzfact.config import (
+    CACHE_DIR,
+    RUNS_DIR,
+    Settings,
+    missing_env,
+    settings_for_mode,
+)
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.net import make_client
 from mayzfact.providers.elevenlabs import ElevenLabsTTS
@@ -84,9 +90,10 @@ def check_voice(paths: RunPaths, *, video_speed: float = 1.1, log: Callable[[str
     if not math.isfinite(tts["duration_s"]) or tts["duration_s"] <= 0:
         raise PipelineError("tts", "Durasi audio harus positif dan finite; pulihkan metadata audio asli.")
     estimated = tts["duration_s"] / video_speed
-    log(f"[tts] Top 3 estimasi final {estimated:.1f} detik dari audio nyata {tts['duration_s']:.1f} detik / {video_speed:g}x.")
-    if not 30 <= estimated <= 40:
-        log("[tts] PERINGATAN: estimasi final di luar target 30-40 detik. Audio tetap disimpan; "
+    label, low, high = ("FaktaCuil", 20, 30) if script["narration_mode"] == "faktacuil" else ("Top 3", 30, 40)
+    log(f"[tts] {label} estimasi final {estimated:.1f} detik dari audio nyata {tts['duration_s']:.1f} detik / {video_speed:g}x.")
+    if not low <= estimated <= high:
+        log(f"[tts] PERINGATAN: estimasi final di luar target {low}-{high} detik. Audio tetap disimpan; "
             "jangan regenerate atau ubah speed otomatis tanpa persetujuan.")
     return tts
 
@@ -125,6 +132,9 @@ def real_deps(settings: Settings) -> Deps:
                                   audio_format=settings.voicestudio_audio_format)
         if settings.tts_provider != "elevenlabs":
             raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
+        if not settings.elevenlabs_voice_id.strip():
+            raise PipelineError("config", "Voice ElevenLabs kosong. Isi elevenlabs_voice_id "
+                                          "(FaktaCuil: faktacuil_elevenlabs_voice_id) di Settings.")
         return ElevenLabsTTS(settings.elevenlabs_api_keys, settings.elevenlabs_voice_id,
                              settings.elevenlabs_model, http(), stability=settings.elevenlabs_stability,
                              delivery_tag=settings.elevenlabs_delivery_tag)
@@ -247,7 +257,8 @@ def run_pipeline(
     done = {step: step_done(step, paths) for step in STEPS}
     steps = plan_steps(done, paths.voice_mp3.exists(), from_step)
     if paths.script_json.exists():
-        load_script(paths)  # schema/mode dicek sebelum output resume lama dihapus; tanpa cek anggaran baru
+        script = load_script(paths)  # schema/mode dicek sebelum output resume lama dihapus; tanpa cek anggaran baru
+        settings = settings_for_mode(settings, script.narration_mode)
     if no_render:
         # Review lewat Remotion Studio dulu. final.mp4 lama jadi basi kalau step sebelumnya diulang.
         if any(step in steps for step in ("plan", "fetch", "timeline")):
@@ -294,7 +305,11 @@ def _require_script(paths: RunPaths, settings: Settings) -> None:
         raise AwaitingInput("script", AWAIT_SCRIPT_HINT)
     from mayzfact.audio import BGM_DIR, list_bgm
 
-    load_script(paths)
+    script = load_script(paths)
+    if (script.narration_mode == "faktacuil" and settings.tts_provider == "voicestudio"
+            and not settings.voicestudio_voice.strip()):
+        raise PipelineError("config", "FaktaCuil pakai VoiceStudio tapi profil suaranya kosong. "
+                                      "Isi faktacuil_voicestudio_voice di settings.local.json.")
     problems = check_script_file(paths, read_json(paths.source_json), bgm_choices=list_bgm(BGM_DIR),
                                  video_speed=settings.video_speed)
     if problems:
