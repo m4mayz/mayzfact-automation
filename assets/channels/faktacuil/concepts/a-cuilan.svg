@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>FaktaCuil konsep A: Cuilan</title>
+  <rect width="256" height="256" fill="#0E6B6B"/>
+  <g transform="translate(128 132) scale(1.15) translate(-124 -128)">
+  <path fill="#FFF3DC" d="M190.1 104.2A72 72 0 1 1 131.8 64.9L138 84L128 96L150 102L160 118L174 110Z"/>
+  <path fill="#FF6B57" transform="translate(17 -17)" d="M131.8 64.9A72 72 0 0 1 190.1 104.2L174 110L160 118L150 102L128 96L138 84Z"/>
+</g>
+</svg>
