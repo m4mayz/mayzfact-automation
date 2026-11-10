@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>FaktaCuil konsep B: f-seru</title>
+  <rect width="256" height="256" fill="#D4FF4F"/>
+  <g transform="translate(128 128) scale(1.1) translate(-130 -136)">
+  <path fill="none" stroke="#1E1240" stroke-width="34" d="M128 164V96A38 38 0 0 1 166 58H176"/>
+  <rect x="86" y="104" width="76" height="28" rx="4" fill="#1E1240"/>
+  <path fill="#FF3D8B" d="M113 182L139 177L147 198L132 214L110 207Z"/>
+</g>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>FaktaCuil konsep C: Si Cuil</title>
+  <rect width="256" height="256" fill="#2F8CFF"/>
+  <path fill="#FFC53D" stroke="#FFC53D" stroke-width="16" stroke-linejoin="round" d="M66 112L116 64L184 82L196 160L140 200L74 178Z"/>
+  <path fill="#FFC53D" stroke="#FFC53D" stroke-width="6" stroke-linejoin="round" d="M196 48L214 54L208 70L194 64Z"/>
+  <circle cx="108" cy="126" r="19" fill="#2A1A0E"/>
+  <circle cx="160" cy="126" r="19" fill="#2A1A0E"/>
+  <circle cx="114" cy="120" r="5.5" fill="#FFFFFF"/>
+  <circle cx="166" cy="120" r="5.5" fill="#FFFFFF"/>
+  <path fill="none" stroke="#2A1A0E" stroke-width="7" stroke-linecap="round" d="M92 98Q105 80 120 90M148 90Q163 80 176 98"/>
+  <ellipse cx="134" cy="166" rx="10" ry="13" fill="#2A1A0E"/>
+</svg>
