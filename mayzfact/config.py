@@ -48,7 +48,7 @@ class Settings:
     faktacuil_voicestudio_instruct: str = ""
     faktacuil_max_shot_seconds: float = 2.0  # ikut referensi, ±2 detik per klip
     faktacuil_slot_hours: tuple[int, ...] = (12, 18)  # jam tayang WIB, maksimal 2 video per hari
-    faktacuil_youtube_channel_id: str = ""  # UC..., bukan rahasia; diisi setelah login youtube --channel faktacuil
+    faktacuil_youtube_channel_id: str = "UCsEAAYtfNZis0dB5TkxtKQA"  # bukan rahasia; ID channel FaktaCuil hasil login
 
     def __post_init__(self) -> None:
         # VoiceStudio default 1.15x (tetap hormati override eksplisit kalau bukan default 1.1).

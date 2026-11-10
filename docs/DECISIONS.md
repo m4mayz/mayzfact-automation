@@ -582,3 +582,9 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Top3 tidak berubah:** dijaga golden test (`tests/golden/`, dibuat sebelum kode apa pun diubah, tidak boleh di-regenerate), `settings_for_mode(s, "top3") is s`, `timeline.json` top3 tanpa `captionStyle`, still Remotion top3 sebelum/sesudah identik (PSNR inf). Satu-satunya test lama yang diubah: `test_env_holds_only_secrets` (set `ENV_FIELDS` + `YOUTUBE_TOKEN_JSON_FAKTACUIL`).
 - **Hubungan dengan keputusan lama:** melengkapi D-050 (`narration_mode` sebagai pemilih format channel). Tidak menggantikan D-045 s/d D-049 (aturan CTA/scene top3 tetap).
 - **Spec/plan:** `docs/superpowers/specs/2026-11-10-faktacuil-format-design.md`, `docs/superpowers/plans/2026-11-10-faktacuil-format.md`.
+
+## D-052 — 2026-11-11 — Source FaktaCuil boleh video Indonesia
+
+- **Keputusan:** Akmal (2026-11-11) milih source FaktaCuil boleh video berbahasa Indonesia, dan cek jiplak pakai teks asli.
+- **Implementasi:** step source tetap ambil transkrip `en`, ditambah transkrip asli `id` (bukan terjemahan) ke `source.json` field `transcript_id` (kosong kalau nggak ada; gagal ambil cuma di-log). `check-script` mode `faktacuil` pakai `transcript_id` kalau nggak kosong, kalau kosong balik ke Inggris. Top3 tetap Inggris. `source.json` lama tanpa field itu tetap jalan.
+- **Setting:** `faktacuil_youtube_channel_id` default `UCsEAAYtfNZis0dB5TkxtKQA` (bukan rahasia).

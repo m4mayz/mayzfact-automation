@@ -31,11 +31,13 @@ Sama kayak `bikin-short` langkah 1:
 uv run mayzfact run <url atau id> --no-render
 ```
 
+Source boleh video Inggris atau Indonesia. Step source juga nyimpen transkrip asli Indonesia (bukan terjemahan) di `source.json` field `transcript_id`; kosong kalau videonya nggak punya (D-052).
+
 Kalau source-nya Top N, boleh ambil **1 item** aja; semua fakta di naskah harus dari item itu. Step source jalan sebelum naskah ada, jadi dia tetap download `source.mp4` dan bikin frame `plan/seg_XX_K.jpg` walau format FaktaCuil. File itu nggak dipakai, abaikan.
 
 ## 2. Tulis naskah
 
-Agent nulis `runs/<id>/script.json`. Aturan **Isi** dari `bikin-short` langkah 2 tetap berlaku: tiap beat harus punya dasar kalimat di source, jangan nambah fakta, angka, atau perbandingan, jangan ngerasin klaim ("can/may/some" tetap "bisa/mungkin/sebagian"), dan pertahankan kata pembatas source. Terjemahan nggak boleh nambah apa pun.
+Agent nulis `runs/<id>/script.json`. Kalau `transcript_id` nggak kosong, tulis dari teks Indonesia itu dan `check-script` ngebandingin overlap 4-gram ke teks itu (tulis ulang, jangan nyalin kalimat asli); kalau kosong, pakai `transcript` Inggris kayak biasa. Aturan **Isi** dari `bikin-short` langkah 2 tetap berlaku: tiap beat harus punya dasar kalimat di source, jangan nambah fakta, angka, atau perbandingan, jangan ngerasin klaim ("can/may/some" tetap "bisa/mungkin/sebagian"), dan pertahankan kata pembatas source. Terjemahan nggak boleh nambah apa pun.
 
 **Bahasa.** Indonesia santai: `nggak`, `udah`, `banget` boleh. Jangan maksa slang. Kata teknis yang biasa dipakai orang Indonesia tetap dipakai.
 
