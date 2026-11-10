@@ -75,7 +75,7 @@ def cta_indices(script) -> list[int]:
     """Blok CTA sesuai narration_mode; top3 tetap pakai cta_beat_indices."""
     from mayzfact.faktacuil import faktacuil_cta_indices
 
-    mode = script["narration_mode"] if isinstance(script, dict) else script.narration_mode
+    mode = script.get("narration_mode") if isinstance(script, dict) else script.narration_mode
     beats = script["beats"] if isinstance(script, dict) else script.beats
     return faktacuil_cta_indices(beats) if mode == "faktacuil" else cta_beat_indices(beats)
 

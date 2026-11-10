@@ -178,9 +178,9 @@ def run_plan(
     by_alignment = tighten_countdown(slots, beats, tts["alignment"])
     slots = tighten_countdown(slots, beats, tts["alignment"], voiced_words=_voiced_words(paths, tts, log))
     subjects = beat_subjects(beats)
-    from mayzfact.narration import cta_beat_indices
+    from mayzfact.narration import cta_indices
 
-    for i in cta_beat_indices(beats):
+    for i in cta_indices(script):
         subjects[i] = ""
     segs = prepare_source_segments(paths, source, download_source, hook_seconds, paths.plan_dir, retry_step="plan") if hook_seconds > 0 else []
     first = next((i for i, b in enumerate(beats) if parse_countdown(b["text"])), len(beats))
@@ -193,7 +193,7 @@ def run_plan(
 
     shots = []
     current_rank = None
-    ctas = set(cta_beat_indices(beats))
+    ctas = set(cta_indices(script))
     for slot in slots:
         beat = beats[slot.beat]
         countdown = parse_countdown(beat['text'])
