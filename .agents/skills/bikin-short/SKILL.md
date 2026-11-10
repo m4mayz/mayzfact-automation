@@ -204,7 +204,7 @@ Agent nulis `runs/<id>/upload.json` dari `script.json` dan `clips.json`:
 
 - **title (gaya @eunoiapicks):** bahasa Inggris, maksimal 100 karakter, tanpa `<` `>`. Wajib ada **1–2 kata ALL-CAPS** penekanan emosi (`MORE`, `RARE`, `KILL`, `UNREAL`, `STRANGEST`, `NEVER`) + **tanda seru `!`** + **3 hashtag** di akhir judul (`#animals #wildlife #shorts` atau hashtag spesifik topik + `#shorts`). Contoh: `3 Ocean Predators MORE Deadly Than Sharks! #animals #wildlife #shorts`. Jangan clickbait yang nggak ada di video.
 - **description:** 2–3 kalimat ringkasan yang menyebut subjek spesifik di video (mengandung kata kunci pencarian US/UK), terus 3–5 hashtag. Jangan masukin daftar credit/link klip (Akmal nggak mau). Maksimal 5000 byte, tanpa `<` `>`.
-- **tags (long-tail SEO ala @eunoiapicks):** **15–25 long-tail tags** (nama semua spesies di video + variasi frasa pencarian Bahasa Inggris seperti `"most powerful ocean predators"`, `"amazing animal facts"`, `"wildlife facts"`, `"US wildlife"`, `"UK wildlife"`), total mendekati tapi maksimal 500 karakter.
+- **tags (long-tail SEO ala @eunoiapicks):** **15–25 long-tail tags** (nama semua spesies di video + variasi frasa pencarian Bahasa Inggris seperti `"most powerful ocean predators"`, `"amazing animal facts"`, `"wildlife facts"`, `"US wildlife"`, `"UK wildlife"`), total maksimal ≤450 karakter termasuk tanda kutip untuk tag berspasi (YouTube API menghitung tag berspasi sebagai `"..."` + koma, batas keras API 500 char).
 - **category_id:** pilih sesuai isi, misal `15` Pets & Animals, `27` Education, `28` Science & Technology, `24` Entertainment.
 
 ## 10. Jadwal
