@@ -47,6 +47,8 @@ class Settings:
     faktacuil_voicestudio_voice: str = ""  # profil bahasa Indonesia, diisi Akmal di settings.local.json
     faktacuil_voicestudio_instruct: str = ""
     faktacuil_max_shot_seconds: float = 2.0  # ikut referensi, ±2 detik per klip
+    faktacuil_slot_hours: tuple[int, ...] = (12, 18)  # jam tayang WIB, maksimal 2 video per hari
+    faktacuil_youtube_channel_id: str = ""  # UC..., bukan rahasia; diisi setelah login youtube --channel faktacuil
 
     def __post_init__(self) -> None:
         # VoiceStudio default 1.15x (tetap hormati override eksplisit kalau bukan default 1.1).
@@ -57,6 +59,7 @@ class Settings:
     elevenlabs_api_keys: tuple[str, ...] = field(default=(), repr=False)
     youtube_client_secret_json: str = field(default="", repr=False)  # JSON OAuth client
     youtube_token_json: str = field(default="", repr=False)
+    youtube_token_json_faktacuil: str = field(default="", repr=False)  # token akun channel FaktaCuil
     ngrok_basic_auth: str = field(default="", repr=False)  # user:password buat tunnel ngrok
 
 
@@ -70,6 +73,7 @@ ENV_FIELDS: dict[str, tuple[str, Callable[[str], object]]] = {
     "ELEVENLABS_API_KEYS": ("elevenlabs_api_keys", _key_list),
     "YOUTUBE_CLIENT_SECRET_JSON": ("youtube_client_secret_json", str),
     "YOUTUBE_TOKEN_JSON": ("youtube_token_json", str),
+    "YOUTUBE_TOKEN_JSON_FAKTACUIL": ("youtube_token_json_faktacuil", str),
     "NGROK_BASIC_AUTH": ("ngrok_basic_auth", str),
 }
 

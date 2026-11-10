@@ -43,7 +43,9 @@ def build_parser() -> argparse.ArgumentParser:
     sample.add_argument("--name", required=True, help="Nama file sampel, huruf kecil/angka/strip")
     login = sub.add_parser("login", help="Login YouTube buat upload (token disimpan di .env)")
     login.add_argument("platform", choices=["youtube"])
-    sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (01.00/04.00 WIB)")
+    login.add_argument("--channel", choices=["faktacuil"], help="Login channel FaktaCuil (token kedua)")
+    next_slot = sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (01.00/04.00 WIB)")
+    next_slot.add_argument("--channel", choices=["faktacuil"], help="Pakai jam slot FaktaCuil (12.00/18.00 WIB)")
     upload = sub.add_parser("upload", help="Upload final.mp4 ke YouTube sebagai video terjadwal")
     upload.add_argument("video", help="Video ID atau URL YouTube source")
     when = upload.add_mutually_exclusive_group(required=True)
@@ -76,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "tunnel":
             return _tunnel(args, settings)
         if args.command == "next-slot":
-            return _next_slot()
+            return _next_slot(args, settings)
         if args.command == "upload":
             return _upload(args, settings)
         paths = run_pipeline(
@@ -156,6 +158,14 @@ def _voice_sample(args: argparse.Namespace, settings: Settings) -> int:
 def _login(args: argparse.Namespace, settings: Settings) -> int:
     from mayzfact import youtube
 
+    if args.channel == "faktacuil":
+        token = youtube.login(settings.youtube_client_secret_json, PROJECT_ROOT / ".env",
+                              token_env="YOUTUBE_TOKEN_JSON_FAKTACUIL")
+        channel_id, title = youtube.channel_info(youtube.service(token))
+        print("YouTube: login berhasil, token FaktaCuil disimpan di .env (YOUTUBE_TOKEN_JSON_FAKTACUIL)")
+        print(f"Channel: {title} ({channel_id})")
+        print("Cek ini channel FaktaCuil, terus isi Settings.faktacuil_youtube_channel_id.")
+        return 0
     youtube.login(settings.youtube_client_secret_json, PROJECT_ROOT / ".env")
     print("YouTube: login berhasil, token disimpan di .env")
     return 0
@@ -173,10 +183,15 @@ def _lan_ip() -> str:
         return "127.0.0.1"
 
 
-def _next_slot() -> int:
+def _next_slot(args: argparse.Namespace, settings: Settings) -> int:
     from mayzfact import youtube
 
-    print(youtube.next_slot(youtube.taken_slots(RUNS_DIR), datetime.now(youtube.WIB)).strftime("%Y-%m-%d %H:%M"))
+    if args.channel == "faktacuil":
+        slot = youtube.next_slot(youtube.taken_slots(RUNS_DIR, "faktacuil"), datetime.now(youtube.WIB),
+                                 settings.faktacuil_slot_hours)
+    else:
+        slot = youtube.next_slot(youtube.taken_slots(RUNS_DIR), datetime.now(youtube.WIB))
+    print(slot.strftime("%Y-%m-%d %H:%M"))
     return 0
 
 
@@ -188,7 +203,19 @@ def _upload(args: argparse.Namespace, settings: Settings) -> int:
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
     meta = youtube.load_meta(paths)
     publish_at = None if args.now else youtube.parse_publish_at(args.at, datetime.now(youtube.WIB))
-    data = youtube.upload_video(paths, meta, publish_at, lambda: youtube.service(settings.youtube_token_json), print)
+    mode = youtube.run_mode(paths)
+    if mode == "faktacuil":
+        def make_service():
+            if not settings.youtube_token_json_faktacuil.strip():
+                raise PipelineError("youtube", f"Belum login channel FaktaCuil. {youtube.FAKTACUIL_LOGIN_HINT}")
+            return youtube.service(settings.youtube_token_json_faktacuil)
+
+        data = youtube.upload_video(paths, meta, publish_at, make_service, print, channel="faktacuil",
+                                    expected_channel_id=settings.faktacuil_youtube_channel_id)
+    elif mode == "top3":
+        data = youtube.upload_video(paths, meta, publish_at, lambda: youtube.service(settings.youtube_token_json), print)
+    else:
+        raise PipelineError("upload", f"narration_mode {mode!r} nggak dikenal, channel tujuan nggak bisa dipastiin.")
     when = "langsung public" if args.now else f"tayang {args.at} WIB"
     print(f"Ke-upload, {when}\n  Video : {data['url']}\n  Studio: {data['studio_url']}")
     return 0

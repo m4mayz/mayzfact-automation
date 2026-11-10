@@ -10,7 +10,8 @@ from mayzfact.config import (
 
 
 def test_env_holds_only_secrets():
-    assert set(ENV_FIELDS) == {"ELEVENLABS_API_KEYS", "YOUTUBE_CLIENT_SECRET_JSON", "YOUTUBE_TOKEN_JSON", "NGROK_BASIC_AUTH"}
+    assert set(ENV_FIELDS) == {"ELEVENLABS_API_KEYS", "YOUTUBE_CLIENT_SECRET_JSON", "YOUTUBE_TOKEN_JSON",
+                               "YOUTUBE_TOKEN_JSON_FAKTACUIL", "NGROK_BASIC_AUTH"}
 
 
 def test_non_secret_settings_live_in_code():
