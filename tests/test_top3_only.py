@@ -74,3 +74,45 @@ def test_old_run_with_paid_voice_is_rejected_before_outputs_are_deleted(tmp_path
                      runs_dir=tmp_path)
     assert before == {p.name: p.read_bytes() for p in paths.root.iterdir()}
     assert json.loads(paths.script_json.read_text()) == raw
+
+
+def test_old_run_without_voice_is_rejected_before_outputs_are_deleted(tmp_path):
+    paths = RunPaths(tmp_path/'abcdefghijk')
+    raw = write_script(paths, narration_mode=None, cta_scene=None)
+    write_json_atomic(paths.source_json, dict(duration_s=90, transcript=[dict(text=SOURCE_TEXT)]))
+    write_json_atomic(paths.shots_plan_json, dict(shots=[]))
+    write_json_atomic(paths.clips_json, dict(shots=[]))
+    write_json_atomic(paths.timeline_json, dict(shots=[]))
+    paths.final_mp4.write_bytes(b'existing-video')
+    assert not paths.voice_mp3.exists()
+    before = {p.name: p.read_bytes() for p in paths.root.iterdir()}
+
+    def forbidden(*a, **kw):
+        pytest.fail('run lama harus berhenti sebelum dependency jalan')
+    deps = Deps(fetch_transcript=forbidden, tts=forbidden, http=httpx.Client, render=forbidden,
+                plan=forbidden, fetch=forbidden)
+    settings = Settings(elevenlabs_api_keys=('e',), elevenlabs_voice_id='v')
+    with pytest.raises(PipelineError, match='format lama'):
+        run_pipeline('abcdefghijk', settings=settings, no_render=True, deps=deps, runs_dir=tmp_path)
+    assert before == {p.name: p.read_bytes() for p in paths.root.iterdir()}
+    assert json.loads(paths.script_json.read_text()) == raw
+
+
+@pytest.mark.parametrize('shape', ['null_scene', 'list_root'])
+def test_invalid_script_shapes_get_specific_errors(tmp_path, shape):
+    paths = RunPaths(tmp_path)
+    if shape == 'null_scene':
+        raw = top3_script().model_dump()
+        raw['cta_scene'] = None
+        write_json_atomic(paths.script_json, raw)
+        with pytest.raises(PipelineError) as err:
+            load_script(paths)
+        message = str(err.value)
+        assert 'cta_scene' in message and 'D-050' in message
+    else:
+        write_json_atomic(paths.script_json, [])
+        with pytest.raises(PipelineError) as err:
+            load_script(paths)
+        message = str(err.value)
+        assert 'script.json nggak valid' in message
+        assert 'format lama' not in message

@@ -131,13 +131,15 @@ def load_script(paths: RunPaths) -> Script:
         raise PipelineError("script", f"{paths.script_json} belum ada. {AWAIT_SCRIPT_HINT}")
     try:
         raw = read_json(paths.script_json)
-        mode = raw.get("narration_mode") if isinstance(raw, dict) else None
+        if not isinstance(raw, dict):
+            raise PipelineError("script", "script.json nggak valid (cek JSON/field-nya): root JSON harus object.")
+        mode = raw.get("narration_mode")
         if mode != "top3":
             shown = "nggak ada" if mode is None else repr(mode)
             raise PipelineError("script", f"script.json pakai format lama (narration_mode: {shown}). Pipeline sekarang cuma "
                                           f'support narration_mode "top3" (D-050). File run ini dibiarin apa adanya; '
                                           f"bikin run baru pakai format top3.")
-        if "cta_scene" not in raw:
+        if raw.get("cta_scene") is None:
             raise PipelineError("script", "script.json belum punya cta_scene. Format top3 sekarang wajib cta_scene (D-050). "
                                           "Tambahin cta_scene sesuai skill bikin-short langkah 2; ini metadata visual, "
                                           "hash suara nggak berubah.")

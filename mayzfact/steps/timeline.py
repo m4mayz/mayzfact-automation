@@ -463,6 +463,7 @@ def build_timeline(
     scene = build_scene(script, shots, entries, words, beat_of, countdown, total) if script else None
     if script and script.get('cta_scene') and not scene:
         log("[timeline] scene CTA dilewat: blok CTA nggak kebentuk")
+        cta = []
     if scene:
         begin, end = scene['from'], scene['from'] + scene['durationInFrames']
         emojis = [e for e in emojis if e['from'] + e['durationInFrames'] <= begin or e['from'] >= end]

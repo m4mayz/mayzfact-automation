@@ -246,7 +246,7 @@ def run_pipeline(
     paths = RunPaths(runs_dir / video_id)
     done = {step: step_done(step, paths) for step in STEPS}
     steps = plan_steps(done, paths.voice_mp3.exists(), from_step)
-    if paths.voice_mp3.exists():
+    if paths.script_json.exists():
         load_script(paths)  # schema/mode dicek sebelum output resume lama dihapus; tanpa cek anggaran baru
     if no_render:
         # Review lewat Remotion Studio dulu. final.mp4 lama jadi basi kalau step sebelumnya diulang.

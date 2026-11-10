@@ -13,7 +13,7 @@ Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal per
 
 ## Pola video baru: Top 3 (D-045, revisi CTA D-046)
 
-Di branch ini, semua naskah wajib menulis `"narration_mode": "top3"`. Run tanpa field ini format lama, pipeline nolak dengan error D-050; jangan migrasi atau ubah naskah/audio-nya.
+Semua naskah wajib menulis `"narration_mode": "top3"`. Run tanpa field ini format lama, pipeline nolak dengan error D-050; jangan migrasi atau ubah naskah/audio-nya.
 
 - Source Top 5 → ambil peringkat asli **3, 2, 1**; pembahasan 5/4 dibuang utuh. Jangan pilih ulang atau tukar subjek. Source harus punya heading 3/2/1 yang bisa diverifikasi; kalau tidak, laporkan, jangan mengarang ranking.
 - Urutan **hook → Number three + ≥2 beat penjelasan → Number two + ≥2 beat penjelasan → CTA → Number one + ≥2 beat penjelasan → selesai**. CTA tidak dihitung sebagai penjelasan.

@@ -103,3 +103,20 @@ def test_cta_scene_has_no_legacy_label():
                            width=1080, height=1920, beat=i) for i, t in enumerate(times)]}
     timeline = build_timeline(clips, duration, .5, script=script, alignment=alignment)
     assert 'label' not in timeline['ctaScene']
+
+
+def test_missing_scene_suppresses_cta_click_sfx(monkeypatch):
+    duration = 38.5
+    script = top3_script().model_dump()
+    alignment = fake_alignment(script_text(script['beats']), duration)
+    times = beat_timings([b['text'] for b in script['beats']], alignment, duration)
+    clips = {'shots': [dict(file=f'clips/shot_{i}.mp4', kind='video', start_s=t['start_s'],
+                           width=1080, height=1920, beat=i) for i, t in enumerate(times)]}
+    audio = {'bgm': None, 'sfx': {'click': 'audio/sfx/click.mp3'}}
+    monkeypatch.setattr('mayzfact.steps.timeline.build_scene', lambda *args: None)
+    logs = []
+    timeline = build_timeline(clips, duration, .5, script=script, alignment=alignment, audio=audio, log=logs.append)
+    clicks = [item for item in timeline['sfx'] if item['src'] == 'audio/sfx/click.mp3']
+    assert clicks == []
+    assert 'ctaScene' not in timeline
+    assert any('scene CTA dilewat' in message for message in logs)

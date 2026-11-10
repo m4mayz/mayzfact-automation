@@ -656,8 +656,9 @@
   - Plan: `run_plan` selalu ranked, `source_rank` selalu diisi, kelompok CTA otomatis diisi `cta_scene`.
   - Timeline & Remotion: overlay legacy `Cta` dan `timeline.cta` dihapus. `ShortVideo` hanya merender `CtaScene`. `Cta.tsx` hanya mengekspor `Thumb` dan `Cursor` untuk kebutuhan `CtaScene`. Click SFX dan sinkronisasi tabrakan emoji tetap aman dihitung via `_top3_cta`.
   - Node markup test di Remotion: 10 CTA visual cases passed tanpa tema `word`.
+  - Review follow-up: scene CTA yang gagal terbentuk mematikan click SFX; run lama tanpa voice ditolak sebelum output dihapus; `cta_scene: null` dan root JSON non-object mendapat pesan error yang tepat.
 - **Verifikasi:**
-  - `uv run pytest -q`: 685 passed, 3 skipped, 4 deselected (termasuk 10 node SSR visual markup cases).
+  - `uv run pytest -q`: 689 passed, 3 skipped, 4 deselected (termasuk 10 node SSR visual markup cases).
   - Ruff `uvx ruff check --select F,I`: bersih.
   - TypeScript `cd remotion && npx tsc --noEmit -p .`: bersih.
   - 10 CTA visual cases passed di Node (`node tests/cta-scene.cjs`).
