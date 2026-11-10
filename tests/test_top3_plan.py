@@ -25,9 +25,14 @@ def test_top3_short_hook_never_steals_countdown_or_body_keywords(tmp_path, cut_v
     for shot in data['shots']:
         if shot['beat'] >= 1:
             assert shot['hook_segment'] is None
-            assert shot['keywords']['en'] == script['beats'][shot['beat']]['queries']
         if shot['beat'] in ctas:
+            assert shot['auto_cta'] is True
             assert shot['subject'] == ''
             assert shot['source_rank'] is None
-            assert shot['group'].startswith('beat-')
-        assert len(shot['ref_frames']) == 3
+            assert shot['group'] == 'auto-cta'
+            assert shot['keywords'] == {'en': [], 'zh': []}
+            assert shot['ref_frames'] == []
+        else:
+            if shot['beat'] >= 1:
+                assert shot['keywords']['en'] == script['beats'][shot['beat']]['queries']
+            assert len(shot['ref_frames']) == 3

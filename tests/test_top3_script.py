@@ -1,19 +1,4 @@
 import pytest
-from pydantic import ValidationError
-
-from mayzfact.models import Script
-from mayzfact.steps.script import normalize_script
-from tests.factories import make_script
-
-
-def test_narration_mode_is_explicit_preserved_and_legacy_safe():
-    raw = make_script().model_dump()
-    raw.pop('narration_mode', None)
-    legacy = normalize_script(Script(**raw))
-    assert legacy.model_dump()['narration_mode'] == 'source'
-    assert normalize_script(Script(**raw, narration_mode='top3')).model_dump()['narration_mode'] == 'top3'
-    with pytest.raises(ValidationError):
-        Script(**raw, narration_mode='typo')
 
 
 def test_top3_word_budget_ignores_source_length_and_honors_speed():

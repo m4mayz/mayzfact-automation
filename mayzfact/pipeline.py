@@ -26,7 +26,6 @@ STEPS = ["source", "tts", "plan", "fetch", "timeline", "render"]
 ALL_STEPS = STEPS
 VOICE_LOCKED = ("source", "tts")
 AFTER_VOICE = ("plan", "fetch", "timeline", "render")
-MIN_AUDIO_SECONDS = 30.0
 STEP_ENV = {
     "tts": ["ELEVENLABS_API_KEYS"],
 }
@@ -79,21 +78,16 @@ def check_voice(paths: RunPaths, *, video_speed: float = 1.1, log: Callable[[str
         raise PipelineError(
             "tts", f"script.json beda sama naskah yang dipakai buat voice.mp3. Balikin script.json. {NEW_SCRIPT_HINT}"
         )
-    if script.get("narration_mode") == "top3":
-        from mayzfact.narration import validate_video_speed
+    from mayzfact.narration import validate_video_speed
 
-        validate_video_speed(video_speed)
-        if not math.isfinite(tts["duration_s"]) or tts["duration_s"] <= 0:
-            raise PipelineError("tts", "Durasi audio harus positif dan finite; pulihkan metadata audio asli.")
-        estimated = tts["duration_s"] / video_speed
-        log(f"[tts] Top 3 estimasi final {estimated:.1f} detik dari audio nyata {tts['duration_s']:.1f} detik / {video_speed:g}x.")
-        if not 30 <= estimated <= 40:
-            log("[tts] PERINGATAN: estimasi final di luar target 30-40 detik. Audio tetap disimpan; "
-                "jangan regenerate atau ubah speed otomatis tanpa persetujuan.")
-    elif tts["duration_s"] < MIN_AUDIO_SECONDS:
-        raise PipelineError(
-            "tts", f"Audio cuma {tts['duration_s']:.1f} detik (minimal {MIN_AUDIO_SECONDS:.0f}). {NEW_SCRIPT_HINT}"
-        )
+    validate_video_speed(video_speed)
+    if not math.isfinite(tts["duration_s"]) or tts["duration_s"] <= 0:
+        raise PipelineError("tts", "Durasi audio harus positif dan finite; pulihkan metadata audio asli.")
+    estimated = tts["duration_s"] / video_speed
+    log(f"[tts] Top 3 estimasi final {estimated:.1f} detik dari audio nyata {tts['duration_s']:.1f} detik / {video_speed:g}x.")
+    if not 30 <= estimated <= 40:
+        log("[tts] PERINGATAN: estimasi final di luar target 30-40 detik. Audio tetap disimpan; "
+            "jangan regenerate atau ubah speed otomatis tanpa persetujuan.")
     return tts
 
 

@@ -342,7 +342,6 @@ def test_unicorn_theme_schema_needs_no_label_and_preserves_voice_hash():
     parsed = Script.model_validate(raw)
     assert parsed.cta_scene is not None
     assert parsed.cta_scene.theme == 'unicorn'
-    assert parsed.cta_scene.label == ''
     assert parsed.cta_scene.transform_word == 'turn'
     assert text_hash(script_text(parsed.model_dump()['beats'])) == text_hash(script_text(raw['beats']))
     with pytest.raises(ValidationError):
@@ -354,7 +353,6 @@ def test_scene_metadata_survives_schema_without_changing_voice_hash():
     parsed = Script.model_validate(raw).model_dump()
     assert parsed['cta_scene']['transform_word'] == 'volcano'
     assert text_hash(script_text(parsed['beats'])) == text_hash(script_text(raw['beats']))
-    assert Script.model_validate(playful_script().model_dump()).cta_scene is None
     for bad in [{**CONFIG, 'typo': True}, {**CONFIG, 'theme': 'unknown'},
                 {**CONFIG, 'transform_word': ''}, {**CONFIG, 'theme': 'word'}]:
         with pytest.raises(ValidationError):

@@ -17,12 +17,13 @@ from mayzfact.pipeline import (
 )
 from mayzfact.store import RunPaths, read_json, write_json_atomic
 from mayzfact.text import script_text, text_hash
-from tests.factories import fake_alignment, make_script
+from tests.factories import fake_alignment
+from tests.top3_fixtures import SOURCE_TEXT, playful_script
 
 VIDEO_ID = "i2xag_1OJfM"
 KEYS = {"elevenlabs_api_keys": ("e",), "elevenlabs_voice_id": "v"}
 SETTINGS = Settings(**KEYS, max_shot_seconds=10.0, target_duration_ratio=0.6, min_duration_seconds=32.0)
-TRANSCRIPT = [{"text": "Five ancient creatures are still alive today", "start": 0.0, "duration": 53.3}]
+TRANSCRIPT = [{"text": SOURCE_TEXT, "start": 0.0, "duration": 53.3}]
 NONE_DONE = {step: False for step in STEPS}
 ALL_DONE = {step: True for step in STEPS}
 QUIET = {"log": lambda message: None}
@@ -80,7 +81,8 @@ def test_voice_without_metadata_needs_new_script():
 # --- check_voice ------------------------------------------------------------
 
 def write_voice_state(paths, text_beats, duration_s, sha=None):
-    script = {"beats": [{"text": t, "media": "video", "queries": ["q"]} for t in text_beats]}
+    script = playful_script().model_dump()
+    script["beats"] = [{"text": t, "media": "video", "queries": ["q"]} for t in text_beats]
     write_json_atomic(paths.script_json, script)
     write_json_atomic(paths.tts_json, {"text_sha256": sha or text_hash(script_text(script["beats"])), "duration_s": duration_s})
 
@@ -95,13 +97,6 @@ def test_check_voice_rejects_edited_script(tmp_path):
     paths = RunPaths(tmp_path)
     write_voice_state(paths, ["Look at this.", "It is old."], 31.0, sha="beda")
     with pytest.raises(PipelineError, match="beda"):
-        check_voice(paths)
-
-
-def test_check_voice_rejects_short_audio(tmp_path):
-    paths = RunPaths(tmp_path)
-    write_voice_state(paths, ["Look at this."], 29.0)
-    with pytest.raises(PipelineError, match="script.json"):
         check_voice(paths)
 
 
@@ -172,7 +167,7 @@ def run(world, **kwargs):
 
 
 def write_fake_script(paths):
-    write_json_atomic(paths.script_json, make_script(n_beats=8, words_per_beat=10).model_dump())
+    write_json_atomic(paths.script_json, playful_script().model_dump())
 
 
 def start(world, **kwargs):
@@ -190,7 +185,8 @@ def test_full_run_then_rerun_from_fetch_reuses_voice(world):
     assert paths.final_mp4.read_bytes() == b"fake-mp4"
     assert (world.tts.calls, world.renders) == (1, 1)
     timeline = read_json(paths.timeline_json)
-    assert len(timeline["shots"]) == 8
+    script = read_json(paths.script_json)
+    assert len(timeline["shots"]) == len(script["beats"])
     assert timeline["durationInFrames"] == math.ceil(read_json(paths.tts_json)["duration_s"] * 30 - 1e-6)
     voice_mtime = paths.voice_mp3.stat().st_mtime_ns
 
@@ -215,15 +211,6 @@ def test_edited_script_blocks_fetch_without_calling_tts(world):
     with pytest.raises(PipelineError, match="beda"):
         run(world, from_step="fetch")
     assert world.tts.calls == 1
-
-
-def test_short_audio_stops_before_plan(tmp_path, sine_mp3, make_video, make_photo):
-    world = build_world(tmp_path, sine_mp3, 2.5, make_video, make_photo)
-    with pytest.raises(PipelineError, match="script.json"):
-        start(world)
-    paths = RunPaths(world.runs / VIDEO_ID)
-    assert paths.voice_mp3.exists()
-    assert not paths.clips_json.exists()
 
 
 def test_missing_keys_fail_before_any_step(world):
@@ -470,7 +457,9 @@ def test_run_rejects_script_that_fails_checks_before_tts(world):
     paths = RunPaths(world.runs / VIDEO_ID)
     with pytest.raises(AwaitingInput):
         run(world)
-    write_json_atomic(paths.script_json, {"beats": [{"text": "Too short.", "media": "video", "queries": ["q"]}]})
+    script = playful_script().model_dump()
+    script["beats"] = [{"text": "Too short.", "media": "video", "queries": ["q"]}]
+    write_json_atomic(paths.script_json, script)
     with pytest.raises(PipelineError, match="lolos cek"):
         run(world)
     assert world.tts.calls == 0

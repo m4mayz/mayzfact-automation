@@ -60,7 +60,7 @@ def test_playful_cta_rejects_wrong_placement_and_body_intrusion(change):
 
 
 def test_cta_extra_words_shift_only_top3_shared_total_budget():
-    from mayzfact.steps.script import narration_word_range, word_range
+    from mayzfact.steps.script import narration_word_range
     from mayzfact.text import words
 
     script = playful_script()
@@ -68,8 +68,6 @@ def test_cta_extra_words_shift_only_top3_shared_total_budget():
     assert narration_word_range(script, 120, 1.1) == (91, 87, 95)
     assert narration_word_range(script, 120, 1.0) == (84, 81, 87)
     assert narration_word_range(top3_script(), 120, 1.1) == (80, 76, 84)
-    script.narration_mode = 'source'
-    assert narration_word_range(script, 120, 1.1) == word_range(120)
 
 
 @pytest.mark.parametrize('base_words,valid', [(75, False), (76, True), (80, True), (84, True), (85, False)])
@@ -92,7 +90,7 @@ def test_old_two_beat_cta_wording_stays_supported_with_shared_delta():
     from mayzfact.steps.script import check_script, narration_word_range
 
     script = top3_script()
-    script.beats[7].text = "Subscribe if you'd touch it, hit like if you'd watch,"
+    script.beats[7].text = "Subscribe, it turns into a volcano, like if you'd watch,"
     script.beats[8].text = "or comment 'nope' if you'd run."
     assert cta_beat_indices(script.beats) == [7, 8]
     assert narration_word_range(script, 120) == (86, 82, 90)

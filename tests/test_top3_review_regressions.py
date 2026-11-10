@@ -13,18 +13,18 @@ def test_source_heading_delimiters_match_shared_countdown_grammar(delimiter):
 
 @pytest.mark.parametrize('layout', ['same_beat', 'split_beats'])
 def test_cta_token_boundaries_match_validation_and_timeline(layout):
-    from mayzfact.steps.timeline import build_timeline
+    from mayzfact.steps.timeline import _beat_of, _top3_cta, build_timeline
     from mayzfact.text import script_text
-    from mayzfact.timing import beat_timings
+    from mayzfact.timing import beat_timings, word_timings
     from tests.factories import fake_alignment
 
     s = top3_script()
     s.beats[6].text = s.beats[6].text.rstrip(',.')
     if layout == 'same_beat':
-        s.beats[7].text = "Like if you'd watch, subscribe if you'd touch it,"
+        s.beats[7].text = "Like if you'd watch, turns into a volcano, subscribe,"
         expected = ['like', 'subscribe']
     else:
-        s.beats[7].text = "Subscribe if you'd touch it and see for yourself"
+        s.beats[7].text = "Subscribe, it turns into a volcano, see for yourself"
         s.beats[8].text = "Like if you'd watch, or comment 'nope' if you'd run."
         expected = ['subscribe', 'like']
     assert check_script(s, SOURCE_TEXT, 90)[0] == []
@@ -34,7 +34,10 @@ def test_cta_token_boundaries_match_validation_and_timeline(layout):
     clips = {'shots':[dict(file=f'clips/{i}.mp4',kind='video',start_s=t['start_s'],width=1080,height=1920,beat=i)
                       for i,t in enumerate(times)]}
     t = build_timeline(clips,38.5,.5,script=script,alignment=alignment)
-    assert [c['kind'] for c in t['cta']] == expected
+    words = word_timings(alignment)
+    beat_of = _beat_of(words, script['beats'])
+    cta = _top3_cta(words, beat_of, script['beats'], t['countdown'], t['durationInFrames'])
+    assert [c['kind'] for c in cta] == expected
 
 
 def test_top3_body_frames_are_pinned_to_original_rank_not_visual_subject(tmp_path, monkeypatch):
