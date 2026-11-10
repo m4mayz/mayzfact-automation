@@ -30,7 +30,7 @@ def test_cta_block_includes_gimmick_question():
 def test_like_word_outside_cta_makes_block_non_contiguous():
     beats = faktacuil_script().model_dump()["beats"]
     beats[7]["text"] = "rasanya like permen buat kucing."
-    assert faktacuil_cta_indices(beats) == [4, 5, 6, 7]  # anchor terakhir narik blok; validator yang nolak
+    assert faktacuil_cta_indices(beats) == [4, 5, 6, 7]  # anchor terakhir narik blok; check_script nolak (test_faktacuil_review_fixes)
 
 
 def test_cta_indices_dispatch_keeps_top3():

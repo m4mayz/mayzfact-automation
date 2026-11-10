@@ -119,6 +119,12 @@ def _cta_problems(script: Script, cta: list[int]) -> list[str]:
         problems.append(f"CTA illustration {theme!r} does not match the narrated transformation object. "
                         "Use the matching supported illustration; unsupported objects need an illustration first.")
     for i in cta:
+        tokens_i = [clean(t) for t in beats[i].text.split()]
+        has_trigger = bool(id_like_positions(beats[i].text.split())) or bool(
+            re.search(rf"\b{re.escape(word)}\b", beats[i].text, re.I))
+        if any(t.startswith("like") for t in tokens_i) and not has_trigger:  # "like" nyasar di beat jawaban yang nempel
+            problems.append(f"Beat {i + 1} uses 'like' outside the CTA; rephrase it so it is not part of the CTA block.")
+            continue
         if beats[i].subject:
             problems.append(f"CTA beat {i + 1} must have an empty subject.")
         if beats[i].point:

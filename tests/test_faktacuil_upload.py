@@ -43,7 +43,7 @@ def env(monkeypatch, tmp_path):
     """CLI dengan 2 token dan YouTube palsu; service() ngecatat token yang dipakai."""
     seen = {"tokens": [], "yt": FakeYT()}
 
-    def fake_service(token):
+    def fake_service(token, channel="mayzfact"):
         seen["tokens"].append(token)
         return seen["yt"]
 
@@ -205,7 +205,7 @@ def test_login_faktacuil_cli_prints_channel_not_token(monkeypatch, capsys):
         return "SECRET-TOKEN-VALUE"
 
     monkeypatch.setattr(youtube, "login", fake_login)
-    monkeypatch.setattr(youtube, "service", lambda token: seen.update(token=token) or FakeYT("UCfakta", "FaktaCuil"))
+    monkeypatch.setattr(youtube, "service", lambda token, channel="mayzfact": seen.update(token=token, channel=channel) or FakeYT("UCfakta", "FaktaCuil"))
     assert cli.main(["login", "youtube", "--channel", "faktacuil"]) == 0
     out = capsys.readouterr()
     assert seen["token_env"] == "YOUTUBE_TOKEN_JSON_FAKTACUIL" and seen["token"] == "SECRET-TOKEN-VALUE"

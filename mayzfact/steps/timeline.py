@@ -170,7 +170,7 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
         end = min(to_frame(min(next_start, word["end_s"] + CAPTION_HOLD_S)), total)
         color = CAPTION_WHITE
         if keywords is not None:  # FaktaCuil: cuma kata keyword beat itu yang berwarna
-            if beat_of and keywords.get(beat_of[index], "").lower() == text.lower():
+            if beat_of and _clean(keywords.get(beat_of[index], "")) == text.lower():
                 color = CAPTION_KEYWORD
         elif len(text) >= LONG_WORD or text.lower() in subject_words:
             color = CAPTION_COLORS[colored % len(CAPTION_COLORS)]

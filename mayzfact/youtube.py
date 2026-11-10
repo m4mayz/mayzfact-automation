@@ -211,25 +211,27 @@ def video_body(meta: UploadMeta, publish_at: datetime | None) -> dict:
     }
 
 
-def service(token_json: str) -> Any:
+def service(token_json: str, channel: str = "mayzfact") -> Any:
     """Client YouTube Data API. Access token di-refresh otomatis; refresh token-nya tetap, jadi .env nggak ditulis ulang."""
     from google.auth.exceptions import GoogleAuthError, RefreshError
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
 
+    hint, env_name = ((FAKTACUIL_LOGIN_HINT, "YOUTUBE_TOKEN_JSON_FAKTACUIL") if channel == "faktacuil"
+                      else (LOGIN_HINT, "YOUTUBE_TOKEN_JSON"))
     if not token_json.strip():
-        raise PipelineError("youtube", f"Belum login YouTube. {LOGIN_HINT}")
-    info = parse_json_env("YOUTUBE_TOKEN_JSON", token_json)
+        raise PipelineError("youtube", f"Belum login YouTube. {hint}")
+    info = parse_json_env(env_name, token_json)
     try:
         creds = Credentials.from_authorized_user_info(info, SCOPES)
     except ValueError:
-        raise PipelineError("youtube", f"YOUTUBE_TOKEN_JSON nggak lengkap. Login ulang. {LOGIN_HINT}") from None
+        raise PipelineError("youtube", f"{env_name} nggak lengkap. Login ulang. {hint}") from None
     if not creds.valid:
         try:
             creds.refresh(Request())
         except RefreshError:
-            raise PipelineError("youtube", f"Token YouTube ditolak (dicabut atau expired). Login ulang. {LOGIN_HINT}") from None
+            raise PipelineError("youtube", f"Token YouTube ditolak (dicabut atau expired). Login ulang. {hint}") from None
         except GoogleAuthError as exc:  # TransportError: offline / DNS putus
             raise PipelineError("youtube", f"Nggak bisa nyambung ke Google buat refresh token ({type(exc).__name__}). "
                                 "Cek koneksi internet, terus coba lagi.") from None
@@ -268,6 +270,9 @@ def upload_video(paths: RunPaths, meta: UploadMeta, publish_at: datetime | None,
                                 "Settings.faktacuil_youtube_channel_id.")
         if meta.language != "id":
             raise PipelineError("upload", f'upload.json FaktaCuil wajib language "id" (sekarang {meta.language!r}).')
+    elif meta.language == "id":  # naskah FaktaCuil yang script.json-nya nggak kebaca sebagai faktacuil bakal salah channel
+        raise PipelineError("upload", 'upload.json language "id" tapi run ini bukan FaktaCuil (channel MayzFact). Cek '
+                                      'narration_mode di script.json: video FaktaCuil harus "faktacuil" biar ke channel FaktaCuil.')
     media = MediaFileUpload(str(paths.final_mp4), mimetype="video/mp4", chunksize=CHUNK, resumable=True)
     client = make_service()
     if channel == "faktacuil":  # upload nggak bisa ditarik: pastiin akun yang login beneran channel FaktaCuil

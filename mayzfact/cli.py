@@ -15,6 +15,7 @@ from mayzfact.config import (
     Settings,
     load_settings,
     missing_env,
+    settings_for_mode,
 )
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.faktacuil import VOICE_SAMPLE_TEXT_ID
@@ -114,6 +115,7 @@ def _check_script(args: argparse.Namespace, settings: Settings) -> int:
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
     if not paths.source_json.exists():
         raise PipelineError("check-script", f"{paths.source_json} belum ada. Jalanin dulu: mayzfact run {paths.root.name}")
+    settings = settings_for_mode(settings, load_script(paths).narration_mode)  # rentang kata sama kayak pipeline
     source = read_json(paths.source_json)
     problems = check_script_file(paths, source, bgm_choices=list_bgm(BGM_DIR), video_speed=settings.video_speed)
     if problems:
@@ -161,7 +163,7 @@ def _login(args: argparse.Namespace, settings: Settings) -> int:
     if args.channel == "faktacuil":
         token = youtube.login(settings.youtube_client_secret_json, PROJECT_ROOT / ".env",
                               token_env="YOUTUBE_TOKEN_JSON_FAKTACUIL")
-        channel_id, title = youtube.channel_info(youtube.service(token))
+        channel_id, title = youtube.channel_info(youtube.service(token, channel="faktacuil"))
         print("YouTube: login berhasil, token FaktaCuil disimpan di .env (YOUTUBE_TOKEN_JSON_FAKTACUIL)")
         print(f"Channel: {title} ({channel_id})")
         print("Cek ini channel FaktaCuil, terus isi Settings.faktacuil_youtube_channel_id.")
@@ -208,7 +210,7 @@ def _upload(args: argparse.Namespace, settings: Settings) -> int:
         def make_service():
             if not settings.youtube_token_json_faktacuil.strip():
                 raise PipelineError("youtube", f"Belum login channel FaktaCuil. {youtube.FAKTACUIL_LOGIN_HINT}")
-            return youtube.service(settings.youtube_token_json_faktacuil)
+            return youtube.service(settings.youtube_token_json_faktacuil, channel="faktacuil")
 
         data = youtube.upload_video(paths, meta, publish_at, make_service, print, channel="faktacuil",
                                     expected_channel_id=settings.faktacuil_youtube_channel_id)
