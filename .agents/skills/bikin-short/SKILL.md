@@ -9,11 +9,13 @@ Alurnya:
 
 source → **[agent tulis naskah]** → **[Akmal review naskah]** → suara → plan → **[Akmal isi link]** → fetch → timeline → render → **[Akmal cek preview]** → metadata → upload YouTube → metadata TikTok (Akmal upload manual)
 
+Format FaktaCuil (video bahasa Indonesia, channel FaktaCuil, `narration_mode` `"faktacuil"`) pakai skill `bikin-faktacuil`, bukan skill ini.
+
 Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal persis apa yang harus dia lakuin. Aturan umum ada di `AGENTS.md`, terutama bagian Keamanan, Biaya, dan Review video.
 
 ## Pola video baru: Top 3 (D-045, revisi CTA D-046)
 
-Semua naskah wajib menulis `"narration_mode": "top3"`. Run tanpa field ini format lama, pipeline nolak dengan error D-050; jangan migrasi atau ubah naskah/audio-nya.
+Naskah di skill ini wajib menulis `"narration_mode": "top3"` (nilai lain, `faktacuil`, pakai skill `bikin-faktacuil`). Run tanpa field ini format lama, pipeline nolak dengan error D-050; jangan migrasi atau ubah naskah/audio-nya.
 
 - Source Top 5 → ambil peringkat asli **3, 2, 1**; pembahasan 5/4 dibuang utuh. Jangan pilih ulang atau tukar subjek. Source harus punya heading 3/2/1 yang bisa diverifikasi; kalau tidak, laporkan, jangan mengarang ranking.
 - Urutan **hook → Number three + ≥2 beat penjelasan → Number two + ≥2 beat penjelasan → CTA → Number one + ≥2 beat penjelasan → selesai**. CTA tidak dihitung sebagai penjelasan.
