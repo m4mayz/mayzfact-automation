@@ -18,6 +18,7 @@ from mayzfact.store import RunPaths, write_json_atomic
 
 BGM_DIR = PROJECT_ROOT / "assets" / "bgm"
 SFX_DIR = PROJECT_ROOT / "assets" / "sfx"
+FAKTACUIL_BGM_DIR = PROJECT_ROOT / "assets" / "channels" / "faktacuil" / "bgm"  # lagu lokal, di-gitignore
 MYINSTANTS = "https://www.myinstants.com/media/sounds/"
 SFX_DEFAULTS = {
     "hook": "cinematicboom.mp3",
@@ -108,7 +109,7 @@ MAIN_BGM = "main.mp3"  # ...terus ini mulai "Number" pertama sampai akhir
 
 def prepare_audio(
     paths: RunPaths, script: dict, *, bgm_dir: Path, sfx_dir: Path, client: httpx.Client,
-    log: Callable[[str], None], custom: list[dict] | None = None,
+    log: Callable[[str], None], custom: list[dict] | None = None, faktacuil_bgm_dir: Path = FAKTACUIL_BGM_DIR,
 ) -> dict:
     """BGM hook + utama, siapin SFX, copy ke runs/<id>/audio/ buat Remotion. Field bgm di naskah nggak dipakai lagi.
 
@@ -116,13 +117,19 @@ def prepare_audio(
     """
     choices = list_bgm(bgm_dir)
     out: dict[str, Any] = {"bgm": None, "bgm_main": None, "sfx": {}}
-    for key, name in (("bgm", HOOK_BGM), ("bgm_main", MAIN_BGM)):
-        if name in choices:
-            out[key] = _copy(bgm_dir / name, paths.root / "audio" / "bgm", paths)
-            log(f"[timeline] BGM {key}: {name}")
-        else:
-            log(f"[timeline] {name} nggak ada di assets/bgm, bagian itu tanpa BGM")
-    write_json_atomic(paths.root / "audio.json", {"bgm": HOOK_BGM if out["bgm"] else None})
+    if script.get("narration_mode") == "faktacuil":
+        song = _faktacuil_song(bgm_dir, faktacuil_bgm_dir, log)
+        if song:
+            out["bgm_main"] = _copy(song, paths.root / "audio" / "bgm", paths)
+        write_json_atomic(paths.root / "audio.json", {"bgm": None, "bgm_main": song.name if song else None})
+    else:
+        for key, name in (("bgm", HOOK_BGM), ("bgm_main", MAIN_BGM)):
+            if name in choices:
+                out[key] = _copy(bgm_dir / name, paths.root / "audio" / "bgm", paths)
+                log(f"[timeline] BGM {key}: {name}")
+            else:
+                log(f"[timeline] {name} nggak ada di assets/bgm, bagian itu tanpa BGM")
+        write_json_atomic(paths.root / "audio.json", {"bgm": HOOK_BGM if out["bgm"] else None})
     for event, path in ensure_sfx(sfx_dir, client, load_sfx_map(sfx_dir, log), log).items():
         out["sfx"][event] = _copy(path, paths.root / "audio" / "sfx", paths)
         if event == "riser":  # panjang riser dipakai buat ngepasin ujungnya ke "Number" pertama
@@ -153,6 +160,20 @@ def prepare_audio(
             onset = 0.0
         out.setdefault("custom", []).append({"src": src, "at_s": float(item["at_s"]), "onset": onset})
     return out
+
+
+def _faktacuil_song(bgm_dir: Path, local_dir: Path, log: Callable[[str], None]) -> Path | None:
+    """Lagu FaktaCuil: file audio pertama di folder lokal, atau main.mp3 sementara kalau folder kosong."""
+    songs = list_bgm(local_dir)
+    if songs:
+        extra = f" (ada {len(songs)} file: {', '.join(songs)})" if len(songs) > 1 else ""
+        log(f"[timeline] BGM FaktaCuil: {songs[0]}{extra}")
+        return local_dir / songs[0]
+    if MAIN_BGM in list_bgm(bgm_dir):
+        log(f"[timeline] BGM FaktaCuil belum ada di assets/channels/faktacuil/bgm/, sementara pakai {MAIN_BGM}")
+        return bgm_dir / MAIN_BGM
+    log(f"[timeline] BGM FaktaCuil belum ada dan {MAIN_BGM} nggak ada di assets/bgm, video tanpa BGM")
+    return None
 
 
 def _copy(src: Path, dest_dir: Path, paths: RunPaths) -> str:
