@@ -71,6 +71,15 @@ def top3_problems(script: Script, source_text: str) -> list[str]:
     return problems
 
 
+def cta_indices(script) -> list[int]:
+    """Blok CTA sesuai narration_mode; top3 tetap pakai cta_beat_indices."""
+    from mayzfact.faktacuil import faktacuil_cta_indices
+
+    mode = script["narration_mode"] if isinstance(script, dict) else script.narration_mode
+    beats = script["beats"] if isinstance(script, dict) else script.beats
+    return faktacuil_cta_indices(beats) if mode == "faktacuil" else cta_beat_indices(beats)
+
+
 def cta_beat_indices(beats: list) -> list[int]:
     """Rentang antar-anchor CTA per bagian countdown; satu aturan buat semua consumer.
 
