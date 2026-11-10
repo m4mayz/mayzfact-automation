@@ -3,15 +3,29 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from datetime import datetime
 
 from mayzfact import tunnel as tunnel_mod
-from mayzfact.config import PROJECT_ROOT, RUNS_DIR, Settings, load_settings, missing_env
+from mayzfact.config import (
+    CACHE_DIR,
+    PROJECT_ROOT,
+    RUNS_DIR,
+    Settings,
+    load_settings,
+    missing_env,
+)
 from mayzfact.errors import AwaitingInput, PipelineError
+from mayzfact.faktacuil import VOICE_SAMPLE_TEXT_ID
+from mayzfact.ffmpeg import audio_duration
 from mayzfact.net import make_client
 from mayzfact.pipeline import ALL_STEPS, run_pipeline
-from mayzfact.providers.elevenlabs import list_voices
+from mayzfact.providers.elevenlabs import ElevenLabsTTS, list_voices
+from mayzfact.store import write_bytes_atomic
+from mayzfact.text import words
+
+VOICE_SAMPLE_DIR = CACHE_DIR / "voice-samples"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -24,6 +38,9 @@ def build_parser() -> argparse.ArgumentParser:
     check = sub.add_parser("check-script", help="Cek runs/<id>/script.json yang ditulis agent")
     check.add_argument("video", help="Video ID atau URL YouTube source")
     sub.add_parser("voices", help="List voice ElevenLabs di akun lu")
+    sample = sub.add_parser("voice-sample", help="Bikin sampel suara FaktaCuil buat milih voice (pakai kredit ElevenLabs)")
+    sample.add_argument("voice_id")
+    sample.add_argument("--name", required=True, help="Nama file sampel, huruf kecil/angka/strip")
     login = sub.add_parser("login", help="Login YouTube buat upload (token disimpan di .env)")
     login.add_argument("platform", choices=["youtube"])
     sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (01.00/04.00 WIB)")
@@ -48,6 +65,8 @@ def main(argv: list[str] | None = None) -> int:
         settings = load_settings()
         if args.command == "voices":
             return _print_voices(settings)
+        if args.command == "voice-sample":
+            return _voice_sample(args, settings)
         if args.command == "check-script":
             return _check_script(args, settings)
         if args.command == "login":
@@ -112,6 +131,25 @@ def _print_voices(settings: Settings) -> int:
     for voice in list_voices(settings.elevenlabs_api_keys, make_client()):
         labels = ", ".join(f"{key}={value}" for key, value in voice["labels"].items())
         print(f"{voice['voice_id']}  {voice['name']}  {labels}")
+    return 0
+
+
+def _voice_sample(args: argparse.Namespace, settings: Settings) -> int:
+    if not re.fullmatch(r"[a-z0-9-]{1,40}", args.name):
+        raise PipelineError("voice-sample", "--name cuma boleh huruf kecil, angka, dan strip (maks 40 karakter)")
+    target = VOICE_SAMPLE_DIR / f"{args.name}.mp3"
+    if target.exists():
+        raise PipelineError("voice-sample", f"{target} udah ada, sampel nggak di-generate ulang")
+    missing = missing_env(settings, ["ELEVENLABS_API_KEYS"])
+    if missing:
+        raise PipelineError("voice-sample", "Isi dulu di .env: " + ", ".join(missing))
+    tts = ElevenLabsTTS(settings.elevenlabs_api_keys, args.voice_id, "eleven_v3", make_client(), stability=0.5, delivery_tag="")
+    audio, _ = tts.synthesize(VOICE_SAMPLE_TEXT_ID)
+    write_bytes_atomic(target, audio)
+    duration = audio_duration(target)
+    print(f"Sampel: {target}")
+    print(f"Teks: {len(VOICE_SAMPLE_TEXT_ID)} karakter, durasi {duration:.2f} detik")
+    print(f"kata/detik mentah: {len(words(VOICE_SAMPLE_TEXT_ID)) / duration:.2f}")
     return 0
 
 
