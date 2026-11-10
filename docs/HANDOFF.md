@@ -1,3 +1,29 @@
+# Handoff — Format FaktaCuil (D-051)
+
+- **Updated:** 2026-11-10 malam, Claude Code. **Branch:** `fase-faktacuil-format` (worktree `mayzfact-automation-wt/faktacuil-format`), belum di-merge dan belum di-push.
+- **Status:** plan Task 1–12 selesai dan ter-commit (1 golden top3 `160964e`, 2 voice-sample `fd3b647`, 3 schema `21acd45`, 4 detektor CTA `620d9e3`, 5 aturan naskah `d456141`, 6 settings per format `1043c0c`, 7 plan `6b675e3`, 8 scene CTA `9a64a09`, 9 timeline `7d62ed8`, 10 BGM lokal `dfc295b`, 11 caption Fredoka `7165031`, 12 upload/slot `5ff9819`). Task 13 (skill `bikin-faktacuil`, `AGENTS.md`, `bikin-short`) dan Task 14 (D-051, HANDOFF ini, update spec + plan) baru ditulis, belum di-commit. Review code oleh reviewer sedang jalan.
+- **Hasil terakhir:** `uv run pytest -q` setelah Task 12: **794 passed, 3 skipped, 4 deselected, 0 failed** (`npm ci` sudah jalan di worktree, jadi test node ikut lolos). `npx tsc --noEmit -p .` bersih. `uvx ruff check --select F,I` bersih di file yang diubah. Golden top3 hijau di tiap task.
+- **Dibangun:** `narration_mode: "faktacuil"` + `Beat.keyword`; aturan naskah F1–F11 di `check-script`; detektor CTA like Indonesia; scene CTA like + transform; timeline tanpa panah/emoji/card/intro/flash dengan `captionStyle: "faktacuil"`; caption Fredoka pop di Remotion; BGM 1 lagu lokal; voice Eric default + VoiceStudio opsional; shot maks 2,0 detik; upload ke channel FaktaCuil lewat token kedua dengan cek akun; slot 12.00/18.00 WIB maks 2 per hari. Angka: `FAKTACUIL_RAW_WPS = 2.27`, rentang kata 50–74 (target 62) di speed 1.1.
+- **Belum dites:**
+  - TTS beneran untuk naskah FaktaCuil utuh (baru sampel 40 kata Eric); bagaimana ElevenLabs membaca "like" dan "like-mu".
+  - Render beneran FaktaCuil dari awal sampai `final.mp4`. Caption Fredoka baru di-still di latar hitam (outline hitam tidak terlihat); lebar kata terpanjang ±830 dari 960 px.
+  - `login youtube --channel faktacuil` dan upload ke YouTube beneran (semua test pakai fake; respons `channels().list` asli belum pernah dilihat).
+  - VoiceStudio bahasa Indonesia: profil belum ada, jadi jalur `faktacuil_tts_provider = "voicestudio"` baru dites dengan fake.
+  - Lagu: file "Welcome to Bullworth" belum ada di `assets/channels/faktacuil/bgm/` (lead/Akmal yang menaruh), jadi BGM sementara `main.mp3`. Rawan Content ID.
+- **Langkah Akmal setelah merge:**
+  1. Taruh lagu pilihan di `assets/channels/faktacuil/bgm/` (folder lokal, tidak ke-commit).
+  2. `uv run mayzfact login youtube --channel faktacuil`, pilih akun channel FaktaCuil di browser, lalu catat judul + ID channel (`UC...`) yang di-print.
+  3. Isi `Settings.faktacuil_youtube_channel_id` dengan ID itu (di `mayzfact/config.py`). Tanpa ini upload FaktaCuil sengaja ditolak.
+  4. Opsional, kalau mau VoiceStudio: isi `faktacuil_tts_provider`, `faktacuil_voicestudio_voice` (profil bahasa Indonesia), `faktacuil_voicestudio_instruct` di `settings.local.json`.
+  5. Video pertama: minta agent pakai skill `bikin-faktacuil`.
+- **Masalah terbuka:**
+  - Run FaktaCuil baru menjalankan step `source` sebelum naskah ada, jadi memakai `hook_seconds` 10 dan men-download `source.mp4` + frame `seg_*` yang tidak dipakai. Belum diperbaiki (dicatat lead).
+  - Pesan "Token YouTube ditolak"/"Belum login YouTube" dari `youtube.service` memakai hint MayzFact (`login youtube` tanpa `--channel`). Cek token kosong FaktaCuil di CLI sudah benar; kasus token ditolak belum.
+  - 1,15 yang di-set eksplisit sebagai `video_speed` MayzFact voicestudio ikut turun ke 1,1 untuk FaktaCuil ElevenLabs (tidak bisa dibedakan dari auto-bump).
+  - `FAKTACUIL_RAW_WPS` dari satu sampel; kalibrasi ulang kalau naskah asli jauh beda tempo.
+- **Pertanyaan spec yang belum dijawab Akmal (pakai default):** Q2 `video_speed` khusus FaktaCuil (tetap 1.1), Q3 source listicle (boleh 1 item), Q5 TikTok (tidak dibuat), Q7 SFX click CTA (sama). Q1, Q4, Q8 sudah dijawab; Q6 menunggu langkah 3 di atas.
+- **Spec/plan:** `docs/superpowers/specs/2026-11-10-faktacuil-format-design.md` (bagian 13 = deviasi), `docs/superpowers/plans/2026-11-10-faktacuil-format.md`.
+
 # Handoff — Honey illustration + guard objek CTA (D-049)
 
 - Desain bounded disetujui Akmal: honey harus ilustrasi, bukan teks; guard berlaku untuk naskah baru. Root cause: script memilih word dan renderer menjadikan tema tak dikenal fallback ke kartu kata.

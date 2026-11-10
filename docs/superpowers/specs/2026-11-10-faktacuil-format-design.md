@@ -1,8 +1,8 @@
 # Spec: format FaktaCuil (`narration_mode: "faktacuil"`)
 
 - **Tanggal:** 2026-11-10
-- **Status:** draft architect (T9), nunggu review lead. Keputusan Akmal (1)–(8) di bagian 2 udah disetujui 2026-11-10.
-- **Keputusan baru:** D-051 (ditulis di task docs, lihat plan Task 14).
+- **Status:** diimplementasi di branch `fase-faktacuil-format` (Task 1–12 ter-commit, docs Task 13–14). Spec ini diupdate 2026-11-10 biar sesuai yang dibangun: jawaban Akmal atas Q1–Q8 (voice Eric, VoiceStudio, slot 12.00/18.00, shot 2,0 detik, BGM Bully), kalibrasi tempo 2,27, dan deviasi implementasi (bagian 13). Keputusan Akmal (1)–(8) di bagian 2 disetujui 2026-11-10.
+- **Keputusan baru:** D-051 (`docs/DECISIONS.md`).
 - **Branch:** `fase-faktacuil-format`
 - **Bahan:** laporan riset T8 `E:\APROJECT\mayzfact-refs\faktacuil\LAPORAN-T8-format-faktabor-zonag2v.md` (di luar repo), spec D-050 `docs/superpowers/specs/2026-11-10-top3-only-design.md`, branding `assets/channels/faktacuil/`.
 
@@ -19,9 +19,9 @@ Pipeline sekarang cuma kenal format top3 (D-050). Field `narration_mode` sengaja
 3. **CTA:** gimmick "coba tekan like, like-mu berubah jadi X?" pakai `CtaScene` yang udah ada, di tengah sebelum jawaban, cuma like (tanpa subscribe). Detektor pemicu bahasa Indonesia terpisah dari aturan Inggris.
 4. **Dimatiin:** panah/lingkaran, card countdown, emoji, intro whip, flash. **Tetap:** SFX transisi, blur teks klip.
 5. **Caption:** 1 kata, Fredoka putih outline hitam, animasi pop, kata kunci kuning brand.
-6. **Voice:** ElevenLabs bahasa Indonesia. Task pertama: 3 sampel pendek buat dipilih Akmal. Kredit 3 sampel pendek udah disetujui, generate-nya lewat lead.
-7. **BGM:** 1 lagu sepanjang video, dipilih Akmal (referensi gaya: Bully main theme, D minor, ±98 BPM feel). File nyusul. Repo public, jadi lagu berhak cipta nggak boleh di-commit; lokasinya lokal + gitignore. Sementara pakai `main.mp3`.
-8. **Upload:** channel FaktaCuil lewat OAuth token kedua, slot jadwal sendiri terpisah dari MayzFact. Jam final belum diputusin (kandidat 12.00 dan 18.00 WIB), jadi configurable di `Settings`. Metadata bahasa Indonesia, hashtag pola `#faktaunik #faktamenarik` + topik + generik.
+6. **Voice:** ElevenLabs bahasa Indonesia. Task pertama: 3 sampel pendek buat dipilih Akmal. Kredit 3 sampel pendek udah disetujui, generate-nya lewat lead. **Jawaban 2026-11-10:** voice cowok, akun ElevenLabs free jadi cuma voice premade yang bisa lewat API. Dipilih **Eric** `cjVigY5qzO86Huf0OWal`. FaktaCuil juga bisa VoiceStudio (`faktacuil_tts_provider` dkk di `settings.local.json`); profil bahasa Indonesia belum ada.
+7. **BGM:** 1 lagu sepanjang video, dipilih Akmal (referensi gaya: Bully main theme, D minor, ±98 BPM feel). File nyusul. Repo public, jadi lagu berhak cipta nggak boleh di-commit; lokasinya lokal + gitignore. Sementara pakai `main.mp3`. **Jawaban 2026-11-10:** dipilih Bully "Welcome to Bullworth" (117,5 BPM). File-nya lokal di `assets/channels/faktacuil/bgm/` (gitignored); Akmal/lead yang naruh, agent nggak download atau copy.
+8. **Upload:** channel FaktaCuil lewat OAuth token kedua, slot jadwal sendiri terpisah dari MayzFact. Jam final belum diputusin (kandidat 12.00 dan 18.00 WIB), jadi configurable di `Settings`. Metadata bahasa Indonesia, hashtag pola `#faktaunik #faktamenarik` + topik + generik. **Jawaban 2026-11-10:** slot 12.00 dan 18.00 WIB, maksimal 2 video per hari; upload nggak tentu tiap hari, jadi `next-slot` ambil slot kosong berikutnya.
 
 Footage tetap lewat brief + `links.json` manual dari Akmal.
 
@@ -154,9 +154,9 @@ Objek di luar tabel = STOP, bikin ilustrasi baru dulu (aturan yang sama kayak to
 
 Rumus: `kata = detik_final × video_speed × tempo_mentah`.
 
-- `tempo_mentah` = kata/detik suara ElevenLabs bahasa Indonesia sebelum speed-up. Belum diukur. Nilai awal **2,5** (asumsi; referensi T8 final 2,45–3,4 kata/detik, MayzFact Inggris 2,2 mentah). Disimpan sebagai konstanta `FAKTACUIL_RAW_WPS` di `mayzfact/faktacuil.py`, dikalibrasi ulang dari 3 sampel voice (plan Task 2).
+- `tempo_mentah` = kata/detik suara ElevenLabs bahasa Indonesia sebelum speed-up. Terukur dari sampel Eric: 40 kata / 17,60 detik (`eleven_v3`, stability 0.5, tanpa delivery tag) = **2,27**. Disimpan sebagai konstanta `FAKTACUIL_RAW_WPS = 2.27` di `mayzfact/faktacuil.py`. (Asumsi awal 2,5 sebelum diukur; referensi T8 final 2,45–3,4 kata/detik, MayzFact Inggris 2,2 mentah.)
 - Rentang final **20–30 detik**, target **25 detik**.
-- Di speed 1.1 dan tempo 2,5: target `round(25 × 1.1 × 2.5)` = **69**, bawah `ceil(20 × 2.75)` = **55**, atas `floor(30 × 2.75)` = **82**. Ini cocok sama referensi T8 (57–77 kata).
+- Di speed 1.1 dan tempo 2,27 (k = 1,1 × 2,27 = 2,497): target `round(25 × k)` = **62**, bawah `ceil(20 × k)` = **50**, atas `floor(30 × k)` = **74** (`faktacuil_word_range(1.1)` = `(62, 50, 74)`). Di speed 1.15 (VoiceStudio): **65 / 53 / 78**. Hitungannya dibulatin ke 6 desimal dulu biar noise float nggak geser batas (20 × 1,4 = 28,000000000000004). Referensi T8: 57–77 kata.
 - Kata CTA ikut dihitung, tanpa allowance tambahan (CTA FaktaCuil cuma 1–3 beat pendek).
 - `approved_word_count` tetap ngunci jumlah kata per run, sama kayak top3.
 - `check_voice` (`mayzfact/pipeline.py:73`) buat FaktaCuil ngasih peringatan kalau estimasi final di luar **20–30 detik** (top3 tetap 30–40, `pipeline.py:88`).
@@ -176,20 +176,23 @@ Nggak berubah. Source tetap video Inggris (keputusan 1), transcript tetap `langu
 
 ### tts (`mayzfact/config.py`, `mayzfact/pipeline.py`)
 - `mayzfact/steps/tts.py` nggak berubah.
-- `Settings` (`config.py:24`) dapat field baru:
-  - `faktacuil_elevenlabs_voice_id: str = ""`: diisi setelah Akmal milih sampel.
+- `Settings` (`config.py`) dapat field baru (bukan rahasia, nggak masuk `.env`):
+  - `faktacuil_elevenlabs_voice_id: str = "cjVigY5qzO86Huf0OWal"`: Eric, voice premade yang bisa lewat API akun free (jawaban Q1, Akmal 2026-11-10).
   - `faktacuil_elevenlabs_delivery_tag: str = ""`: tag `[calm]` D-047 dipilih buat suara Inggris, belum tentu cocok.
-  - Model (`eleven_v3`) dan stability (0.5) pakai field yang udah ada. Kalau sampel nunjukin perlu beda, ditambah nanti.
-- Fungsi baru `settings_for_mode(settings, mode)` di `config.py`: top3 balikin `settings` apa adanya. FaktaCuil balikin `replace(settings, elevenlabs_voice_id=..., elevenlabs_delivery_tag=..., hook_seconds=0.0)`. Fungsi ini nggak ngecek provider.
-- Cek provider ada di `_require_script` (`pipeline.py:292`), yang cuma jalan sebelum step tts: mode FaktaCuil + `tts_provider != "elevenlabs"` → `PipelineError("config", ...)`. FaktaCuil cuma ElevenLabs (keputusan 6), dan VoiceStudio lokal di-setup buat Inggris. PC yang setting lokalnya voicestudio tetap bisa jalanin `--from fetch/timeline/render`.
-- `run_pipeline` (`pipeline.py:249-250`): `load_script` udah dipanggil di sini. Simpan mode-nya, terus `settings = settings_for_mode(settings, mode)` sebelum `real_deps(settings)`. Run pertama (naskah belum ada) nggak sampai TTS, jadi aman.
-- `real_deps.tts()` (`pipeline.py:118`): kalau `settings.elevenlabs_voice_id` kosong → `PipelineError("config", "Voice FaktaCuil belum dipilih: isi Settings.faktacuil_elevenlabs_voice_id setelah Akmal milih sampel.")`. Top3 default-nya nggak kosong, jadi nggak kena.
+  - `faktacuil_tts_provider: str = "elevenlabs"`, `faktacuil_voicestudio_voice: str = ""`, `faktacuil_voicestudio_instruct: str = ""`: FaktaCuil juga bisa VoiceStudio. Akmal ngisinya di `settings.local.json` (ketiganya ada di daftar field yang diterima `load_settings`; provider divalidasi, voice nggak boleh kosong kalau diisi). Profil bahasa Indonesia belum ada, jadi default-nya ElevenLabs.
+  - `faktacuil_max_shot_seconds: float = 2.0` (lihat bagian plan).
+  - Model (`eleven_v3`) dan stability (0.5) pakai field yang udah ada.
+- Fungsi baru `settings_for_mode(settings, mode)` di `config.py`: top3 balikin `settings` apa adanya (identity). FaktaCuil balikin `replace(settings, tts_provider=faktacuil_tts_provider, voicestudio_voice=..., voicestudio_instruct=..., elevenlabs_voice_id=..., elevenlabs_delivery_tag=..., hook_seconds=0.0, max_shot_seconds=...)` dari field `faktacuil_*`, jadi `tts_provider` global (override MayzFact di `settings.local.json`) nggak kebawa. `video_speed`: `__post_init__` nge-bump 1,1 jadi 1,15 kalau voicestudio, dan `replace()` ikut kena (FaktaCuil voicestudio dapat 1,15). Kebalikannya, 1,15 hasil bump MayzFact voicestudio diturunin ke 1,1 kalau FaktaCuil pakai ElevenLabs.
+- Cek VoiceStudio ada di `_require_script`, yang cuma jalan sebelum step tts: FaktaCuil + `tts_provider == "voicestudio"` + `voicestudio_voice` kosong → `PipelineError("config", ...)` yang nyuruh ngisi `faktacuil_voicestudio_voice` di `settings.local.json`. Provider selain `elevenlabs`/`voicestudio` ditolak di `run_pipeline`. PC yang setting lokalnya voicestudio tetap bisa jalanin `--from fetch/timeline/render`.
+- `run_pipeline` (`pipeline.py`): `load_script` udah dipanggil di sini. Simpan mode-nya, terus `settings = settings_for_mode(settings, mode)` sebelum cek provider, `_require_script`, `check_voice`, dan `real_deps(settings)`. Run pertama (naskah belum ada) nggak sampai TTS, jadi aman.
+- `real_deps.tts()` (`pipeline.py:118`): kalau `settings.elevenlabs_voice_id` kosong (misal `faktacuil_elevenlabs_voice_id` di-override kosong) → `PipelineError("config", "Voice ElevenLabs kosong. Isi elevenlabs_voice_id (FaktaCuil: faktacuil_elevenlabs_voice_id) di Settings.")` sebelum provider dibikin. Default Eric nggak kosong, jadi nggak kena.
 - Cache pending TTS (`tts.py:62-65`) udah pakai identity voice/model/tag, jadi pending top3 nggak bakal kepakai buat FaktaCuil.
 - Sampel voice: CLI kecil `mayzfact voice-sample` (bagian 8, plan Task 2).
 
 ### plan (`mayzfact/steps/plan.py`)
 - `cta_beat_indices(beats)` di `plan.py:181-184` dan `plan.py:196` diganti `cta_indices(script)`: dispatcher di `mayzfact/narration.py` yang balikin `cta_beat_indices` buat top3 dan `faktacuil_cta_indices` buat FaktaCuil.
 - `settings_for_mode` maksa `hook_seconds=0` buat FaktaCuil, jadi `run_plan` nggak bikin segmen hook (`plan.py:185`). Semua shot pakai `queries`/`queries_zh` beat-nya sendiri, dan `hook_queries` FaktaCuil selalu `{}`. Alasannya: hook FaktaCuil cuma 1 kalimat tanya (±3 detik). Kalau `hook_seconds` tetap 10, ±40% video ngambil keyword dari transcript source dan `queries` beat-nya nggak kepake.
+- `settings_for_mode` juga nurunin `max_shot_seconds` ke `faktacuil_max_shot_seconds` = 2,0 (MayzFact 4,0). `real_deps.plan` baca `settings.max_shot_seconds`, jadi cukup ganti Settings-nya. Alasannya: referensi ganti klip tiap 1–2,5 detik (jawaban Q8, Akmal 2026-11-10). Akibatnya link per video lebih banyak dari top3.
 - Frame referensi tiap shot pakai `subject_ranges` atau posisi proporsional (`plan.py:132-134`). `source_rank` selalu `None`. Step source tetap bikin frame `seg_*` karena mode belum ketahuan di sana; frame itu nggak dipakai.
 - Shot CTA tetap `auto_cta: true` (`plan.py:220-223`), jadi brief/fetch otomatis nanganinnya.
 
@@ -221,7 +224,7 @@ Mode dibaca dari `script["narration_mode"]` di `build_timeline` (`timeline.py:41
 
 **BGM** (`mayzfact/audio.py:109`): `prepare_audio` baca `script["narration_mode"]`. Buat FaktaCuil:
 - Folder lokal `assets/channels/faktacuil/bgm/`, di-gitignore (`.gitignore` tambah `assets/channels/faktacuil/bgm/`).
-- Ambil file audio pertama (urut nama) di folder itu. Folder kosong atau nggak ada → pakai `assets/bgm/main.mp3` + log `[timeline] BGM FaktaCuil belum ada di assets/channels/faktacuil/bgm/, sementara pakai main.mp3`. Lebih dari 1 file → pakai yang pertama + log nama yang dipakai.
+- Ambil file audio pertama (urut nama, ekstensi lewat `list_bgm`) di folder itu. Folder kosong, nggak ada, atau cuma berisi non-audio → pakai `assets/bgm/main.mp3` + log `[timeline] BGM FaktaCuil belum ada di assets/channels/faktacuil/bgm/, sementara pakai main.mp3`. `main.mp3` juga nggak ada → tanpa BGM + log. Lebih dari 1 file → pakai yang pertama + log semua nama. Lagu yang dipilih Akmal: Bully "Welcome to Bullworth" (117,5 BPM); Akmal/lead yang naruh file-nya, agent nggak download atau copy.
 - Hasilnya `{"bgm": None, "bgm_main": <file>}`, jadi `_sound` masuk cabang 1 BGM sepanjang video (`timeline.py:210-212`) tanpa riser. Nggak ada kode `_sound` baru buat BGM.
 - `audio.json` FaktaCuil: `{"bgm": null, "bgm_main": "<nama file yang dipakai>"}`. Top3 tetap `{"bgm": ...}` kayak sekarang.
 
@@ -244,13 +247,13 @@ Nggak berubah. `video_speed` 1.1 dipakai dua format. Kalau sampel nunjukin tempo
 ### upload, login, next-slot (`mayzfact/youtube.py`, `mayzfact/cli.py`, `mayzfact/config.py`)
 - **Secret baru:** `YOUTUBE_TOKEN_JSON_FAKTACUIL` → `Settings.youtube_token_json_faktacuil` (`ENV_FIELDS`, `config.py:61-66`), `repr=False`. Client secret OAuth tetap `YOUTUBE_CLIENT_SECRET_JSON` yang sama.
 - **Setting biasa baru:**
-  - `faktacuil_slot_hours: tuple[int, ...] = (12, 18)` (kandidat, jam final nunggu Akmal),
-  - `faktacuil_youtube_channel_id: str = ""` (ID channel FaktaCuil, `UC...`, bukan rahasia).
-- **Login:** `mayzfact login youtube --channel faktacuil` nyimpen token ke `YOUTUBE_TOKEN_JSON_FAKTACUIL` (`youtube.login`, `youtube.py:83`, dapat parameter nama env). Setelah token kesimpen, CLI nge-print judul + ID channel dari `channels().list(part="snippet", mine=True)`, biar Akmal bisa ngecek akunnya bener dan ngisi `faktacuil_youtube_channel_id`. Tanpa `--channel` perilakunya sama kayak sekarang.
-- **Upload** (`cli.py:145`, `youtube.upload_video` `youtube.py:222`): mode dibaca dari `runs/<id>/script.json` mentah (`narration_mode`). Buat FaktaCuil:
-  1. token `youtube_token_json_faktacuil`,
+  - `faktacuil_slot_hours: tuple[int, ...] = (12, 18)` (final, Akmal 2026-11-10: 12.00 dan 18.00 WIB, maksimal 2 video per hari; `next_slot` ngurutin jam dulu),
+  - `faktacuil_youtube_channel_id: str = ""` (ID channel FaktaCuil, `UC...`, bukan rahasia; diisi Akmal lewat kode `Settings` setelah login).
+- **Login:** `mayzfact login youtube --channel faktacuil` nyimpen token ke `YOUTUBE_TOKEN_JSON_FAKTACUIL` (`youtube.login(..., token_env=...)`, yang sekarang balikin token-nya, jangan di-print). Setelah token kesimpen, CLI nge-print judul + ID channel dari `youtube.channel_info` (`channels().list(part="id,snippet", mine=True)`), biar Akmal bisa ngecek akunnya bener dan ngisi `faktacuil_youtube_channel_id`. Tanpa `--channel` perilakunya sama kayak sekarang.
+- **Upload** (`cli.py`, `youtube.upload_video`): mode dibaca dari `runs/<id>/script.json` mentah lewat `youtube.run_mode` (tanpa file = top3, file rusak atau mode tak dikenal = error). Buat FaktaCuil, urutannya:
+  1. `faktacuil_youtube_channel_id` nggak kosong (cek sebelum service dibikin), token `youtube_token_json_faktacuil` kebaca,
   2. `upload.json` wajib `language: "id"`,
-  3. sebelum `videos().insert`, `channels().list(part="id", mine=True)` harus balikin ID yang sama dengan `faktacuil_youtube_channel_id`. ID kosong atau beda → `PipelineError`, nggak upload. Upload nggak bisa ditarik, jadi cek akun ini wajib,
+  3. service dibikin, lalu sebelum `videos().insert`, `channel_info(service)` harus balikin ID yang sama dengan `faktacuil_youtube_channel_id`. ID kosong atau beda → `PipelineError`, nggak upload. Upload nggak bisa ditarik, jadi cek akun ini wajib,
   4. `youtube.json` dapat field `"channel": "faktacuil"`.
   
   Top3: token, body, dan isi `youtube.json` sama persis kayak sekarang (tanpa field `channel`).
@@ -268,7 +271,7 @@ Nggak berubah. `video_speed` 1.1 dipakai dua format. Kalau sampel nunjukin tempo
    Test-nya bandingin JSON persis. Golden nggak boleh di-regenerate di task lain; kalau beda, berarti top3 berubah.
 3. **Upload/slot top3:** test yang ada (`tests/test_youtube.py:91-101`, `tests/test_cli.py:191`) tetap hijau tanpa diubah. Tambah test: `youtube.json` top3 nggak punya key `channel`; slot MayzFact nggak keblok `youtube.json` FaktaCuil.
 4. **Remotion:** tanpa `captionStyle`, `Captions` render persis sama. Dicek pakai `npx remotion still` frame caption top3 sebelum/sesudah (butuh `npm ci` di worktree, Node 22).
-5. **Full suite** `uv run pytest -q` di akhir tiap task. Baseline worktree ini: 688 lolos, 1 gagal (`test_cta_visual_markup_cases_run_in_node`, `remotion/node_modules` belum ada, sama kayak R7 spec D-050), 3 skip, 4 deselect.
+5. **Full suite** `uv run pytest -q` di akhir tiap task. Baseline worktree ini: 688 lolos, 1 gagal (`test_cta_visual_markup_cases_run_in_node`, `remotion/node_modules` belum ada, sama kayak R7 spec D-050), 3 skip, 4 deselect. Setelah Task 12: 794 lolos, 3 skip, 4 deselect, 0 gagal (`npm ci` udah jalan di Task 11, jadi test node ikut lolos).
 
 ## 8. Sampel voice (keputusan 6)
 
@@ -279,32 +282,34 @@ Nggak berubah. `video_speed` 1.1 dipakai dua format. Kalau sampel nunjukin tempo
 
   Ini teks uji suara, bukan naskah video.
 - **Implementer cuma bikin CLI + test pakai fake provider.** Generate 3 sampel beneran dijalanin lead, setelah ada 3 voice ID (Q1).
-- Setelah Akmal milih: isi `faktacuil_elevenlabs_voice_id`, kalibrasi `FAKTACUIL_RAW_WPS` dari kata/detik sampel yang dipilih, catat di D-051.
+- Setelah Akmal milih: Eric (`cjVigY5qzO86Huf0OWal`) dan `FAKTACUIL_RAW_WPS = 2.27` (sampel 40 kata, 17,60 detik, `eleven_v3`, stability 0.5, tanpa tag) udah masuk kode dan dicatat di D-051.
 
 ## 9. Risiko
 
 - **R1. Detektor CTA kebawa ke top3.** `mayzfact/cta.py` dipakai top3 di 4 tempat. Detektor Indonesia ditaruh di `mayzfact/faktacuil.py`, bukan di `cta.py`, biar `LIKE_BEFORE` nggak kesentuh.
 - **R2. `build_scene` dapat cabang.** `cta_scene.py` file top3 yang sensitif (timing cue, label `word`/`structure`). Cabang cuma di 4 titik: `allowed`, `stop`, deteksi cue like + lookback, dan loop `bounds` (`cta_scene.py:49-58`) yang sekarang pakai `cta_kinds` Inggris. Di FaktaCuil, loop itu pakai `id_like_positions` + regex `transform_word`. Golden `timeline_fixture` jagain top3.
 - **R3. `keyword` di top3.** Field baru di `Beat` default kosong. Top3 nolak kalau diisi. Run top3 yang ada nggak punya field ini.
-- **R4. Tempo Indonesia belum diukur.** Rentang 55–82 kata dari asumsi 2,5 kata/detik. Kalau sampel ElevenLabs Indonesia jauh beda, rentang geser. Makanya `FAKTACUIL_RAW_WPS` dikalibrasi sebelum naskah pertama.
+- **R4. Tempo Indonesia baru dari 1 sampel.** `FAKTACUIL_RAW_WPS` 2,27 dari sampel Eric (40 kata, 17,60 detik). Kalau naskah beneran jauh beda tempo, rentang 50–74 kata geser; `check_voice` ngasih peringatan kalau estimasi di luar 20–30 detik.
 - **R5. Salah akun YouTube.** Google OAuth gampang kepilih akun/brand account yang salah. Cek `channels().list(mine=True)` vs `faktacuil_youtube_channel_id` sebelum upload. Login cuma bisa dijalanin Akmal (browser).
 - **R6. Font render butuh internet.** `@remotion/google-fonts` ambil font pas render, sama kayak Anton sekarang. Bukan risiko baru.
 - **R7. Kata panjang Indonesia di caption.** 1 kata per tampilan + font auto-kecil. Kalau masih kepotong, baru pertimbangin wrap.
 - **R8. Remotion test butuh `node_modules`.** Worktree belum punya. Task Remotion jalanin `npm ci` dulu (Node 22).
 - **R9. Rawan conflict merge:** `mayzfact/config.py` (plan Task 6, 12), `mayzfact/cli.py` (Task 2, 12), `mayzfact/pipeline.py` (Task 6, 9), `mayzfact/steps/script.py`, `mayzfact/steps/timeline.py`, `AGENTS.md`, `docs/DECISIONS.md`, `docs/HANDOFF.md`. Rekomendasi: satu branch, task berurutan (plan).
 
-**Belum dicek:** render beneran, suara ElevenLabs Indonesia, cara ElevenLabs baca "like" dan "like-mu" di kalimat Indonesia, `npx remotion still` buat Fredoka (worktree belum punya `node_modules`).
+**Belum dicek:** render FaktaCuil beneran, suara ElevenLabs Indonesia dalam naskah panjang (baru sampel 40 kata), cara ElevenLabs baca "like" dan "like-mu" di kalimat Indonesia, `login`/`upload` ke YouTube beneran (baru fake), VoiceStudio bahasa Indonesia (profil belum ada), caption Fredoka di atas klip beneran (still cuma di latar hitam, outline hitam nggak kelihatan).
 
-## 10. Pertanyaan yang masih kebuka (buat Akmal, lewat lead)
+## 10. Pertanyaan dan jawabannya
 
-1. **Q1. 3 kandidat voice.** Voice ID mana yang disampel? Opsinya voice yang udah ada di akun (`mayzfact voices`) atau voice bahasa Indonesia dari Voice Library yang ditambahin Akmal ke akun dulu. Laki/perempuan? Ini nentuin Task 2 bisa dijalanin atau nggak.
-2. **Q2. Tempo.** Kalau sampel kepilih kedengeran kecepetan atau kelambatan di speed 1.1, mau ganti `video_speed` khusus FaktaCuil atau atur lewat panjang naskah aja? Default spec: speed 1.1 sama, panjang naskah yang ngikutin.
-3. **Q3. Source listicle.** Kalau source Inggris-nya Top N, boleh ambil 1 item aja (fakta item itu doang), atau source wajib video 1 topik? Default spec: dua-duanya boleh, asal semua fakta dari 1 item itu.
-4. **Q4. Jam slot.** 12.00 dan 18.00 WIB jadi final? Berapa video per hari?
-5. **Q5. TikTok.** FaktaCuil perlu `tiktok.json` juga? Default spec: nggak.
-6. **Q6. ID channel FaktaCuil.** Diisi Akmal setelah `login youtube --channel faktacuil` nge-print ID-nya.
-7. **Q7. SFX CTA.** Click SFX like tetap pakai `click` yang sama kayak MayzFact? Default spec: iya (SFX dipilih Akmal, aturan AGENTS.md).
-8. **Q8. Panjang shot.** Referensi ganti klip tiap 1–2,5 detik. Dengan `max_shot_seconds` 4,0 sekarang, 1 beat ≤10 kata jadi 1 shot ±2,5–3,5 detik setelah speed-up, jadi ±9–12 link per video. Mau diturunin (misal 2,0 detik, ±15–20 link per video) biar lebih cepat kayak referensi? Default spec: tetap 4,0.
+Status per 2026-11-10 (jawaban Akmal lewat lead; yang nggak ada jawabannya pakai default spec):
+
+1. **Q1. Voice:** cowok. Akun ElevenLabs free, jadi cuma voice premade yang bisa lewat API. Dipilih **Eric** `cjVigY5qzO86Huf0OWal`. VoiceStudio juga didukung (profil bahasa Indonesia belum ada).
+2. **Q2. Tempo:** `video_speed` tetap 1,1; panjang naskah yang ngikutin (`FAKTACUIL_RAW_WPS` 2,27, rentang 50–74 kata). Belum ada keputusan ganti speed khusus FaktaCuil.
+3. **Q3. Source listicle:** pakai default spec (boleh ambil 1 item, semua fakta dari item itu). Belum ditegasin Akmal.
+4. **Q4. Jam slot:** **12.00 dan 18.00 WIB, maksimal 2 video per hari.** Upload nggak tentu tiap hari, jadi `next-slot` cukup ambil slot kosong berikutnya.
+5. **Q5. TikTok:** pakai default spec (nggak ada `tiktok.json` FaktaCuil). Belum ada jawaban Akmal.
+6. **Q6. ID channel:** Akmal isi `Settings.faktacuil_youtube_channel_id` setelah `login youtube --channel faktacuil` nge-print ID-nya. Belum diisi.
+7. **Q7. SFX CTA:** pakai default spec (`click` yang sama kayak MayzFact).
+8. **Q8. Panjang shot:** ikut referensi, ±2 detik per klip: `faktacuil_max_shot_seconds = 2.0` (MayzFact tetap 4,0).
 
 ## 11. Yang diputusin architect (cek pas baca)
 
@@ -330,3 +335,20 @@ Nggak berubah. `video_speed` 1.1 dipakai dua format. Kalau sampel nunjukin tempo
 - **Channel disimpan di `youtube.json` semua run (termasuk MayzFact).** Bikin isi `youtube.json` top3 berubah. Tanpa field = MayzFact udah cukup.
 - **Dua BGM (mystery + main) kayak top3.** Keputusan 7: 1 lagu sepanjang video.
 - **CLI sampel voice dilewat, lead jalanin skrip sekali pakai.** Skrip tanpa test gampang ke-run dua kali dan bayar dua kali. CLI-nya kecil, nolak nimpa file, dan bakal kepake lagi kalau voice diganti.
+
+
+## 13. Deviasi implementasi dari draft awal (2026-11-10)
+
+Hal yang dibangun beda dari draft architect. Yang bagian lain di spec ini udah diupdate; daftar ini buat yang nggak kelihatan dari satu bagian aja.
+
+- **Voice dan TTS:** default `faktacuil_elevenlabs_voice_id` Eric (bukan string kosong). FaktaCuil juga bisa VoiceStudio lewat `faktacuil_tts_provider` / `faktacuil_voicestudio_voice` / `faktacuil_voicestudio_instruct` (draft: FaktaCuil cuma ElevenLabs). `_require_script` nolak FaktaCuil + VoiceStudio kalau `faktacuil_voicestudio_voice` kosong, bukan nolak VoiceStudio sama sekali.
+- **`settings_for_mode` ganti lebih banyak field:** `tts_provider`, `voicestudio_voice`, `voicestudio_instruct`, `max_shot_seconds` (2,0), selain voice id, delivery tag, dan `hook_seconds`. `tts_provider` global MayzFact nggak kebawa ke FaktaCuil.
+- **`video_speed`:** `__post_init__` `Settings` nge-bump 1,1 jadi 1,15 kalau provider voicestudio, dan `replace()` ikut kena. `settings_for_mode` nurunin balik ke 1,1 kalau 1,15 itu hasil bump MayzFact voicestudio sementara FaktaCuil pakai ElevenLabs. 1,15 yang di-set eksplisit nggak bisa dibedain dari hasil bump, jadi ikut turun; override lain (misal 1,2) kebawa.
+- **Tempo:** `FAKTACUIL_RAW_WPS` 2,27 (draft 2,5); rentang kata 50–74 (draft 55–82). `faktacuil_word_range` ngebulatin ke 6 desimal sebelum `ceil`/`floor`.
+- **`cta_indices`:** baca `narration_mode` pakai `.get` (script dict tanpa field itu dianggap top3), karena ada test plan top3 tanpa `narration_mode`.
+- **Timeline:** `build_timeline` ngabaikan `marks`/`overlays` yang dikirim dari luar untuk FaktaCuil (draft: cuma pipeline yang nggak manggil). `hook_end` dipaksa 0 walau `clips.json` punya `hook_segment`.
+- **BGM:** folder lokal ada tapi isinya non-audio = fallback `main.mp3`. `main.mp3` juga nggak ada = tanpa BGM + log, `audio.json` `{"bgm": null, "bgm_main": null}`.
+- **Login/upload:** `youtube.login` balikin token (draft: `None`) biar CLI bisa nge-print channel tanpa baca `.env`. `channel_info` pakai `part="id,snippet"`. `youtube.run_mode(paths)` baca `script.json` mentah dan melempar error kalau file rusak atau mode di luar `top3`/`faktacuil` (nebak top3 dari file rusak bisa nge-upload video FaktaCuil ke channel MayzFact). Tanpa `script.json` = top3, jadi run lama tetap bisa upload.
+- **Test lama yang berubah:** `tests/test_config.py::test_env_holds_only_secrets` (set `ENV_FIELDS` nambah `YOUTUBE_TOKEN_JSON_FAKTACUIL`). Sisanya nggak diubah, golden top3 nggak di-regenerate.
+- **Masih kebuka:** `service()` (token ditolak/kosong) pakai `LOGIN_HINT` MayzFact ("login youtube" tanpa `--channel`). Buat token FaktaCuil, pesan yang bener ada di cek token kosong di CLI; pesan "Token YouTube ditolak" masih nyebut perintah tanpa `--channel`.
+- **Run baru FaktaCuil** jalanin step `source` pakai `hook_seconds` 10 (naskah belum ada, mode belum ketahuan), jadi `source.mp4` ke-download walau nggak dipakai.

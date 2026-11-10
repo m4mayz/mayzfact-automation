@@ -10,6 +10,13 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-10-faktacuil-format-design.md`. Baca dulu bagian 5 (kontrak + aturan F1–F11) dan bagian 6 (perubahan per step). Laporan riset T8 ada di luar repo: `E:\APROJECT\mayzfact-refs\faktacuil\LAPORAN-T8-format-faktabor-zonag2v.md`.
 
+> **Catatan pasca-implementasi (2026-11-10).** Plan ini ditulis sebelum Akmal jawab Q1–Q8 dan sebelum sampel voice diukur. Yang dibangun beda dari draft:
+> - Voice default **Eric** `cjVigY5qzO86Huf0OWal` (bukan `""`), dan FaktaCuil juga support VoiceStudio lewat `faktacuil_tts_provider` / `faktacuil_voicestudio_voice` / `faktacuil_voicestudio_instruct` (Task 6).
+> - `faktacuil_max_shot_seconds = 2.0` (Task 6, 7), `FAKTACUIL_RAW_WPS = 2.27` jadi rentang kata `faktacuil_word_range(1.1) = (62, 50, 74)`, bukan 69/55/82 (Task 5).
+> - Slot 12.00/18.00 WIB maksimal 2 per hari (Task 12). BGM Bully "Welcome to Bullworth" (117,5 BPM), lokal gitignored (Task 10).
+> - Deviasi Task 12: `login` balikin token, `run_mode` melempar error kalau `script.json` rusak. Daftar lengkap di spec bagian 13.
+> Task 6 dan Task 12 di bawah udah ditulis ulang/dikasih catatan sesuai itu; bagian lain cuma angka yang dikoreksi.
+
 ## Global Constraints
 
 - Top3 nggak boleh berubah perilaku. File `tests/golden/*.json` dari Task 1 nggak boleh di-regenerate di task lain.
@@ -20,7 +27,7 @@
 - Pesan `check-script` bahasa Inggris (biar bisa ditempel ke agent mana pun), pesan `PipelineError` lain bahasa Indonesia santai, sama kayak kode sekarang.
 - Commit per task, Conventional Commits, bahasa Inggris, 1 baris, tanpa body, tanpa trailer `Co-Authored-By`.
 - Cek tiap task: `uv run pytest -q` (baseline: 688 lolos, 1 gagal `tests/test_cta_scene.py::test_cta_visual_markup_cases_run_in_node` karena `remotion/node_modules` belum ada, 3 skip) dan `uvx ruff check --select F,I <file yang diubah>`.
-- Nilai tetap dari spec: warna caption `#ffffff` (`CAPTION_WHITE`), kuning brand `#FFC53D`; final 20–30 detik, target 25; `FAKTACUIL_RAW_WPS = 2.5`; slot kandidat `(12, 18)`; env secret `YOUTUBE_TOKEN_JSON_FAKTACUIL`; folder BGM lokal `assets/channels/faktacuil/bgm/`.
+- Nilai tetap dari spec: warna caption `#ffffff` (`CAPTION_WHITE`), kuning brand `#FFC53D`; final 20–30 detik, target 25; `FAKTACUIL_RAW_WPS = 2.27` (dikalibrasi dari sampel Eric; draft awal 2.5); slot `(12, 18)` (final, maks 2 video per hari); env secret `YOUTUBE_TOKEN_JSON_FAKTACUIL`; folder BGM lokal `assets/channels/faktacuil/bgm/`.
 
 ## Review Focus
 
@@ -317,7 +324,7 @@ def test_valid_faktacuil_script_passes():
     assert check_script(faktacuil_script(), SOURCE_TEXT_EN)[0] == []
 
 def test_word_range_at_default_speed():
-    assert faktacuil_word_range(1.1) == (69, 55, 82)
+    assert faktacuil_word_range(1.1) == (62, 50, 74)  # tempo 2.27 (draft awal 2.5 = (69, 55, 82))
 
 @pytest.mark.parametrize("mutate,needle", [
     (lambda b: b[0].update(text="Kucing suka masuk kardus,"), 'open with "Kenapa"'),
@@ -375,52 +382,22 @@ def test_top3_rejects_keyword():
 ### Task 6: Voice FaktaCuil di Settings + pipeline
 
 **Files:**
-- Modify: `mayzfact/config.py:24-53` (Settings), tambah `settings_for_mode`
-- Modify: `mayzfact/pipeline.py:73-91` (`check_voice`), `:118-130` (`tts()`), `:248-250` (`run_pipeline`)
+- Modify: `mayzfact/config.py` (Settings), tambah `settings_for_mode`; `load_settings` nerima field `faktacuil_*` di `settings.local.json`
+- Modify: `mayzfact/pipeline.py` (`check_voice`, `real_deps().tts`, `run_pipeline`, `_require_script`)
 - Test: `tests/test_faktacuil_pipeline.py`
 
-**Interfaces:**
-- Consumes: Task 3, Task 5 (`faktacuil_word_range` nggak dipakai di sini).
-- Produces: `Settings.faktacuil_elevenlabs_voice_id: str = ""`, `Settings.faktacuil_elevenlabs_delivery_tag: str = ""`, `settings_for_mode(settings: Settings, mode: str) -> Settings`.
+**Interfaces (versi yang dibangun, keputusan Akmal 2026-11-10 ngalahin draft "FaktaCuil cuma ElevenLabs, voice kosong"):**
+- Produces: `Settings.faktacuil_elevenlabs_voice_id = "cjVigY5qzO86Huf0OWal"` (Eric), `faktacuil_elevenlabs_delivery_tag = ""`, `faktacuil_tts_provider = "elevenlabs"`, `faktacuil_voicestudio_voice = ""`, `faktacuil_voicestudio_instruct = ""`, `faktacuil_max_shot_seconds = 2.0`, `settings_for_mode(settings, mode) -> Settings`.
+- `settings_for_mode(s, "top3")` identity. `"faktacuil"` ganti `tts_provider`, `voicestudio_voice`, `voicestudio_instruct`, `elevenlabs_voice_id`, `elevenlabs_delivery_tag`, `hook_seconds=0.0`, `max_shot_seconds` dari field `faktacuil_*`. `tts_provider` global nggak kebawa.
+- `__post_init__` nge-bump `video_speed` 1,1 → 1,15 kalau voicestudio: FaktaCuil voicestudio dapat 1,15; 1,15 hasil bump MayzFact voicestudio diturunin ke 1,1 buat FaktaCuil ElevenLabs.
+- `_require_script` nolak FaktaCuil + voicestudio kalau `faktacuil_voicestudio_voice` kosong (pesan nyebut `settings.local.json`); provider selain elevenlabs/voicestudio ditolak di `run_pipeline`.
+- `check_voice` FaktaCuil: label `FaktaCuil`, jendela 20–30 detik; top3 tetap 30–40 dan teks lognya sama persis.
 
-- [ ] **Step 1: Tulis test**
-
-```python
-def test_settings_for_top3_is_identity():
-    s = Settings()
-    assert settings_for_mode(s, "top3") is s
-
-def test_settings_for_faktacuil_swaps_voice_tag_and_hook():
-    s = settings_for_mode(Settings(faktacuil_elevenlabs_voice_id="IDVOICE"), "faktacuil")
-    assert (s.elevenlabs_voice_id, s.elevenlabs_delivery_tag, s.elevenlabs_model, s.hook_seconds) == ("IDVOICE", "", "eleven_v3", 0.0)
-
-def test_voicestudio_only_blocks_faktacuil_tts(tmp_path):
-    settings = settings_for_mode(Settings(tts_provider="voicestudio"), "faktacuil")   # nggak raise
-    # tulis source.json + script faktacuil valid di paths → _require_script(paths, settings) raise PipelineError "ElevenLabs"
-    with pytest.raises(PipelineError, match="ElevenLabs"):
-        _require_script(paths, settings)
-
-def test_tts_without_faktacuil_voice_stops_before_request():
-    deps = real_deps(settings_for_mode(Settings(elevenlabs_api_keys=("k",)), "faktacuil"))
-    with pytest.raises(PipelineError, match="faktacuil_elevenlabs_voice_id"):
-        deps.tts()
-
-def test_check_voice_warns_outside_20_30_for_faktacuil(tmp_path):
-    # tulis script faktacuil + tts.json duration_s 40.0 (hash cocok), video_speed 1.1 → estimasi 36,4 detik
-    logs = []
-    check_voice(paths, video_speed=1.1, log=logs.append)
-    assert any("20-30 detik" in line for line in logs)
-```
-
-Plus 1 test `run_pipeline` pakai `Deps` fake: naskah FaktaCuil + `voice_id` diisi → provider fake yang dibikin lewat `deps.tts` ngecek `settings.elevenlabs_voice_id == "IDVOICE"`. Pola `Deps` fake ada di `tests/test_pipeline.py`. Kalau `run_pipeline` nerima `deps` dari luar, test-nya cukup mastiin `settings_for_mode` dipanggil sebelum `check_voice`/`_require_script` (misal monkeypatch `pipeline.settings_for_mode` dan catat argumennya).
-
-- [ ] **Step 2: Run, pastiin gagal.**
-
-- [ ] **Step 3: Implement** sesuai spec bagian 6 "tts". Di `run_pipeline`, hasil `load_script(paths)` (`pipeline.py:250`) disimpan; `settings = settings_for_mode(settings, script.narration_mode)` sebelum `real_deps`. `_require_script` (`pipeline.py:292`) nolak mode FaktaCuil kalau `tts_provider != "elevenlabs"`. `check_voice`: pakai `script["narration_mode"]` buat milih jendela (top3 30–40, FaktaCuil 20–30) dan label log (`Top 3` / `FaktaCuil`). Teks log top3 harus sama persis kayak sekarang.
-
-- [ ] **Step 4: Run** — `uv run pytest tests/test_faktacuil_pipeline.py tests/test_pipeline.py tests/test_config.py tests/test_top3_golden.py -v && uv run pytest -q` → PASS.
-
-- [ ] **Step 5: Commit** — `git commit -m "feat: pick FaktaCuil ElevenLabs voice per narration mode"`.
+- [x] **Step 1: Tulis test** (`tests/test_faktacuil_pipeline.py`): top3 identity; default Eric + field lain; swap voice/tag/hook/shot; voice id kosong berhenti sebelum provider dibikin (`faktacuil_elevenlabs_voice_id` di pesan); `tts_provider` global nggak bocor; FaktaCuil voicestudio pakai field `faktacuil_*`; `video_speed` (1,15 / 1,1 / override 1,2 kebawa); `_require_script` nolak dan nerima voicestudio; provider tak dikenal ditolak sebelum TTS; `check_voice` 20–30; `run_pipeline` manggil `settings_for_mode` sebelum `_require_script` dan `check_voice`; `real_deps().plan` baca `max_shot_seconds` + `hook_seconds` dari settings; `settings.local.json` nerima/nolak field `faktacuil_*`; field `faktacuil_*` bukan `ENV_FIELDS`.
+- [x] **Step 2: Run, pastiin gagal.**
+- [x] **Step 3: Implement** sesuai spec bagian 6 "tts".
+- [x] **Step 4: Run** — `uv run pytest tests/test_faktacuil_pipeline.py tests/test_pipeline.py tests/test_config.py tests/test_top3_golden.py -v && uv run pytest -q` → PASS.
+- [x] **Step 5: Commit** — `git commit -m "feat: per-mode voice, provider and shot settings for faktacuil"` (1043c0c).
 
 ---
 
@@ -611,6 +588,13 @@ Pakai `client` fake / `sfx.json` kosong biar nggak ada request (pola test yang u
   - `youtube.upload_video(..., channel: str = "mayzfact", expected_channel_id: str = "")`
   - `youtube.run_mode(paths: RunPaths) -> str`: `narration_mode` dari `script.json` mentah, default `"top3"` kalau file/field nggak ada
   - CLI: `login youtube [--channel faktacuil]`, `next-slot [--channel faktacuil]`
+
+**Deviasi dari draft ini (dibangun beda, spec bagian 13):**
+- `youtube.login(..., token_env)` balikin token (`-> str`), bukan `None`, biar CLI bisa nge-print channel tanpa baca `.env`.
+- `channel_info` pakai `part="id,snippet"`.
+- `run_mode` melempar `PipelineError` kalau `script.json` rusak atau mode di luar `top3`/`faktacuil`; tanpa file = `top3`.
+- `faktacuil_slot_hours = (12, 18)` itu final (Akmal 2026-11-10: maksimal 2 video per hari), bukan kandidat. `next_slot` ngurutin jam.
+- `tests/test_config.py::test_env_holds_only_secrets` ikut diubah (set `ENV_FIELDS` nambah `YOUTUBE_TOKEN_JSON_FAKTACUIL`), jadi "test lama nggak diubah" nggak berlaku buat satu test itu.
 
 - [ ] **Step 1: Tulis test**
 
