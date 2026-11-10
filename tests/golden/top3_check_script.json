@@ -1,0 +1,9 @@
+{
+  "valid": [],
+  "playful": [],
+  "multi": [
+    "0% of the beats use a photo; it must be between 15% and 45%.",
+    "Beat 3 has 12 words; split it so every beat has at most 10 words.",
+    "Beat 4 has no search queries."
+  ]
+}

@@ -1,0 +1,609 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 1155,
+  "audio": "voice.mp3",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_0.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 90
+    },
+    {
+      "src": "clips/shot_1.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 90,
+      "durationInFrames": 57
+    },
+    {
+      "src": "clips/shot_2.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 147,
+      "durationInFrames": 154
+    },
+    {
+      "src": "clips/shot_3.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 301,
+      "durationInFrames": 159
+    },
+    {
+      "src": "clips/shot_4.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 460,
+      "durationInFrames": 58
+    },
+    {
+      "src": "clips/shot_5.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 518,
+      "durationInFrames": 170
+    },
+    {
+      "src": "clips/shot_6.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 688,
+      "durationInFrames": 130
+    },
+    {
+      "src": "clips/shot_7.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 818,
+      "durationInFrames": 76,
+      "decorative": true
+    },
+    {
+      "src": "clips/shot_8.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 894,
+      "durationInFrames": 34,
+      "decorative": true
+    },
+    {
+      "src": "clips/shot_9.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 928,
+      "durationInFrames": 44
+    },
+    {
+      "src": "clips/shot_10.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 972,
+      "durationInFrames": 102
+    },
+    {
+      "src": "clips/shot_11.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1074,
+      "durationInFrames": 81
+    }
+  ],
+  "countdown": [
+    {
+      "number": 3,
+      "label": "BASILISK LIZARDS",
+      "numberFrom": 90,
+      "numberAt": 0,
+      "numberDuration": 25,
+      "cardFrom": 115,
+      "cardDuration": 32,
+      "src": "clips/shot_1.mp4",
+      "kind": "video",
+      "clipOffset": 25
+    },
+    {
+      "number": 2,
+      "label": "IMMORTAL JELLYFISH",
+      "numberFrom": 460,
+      "numberAt": 0,
+      "numberDuration": 22,
+      "cardFrom": 482,
+      "cardDuration": 36,
+      "src": "clips/shot_4.mp4",
+      "kind": "video",
+      "clipOffset": 22
+    },
+    {
+      "number": 1,
+      "label": "TARDIGRADES",
+      "numberFrom": 928,
+      "numberAt": 0,
+      "numberDuration": 21,
+      "cardFrom": 949,
+      "cardDuration": 23,
+      "src": "clips/shot_9.mp4",
+      "kind": "video",
+      "clipOffset": 21
+    }
+  ],
+  "captions": [
+    {
+      "text": "THESE",
+      "from": 0,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THREE",
+      "from": 11,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ANIMALS",
+      "from": 21,
+      "durationInFrames": 15,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "HAVE",
+      "from": 36,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "UNUSUAL",
+      "from": 45,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SURVIVAL",
+      "from": 59,
+      "durationInFrames": 16,
+      "color": "#facc15"
+    },
+    {
+      "text": "TRICKS",
+      "from": 75,
+      "durationInFrames": 15,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "NUMBER",
+      "from": 90,
+      "durationInFrames": 12,
+      "color": "#4ade80"
+    },
+    {
+      "text": "CAN",
+      "from": 156,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SPRINT",
+      "from": 163,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "BRIEFLY",
+      "from": 175,
+      "durationInFrames": 15,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ACROSS",
+      "from": 190,
+      "durationInFrames": 12,
+      "color": "#4ade80"
+    },
+    {
+      "text": "WATER",
+      "from": 202,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FIXTURE2X15",
+      "from": 213,
+      "durationInFrames": 22,
+      "color": "#facc15"
+    },
+    {
+      "text": "FIXTURE2X14",
+      "from": 235,
+      "durationInFrames": 21,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "FIXTURE2X13",
+      "from": 256,
+      "durationInFrames": 22,
+      "color": "#4ade80"
+    },
+    {
+      "text": "FIXTURE2X12",
+      "from": 278,
+      "durationInFrames": 23,
+      "color": "#facc15"
+    },
+    {
+      "text": "USING",
+      "from": 301,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FAST",
+      "from": 312,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MOVEMENTS",
+      "from": 321,
+      "durationInFrames": 17,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "AND",
+      "from": 338,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SPECIALIZED",
+      "from": 346,
+      "durationInFrames": 21,
+      "color": "#4ade80"
+    },
+    {
+      "text": "FEET",
+      "from": 367,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FIXTURE3X11",
+      "from": 376,
+      "durationInFrames": 22,
+      "color": "#facc15"
+    },
+    {
+      "text": "FIXTURE3X10",
+      "from": 398,
+      "durationInFrames": 21,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "FIXTURE3X9",
+      "from": 419,
+      "durationInFrames": 20,
+      "color": "#4ade80"
+    },
+    {
+      "text": "FIXTURE3X8",
+      "from": 439,
+      "durationInFrames": 21,
+      "color": "#facc15"
+    },
+    {
+      "text": "UNDER",
+      "from": 518,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CERTAIN",
+      "from": 528,
+      "durationInFrames": 15,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "CONDITIONS",
+      "from": 543,
+      "durationInFrames": 19,
+      "color": "#4ade80"
+    },
+    {
+      "text": "THEY",
+      "from": 562,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "REVERSE",
+      "from": 571,
+      "durationInFrames": 15,
+      "color": "#facc15"
+    },
+    {
+      "text": "DEVELOPMENT",
+      "from": 586,
+      "durationInFrames": 21,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "FIXTURE5X7",
+      "from": 607,
+      "durationInFrames": 20,
+      "color": "#4ade80"
+    },
+    {
+      "text": "FIXTURE5X6",
+      "from": 627,
+      "durationInFrames": 19,
+      "color": "#facc15"
+    },
+    {
+      "text": "FIXTURE5X5",
+      "from": 646,
+      "durationInFrames": 20,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "FIXTURE5X4",
+      "from": 666,
+      "durationInFrames": 22,
+      "color": "#4ade80"
+    },
+    {
+      "text": "POTENTIALLY",
+      "from": 688,
+      "durationInFrames": 21,
+      "color": "#facc15"
+    },
+    {
+      "text": "REPEATING",
+      "from": 709,
+      "durationInFrames": 18,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "AN",
+      "from": 727,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EARLIER",
+      "from": 732,
+      "durationInFrames": 15,
+      "color": "#4ade80"
+    },
+    {
+      "text": "STAGE",
+      "from": 747,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FIXTURE6X3",
+      "from": 757,
+      "durationInFrames": 20,
+      "color": "#facc15"
+    },
+    {
+      "text": "FIXTURE6X2",
+      "from": 777,
+      "durationInFrames": 20,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "FIXTURE6X1",
+      "from": 797,
+      "durationInFrames": 21,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SUBSCRIBE",
+      "from": 818,
+      "durationInFrames": 20,
+      "color": "#facc15"
+    },
+    {
+      "text": "IT",
+      "from": 838,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TURNS",
+      "from": 843,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "INTO",
+      "from": 854,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 863,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "VOLCANO",
+      "from": 867,
+      "durationInFrames": 16,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "LIKE",
+      "from": 883,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OR",
+      "from": 894,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COMMENT",
+      "from": 899,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "'NOPE'",
+      "from": 913,
+      "durationInFrames": 15,
+      "color": "#facc15"
+    },
+    {
+      "text": "CAN",
+      "from": 981,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ENDURE",
+      "from": 988,
+      "durationInFrames": 13,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "RADIATION",
+      "from": 1001,
+      "durationInFrames": 18,
+      "color": "#4ade80"
+    },
+    {
+      "text": "AND",
+      "from": 1019,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DEHYDRATION",
+      "from": 1026,
+      "durationInFrames": 22,
+      "color": "#facc15"
+    },
+    {
+      "text": "WHILE",
+      "from": 1048,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DORMANT",
+      "from": 1058,
+      "durationInFrames": 16,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "EVEN",
+      "from": 1074,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SPACE'S",
+      "from": 1083,
+      "durationInFrames": 15,
+      "color": "#4ade80"
+    },
+    {
+      "text": "VACUUM",
+      "from": 1098,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "UNDER",
+      "from": 1110,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CERTAIN",
+      "from": 1121,
+      "durationInFrames": 14,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "CONDITIONS",
+      "from": 1135,
+      "durationInFrames": 20,
+      "color": "#4ade80"
+    }
+  ],
+  "overlays": [],
+  "emojis": [],
+  "bgm": [],
+  "sfx": [],
+  "intro": null,
+  "transitions": [],
+  "flashes": [],
+  "ctaScene": {
+    "theme": "volcano",
+    "commentText": "NOPE",
+    "durationInFrames": 110,
+    "stages": [
+      {
+        "kind": "subscribe",
+        "durationInFrames": 25,
+        "timing": "word",
+        "from": 818,
+        "triggerAt": 0
+      },
+      {
+        "kind": "transform",
+        "durationInFrames": 40,
+        "timing": "word",
+        "from": 843,
+        "triggerAt": 0
+      },
+      {
+        "kind": "like",
+        "durationInFrames": 16,
+        "timing": "word",
+        "from": 883,
+        "triggerAt": 0
+      },
+      {
+        "kind": "comment",
+        "durationInFrames": 29,
+        "timing": "word",
+        "from": 899,
+        "triggerAt": 0
+      }
+    ],
+    "cues": [
+      {
+        "kind": "subscribe",
+        "word": "Subscribe,",
+        "from": 818
+      },
+      {
+        "kind": "transform",
+        "word": "turns",
+        "from": 843
+      },
+      {
+        "kind": "like",
+        "word": "like,",
+        "from": 883
+      },
+      {
+        "kind": "comment",
+        "word": "comment",
+        "from": 899
+      }
+    ],
+    "from": 818
+  }
+}
