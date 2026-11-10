@@ -31,6 +31,7 @@ SCOPES = [
 ]
 WIB = timezone(timedelta(hours=7))  # WIB nggak pakai DST, jadi cukup offset tetap
 LOGIN_HINT = "Jalanin: uv run mayzfact login youtube"
+FAKTACUIL_LOGIN_HINT = "Jalanin: uv run mayzfact login youtube --channel faktacuil"
 SLOT_HOURS = (1, 4)
 MIN_LEAD = timedelta(minutes=15)
 CHUNK = 8 * 1024 * 1024
@@ -80,11 +81,13 @@ def _flow_class():
     return InstalledAppFlow
 
 
-def login(client_secret_json: str, env_file: Path) -> None:
-    """Browser kebuka buat izin akun Google, token-nya masuk YOUTUBE_TOKEN_JSON di .env."""
+def login(client_secret_json: str, env_file: Path, token_env: str = "YOUTUBE_TOKEN_JSON") -> str:
+    """Browser kebuka buat izin akun Google, token-nya masuk token_env di .env. Balikin token-nya (jangan di-print)."""
     config = parse_json_env("YOUTUBE_CLIENT_SECRET_JSON", client_secret_json)
     creds = _flow_class().from_client_config(config, SCOPES).run_local_server(port=0)
-    set_env_value(env_file, "YOUTUBE_TOKEN_JSON", creds.to_json())
+    token = creds.to_json()
+    set_env_value(env_file, token_env, token)
+    return token
 
 
 class UploadMeta(BaseModel):
@@ -141,23 +144,37 @@ def load_meta(paths: RunPaths) -> UploadMeta:
         raise PipelineError("upload", f"upload.json nggak valid: {exc}") from exc
 
 
-def taken_slots(runs_dir: Path) -> list[datetime]:
-    """Jadwal video yang udah ke-upload, dari runs/*/youtube.json."""
+def run_mode(paths: RunPaths) -> str:
+    """narration_mode dari script.json mentah; top3 kalau file/field nggak ada (run lama). File rusak = error."""
+    if not paths.script_json.exists():
+        return "top3"
+    try:
+        data = read_json(paths.script_json)
+    except ValueError:
+        raise PipelineError("upload", f"{paths.script_json.name} nggak bisa dibaca, jadi channel tujuan nggak bisa "
+                                      "dipastiin. Benerin file-nya dulu.") from None
+    return data.get("narration_mode", "top3") if isinstance(data, dict) else "top3"
+
+
+def taken_slots(runs_dir: Path, channel: str = "mayzfact") -> list[datetime]:
+    """Jadwal video yang udah ke-upload di channel itu, dari runs/*/youtube.json (tanpa field channel = mayzfact)."""
     out = []
     for path in sorted(runs_dir.glob("*/youtube.json")):
         try:
-            out.append(datetime.fromisoformat(read_json(path)["publish_at"]))
-        except (KeyError, ValueError, TypeError):
+            data = read_json(path)
+            if data.get("channel", "mayzfact") == channel:
+                out.append(datetime.fromisoformat(data["publish_at"]))
+        except (KeyError, ValueError, TypeError, AttributeError):
             continue
     return out
 
 
-def next_slot(taken: list[datetime], now: datetime) -> datetime:
-    """Slot 01.00/04.00 WIB pertama yang belum kepake dan minimal 15 menit dari sekarang."""
+def next_slot(taken: list[datetime], now: datetime, hours: tuple[int, ...] = SLOT_HOURS) -> datetime:
+    """Slot (default 01.00/04.00 WIB) pertama yang belum kepake dan minimal 15 menit dari sekarang."""
     used = {t.astimezone(WIB) for t in taken}
     start = now.astimezone(WIB).replace(hour=0, minute=0, second=0, microsecond=0)
     for day in range(366):
-        for hour in SLOT_HOURS:
+        for hour in sorted(hours):
             slot = start + timedelta(days=day, hours=hour)
             if slot >= now + MIN_LEAD and slot not in used:
                 return slot
@@ -194,34 +211,47 @@ def video_body(meta: UploadMeta, publish_at: datetime | None) -> dict:
     }
 
 
-def service(token_json: str) -> Any:
+def service(token_json: str, channel: str = "mayzfact") -> Any:
     """Client YouTube Data API. Access token di-refresh otomatis; refresh token-nya tetap, jadi .env nggak ditulis ulang."""
     from google.auth.exceptions import GoogleAuthError, RefreshError
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
 
+    hint, env_name = ((FAKTACUIL_LOGIN_HINT, "YOUTUBE_TOKEN_JSON_FAKTACUIL") if channel == "faktacuil"
+                      else (LOGIN_HINT, "YOUTUBE_TOKEN_JSON"))
     if not token_json.strip():
-        raise PipelineError("youtube", f"Belum login YouTube. {LOGIN_HINT}")
-    info = parse_json_env("YOUTUBE_TOKEN_JSON", token_json)
+        raise PipelineError("youtube", f"Belum login YouTube. {hint}")
+    info = parse_json_env(env_name, token_json)
     try:
         creds = Credentials.from_authorized_user_info(info, SCOPES)
     except ValueError:
-        raise PipelineError("youtube", f"YOUTUBE_TOKEN_JSON nggak lengkap. Login ulang. {LOGIN_HINT}") from None
+        raise PipelineError("youtube", f"{env_name} nggak lengkap. Login ulang. {hint}") from None
     if not creds.valid:
         try:
             creds.refresh(Request())
         except RefreshError:
-            raise PipelineError("youtube", f"Token YouTube ditolak (dicabut atau expired). Login ulang. {LOGIN_HINT}") from None
+            raise PipelineError("youtube", f"Token YouTube ditolak (dicabut atau expired). Login ulang. {hint}") from None
         except GoogleAuthError as exc:  # TransportError: offline / DNS putus
             raise PipelineError("youtube", f"Nggak bisa nyambung ke Google buat refresh token ({type(exc).__name__}). "
                                 "Cek koneksi internet, terus coba lagi.") from None
     return build("youtube", "v3", credentials=creds, cache_discovery=False)
 
 
+def channel_info(service: Any) -> tuple[str, str]:
+    """(ID, judul) channel dari akun yang token-nya dipakai."""
+    items = service.channels().list(part="id,snippet", mine=True).execute().get("items") or []
+    if not items:
+        raise PipelineError("youtube", "Akun ini nggak punya channel YouTube yang kebaca. Login ulang pakai akun yang bener.")
+    return items[0]["id"], items[0].get("snippet", {}).get("title", "")
+
+
 def upload_video(paths: RunPaths, meta: UploadMeta, publish_at: datetime | None, make_service: Callable[[], Any],
-                 log: Callable[[str], None]) -> dict:
-    """Upload final.mp4 sebagai video terjadwal. Semua cek lokal dulu, baru nyentuh YouTube."""
+                 log: Callable[[str], None], channel: str = "mayzfact", expected_channel_id: str = "") -> dict:
+    """Upload final.mp4 sebagai video terjadwal. Semua cek lokal dulu, baru nyentuh YouTube.
+
+    channel "faktacuil": wajib ID channel yang diharapkan + metadata bahasa Indonesia, dan akun yang login dicek dulu.
+    """
     from google.auth.exceptions import GoogleAuthError
     from googleapiclient.errors import HttpError
     from googleapiclient.http import MediaFileUpload
@@ -233,8 +263,24 @@ def upload_video(paths: RunPaths, meta: UploadMeta, publish_at: datetime | None,
         raise PipelineError("upload", f"Video ini udah pernah di-upload: {old}. Mau upload ulang? Hapus {out} dulu.")
     if not paths.final_mp4.exists():
         raise PipelineError("upload", f"{paths.final_mp4} belum ada. Render dulu.")
+    if channel == "faktacuil":
+        if not expected_channel_id:
+            raise PipelineError("upload", "faktacuil_youtube_channel_id masih kosong. Login dulu "
+                                f"({FAKTACUIL_LOGIN_HINT}), terus isi ID channel yang di-print ke "
+                                "Settings.faktacuil_youtube_channel_id.")
+        if meta.language != "id":
+            raise PipelineError("upload", f'upload.json FaktaCuil wajib language "id" (sekarang {meta.language!r}).')
+    elif meta.language == "id":  # naskah FaktaCuil yang script.json-nya nggak kebaca sebagai faktacuil bakal salah channel
+        raise PipelineError("upload", 'upload.json language "id" tapi run ini bukan FaktaCuil (channel MayzFact). Cek '
+                                      'narration_mode di script.json: video FaktaCuil harus "faktacuil" biar ke channel FaktaCuil.')
     media = MediaFileUpload(str(paths.final_mp4), mimetype="video/mp4", chunksize=CHUNK, resumable=True)
-    request = make_service().videos().insert(part="snippet,status", body=video_body(meta, publish_at), media_body=media)
+    client = make_service()
+    if channel == "faktacuil":  # upload nggak bisa ditarik: pastiin akun yang login beneran channel FaktaCuil
+        found_id, found_title = channel_info(client)
+        if found_id != expected_channel_id:
+            raise PipelineError("upload", f"Token FaktaCuil login ke channel {found_title!r} ({found_id}), bukan "
+                                f"{expected_channel_id}. Upload dibatalin. {FAKTACUIL_LOGIN_HINT} pakai akun yang bener.")
+    request = client.videos().insert(part="snippet,status", body=video_body(meta, publish_at), media_body=media)
     response = None
     try:
         while response is None:
@@ -257,5 +303,7 @@ def upload_video(paths: RunPaths, meta: UploadMeta, publish_at: datetime | None,
         "publish_at": (publish_at or uploaded).astimezone(WIB).isoformat(timespec="seconds"),
         "uploaded_at": uploaded.isoformat(timespec="seconds"),
     }
+    if channel != "mayzfact":
+        data["channel"] = channel
     write_json_atomic(out, data)
     return data

@@ -3,15 +3,30 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from datetime import datetime
 
 from mayzfact import tunnel as tunnel_mod
-from mayzfact.config import PROJECT_ROOT, RUNS_DIR, Settings, load_settings, missing_env
+from mayzfact.config import (
+    CACHE_DIR,
+    PROJECT_ROOT,
+    RUNS_DIR,
+    Settings,
+    load_settings,
+    missing_env,
+    settings_for_mode,
+)
 from mayzfact.errors import AwaitingInput, PipelineError
+from mayzfact.faktacuil import VOICE_SAMPLE_TEXT_ID
+from mayzfact.ffmpeg import audio_duration
 from mayzfact.net import make_client
 from mayzfact.pipeline import ALL_STEPS, run_pipeline
-from mayzfact.providers.elevenlabs import list_voices
+from mayzfact.providers.elevenlabs import ElevenLabsTTS, list_voices
+from mayzfact.store import write_bytes_atomic
+from mayzfact.text import words
+
+VOICE_SAMPLE_DIR = CACHE_DIR / "voice-samples"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -24,9 +39,14 @@ def build_parser() -> argparse.ArgumentParser:
     check = sub.add_parser("check-script", help="Cek runs/<id>/script.json yang ditulis agent")
     check.add_argument("video", help="Video ID atau URL YouTube source")
     sub.add_parser("voices", help="List voice ElevenLabs di akun lu")
+    sample = sub.add_parser("voice-sample", help="Bikin sampel suara FaktaCuil buat milih voice (pakai kredit ElevenLabs)")
+    sample.add_argument("voice_id")
+    sample.add_argument("--name", required=True, help="Nama file sampel, huruf kecil/angka/strip")
     login = sub.add_parser("login", help="Login YouTube buat upload (token disimpan di .env)")
     login.add_argument("platform", choices=["youtube"])
-    sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (01.00/04.00 WIB)")
+    login.add_argument("--channel", choices=["faktacuil"], help="Login channel FaktaCuil (token kedua)")
+    next_slot = sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (01.00/04.00 WIB)")
+    next_slot.add_argument("--channel", choices=["faktacuil"], help="Pakai jam slot FaktaCuil (12.00/18.00 WIB)")
     upload = sub.add_parser("upload", help="Upload final.mp4 ke YouTube sebagai video terjadwal")
     upload.add_argument("video", help="Video ID atau URL YouTube source")
     when = upload.add_mutually_exclusive_group(required=True)
@@ -48,6 +68,8 @@ def main(argv: list[str] | None = None) -> int:
         settings = load_settings()
         if args.command == "voices":
             return _print_voices(settings)
+        if args.command == "voice-sample":
+            return _voice_sample(args, settings)
         if args.command == "check-script":
             return _check_script(args, settings)
         if args.command == "login":
@@ -57,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "tunnel":
             return _tunnel(args, settings)
         if args.command == "next-slot":
-            return _next_slot()
+            return _next_slot(args, settings)
         if args.command == "upload":
             return _upload(args, settings)
         paths = run_pipeline(
@@ -93,6 +115,7 @@ def _check_script(args: argparse.Namespace, settings: Settings) -> int:
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
     if not paths.source_json.exists():
         raise PipelineError("check-script", f"{paths.source_json} belum ada. Jalanin dulu: mayzfact run {paths.root.name}")
+    settings = settings_for_mode(settings, load_script(paths).narration_mode)  # rentang kata sama kayak pipeline
     source = read_json(paths.source_json)
     problems = check_script_file(paths, source, bgm_choices=list_bgm(BGM_DIR), video_speed=settings.video_speed)
     if problems:
@@ -115,9 +138,36 @@ def _print_voices(settings: Settings) -> int:
     return 0
 
 
+def _voice_sample(args: argparse.Namespace, settings: Settings) -> int:
+    if not re.fullmatch(r"[a-z0-9-]{1,40}", args.name):
+        raise PipelineError("voice-sample", "--name cuma boleh huruf kecil, angka, dan strip (maks 40 karakter)")
+    target = VOICE_SAMPLE_DIR / f"{args.name}.mp3"
+    if target.exists():
+        raise PipelineError("voice-sample", f"{target} udah ada, sampel nggak di-generate ulang")
+    missing = missing_env(settings, ["ELEVENLABS_API_KEYS"])
+    if missing:
+        raise PipelineError("voice-sample", "Isi dulu di .env: " + ", ".join(missing))
+    tts = ElevenLabsTTS(settings.elevenlabs_api_keys, args.voice_id, "eleven_v3", make_client(), stability=0.5, delivery_tag="")
+    audio, _ = tts.synthesize(VOICE_SAMPLE_TEXT_ID)
+    write_bytes_atomic(target, audio)
+    duration = audio_duration(target)
+    print(f"Sampel: {target}")
+    print(f"Teks: {len(VOICE_SAMPLE_TEXT_ID)} karakter, durasi {duration:.2f} detik")
+    print(f"kata/detik mentah: {len(words(VOICE_SAMPLE_TEXT_ID)) / duration:.2f}")
+    return 0
+
+
 def _login(args: argparse.Namespace, settings: Settings) -> int:
     from mayzfact import youtube
 
+    if args.channel == "faktacuil":
+        token = youtube.login(settings.youtube_client_secret_json, PROJECT_ROOT / ".env",
+                              token_env="YOUTUBE_TOKEN_JSON_FAKTACUIL")
+        channel_id, title = youtube.channel_info(youtube.service(token, channel="faktacuil"))
+        print("YouTube: login berhasil, token FaktaCuil disimpan di .env (YOUTUBE_TOKEN_JSON_FAKTACUIL)")
+        print(f"Channel: {title} ({channel_id})")
+        print("Cek ini channel FaktaCuil, terus isi Settings.faktacuil_youtube_channel_id.")
+        return 0
     youtube.login(settings.youtube_client_secret_json, PROJECT_ROOT / ".env")
     print("YouTube: login berhasil, token disimpan di .env")
     return 0
@@ -135,10 +185,15 @@ def _lan_ip() -> str:
         return "127.0.0.1"
 
 
-def _next_slot() -> int:
+def _next_slot(args: argparse.Namespace, settings: Settings) -> int:
     from mayzfact import youtube
 
-    print(youtube.next_slot(youtube.taken_slots(RUNS_DIR), datetime.now(youtube.WIB)).strftime("%Y-%m-%d %H:%M"))
+    if args.channel == "faktacuil":
+        slot = youtube.next_slot(youtube.taken_slots(RUNS_DIR, "faktacuil"), datetime.now(youtube.WIB),
+                                 settings.faktacuil_slot_hours)
+    else:
+        slot = youtube.next_slot(youtube.taken_slots(RUNS_DIR), datetime.now(youtube.WIB))
+    print(slot.strftime("%Y-%m-%d %H:%M"))
     return 0
 
 
@@ -150,7 +205,19 @@ def _upload(args: argparse.Namespace, settings: Settings) -> int:
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
     meta = youtube.load_meta(paths)
     publish_at = None if args.now else youtube.parse_publish_at(args.at, datetime.now(youtube.WIB))
-    data = youtube.upload_video(paths, meta, publish_at, lambda: youtube.service(settings.youtube_token_json), print)
+    mode = youtube.run_mode(paths)
+    if mode == "faktacuil":
+        def make_service():
+            if not settings.youtube_token_json_faktacuil.strip():
+                raise PipelineError("youtube", f"Belum login channel FaktaCuil. {youtube.FAKTACUIL_LOGIN_HINT}")
+            return youtube.service(settings.youtube_token_json_faktacuil, channel="faktacuil")
+
+        data = youtube.upload_video(paths, meta, publish_at, make_service, print, channel="faktacuil",
+                                    expected_channel_id=settings.faktacuil_youtube_channel_id)
+    elif mode == "top3":
+        data = youtube.upload_video(paths, meta, publish_at, lambda: youtube.service(settings.youtube_token_json), print)
+    else:
+        raise PipelineError("upload", f"narration_mode {mode!r} nggak dikenal, channel tujuan nggak bisa dipastiin.")
     when = "langsung public" if args.now else f"tayang {args.at} WIB"
     print(f"Ke-upload, {when}\n  Video : {data['url']}\n  Studio: {data['studio_url']}")
     return 0

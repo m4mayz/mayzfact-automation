@@ -190,3 +190,62 @@ def test_custom_sfx_copy_failure_skips_only_that_sfx(tmp_path, sine_mp3, monkeyp
                         log=logs.append, custom=[{"file": "uy.mp3", "at_s": 1.0}, {"file": "gasp.mp3", "at_s": 2.0}])
     assert out["bgm"] == "audio/bgm/mystery.mp3"  # BGM nggak ikut ilang
     assert [c["src"] for c in out["custom"]] == ["audio/sfx/gasp.mp3"] and any("uy.mp3" in m for m in logs)
+
+
+def fk_audio(tmp_path, local_files=None, bgm_files=None, script=None):
+    """prepare_audio buat naskah FaktaCuil; local_files None = folder BGM lokal nggak ada."""
+    bgm_dir, sfx_dir, local = tmp_path / "bgm", tmp_path / "sfx", tmp_path / "fc"
+    bgm_dir.mkdir()
+    sfx_dir.mkdir()
+    for name, data in (bgm_files if bgm_files is not None else {"main.mp3": b"main"}).items():
+        (bgm_dir / name).write_bytes(data)
+    if local_files is not None:
+        local.mkdir()
+        for name, data in local_files.items():
+            (local / name).write_bytes(data)
+    client, _ = serving({})
+    paths, logs = RunPaths(tmp_path / "run"), []
+    script = script or {"narration_mode": "faktacuil", "beats": []}
+    out = prepare_audio(paths, script, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, log=logs.append,
+                        faktacuil_bgm_dir=local)
+    return out, paths, logs
+
+
+def test_faktacuil_bgm_uses_local_song(tmp_path):
+    out, paths, _ = fk_audio(tmp_path, {"lagu.mp3": b"x"}, {"main.mp3": b"main", "mystery.mp3": b"m"})
+    assert out["bgm"] is None and out["bgm_main"] == "audio/bgm/lagu.mp3"
+    assert read_json(paths.root / "audio.json") == {"bgm": None, "bgm_main": "lagu.mp3"}
+    assert (paths.root / "audio/bgm/lagu.mp3").read_bytes() == b"x"
+    assert not (paths.root / "audio/bgm/mystery.mp3").exists()
+
+
+def test_faktacuil_bgm_falls_back_to_main(tmp_path):
+    out, paths, logs = fk_audio(tmp_path)  # folder lokal nggak ada
+    assert out["bgm"] is None and out["bgm_main"] == "audio/bgm/main.mp3"
+    assert read_json(paths.root / "audio.json") == {"bgm": None, "bgm_main": "main.mp3"}
+    assert any("sementara pakai main.mp3" in line for line in logs)
+
+
+def test_faktacuil_bgm_ignores_non_audio_files(tmp_path):
+    out, _, logs = fk_audio(tmp_path, {"README.txt": b"catatan"})
+    assert out["bgm_main"] == "audio/bgm/main.mp3"
+    assert any("sementara pakai main.mp3" in line for line in logs)
+
+
+def test_faktacuil_bgm_without_any_song_has_no_bgm(tmp_path):
+    out, paths, _ = fk_audio(tmp_path, bgm_files={})
+    assert out["bgm"] is None and out["bgm_main"] is None
+    assert read_json(paths.root / "audio.json") == {"bgm": None, "bgm_main": None}
+
+
+def test_faktacuil_bgm_takes_first_song_and_logs_it(tmp_path):
+    out, _, logs = fk_audio(tmp_path, {"b.mp3": b"b", "a.mp3": b"a"})
+    assert out["bgm_main"] == "audio/bgm/a.mp3"
+    assert any("a.mp3" in line and "b.mp3" in line for line in logs)
+
+
+def test_top3_bgm_unchanged_by_faktacuil_dir(tmp_path):
+    script = {"narration_mode": "top3", "beats": []}
+    out, paths, _ = fk_audio(tmp_path, {"lagu.mp3": b"x"}, {"mystery.mp3": b"m", "main.mp3": b"x"}, script)
+    assert (out["bgm"], out["bgm_main"]) == ("audio/bgm/mystery.mp3", "audio/bgm/main.mp3")
+    assert read_json(paths.root / "audio.json") == {"bgm": "mystery.mp3"}

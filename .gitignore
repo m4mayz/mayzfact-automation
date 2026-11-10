@@ -15,3 +15,5 @@ models/
 .env*.tmp
 out/quality-smoke/
 out/cta-scene-fixture/
+# lagu FaktaCuil berhak cipta, repo ini public
+assets/channels/faktacuil/bgm/

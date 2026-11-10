@@ -23,6 +23,7 @@ class Beat(BaseModel):
     emoji: str = ""  # emoji animasi di atas caption, dari daftar mayzfact.emoji.EMOJI
     emoji_word: str = ""  # kata di beat ini tempat emoji muncul
     queries_zh: list[str] = []  # versi Mandarin buat nyari di Douyin, ditulis agent
+    keyword: str = ""  # kata di beat ini yang dikasih highlight, dipakai format faktacuil
 
 
 class HookQuery(BaseModel):
@@ -31,7 +32,7 @@ class HookQuery(BaseModel):
 
 
 class Script(BaseModel):
-    narration_mode: Literal["top3"]  # pemilih format; format channel lain nanti nambah nilai di sini (D-050)
+    narration_mode: Literal["top3", "faktacuil"]  # pemilih format; format channel lain nanti nambah nilai di sini (D-050)
     approved_word_count: int | None = Field(default=None, strict=True, ge=1, le=500)
     cta_scene: CtaScene
     beats: list[Beat]

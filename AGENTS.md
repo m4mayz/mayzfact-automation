@@ -15,11 +15,16 @@ Peran agent di sini:
 - **Operator:** jalanin CLI, berhenti di checkpoint yang butuh Akmal, ngecek hasilnya.
 - **Developer:** benerin bug dan nambah fitur.
 
-Naskah, keyword klip, dan tanda emoji/panah ditulis **agent** ke `runs/<id>/script.json`, dicek pakai `mayzfact check-script`, dan harus di-review Akmal sebelum suara dibikin. Nggak ada LLM eksternal di pipeline. Aturan nulis naskahnya ada di skill `bikin-short` langkah 2.
+Naskah, keyword klip, dan tanda emoji/panah ditulis **agent** ke `runs/<id>/script.json`, dicek pakai `mayzfact check-script`, dan harus di-review Akmal sebelum suara dibikin. Nggak ada LLM eksternal di pipeline. Aturan nulis naskahnya ada di skill `bikin-short` langkah 2 (format FaktaCuil: skill `bikin-faktacuil`).
 
 ## Bikin video
 
-Ikutin skill `.agents/skills/bikin-short/SKILL.md`. Codex, OpenCode, dan Antigravity nemu skill ini otomatis. Agent lain baca file-nya langsung.
+Ada dua format, dua skill:
+
+- **MayzFact (Top 3, bahasa Inggris):** `.agents/skills/bikin-short/SKILL.md`.
+- **FaktaCuil (fakta unik bahasa Indonesia, channel FaktaCuil, D-051):** `.agents/skills/bikin-faktacuil/SKILL.md`. Alur dan checkpoint-nya sama, skill ini cuma nulis bagian yang beda.
+
+Codex, OpenCode, dan Antigravity nemu skill-skill ini otomatis. Agent lain baca file-nya langsung.
 
 ## Struktur
 
@@ -29,6 +34,7 @@ Ikutin skill `.agents/skills/bikin-short/SKILL.md`. Codex, OpenCode, dan Antigra
 | `remotion/` | komponen video (React + Remotion 4) |
 | `runs/<id>/` | hasil per video (di-gitignore) |
 | `assets/bgm/` | 2 BGM dari Akmal: `mystery.mp3` di hook, `main.mp3` mulai "Number" pertama (D-038) |
+| `assets/channels/faktacuil/` | branding FaktaCuil (avatar, banner, watermark, deskripsi) ikut di-commit. `bgm/` isinya lagu FaktaCuil dari Akmal, lokal dan di-gitignore (berhak cipta, D-051) |
 | `assets/sfx/sfx.json` | momen → nama file SFX myinstants. File mp3-nya ke-download otomatis |
 | `assets/emoji/`, `models/` | cache yang ke-download otomatis: Lottie Noto, model SigLIP + OWLv2 (±1,4 GB) |
 | `docs/DECISIONS.md` | keputusan project (D-001, D-002, …) |
@@ -37,7 +43,7 @@ Ikutin skill `.agents/skills/bikin-short/SKILL.md`. Codex, OpenCode, dan Antigra
 
 File penting di `runs/<id>/`:
 
-- `script.json`: naskah per beat (ditulis agent), termasuk `queries`/`queries_zh`, tanda `point`/`emoji`/`emoji_word`, dan `hook_queries`. `narration_mode` cuma `top3` dan `cta_scene` wajib (D-050); run format lama ditolak pipeline, file-nya dibiarin.
+- `script.json`: naskah per beat (ditulis agent), termasuk `queries`/`queries_zh`, tanda `point`/`emoji`/`emoji_word`, dan `hook_queries`. `narration_mode` `top3` atau `faktacuil` (D-050, D-051) dan `cta_scene` wajib; run format lama ditolak pipeline, file-nya dibiarin.
 - `voice.mp3` + `tts.json`: suara. **Dibikin pakai kredit ElevenLabs, jangan dihapus.**
 - `links.json`: link klip per shot dari halaman brief (plus start/end detik kalau diisi, dan SFX kustom `sfx: {file, at_s}`).
 - `clips.json`: klip per shot, termasuk sumbernya (`provider`, `page_url`, `author`).
@@ -47,7 +53,7 @@ File penting di `runs/<id>/`:
 - `final.mp4`: hasil render.
 - `upload.json`: metadata YouTube yang ditulis agent.
 - `tiktok.json`: caption + cover + label AI buat TikTok. Akmal upload ke TikTok manual.
-- `youtube.json`: hasil upload (video ID, link, jadwal). Jangan dihapus tanpa izin Akmal.
+- `youtube.json`: hasil upload (video ID, link, jadwal; FaktaCuil juga `channel: "faktacuil"`). Jangan dihapus tanpa izin Akmal.
 - `prefetch.json`: status download link dari halaman brief (`antre`/`download`/`siap`/`gagal` per URL).
 
 ## Perintah
@@ -62,7 +68,11 @@ uv run mayzfact run <id> --from fetch --no-render     # download + potong klip, 
 uv run mayzfact run <id> --from timeline --no-render  # bikin ulang timeline aja
 uv run mayzfact run <id> --from render                # render final.mp4 (5–8 menit)
 uv run mayzfact login youtube                         # login Google sekali, token masuk .env
+uv run mayzfact login youtube --channel faktacuil     # login akun channel FaktaCuil (token kedua), nge-print judul + ID channel
+uv run mayzfact voices                                # list voice ElevenLabs di akun
+uv run mayzfact voice-sample <voice_id> --name <slug>  # sampel suara FaktaCuil, pakai kredit; nolak nimpa file
 uv run mayzfact next-slot                             # slot tayang kosong berikutnya (01.00/04.00 WIB)
+uv run mayzfact next-slot --channel faktacuil         # slot FaktaCuil (12.00/18.00 WIB, maks 2 per hari)
 uv run mayzfact upload <id> --at "YYYY-MM-DD HH:MM"  # upload terjadwal, jam WIB
 uv run mayzfact upload <id> --now                     # langsung public (cuma kalau Akmal minta)
 cd remotion && npx remotion studio src/index.ts --public-dir=../runs/<id> --props=../runs/<id>/timeline.json --port=3000 --no-open
@@ -87,15 +97,15 @@ cd remotion && npx tsc --noEmit -p .
 
 ### Keamanan (wajib)
 
-- Jangan print, log, atau commit isi `.env` (`ELEVENLABS_API_KEYS`, `YOUTUBE_CLIENT_SECRET_JSON`, `YOUTUBE_TOKEN_JSON`, `NGROK_BASIC_AUTH`), cookie, atau apa pun di `browser-profiles/` (sisa mode auto, isinya cookie session).
+- Jangan print, log, atau commit isi `.env` (`ELEVENLABS_API_KEYS`, `YOUTUBE_CLIENT_SECRET_JSON`, `YOUTUBE_TOKEN_JSON`, `YOUTUBE_TOKEN_JSON_FAKTACUIL`, `NGROK_BASIC_AUTH`), cookie, atau apa pun di `browser-profiles/` (sisa mode auto, isinya cookie session).
 - `.env` cuma buat rahasia. Setting lain ada di `Settings` (`mayzfact/config.py`); ubah di situ, jangan nambah variabel ke `.env`.
-- Upload ke YouTube itu aksi keluar yang nggak bisa ditarik. Jalanin `mayzfact upload` cuma setelah Akmal oke preview video-nya. Jamnya langsung slot kosong berikutnya (`next-slot`), nggak usah nanya; kabarin jam tayangnya setelah upload (D-037).
+- Upload ke YouTube itu aksi keluar yang nggak bisa ditarik. Jalanin `mayzfact upload` cuma setelah Akmal oke preview video-nya. Jamnya langsung slot kosong berikutnya (`next-slot`), nggak usah nanya; kabarin jam tayangnya setelah upload (D-037). Run FaktaCuil otomatis ke channel FaktaCuil pakai token kedua dan dicek akunnya dulu; kalau akun salah, jangan diakalin, minta Akmal login ulang.
 - Jangan solve captcha yang butuh manusia. Jangan rotasi proxy/IP. Jangan spoof fingerprint, termasuk impersonation `curl_cffi` di yt-dlp.
 - Kalau link klip minta captcha atau login, jangan diakalin. Kasih tau Akmal shot mana, minta link lain atau upload file.
 - Challenge yang diselesaiin browser biasa tanpa manusia (WAF proof-of-work Douyin) boleh (D-018).
 - Jangan ubah atau hapus `flow.svg` dan `sources/`.
 - Halaman brief selalu kebuka ke LAN dan ke internet lewat ngrok (biar bisa diisi dari HP). Brief sendiri nggak punya login; yang ngunci cuma basic-auth ngrok dari `NGROK_BASIC_AUTH`. Jangan pernah buka ngrok tanpa basic-auth, jangan print isi `NGROK_BASIC_AUTH`, dan matiin brief + tunnel kalau udah selesai. Siapa aja di WiFi yang sama tetap bisa buka alamat LAN, jadi jangan jalanin brief di WiFi publik.
-- `assets/bgm/`, `assets/sfx/`, `assets/emoji/`, dan `runs/*/youtube.json` ikut di-commit biar project bisa dipindah pakai `git clone` (Akmal, 2026-10-17). `models/`, `cache/`, dan isi `runs/` lainnya tetap di-gitignore.
+- `assets/bgm/`, `assets/sfx/`, `assets/emoji/`, dan `runs/*/youtube.json` ikut di-commit biar project bisa dipindah pakai `git clone` (Akmal, 2026-10-17). `models/`, `cache/`, dan isi `runs/` lainnya tetap di-gitignore. Lagu FaktaCuil di `assets/channels/faktacuil/bgm/` juga di-gitignore (berhak cipta, repo public); jangan commit, jangan download atau copy lagu sendiri.
 
 ### Biaya
 
