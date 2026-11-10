@@ -39,13 +39,25 @@ def youtube_transcript(video_id: str) -> list[dict]:
         ) from exc
 
 
-def build_source(video_id: str, snippets: list[dict]) -> dict:
-    if not snippets:
-        raise PipelineError("source", f"Transcript {video_id} kosong.")
-    transcript = [
+def youtube_transcript_id(video_id: str) -> list[dict]:
+    # Transkrip asli bahasa Indonesia (bukan terjemahan); kosong kalau nggak ada.
+    try:
+        return YouTubeTranscriptApi().fetch(video_id, languages=["id"]).to_raw_data()
+    except CouldNotRetrieveTranscript:
+        return []
+
+
+def _clean_snippets(snippets: list[dict]) -> list[dict]:
+    return [
         {"text": " ".join(str(s["text"]).split()), "start": float(s["start"]), "duration": float(s["duration"])}
         for s in snippets
     ]
+
+
+def build_source(video_id: str, snippets: list[dict]) -> dict:
+    if not snippets:
+        raise PipelineError("source", f"Transcript {video_id} kosong.")
+    transcript = _clean_snippets(snippets)
     last = transcript[-1]
     return {
         "video_id": video_id,
@@ -57,9 +69,15 @@ def build_source(video_id: str, snippets: list[dict]) -> dict:
 def run_source(
     video_id: str, paths: RunPaths, fetch: Callable[[str], list[dict]] = youtube_transcript, *,
     download_source: Callable[[str, Path], Path] | None = None, hook_seconds: float = 0.0,
-    log: Callable[[str], None] = print,
+    log: Callable[[str], None] = print, fetch_id: Callable[[str], list[dict]] | None = None,
 ) -> dict:
     data = build_source(video_id, fetch(video_id))
+    data["transcript_id"] = []
+    if fetch_id is not None:
+        try:
+            data["transcript_id"] = _clean_snippets(fetch_id(video_id))
+        except Exception as exc:  # opsional: gagal ambil transkrip Indonesia nggak boleh bikin step gagal
+            log(f"[source] transcript Indonesia dilewat: {exc}")
     data["hook_segments"] = []
     if download_source is not None and hook_seconds > 0:
         from mayzfact.source_frames import prepare_source_segments

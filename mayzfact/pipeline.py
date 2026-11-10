@@ -22,7 +22,12 @@ from mayzfact.net import make_client
 from mayzfact.providers.elevenlabs import ElevenLabsTTS
 from mayzfact.steps.render import run_render
 from mayzfact.steps.script import AWAIT_SCRIPT_HINT, check_script_file, load_script
-from mayzfact.steps.source import parse_video_id, run_source, youtube_transcript
+from mayzfact.steps.source import (
+    parse_video_id,
+    run_source,
+    youtube_transcript,
+    youtube_transcript_id,
+)
 from mayzfact.steps.timeline import run_timeline
 from mayzfact.steps.tts import TTSProvider, run_tts
 from mayzfact.store import RunPaths, read_json
@@ -111,6 +116,7 @@ class Deps:
     overlay: Callable[..., dict] | None = None  # (paths, log, point_beats) → deteksi subjek; None = tanpa panah/lingkaran
     marks: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # tanda beat: point + emoji (Fase 3C-2)
     textblur: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # kotak blur teks di klip (D-038)
+    fetch_transcript_id: Callable[[str], list[dict]] | None = None  # transcript asli Indonesia (D-052); None = lewat
     download_source: Callable[[str, Path], Path] | None = None  # download source.mp4 di step source; None = lewat
 
 
@@ -222,6 +228,7 @@ def real_deps(settings: Settings) -> Deps:
 
     return Deps(
         fetch_transcript=youtube_transcript,
+        fetch_transcript_id=youtube_transcript_id,
         download_source=lambda video_id, dest: run_ytdlp(youtube_url(video_id), dest),
         tts=tts,
         http=http,
@@ -319,7 +326,7 @@ def _require_script(paths: RunPaths, settings: Settings) -> None:
 def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: Callable[[str], None]) -> None:
     if step == "source":
         run_source(paths.root.name, paths, fetch=deps.fetch_transcript, download_source=deps.download_source,
-                   hook_seconds=settings.hook_seconds, log=log)
+                   hook_seconds=settings.hook_seconds, log=log, fetch_id=deps.fetch_transcript_id)
     elif step == "tts":
         run_tts(paths, read_json(paths.script_json), deps.tts(), log=log)
     elif step == "plan":

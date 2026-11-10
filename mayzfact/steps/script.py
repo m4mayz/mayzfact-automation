@@ -181,7 +181,9 @@ def check_script_file(paths: RunPaths, source: dict, *,
                       bgm_choices: list[str] | None, video_speed: float = 1.1) -> list[str]:
     """Cek runs/<id>/script.json yang ditulis agent pakai aturan yang sama kayak check_script."""
     script = load_script(paths)
-    source_text = " ".join(s["text"] for s in source["transcript"])
+    # FaktaCuil bandingin sama teks asli Indonesia kalau ada; top3 tetap Inggris.
+    use_id = script.narration_mode == "faktacuil" and source.get("transcript_id")
+    source_text = " ".join(s["text"] for s in source["transcript_id" if use_id else "transcript"])
     try:
         problems, _ = check_script(script, source_text, bgm_choices, video_speed=video_speed)
     except ValueError as exc:
