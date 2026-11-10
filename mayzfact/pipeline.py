@@ -327,6 +327,7 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
     elif step == "fetch":
         deps.fetch(paths, log)
     elif step == "timeline":
+        faktacuil = read_json(paths.script_json).get("narration_mode") == "faktacuil"
         audio = None
         if deps.audio:
             try:
@@ -334,14 +335,14 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
             except Exception as exc:  # BGM/SFX cuma hiasan: timeline tetap jadi tanpa audio
                 log(f"[timeline] BGM/SFX dilewat: {type(exc).__name__}: {exc}")
         marks = None
-        if deps.marks:
+        if deps.marks and not faktacuil:  # FaktaCuil nggak pakai panah/emoji
             try:
                 marks = deps.marks(paths, log)
             except Exception as exc:  # emoji/panah cuma hiasan
                 log(f"[timeline] tanda beat (emoji/panah) dilewat: {type(exc).__name__}: {exc}")
         point_beats = {i for i, mark in enumerate(marks["beats"]) if mark.get("point")} if marks else None
         overlays = None
-        if deps.overlay:
+        if deps.overlay and not faktacuil:
             try:
                 overlays = deps.overlay(paths, log, point_beats)
             except Exception as exc:  # panah/lingkaran cuma hiasan

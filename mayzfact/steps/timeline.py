@@ -10,8 +10,9 @@ from typing import Any, Callable
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import _EDGE_PUNCT, SUBSCRIBE, is_like_cta
 from mayzfact.cta import clean as _clean
-from mayzfact.cta_scene import build_scene
+from mayzfact.cta_scene import build_scene, faktacuil_cta_stop
 from mayzfact.errors import PipelineError
+from mayzfact.faktacuil import faktacuil_cta_indices, id_like_positions
 from mayzfact.media import (
     FRAME_H,
     FRAME_W,
@@ -30,6 +31,7 @@ FPS = 30
 CAPTION_HOLD_S = 0.4  # kata terakhir tetap tampil sebentar pas jeda
 CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
+CAPTION_KEYWORD = "#FFC53D"  # kuning brand FaktaCuil buat kata keyword
 LONG_WORD = 6
 SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.4, "overlay": 0.35, "emoji": 0.6, "click": 0.8,
               "item_reveal": 0.7, "riser": 1.0, "hook_cut": 0.4}
@@ -154,7 +156,7 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
 
 
 def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[float, float]], subject_words: set[str],
-              total: int) -> list[dict]:
+              total: int, keywords: dict[int, str] | None = None, beat_of: list[int] | None = None) -> list[dict]:
     captions = []
     colored = 0
     for index, word in enumerate(words):
@@ -167,7 +169,10 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
         start = to_frame(word["start_s"])
         end = min(to_frame(min(next_start, word["end_s"] + CAPTION_HOLD_S)), total)
         color = CAPTION_WHITE
-        if len(text) >= LONG_WORD or text.lower() in subject_words:
+        if keywords is not None:  # FaktaCuil: cuma kata keyword beat itu yang berwarna
+            if beat_of and keywords.get(beat_of[index], "").lower() == text.lower():
+                color = CAPTION_KEYWORD
+        elif len(text) >= LONG_WORD or text.lower() in subject_words:
             color = CAPTION_COLORS[colored % len(CAPTION_COLORS)]
             colored += 1
         captions.append({"text": text.upper(), "from": start, "durationInFrames": max(1, end - start), "color": color})
@@ -175,8 +180,8 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
 
 
 def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overlays: list[dict],
-           emojis: list[dict], cta: list[dict], hook_end: int, total: int, same_clip: set[int] = frozenset()
-           ) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
+           emojis: list[dict], cta: list[dict], hook_end: int, total: int, same_clip: set[int] = frozenset(),
+           intro_sfx: bool = True) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
     """BGM (hook + utama), SFX, frame transisi magic reveal, dan flash putih di pergantian klip hook."""
     if not audio:
         return [], [], [], []
@@ -211,7 +216,8 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
         bgm = [{"src": audio.get("bgm") or audio["bgm_main"], "from": 0, "durationInFrames": total, "volume": BGM_VOLUME,
                 "fadeOutFrames": BGM_FADE_FRAMES}]
 
-    add("hook", 0)
+    if intro_sfx:
+        add("hook", 0)
     for card in countdown:
         add("number", card["numberFrom"] + card["numberAt"] - NUMBER_SFX_LEAD_FRAMES)
         add("subject", card["cardFrom"] - SFX_LEAD_FRAMES)
@@ -367,6 +373,25 @@ def _top3_cta(words: list[dict], beat_of: list[int], beats: list[dict], countdow
     return out
 
 
+def _faktacuil_cta(words: list[dict], beat_of: list[int], beats: list[dict], shots: list[dict], entries: list[dict],
+                   total: int) -> list[dict]:
+    """Klik like FaktaCuil di kata ajakan Indonesia ("tekan like"); selesai pas scene CTA berhenti."""
+    allowed = faktacuil_cta_indices(beats)
+    if not allowed:
+        return []
+    stop = faktacuil_cta_stop(shots, entries, allowed, total)
+    out = []
+    for beat in allowed:
+        local = [w for w, b in zip(words, beat_of) if b == beat]
+        for i in id_like_positions([w["text"] for w in local]):
+            start = max(0, to_frame(local[i]["start_s"]))
+            end = min(stop, start + CTA_FRAMES["like"])
+            if start < stop and end > start:
+                out.append({"kind": "like", "from": start, "durationInFrames": end - start,
+                            "clickAt": min(CTA_CLICK["like"], end - start - 1)})
+    return out
+
+
 def _emojis(words: list[dict], beat_of: list[int], marks: dict | None, cta: list[dict], countdown: list[dict],
             total: int) -> list[dict]:
     """Emoji muncul di kata pemicunya dan boleh nyebrang ke beat berikutnya (kayak 🍀 di source), maksimal 2.5 detik.
@@ -431,6 +456,9 @@ def build_timeline(
     shots = clips["shots"]
     if not shots:
         raise PipelineError("timeline", "clips.json kosong.")
+    faktacuil = bool(script) and script.get("narration_mode") == "faktacuil"
+    if faktacuil:  # tanpa panah/emoji, meski datanya kebawa dari luar
+        marks, overlays = None, None
     total = math.ceil(audio_duration_s * FPS - 1e-6)
     entries = _shot_entries(shots, total, fg_min_ratio)
     countdown: list[dict] = []
@@ -450,10 +478,12 @@ def build_timeline(
                            if i and s.get("beat") is not None and s.get("beat") != shots[i - 1].get("beat")]
             countdown, spans, subject_words = _countdown(script["beats"], alignment, words, audio_duration_s, entries, total, log,
                                                          beat_starts)
-            captions = _captions(words, audio_duration_s, spans, subject_words, total)
-            timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
             beat_of = _beat_of(words, script["beats"])
-            cta = _top3_cta(words, beat_of, script["beats"], countdown, total)
+            keywords = {i: b.get("keyword", "") for i, b in enumerate(script["beats"])} if faktacuil else None
+            captions = _captions(words, audio_duration_s, spans, subject_words, total, keywords, beat_of)
+            timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
+            cta = (_faktacuil_cta(words, beat_of, script["beats"], shots, entries, total) if faktacuil
+                   else _top3_cta(words, beat_of, script["beats"], countdown, total))
             emojis = _emojis(words, beat_of, marks, cta, countdown, total)
         except (PipelineError, IndexError, KeyError) as exc:  # caption/card cuma hiasan: timeline tetap jadi tanpa itu
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
@@ -474,12 +504,12 @@ def build_timeline(
     shown = _overlays(overlays, entries, countdown, _point_ranges(timings, marks))
     if scene:
         shown = [e for e in shown if e['from'] + e['durationInFrames'] <= begin or e['from'] >= end]
-    hook_end = max((e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None),
-                   default=0)
+    hook_end = 0 if faktacuil else max(
+        (e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None), default=0)
     # shot yang ngelanjutin link/klip yang sama kayak shot sebelumnya nggak dapat bunyi/efek transisi
     same_clip = {e["from"] for i, (e, s) in enumerate(zip(entries, shots))
                  if i and s.get("page_url") and s.get("page_url") == shots[i - 1].get("page_url")}
-    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total, same_clip)
+    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total, same_clip, intro_sfx=not faktacuil)
     data = {
         "fps": FPS,
         "width": FRAME_W,
@@ -494,12 +524,14 @@ def build_timeline(
         "emojis": emojis,
         "bgm": bgm,
         "sfx": sfx,
-        "intro": {"durationInFrames": INTRO_FRAMES} if audio and "hook" in audio.get("sfx", {}) else None,
+        "intro": {"durationInFrames": INTRO_FRAMES} if audio and "hook" in audio.get("sfx", {}) and not faktacuil else None,
         "transitions": reveals,
         "flashes": flashes,
     }
     if scene:
         data['ctaScene'] = scene
+    if faktacuil:
+        data["captionStyle"] = "faktacuil"
     return data
 
 
