@@ -147,16 +147,16 @@ Sama kayak `bikin-short` langkah 5, 6, 8 (langkah 7 Studio cuma kalau Akmal mint
 
 ## 8. Metadata YouTube
 
-Tulis `runs/<id>/upload.json`. Formatnya disamain sama FaktaBor (D-053, dicek dari `info.json` 3 video FaktaBor):
+Tulis `runs/<id>/upload.json`. Judul, deskripsi, dan kategori disamain sama FaktaBor (D-053, dicek dari `info.json` 3 video FaktaBor). Tags beda: FaktaBor kosong, FaktaCuil tetap isi.
 
 ```json
-{"title": "Rumah Jepang Dibangun Tanpa Paku😱", "description": "...", "tags": [], "category_id": "22", "language": "id"}
+{"title": "Rumah Jepang Dibangun Tanpa Paku😱", "description": "...", "tags": ["fakta unik", "..."], "category_id": "22", "language": "id"}
 ```
 
 - **language** wajib `"id"`. Upload ditolak kalau bukan.
 - **title:** bahasa Indonesia, Title Case, klaim yang bikin penasaran, diakhiri 😱 tanpa spasi. Pola FaktaBor: "Rumah Jepang Ini Tanpa Paku😱", "Alasan Koboi Membuat Jeans Sekaku Ini😱", "Pantas Banyak Orang Gagal Pakai Topi Renang😱". Maksimal 100 karakter, tanpa `<` `>`. Klaimnya harus kejawab di video. Jangan copy judul source; tulis sendiri.
 - **description:** 2–4 kalimat bahasa Indonesia: ulang hook, kasih jawaban singkat, tutup pakai kalimat seru atau pertanyaan + 1 emoji yang nyambung (misal 🇯🇵). Terus baris baru, hashtag: `#faktaunik #faktamenarik`, 3–8 hashtag topik huruf kecil (`#jepang #rumahjepang #arsitektur`), terus `#shorts #shortvideo #youtubeshorts #fyp #viral #viralshorts`. Maksimal 5000 byte, tanpa `<` `>`.
-- **tags:** `[]`, sama kayak FaktaBor.
+- **tags:** wajib diisi (Akmal, beda dari FaktaBor): tags bahasa Indonesia, topik + frasa pencarian (`fakta unik`, `rumah jepang`, `rumah tahan gempa`, …), total ≤450 karakter.
 - **category_id:** `"22"` (People & Blogs), sama kayak FaktaBor.
 
 ## 9. Jadwal dan upload
