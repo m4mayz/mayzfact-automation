@@ -99,7 +99,7 @@ Kata "like" cuma muncul di CTA. Pertanyaan gimmick nggak punya ajakan sendiri ta
 - `keyword`: 1 kata yang ditekankan (caption-nya kuning), isi di ±1 dari 3 beat, bukan beat CTA. Kata yang dipilih sering bukan subjek ("ternyata", "aman"). Tanda hubung boleh (`kupu-kupu`).
 - `point` selalu false, `emoji` dan `emoji_word` selalu kosong.
 - `subject`: hewan/objek yang dibahas, kosong di beat CTA.
-- `queries` bahasa Inggris dan `queries_zh` Mandarin, sama kayak top3. Beat CTA tetap wajib punya `queries` (shot CTA otomatis dan nggak minta link, tapi `check-script` tetap minta isinya).
+- `queries` bahasa Inggris dan `queries_zh` Mandarin, sama kayak top3. Beat CTA juga wajib punya `queries`: shot CTA minta link di brief kayak shot lain (D-053), jadi isi keyword klip yang cocok buat background pill like.
 - `hook_queries` selalu `{}`: FaktaCuil nggak punya segmen hook dari source.
 - Beat pertama otomatis jadi video.
 
@@ -139,8 +139,9 @@ Exit 3 "Nunggu input" = plan udah jadi, lanjut ke brief.
 
 Sama kayak `bikin-short` langkah 5, 6, 8 (langkah 7 Studio cuma kalau Akmal minta). Bedanya:
 
-- Brief nggak punya grup HOOK dan badge CARD. Shot CTA ditandai **AUTO CTA** dan nggak minta link.
-- Timeline nggak punya `countdown`, `emojis`, `overlays`, dan `intro`. `timeline.json` punya `captionStyle: "faktacuil"` dan `ctaScene` cuma stage `like` + `transform`.
+- Brief nggak punya grup HOOK dan badge CARD. Shot CTA masuk grup **CTA** dan minta link kayak shot lain (bukan AUTO CTA, D-053).
+- Timeline nggak punya `countdown`, `emojis`, dan `overlays`. `intro` + SFX hook di detik 0 sama kayak MayzFact. `timeline.json` punya `captionStyle: "faktacuil"` dan `ctaScene.style: "faktacuil"`: pill like gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`FaktaCuilCta.tsx`, ditiru dari FaktaBor `pJe_Qok8qDA`). Klip CTA tampil normal, nggak di-blur.
+- Caption: kalimat tanya kebawa "?", caption ngilang pas jeda ≥0,25 detik, lebar maksimal 60% frame.
 - BGM: file audio pertama (urut nama) di `assets/channels/faktacuil/bgm/`. Folder itu **lokal dan di-gitignore** (lagu berhak cipta, repo public). Jangan download atau copy lagu sendiri, dan jangan commit; Akmal yang naruh file. Kalau folder kosong, sementara pakai `assets/bgm/main.mp3` dan log bilang begitu; sebutin ke Akmal.
 - Kirim preview dan jam penting dari `timeline.json` (`ctaScene`, klik like di `sfx`), plus apa yang dilewat.
 

@@ -29,9 +29,9 @@ def test_faktacuil_timeline_shape():
     tl = timeline()
     assert tl["captionStyle"] == "faktacuil"
     assert tl["countdown"] == [] and tl["overlays"] == [] and tl["emojis"] == []
-    assert tl["intro"] is None and tl["flashes"] == [] and tl["transitions"] == []
+    assert tl["intro"] == {"durationInFrames": 7} and tl["flashes"] == [] and tl["transitions"] == []
     srcs = [s["src"] for s in tl["sfx"]]
-    assert "audio/sfx/hook.mp3" not in srcs and "audio/sfx/hook_cut.mp3" not in srcs
+    assert "audio/sfx/hook.mp3" in srcs and "audio/sfx/hook_cut.mp3" not in srcs
     assert "audio/sfx/gasp.mp3" not in srcs and "audio/sfx/riser.mp3" not in srcs
     assert srcs.count("audio/sfx/click.mp3") == 1  # 1 klik di kata like
     assert "audio/sfx/cut.mp3" in srcs

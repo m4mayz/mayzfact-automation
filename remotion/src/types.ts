@@ -97,6 +97,7 @@ export type CtaSceneData = {
   durationInFrames: number;
   stages: CtaStage[];
   cues: {kind: CtaStage['kind']; from: number; word: string}[];
+  style?: 'faktacuil'; // pill like + stiker gaya FaktaBor, bukan scene MayzFact
 };
 
 export type Intro = {

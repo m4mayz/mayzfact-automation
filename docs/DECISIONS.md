@@ -588,3 +588,12 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Keputusan:** Akmal (2026-11-11) milih source FaktaCuil boleh video berbahasa Indonesia, dan cek jiplak pakai teks asli.
 - **Implementasi:** step source tetap ambil transkrip `en`, ditambah transkrip asli `id` (bukan terjemahan) ke `source.json` field `transcript_id` (kosong kalau nggak ada; gagal ambil cuma di-log). `check-script` mode `faktacuil` pakai `transcript_id` kalau nggak kosong, kalau kosong balik ke Inggris. Top3 tetap Inggris. `source.json` lama tanpa field itu tetap jalan.
 - **Setting:** `faktacuil_youtube_channel_id` default `UCsEAAYtfNZis0dB5TkxtKQA` (bukan rahasia).
+
+## D-053 — 2026-11-11 — Revisi FaktaCuil dari preview pertama (`gu2M14rfRlU`)
+
+- **Keputusan:** Akmal (2026-11-11) setelah nonton preview pertama FaktaCuil. Semua perubahan cuma buat `narration_mode: "faktacuil"`; top3 nggak berubah (golden test tetap lolos).
+- **Caption:** jeda ElevenLabs nempel ke tanda baca ujung kata (`rumah?` 2,46–3,52 padahal suara habis 2,80), jadi `word_timings` nyimpen `voice_end_s` (akhir huruf terakhir). Kalau jeda ke kata berikutnya ≥0,25 detik, caption ngilang 0,15 detik setelah `voice_end_s`. Kata terakhir kalimat tanya tampil pakai "?". Shadow caption ditebelin (10/13 px + glow gelap). Lebar maksimal 648 px (60% frame, sisa kiri-kanan ±20%).
+- **Intro:** efek masuk + SFX `hook` di detik 0 sama kayak MayzFact. Riser intro sempat dicoba lalu dicabut atas permintaan Akmal.
+- **CTA gaya FaktaBor** (ditiru frame per frame dari `pJe_Qok8qDA`, bukan scene MayzFact): pill gelap "LIKE" muncul di awal blok CTA, kursor panah masuk 10 frame sebelum klik lalu jadi tangan, klik di kata "like" → pill biru "LIKED" 20 frame, lalu stiker flat objek tema (6 tema, `FaktaCuilStickers.tsx`) pop-in sampai scene selesai. `ctaScene.style = "faktacuil"` milih `FaktaCuilCta.tsx`.
+- **Shot CTA diisi link:** plan FaktaCuil nandain shot CTA `cta: true` (grup brief "CTA", keyword dari `queries` beat CTA), bukan `auto_cta`. Klipnya tampil normal tanpa blur. Top3 tetap AUTO CTA.
+- **BGM:** diganti Bully "Main Theme" (dari link Akmal), hening 0,43 detik di awal file dipotong. File lokal, gitignored.

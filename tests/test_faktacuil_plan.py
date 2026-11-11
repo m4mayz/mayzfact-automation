@@ -20,11 +20,15 @@ def plan(tmp_path, cut_video):
                     download_source=lambda vid, dest: shutil.copyfile(cut_video, dest), log=lambda m: None)
 
 
-def test_cta_block_beats_become_auto_cta_shots(plan):
-    cta = [s for s in plan["shots"] if s.get("auto_cta")]
-    assert {s["beat"] for s in cta} == {4, 5}
-    assert all(s["keywords"] == {"en": [], "zh": []} and s["subject"] == "" and s["group"] == "auto-cta" for s in cta)
-    assert any(g.get("auto_cta") for g in plan["groups"])
+def test_cta_block_beats_need_links_in_brief(plan):
+    """Gaya FaktaBor: pill like di atas klip beneran, jadi shot CTA diisi link kayak shot lain (bukan AUTO CTA)."""
+    cta = [s for s in plan["shots"] if s["beat"] in (4, 5)]
+    assert cta and not any(s.get("auto_cta") for s in cta)
+    assert all(s["keywords"]["en"] == ["cat in box", "cat cardboard box"] and s["subject"] == "" for s in cta)
+    assert all(s["group"] == "cta" for s in cta)
+    group = next(g for g in plan["groups"] if g["id"] == "cta")
+    assert group["label"] == "CTA" and not group.get("auto_cta")
+    assert not any(g.get("auto_cta") for g in plan["groups"])
 
 
 def test_non_cta_shots_keep_their_queries_and_are_not_auto_cta(plan):

@@ -4,6 +4,7 @@ import {Audio} from '@remotion/media';
 import {Captions} from './Captions';
 import {CtaScene} from './CtaScene';
 import {Emojis} from './Emojis';
+import {FaktaCuilCta} from './FaktaCuilCta';
 import {IntroWhip} from './Intro';
 import {NumberCard} from './NumberCard';
 import {Overlays} from './Overlays';
@@ -41,7 +42,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
       </IntroWhip>
       <Overlays overlays={overlays} />
       <Emojis emojis={emojis} />
-      {ctaScene ? <CtaScene scene={ctaScene}/> : null}
+      {ctaScene?.style === 'faktacuil' ? <FaktaCuilCta scene={ctaScene}/> : ctaScene ? <CtaScene scene={ctaScene}/> : null}
       <Captions captions={captions} style={captionStyle} />
       {audio ? <Audio src={staticFile(audio)} /> : null}
       <SoundLayer bgm={bgm} sfx={sfx} />

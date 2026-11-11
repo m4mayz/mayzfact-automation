@@ -47,9 +47,11 @@ def word_timings(alignment: dict) -> list[dict]:
         if not char.isspace() and begin is None:
             begin = index
         elif char.isspace() and begin is not None:
+            # ElevenLabs nempelin jeda setelah kata ke tanda baca di ujungnya ("?" bisa 0,7 detik)
+            last = next((j for j in range(index - 1, begin - 1, -1) if chars[j].isalnum() or chars[j] == "'"), index - 1)
             words.append({
                 "text": "".join(chars[begin:index]), "start_s": float(starts[begin]), "end_s": float(ends[index - 1]),
-                "char_start": begin, "char_end": index - 1,
+                "voice_end_s": float(ends[last]), "char_start": begin, "char_end": index - 1,
             })
             begin = None
     return words
