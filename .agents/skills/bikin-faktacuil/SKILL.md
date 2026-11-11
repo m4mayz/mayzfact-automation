@@ -99,7 +99,7 @@ Kata "like" cuma muncul di CTA. Pertanyaan gimmick nggak punya ajakan sendiri ta
 - `keyword`: 1 kata yang ditekankan (caption-nya kuning), isi di ±1 dari 3 beat, bukan beat CTA. Kata yang dipilih sering bukan subjek ("ternyata", "aman"). Tanda hubung boleh (`kupu-kupu`).
 - `point` selalu false, `emoji` dan `emoji_word` selalu kosong.
 - `subject`: hewan/objek yang dibahas, kosong di beat CTA.
-- `queries` bahasa Inggris dan `queries_zh` Mandarin, sama kayak top3. Beat CTA tetap wajib punya `queries` (shot CTA otomatis dan nggak minta link, tapi `check-script` tetap minta isinya).
+- `queries` bahasa Inggris dan `queries_zh` Mandarin, sama kayak top3. Beat CTA juga wajib punya `queries`: shot CTA minta link di brief kayak shot lain (D-053), jadi isi keyword klip yang cocok buat background pill like.
 - `hook_queries` selalu `{}`: FaktaCuil nggak punya segmen hook dari source.
 - Beat pertama otomatis jadi video.
 
@@ -131,7 +131,7 @@ Bedanya:
 - VoiceStudio bisa dipakai kalau Akmal isi di `settings.local.json`: `faktacuil_tts_provider` (`"voicestudio"`), `faktacuil_voicestudio_voice` (profil bahasa Indonesia), `faktacuil_voicestudio_instruct`. Kalau provider voicestudio tapi voice kosong, pipeline berhenti sebelum TTS. Belum ada profil bahasa Indonesia, jadi default-nya tetap ElevenLabs.
 - Jangan generate ulang suara, dan jangan hapus `voice.mp3`/`script.json` tanpa izin Akmal.
 - Log `[tts] FaktaCuil estimasi final …` ngasih peringatan kalau estimasi di luar 20–30 detik. Audio tetap disimpan; jangan regenerate atau ubah speed otomatis.
-- Plan nggak bikin segmen hook, dan shot maksimal 2 detik (`faktacuil_max_shot_seconds`), jadi link yang diisi lebih banyak dari top3.
+- Plan nggak bikin segmen hook. Shot maksimal 3 detik (`faktacuil_max_shot_seconds`, D-053), jadi biasanya 1 beat = 1 shot. Kalau beberapa shot pakai link yang sama, isi Mulai beda-beda biar dapet adegan lain dan SFX transisinya bunyi.
 
 Exit 3 "Nunggu input" = plan udah jadi, lanjut ke brief.
 
@@ -139,24 +139,25 @@ Exit 3 "Nunggu input" = plan udah jadi, lanjut ke brief.
 
 Sama kayak `bikin-short` langkah 5, 6, 8 (langkah 7 Studio cuma kalau Akmal minta). Bedanya:
 
-- Brief nggak punya grup HOOK dan badge CARD. Shot CTA ditandai **AUTO CTA** dan nggak minta link.
-- Timeline nggak punya `countdown`, `emojis`, `overlays`, dan `intro`. `timeline.json` punya `captionStyle: "faktacuil"` dan `ctaScene` cuma stage `like` + `transform`.
+- Brief nggak punya grup HOOK dan badge CARD. Shot CTA masuk grup **CTA** dan minta link kayak shot lain (bukan AUTO CTA, D-053).
+- Timeline nggak punya `countdown`, `emojis`, dan `overlays`. `intro` + SFX hook di detik 0 sama kayak MayzFact. `timeline.json` punya `captionStyle: "faktacuil"` dan `ctaScene.style: "faktacuil"`: pill like gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`FaktaCuilCta.tsx`, ditiru dari FaktaBor `pJe_Qok8qDA`). Klip CTA tampil normal, nggak di-blur.
+- Caption: kalimat tanya kebawa "?", caption ngilang pas jeda ≥0,25 detik, lebar maksimal 60% frame.
 - BGM: file audio pertama (urut nama) di `assets/channels/faktacuil/bgm/`. Folder itu **lokal dan di-gitignore** (lagu berhak cipta, repo public). Jangan download atau copy lagu sendiri, dan jangan commit; Akmal yang naruh file. Kalau folder kosong, sementara pakai `assets/bgm/main.mp3` dan log bilang begitu; sebutin ke Akmal.
 - Kirim preview dan jam penting dari `timeline.json` (`ctaScene`, klik like di `sfx`), plus apa yang dilewat.
 
 ## 8. Metadata YouTube
 
-Tulis `runs/<id>/upload.json`. Bedanya dari `bikin-short` langkah 9:
+Tulis `runs/<id>/upload.json`. Judul, deskripsi, dan kategori disamain sama FaktaBor (D-053, dicek dari `info.json` 3 video FaktaBor). Tags beda: FaktaBor kosong, FaktaCuil tetap isi.
 
 ```json
-{"title": "...", "description": "...", "tags": ["..."], "category_id": "27", "language": "id"}
+{"title": "Rumah Jepang Dibangun Tanpa Paku😱", "description": "...", "tags": ["fakta unik", "..."], "category_id": "22", "language": "id"}
 ```
 
 - **language** wajib `"id"`. Upload ditolak kalau bukan.
-- **title:** bahasa Indonesia, maksimal 100 karakter, tanpa `<` `>`. Pertanyaan atau klaim yang ada jawabannya di video; jangan clickbait yang nggak ada di video.
-- **description:** 1–2 kalimat ringkasan, terus hashtag `#faktaunik #faktamenarik #<topik> #shorts`. Maksimal 5000 byte, tanpa `<` `>`.
-- **tags:** tags bahasa Indonesia (topik + frasa pencarian), total ≤450 karakter.
-- **category_id:** misal `27` Education, `15` Pets & Animals.
+- **title:** bahasa Indonesia, Title Case, klaim yang bikin penasaran, diakhiri 😱 tanpa spasi. Pola FaktaBor: "Rumah Jepang Ini Tanpa Paku😱", "Alasan Koboi Membuat Jeans Sekaku Ini😱", "Pantas Banyak Orang Gagal Pakai Topi Renang😱". Maksimal 100 karakter, tanpa `<` `>`. Klaimnya harus kejawab di video. Jangan copy judul source; tulis sendiri.
+- **description:** 2–4 kalimat bahasa Indonesia: ulang hook, kasih jawaban singkat, tutup pakai kalimat seru atau pertanyaan + 1 emoji yang nyambung (misal 🇯🇵). Terus baris baru, hashtag: `#faktaunik #faktamenarik`, 3–8 hashtag topik huruf kecil (`#jepang #rumahjepang #arsitektur`), terus `#shorts #shortvideo #youtubeshorts #fyp #viral #viralshorts`. Maksimal 5000 byte, tanpa `<` `>`.
+- **tags:** wajib diisi (Akmal, beda dari FaktaBor): tags bahasa Indonesia, topik + frasa pencarian (`fakta unik`, `rumah jepang`, `rumah tahan gempa`, …), total ≤450 karakter.
+- **category_id:** `"22"` (People & Blogs), sama kayak FaktaBor.
 
 ## 9. Jadwal dan upload
 

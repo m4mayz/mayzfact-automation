@@ -46,7 +46,7 @@ class Settings:
     faktacuil_tts_provider: str = "elevenlabs"  # override lewat settings.local.json
     faktacuil_voicestudio_voice: str = ""  # profil bahasa Indonesia, diisi Akmal di settings.local.json
     faktacuil_voicestudio_instruct: str = ""
-    faktacuil_max_shot_seconds: float = 2.0  # ikut referensi, ±2 detik per klip
+    faktacuil_max_shot_seconds: float = 3.0  # 1 beat = 1 shot; median ±1,9 detik kayak FaktaBor (D-053)
     faktacuil_slot_hours: tuple[int, ...] = (12, 18)  # jam tayang WIB, maksimal 2 video per hari
     faktacuil_youtube_channel_id: str = "UCsEAAYtfNZis0dB5TkxtKQA"  # bukan rahasia; ID channel FaktaCuil hasil login
 

@@ -32,14 +32,14 @@ def test_faktacuil_defaults():
     s = Settings()
     assert (s.faktacuil_elevenlabs_voice_id, s.faktacuil_elevenlabs_delivery_tag, s.faktacuil_tts_provider,
             s.faktacuil_voicestudio_voice, s.faktacuil_voicestudio_instruct, s.faktacuil_max_shot_seconds) == (
-        ERIC, "", "elevenlabs", "", "", 2.0)
+        ERIC, "", "elevenlabs", "", "", 3.0)
 
 
 def test_settings_for_faktacuil_swaps_voice_tag_hook_and_shot_length():
     base = Settings(faktacuil_elevenlabs_voice_id="IDVOICE")
     s = settings_for_mode(base, "faktacuil")
     assert (s.elevenlabs_voice_id, s.elevenlabs_delivery_tag, s.elevenlabs_model, s.hook_seconds,
-            s.max_shot_seconds) == ("IDVOICE", "", "eleven_v3", 0.0, 2.0)
+            s.max_shot_seconds) == ("IDVOICE", "", "eleven_v3", 0.0, 3.0)
     assert (base.elevenlabs_voice_id, base.max_shot_seconds, base.hook_seconds) == ("TX3LPaxmHKxFdv7VOQHJ", 4.0, 10.0)
 
 
@@ -160,7 +160,7 @@ def test_real_plan_reads_max_shot_seconds_from_settings(tmp_path, monkeypatch):
     paths = RunPaths(tmp_path)
     for p in (paths.script_json, paths.tts_json, paths.source_json):
         write_json_atomic(p, {})
-    for mode, expected in (("faktacuil", (2.0, 0.0)), ("top3", (4.0, 10.0))):
+    for mode, expected in (("faktacuil", (3.0, 0.0)), ("top3", (4.0, 10.0))):
         deps = real_deps(settings_for_mode(Settings(), mode))
         deps.plan(paths, lambda m: None)
         assert (seen["max_shot_s"], seen["hook_seconds"]) == expected

@@ -28,6 +28,8 @@ SCOPES = [
     # baca Analytics (kurva retensi, durasi tonton) buat ngevaluasi naskah; reports.query juga minta youtube.readonly
     "https://www.googleapis.com/auth/yt-analytics.readonly",
     "https://www.googleapis.com/auth/youtube.readonly",
+    # videos.update (ganti judul/deskripsi video yang udah terjadwal); token lama tanpa ini harus login ulang
+    "https://www.googleapis.com/auth/youtube.force-ssl",
 ]
 WIB = timezone(timedelta(hours=7))  # WIB nggak pakai DST, jadi cukup offset tetap
 LOGIN_HINT = "Jalanin: uv run mayzfact login youtube"
