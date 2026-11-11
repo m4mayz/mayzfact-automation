@@ -344,6 +344,15 @@ def _overlays(detections: dict | None, entries: list[dict], countdown: list[dict
     return out
 
 
+def _continues(prev: dict, shot: dict) -> bool:
+    """Link sama dan detik source-nya lanjut dari shot sebelumnya. Mulai yang lompat = potongan beneran."""
+    if not shot.get("page_url") or shot.get("page_url") != prev.get("page_url"):
+        return False
+    if shot.get("source_s") is None or prev.get("source_s") is None:  # clips.json lama tanpa detik source
+        return True
+    return abs(shot["source_s"] - (prev["source_s"] + prev["end_s"] - prev["start_s"])) < 0.05
+
+
 def _beat_of(words: list[dict], beats: list[dict]) -> list[int]:
     """Index beat buat tiap kata (dari posisi karakter di teks gabungan)."""
     texts = beat_texts(beats)
@@ -518,8 +527,7 @@ def build_timeline(
     hook_end = 0 if faktacuil else max(
         (e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None), default=0)
     # shot yang ngelanjutin link/klip yang sama kayak shot sebelumnya nggak dapat bunyi/efek transisi
-    same_clip = {e["from"] for i, (e, s) in enumerate(zip(entries, shots))
-                 if i and s.get("page_url") and s.get("page_url") == shots[i - 1].get("page_url")}
+    same_clip = {e["from"] for i, (e, s) in enumerate(zip(entries, shots)) if i and _continues(shots[i - 1], s)}
     bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total, same_clip)
     data = {
         "fps": FPS,

@@ -85,3 +85,22 @@ def test_top3_cta_scene_keeps_mayzfact_style():
     script, alignment, clips = timeline_fixture()
     tl = build_timeline(clips, 20, 0.5, script=script, alignment=alignment)
     assert "style" not in tl["ctaScene"]
+
+
+def _cut_frames(tl):
+    return {s["from"] for s in tl["sfx"] if s["src"] == "audio/sfx/cut.mp3"}
+
+
+def test_same_link_jumping_to_another_scene_gets_transition_sfx():
+    """Link sama tapi Mulai lompat = potongan beneran, jadi SFX transisi tetap bunyi."""
+    script, alignment, clips = faktacuil_timeline_fixture(25)
+    a, b, c = clips["shots"][0], clips["shots"][1], clips["shots"][2]
+    for shot in (a, b, c):
+        shot["page_url"] = "https://example.com/v"
+    a["source_s"] = 10.0
+    b["source_s"] = round(10.0 + a["end_s"] - a["start_s"], 2)  # lanjut nyambung
+    c["source_s"] = 2.0  # lompat
+    tl = build_timeline(clips, 25, 0.5, script=script, alignment=alignment, audio=AUDIO, log=lambda m: None)
+    starts = [s["from"] for s in tl["shots"]]
+    assert starts[1] - 3 not in _cut_frames(tl)
+    assert starts[2] - 3 in _cut_frames(tl)
