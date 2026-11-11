@@ -131,7 +131,7 @@ Bedanya:
 - VoiceStudio bisa dipakai kalau Akmal isi di `settings.local.json`: `faktacuil_tts_provider` (`"voicestudio"`), `faktacuil_voicestudio_voice` (profil bahasa Indonesia), `faktacuil_voicestudio_instruct`. Kalau provider voicestudio tapi voice kosong, pipeline berhenti sebelum TTS. Belum ada profil bahasa Indonesia, jadi default-nya tetap ElevenLabs.
 - Jangan generate ulang suara, dan jangan hapus `voice.mp3`/`script.json` tanpa izin Akmal.
 - Log `[tts] FaktaCuil estimasi final …` ngasih peringatan kalau estimasi di luar 20–30 detik. Audio tetap disimpan; jangan regenerate atau ubah speed otomatis.
-- Plan nggak bikin segmen hook, dan shot maksimal 2 detik (`faktacuil_max_shot_seconds`), jadi link yang diisi lebih banyak dari top3.
+- Plan nggak bikin segmen hook. Shot maksimal 3 detik (`faktacuil_max_shot_seconds`, D-053), jadi biasanya 1 beat = 1 shot. Kalau beberapa shot pakai link yang sama, isi Mulai beda-beda biar dapet adegan lain dan SFX transisinya bunyi.
 
 Exit 3 "Nunggu input" = plan udah jadi, lanjut ke brief.
 
