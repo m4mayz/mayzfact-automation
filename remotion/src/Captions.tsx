@@ -52,7 +52,7 @@ const Word: React.FC<{caption: Caption; id: string}> = ({caption, id}) => {
 // FaktaCuil: Fredoka 700, pop tanpa blur (scale 0.6 → 1.12 → 1 dalam 5 frame, opacity 0 → 1 dalam 2 frame).
 const FC_MAX_WIDTH = 648; // 60% lebar frame: sisa kiri-kanan ±20% (Akmal)
 const FC_MAX_SIZE = 120;
-const FC_MIN_SIZE = 56;
+const FC_MIN_SIZE = 44; // 648 px muat ±20 huruf di 44 px; di bawah ini kata panjang tetap bisa lewat 60%
 const FC_CHAR_EM = 0.72; // perkiraan lebar rata-rata huruf kapital Fredoka 700 + stroke, dalam em
 
 const fcFontSize = (text: string): number =>

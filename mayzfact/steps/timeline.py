@@ -175,7 +175,7 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
         if keywords is not None:  # FaktaCuil: cuma kata keyword beat itu yang berwarna
             if beat_of and _clean(keywords.get(beat_of[index], "")) == text.lower():
                 color = CAPTION_KEYWORD
-            voice_end = word.get("voice_end_s", word["end_s"])
+            voice_end = max(word.get("voice_end_s", word["end_s"]), word["start_s"])  # start bisa ke-snap lewat voice_end
             if next_start - voice_end >= CAPTION_PAUSE_S:
                 end_s = voice_end + CAPTION_PAUSE_HOLD_S
             if re.search(r"\?[^\w']*$", word["text"]):

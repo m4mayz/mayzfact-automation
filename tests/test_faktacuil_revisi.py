@@ -104,3 +104,13 @@ def test_same_link_jumping_to_another_scene_gets_transition_sfx():
     starts = [s["from"] for s in tl["shots"]]
     assert starts[1] - 3 not in _cut_frames(tl)
     assert starts[2] - 3 in _cut_frames(tl)
+
+
+def test_pause_caption_never_ends_before_it_starts():
+    # Awal kata ke-snap ke suara pertama yang jatuh setelah voice_end (alignment kecepetan).
+    words = word_timings(alignment_of([BIKIN, RUMAH, MUNGKIN]))
+    words[1]["start_s"] = 3.1
+    caps = _captions(words, 4.0, [], set(), 120, keywords={}, beat_of=[0, 0, 1])
+    rumah = caps[1]
+    assert rumah["from"] == to_frame(3.1)
+    assert rumah["from"] + rumah["durationInFrames"] == to_frame(3.1 + 0.15)

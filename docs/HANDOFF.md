@@ -1,31 +1,25 @@
-# Handoff — Format FaktaCuil (D-051)
+# Handoff — FaktaCuil (D-051, D-052, D-053)
 
-- **Updated:** 2026-11-10 malam, Claude Code. **Branch:** `fase-faktacuil-format` (worktree `mayzfact-automation-wt/faktacuil-format`), belum di-merge dan belum di-push.
-- **Status:** plan Task 1–12 selesai dan ter-commit (1 golden top3 `160964e`, 2 voice-sample `fd3b647`, 3 schema `21acd45`, 4 detektor CTA `620d9e3`, 5 aturan naskah `d456141`, 6 settings per format `1043c0c`, 7 plan `6b675e3`, 8 scene CTA `9a64a09`, 9 timeline `7d62ed8`, 10 BGM lokal `dfc295b`, 11 caption Fredoka `7165031`, 12 upload/slot `5ff9819`). Task 13 (skill `bikin-faktacuil`, `AGENTS.md`, `bikin-short`) dan Task 14 (D-051, HANDOFF ini, update spec + plan) baru ditulis, belum di-commit. Review code oleh reviewer sedang jalan.
-- **D-052 (2026-11-11):** source FaktaCuil boleh video Indonesia: `source.json` punya `transcript_id` (transkrip asli `id`), `check-script` faktacuil ngebandingin overlap ke teks itu. Belum dites ke YouTube beneran (test pakai fake); `faktacuil_youtube_channel_id` sudah diisi.
-- **Fix review (T13):** kata "like" di beat jawaban yang nempel ke blok CTA sekarang ditolak `check-script` (`Beat N uses 'like' outside the CTA`); `check-script` pakai `settings_for_mode` (rentang kata sama kayak pipeline); upload top3 nolak `language: "id"`; keyword berpunctuation (`madu?`) tetap kuning; hint login token FaktaCuil nyebut `--channel faktacuil`.
-- **Hasil terakhir:** `uv run pytest -q` setelah Task 12: **794 passed, 3 skipped, 4 deselected, 0 failed** (`npm ci` sudah jalan di worktree, jadi test node ikut lolos). `npx tsc --noEmit -p .` bersih. `uvx ruff check --select F,I` bersih di file yang diubah. Golden top3 hijau di tiap task.
-- **Dibangun:** `narration_mode: "faktacuil"` + `Beat.keyword`; aturan naskah F1–F11 di `check-script`; detektor CTA like Indonesia; scene CTA like + transform; timeline tanpa panah/emoji/card/intro/flash dengan `captionStyle: "faktacuil"`; caption Fredoka pop di Remotion; BGM 1 lagu lokal; voice Eric default + VoiceStudio opsional; shot maks 2,0 detik; upload ke channel FaktaCuil lewat token kedua dengan cek akun; slot 12.00/18.00 WIB maks 2 per hari. Angka: `FAKTACUIL_RAW_WPS = 2.27`, rentang kata 50–74 (target 62) di speed 1.1.
-- **Belum dites:**
-  - TTS beneran untuk naskah FaktaCuil utuh (baru sampel 40 kata Eric); bagaimana ElevenLabs membaca "like" dan "like-mu".
-  - Render beneran FaktaCuil dari awal sampai `final.mp4`. Caption Fredoka baru di-still di latar hitam (outline hitam tidak terlihat); lebar kata terpanjang ±830 dari 960 px.
-  - `login youtube --channel faktacuil` dan upload ke YouTube beneran (semua test pakai fake; respons `channels().list` asli belum pernah dilihat).
-  - VoiceStudio bahasa Indonesia: profil belum ada, jadi jalur `faktacuil_tts_provider = "voicestudio"` baru dites dengan fake.
-  - Lagu: file "Welcome to Bullworth" belum ada di `assets/channels/faktacuil/bgm/` (lead/Akmal yang menaruh), jadi BGM sementara `main.mp3`. Rawan Content ID.
-- **Langkah Akmal setelah merge:**
-  1. Taruh lagu pilihan di `assets/channels/faktacuil/bgm/` (folder lokal, tidak ke-commit).
-  2. `uv run mayzfact login youtube --channel faktacuil`, pilih akun channel FaktaCuil di browser, lalu catat judul + ID channel (`UC...`) yang di-print.
-  3. Isi `Settings.faktacuil_youtube_channel_id` dengan ID itu (di `mayzfact/config.py`). Tanpa ini upload FaktaCuil sengaja ditolak.
-  4. Opsional, kalau mau VoiceStudio: isi `faktacuil_tts_provider`, `faktacuil_voicestudio_voice` (profil bahasa Indonesia), `faktacuil_voicestudio_instruct` di `settings.local.json`.
-  5. Video pertama: minta agent pakai skill `bikin-faktacuil`.
+- **Updated:** 2026-11-11 malam, Claude Code (lead). **Branch:** `fase-faktacuil-revisi-1` (revisi dari preview pertama, D-053), di-merge ke master setelah review.
+- **Video pertama FaktaCuil:** run `gu2M14rfRlU` ("Rahasia Rumah Jepang Kokoh Tanpa Paku😱"), di-upload ke channel FaktaCuil `RNZ4iZy4iIU`, tayang 2026-11-12 12.00 WIB. Metadata-nya diganti lewat `videos.update` setelah upload (format FaktaBor).
+- **Sekarang FaktaCuil begini (D-053 menggantikan sebagian D-051):**
+  - Shot maks 3,0 detik (`faktacuil_max_shot_seconds`), biasanya 1 beat = 1 shot, median ±1,9 detik kayak FaktaBor.
+  - Shot CTA minta link di brief (grup "CTA"), bukan AUTO CTA. CTA gaya FaktaBor `pJe_Qok8qDA`: pill "LIKE" gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`remotion/src/FaktaCuilCta.tsx`, `FaktaCuilStickers.tsx`), klip CTA nggak di-blur.
+  - Intro + SFX `hook` di detik 0 sama kayak MayzFact. Nggak ada riser.
+  - Caption: "?" di kalimat tanya, ngilang pas jeda ≥0,25 detik (`voice_end_s` dari alignment), shadow lebih tebel, lebar maks 648 px (60%), font minimal 44 px.
+  - SFX transisi bunyi juga di link yang sama kalau Mulai-nya lompat (`_continues` pakai `source_s`). Berlaku buat top3 juga.
+  - BGM lokal: Bully "Main Theme" (hening 0,43 detik di awal dipotong), gitignored.
+  - Metadata: judul Title Case + 😱, deskripsi 2–4 kalimat + emoji + hashtag ala FaktaBor, tags tetap diisi, kategori 22.
+  - Login YouTube minta `youtube.force-ssl` (edit metadata video terjadwal). Token MayzFact + FaktaCuil udah login ulang 2026-11-11.
+- **Udah dites beneran:** TTS Eric naskah utuh, render sampai `final.mp4`, login + upload + `videos.update` ke channel FaktaCuil (channel dicek sebelum nulis).
+- **Belum dites:** SFX hook/transisi + BGM baru belum didengerin agent (Akmal udah nonton preview). VoiceStudio bahasa Indonesia (profil belum ada).
 - **Masalah terbuka:**
-  - Run FaktaCuil baru menjalankan step `source` sebelum naskah ada, jadi memakai `hook_seconds` 10 dan men-download `source.mp4` + frame `seg_*` yang tidak dipakai. Belum diperbaiki (dicatat lead).
-  - ~~Hint login `youtube.service` tanpa `--channel`~~: beres di fix review T13 (`service(token, channel="faktacuil")` nyebut `--channel faktacuil`).
-  - 1,15 yang di-set eksplisit sebagai `video_speed` MayzFact voicestudio ikut turun ke 1,1 untuk FaktaCuil ElevenLabs (tidak bisa dibedakan dari auto-bump).
-  - Beat jawaban yang nempel ke CTA dan punya "like" + `transform_word` sekaligus (contoh "warnanya berubah, rasanya like permen." dengan `transform_word` "berubah") masih lolos `check-script` (`mayzfact/faktacuil.py:122-124`, `has_trigger`). Saran: trigger transform cuma dihitung kalau beat-nya juga pola gimmick (diakhiri `?` dan ada `jadi <noun>`).
+  - Run FaktaCuil baru menjalankan step `source` sebelum naskah ada, jadi memakai `hook_seconds` 10 dan men-download `source.mp4` + frame `seg_*` yang tidak dipakai.
+  - 1,15 yang di-set eksplisit sebagai `video_speed` MayzFact voicestudio ikut turun ke 1,1 untuk FaktaCuil ElevenLabs.
+  - Beat jawaban yang nempel ke CTA dan punya "like" + `transform_word` sekaligus masih lolos `check-script` (`mayzfact/faktacuil.py`, `has_trigger`).
   - `FAKTACUIL_RAW_WPS` dari satu sampel; kalibrasi ulang kalau naskah asli jauh beda tempo.
-- **Pertanyaan spec yang belum dijawab Akmal (pakai default):** Q2 `video_speed` khusus FaktaCuil (tetap 1.1), Q3 source listicle (boleh 1 item), Q5 TikTok (tidak dibuat), Q7 SFX click CTA (sama). Q1, Q4, Q8 sudah dijawab; Q6 menunggu langkah 3 di atas.
-- **Spec/plan:** `docs/superpowers/specs/2026-11-10-faktacuil-format-design.md` (bagian 13 = deviasi), `docs/superpowers/plans/2026-11-10-faktacuil-format.md`.
+  - Belum ada perintah CLI buat edit metadata; `videos.update` video pertama pakai skrip sekali jalan.
+- **Spec/plan format awal:** `docs/superpowers/specs/2026-11-10-faktacuil-format-design.md`, `docs/superpowers/plans/2026-11-10-faktacuil-format.md`.
 
 # Handoff — Honey illustration + guard objek CTA (D-049)
 

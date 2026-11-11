@@ -61,7 +61,8 @@ def subject_ranges(transcript: list[dict], subjects: list[str], total_s: float) 
 
 
 def group_of(shot: dict) -> tuple[str, str]:
-    """(id, label) kelompok konteks shot: semua hook jadi 1, sisanya per subjek, atau per beat kalau subjeknya kosong."""
+    """(id, label) kelompok konteks shot: AUTO CTA / CTA FaktaCuil / hook masing-masing 1 grup, sisanya per subjek,
+    atau per beat kalau subjeknya kosong."""
     if shot.get("auto_cta"):
         return "auto-cta", "AUTO CTA · background video sebelumnya"
     if shot.get("cta"):
@@ -71,7 +72,7 @@ def group_of(shot: dict) -> tuple[str, str]:
     subject = (shot["subject"] or "").strip()
     slug = re.sub(r"[^a-z0-9]+", "-", subject.lower()).strip("-")
     if slug:
-        return ("subject-hook" if slug == "hook" else slug), subject  # "hook" khusus buat kelompok hook
+        return (f"subject-{slug}" if slug in ("hook", "cta") else slug), subject  # id "hook"/"cta" khusus grup itu
     return f"beat-{shot['beat'] + 1}", f"beat {shot['beat'] + 1}"
 
 

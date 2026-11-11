@@ -49,3 +49,13 @@ def test_cta_beat_subject_is_cleared_even_if_script_sets_one(tmp_path, cut_video
     data = run_plan(RunPaths(tmp_path / "run"), script, tts, SOURCE, max_shot_s=2.0, hook_seconds=0.0,
                     download_source=lambda vid, dest: shutil.copyfile(cut_video, dest), log=lambda m: None)
     assert all(s["subject"] == "" for s in data["shots"] if s["beat"] in (4, 5))
+
+
+def test_subject_named_cta_does_not_merge_into_cta_group(tmp_path, cut_video):
+    script = faktacuil_script().model_dump()
+    script["beats"][2]["subject"] = "CTA"
+    tts = dict(duration_s=25, alignment=fake_alignment(script_text(script["beats"]), 25))
+    data = run_plan(RunPaths(tmp_path / "run"), script, tts, SOURCE, max_shot_s=2.0, hook_seconds=0.0,
+                    download_source=lambda vid, dest: shutil.copyfile(cut_video, dest), log=lambda m: None)
+    assert all(s["group"] == "subject-cta" for s in data["shots"] if s["beat"] == 2)
+    assert all(s["group"] == "cta" for s in data["shots"] if s["beat"] in (4, 5))
