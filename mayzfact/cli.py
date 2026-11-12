@@ -36,6 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("video", help="Video ID atau URL YouTube")
     run.add_argument("--from", dest="from_step", choices=ALL_STEPS, help="Ulang dari step ini (source/tts dikunci kalau voice.mp3 udah ada)")
     run.add_argument("--no-render", action="store_true", help="Berhenti setelah timeline.json, buat review di Remotion Studio")
+    run.add_argument("--mode", choices=["faktacuil"], help="FaktaCuil: pakai transkrip Indonesia dulu (Top 3 tetap English)")
     check = sub.add_parser("check-script", help="Cek runs/<id>/script.json yang ditulis agent")
     check.add_argument("video", help="Video ID atau URL YouTube source")
     sub.add_parser("voices", help="List voice ElevenLabs di akun lu")
@@ -83,7 +84,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "upload":
             return _upload(args, settings)
         paths = run_pipeline(
-            args.video, settings=settings, from_step=args.from_step, no_render=args.no_render
+            args.video, settings=settings, from_step=args.from_step, no_render=args.no_render,
+            mode=args.mode,
         )
         if args.no_render:
             print(

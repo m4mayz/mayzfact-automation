@@ -109,3 +109,40 @@ def test_pipeline_source_step_passes_fetch_transcript_id(tmp_path):
     paths.root.mkdir()
     _run_step("source", paths, Settings(), deps, lambda m: None)
     assert read_json(paths.source_json)["transcript_id"][0]["text"].startswith("Hewan")
+
+
+def test_prefer_id_pakai_transkrip_indonesia_walau_en_hilang(tmp_path):
+    """Source Indonesia sering nggak punya track EN: step source nggak boleh gagal."""
+    def no_en(v):
+        raise TranscriptsDisabled(v)
+
+    paths = RunPaths(tmp_path)
+    run_source("abcdefghijk", paths, fetch=no_en, fetch_id=lambda v: ID_OTHER, prefer_id=True)
+    data = read_json(paths.source_json)
+    assert data["transcript_id"][0]["text"].startswith("Hewan peliharaan")
+    assert data["transcript"] == data["transcript_id"]
+
+
+def test_prefer_id_jatuh_ke_en_kalau_indonesia_kosong(tmp_path):
+    paths = RunPaths(tmp_path)
+    run_source("abcdefghijk", paths, fetch=lambda v: EN, fetch_id=lambda v: [], prefer_id=True)
+    data = read_json(paths.source_json)
+    assert data["transcript"][0]["text"] == SOURCE_TEXT_EN
+    assert data["transcript_id"] == []
+
+
+def test_pipeline_top3_tetap_wajib_transkrip_english(tmp_path):
+    """Tanpa prefer_id (Top 3), source nggak punya transkrip EN harus tetap gagal."""
+    from mayzfact.config import Settings
+    from mayzfact.pipeline import Deps, _run_step
+
+    def no_en(v):
+        raise TranscriptsDisabled(v)
+
+    deps = Deps(fetch_transcript=no_en, tts=None, http=None, render=None, plan=None, fetch=None,
+                fetch_transcript_id=lambda v: ID_OTHER)
+    paths = RunPaths(tmp_path / "abcdefghijk")
+    paths.root.mkdir()
+    with pytest.raises(TranscriptsDisabled):
+        _run_step("source", paths, Settings(), deps, lambda m: None)
+    assert not paths.source_json.exists()

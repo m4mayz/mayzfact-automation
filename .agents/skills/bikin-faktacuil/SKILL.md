@@ -28,10 +28,12 @@ Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal per
 Sama kayak `bikin-short` langkah 1:
 
 ```bash
-uv run mayzfact run <url atau id> --no-render
+uv run mayzfact run <url atau id> --mode faktacuil --no-render
 ```
 
-Source boleh video Inggris atau Indonesia. Step source juga nyimpen transkrip asli Indonesia (bukan terjemahan) di `source.json` field `transcript_id`; kosong kalau videonya nggak punya (D-052).
+Source boleh video Inggris atau Indonesia. **Selalu jalankan `mayzfact run <id> --mode faktacuil --no-render`**: flag itu bikin step source nyoba **transkrip Indonesia dulu** (transkrip asli, bukan terjemahan mesin) dan cuma pakai English sebagai referensi. Tanpa flag, Top 3 tetap wajib transkrip English dan run bakal gagal `NoTranscriptFound` untuk source Indonesia yang nggak punya track EN (D-056).
+
+Transkrip asli Indonesia tetap disimpan di `source.json` field `transcript_id`; kosong kalau videonya nggak punya (D-052).
 
 Kalau source-nya Top N, boleh ambil **1 item** aja; semua fakta di naskah harus dari item itu. Step source jalan sebelum naskah ada, jadi dia tetap download `source.mp4` dan bikin frame `plan/seg_XX_K.jpg` walau format FaktaCuil. File itu nggak dipakai, abaikan.
 
@@ -122,7 +124,7 @@ Tunjukin di chat, per beat: **teks Indonesia | kalimat source Inggris yang jadi 
 Perintahnya sama kayak `bikin-short` langkah 4:
 
 ```bash
-uv run mayzfact run <id> --no-render
+uv run mayzfact run <id> --mode faktacuil --no-render
 ```
 
 Bedanya:

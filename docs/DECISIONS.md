@@ -619,3 +619,11 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Keputusan:** `faktacuil_slot_hours = (8, 12)` — pagi ikut jendela kompetitor, siang buat video kedua. MayzFact (01.00/04.00) nggak berubah; audiensnya beda pasar.
 - **Bukti belum ada:** channel FaktaCuil baru 1 video tayang, jadi ini ikut pola kompetitor + prime time, bukan hasil Analytics sendiri. Evaluasi setelah 6–8 video: bandingkan views 48 jam pertama per slot.
 - **Authority:** Akmal (chat 2026-11-12: "buat next video, better upload jam 8 sama jam 12 siang aja").
+
+## D-056 — 2026-11-12 — Transkrip Indonesia diutamakan, tapi cuma untuk FaktaCuil
+
+- **Status:** accepted; `master`.
+- **Masalah:** `run_source` wajib transkrip `en`; source `@faktabor` berbahasa Indonesia sering nggak punya track EN, jadi step source mati `NoTranscriptFound` (kejadian di `S8ugKgZh1kg`, `P9udoZRaH6o`, `q3QsqNQxqUc`) padahal transkrip Indonesianya ada.
+- **Keputusan:** `run_source(..., prefer_id=True)` mencoba transkrip **Indonesia** dulu, English cuma referensi (kalau EN nggak ada, plan pakai teks Indonesia). Flag ini cuma aktif lewat `mayzfact run <id> --mode faktacuil` atau kalau `script.json` run itu `narration_mode: "faktacuil"` — Top 3 tetap wajib EN.
+- **Verifikasi:** 13 tes di `tests/test_faktacuil_source_id.py` (termasuk Top 3 tetap gagal tanpa EN), run `P9udoZRaH6o` dan `q3QsqNQxqUc` sekarang dapat `transcript_id` dan lanjut.
+- **Authority:** Akmal (chat 2026-11-12: "emang harus pake transkrip EN? kan emang source nya indo", "transcript indo itu buat faktacuil aja ya").

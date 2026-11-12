@@ -249,6 +249,7 @@ def run_pipeline(
     settings: Settings,
     from_step: str | None = None,
     no_render: bool = False,
+    mode: str | None = None,
     deps: Deps | None = None,
     runs_dir: Path = RUNS_DIR,
     log: Callable[[str], None] = print,
@@ -263,9 +264,12 @@ def run_pipeline(
     paths = RunPaths(runs_dir / video_id)
     done = {step: step_done(step, paths) for step in STEPS}
     steps = plan_steps(done, paths.voice_mp3.exists(), from_step)
+    # Source Indonesia cuma buat FaktaCuil; Top 3 tetap butuh transkrip English.
+    prefer_id = mode == "faktacuil"
     if paths.script_json.exists():
         script = load_script(paths)  # schema/mode dicek sebelum output resume lama dihapus; tanpa cek anggaran baru
         settings = settings_for_mode(settings, script.narration_mode)
+        prefer_id = prefer_id or script.narration_mode == "faktacuil"
     if no_render:
         # Review lewat Remotion Studio dulu. final.mp4 lama jadi basi kalau step sebelumnya diulang.
         if any(step in steps for step in ("plan", "fetch", "timeline")):
@@ -301,7 +305,7 @@ def run_pipeline(
                 check_voice(paths, video_speed=settings.video_speed, log=log)
                 voice_checked = True
             log(f"[{step}] mulai")
-            _run_step(step, paths, settings, deps, log)
+            _run_step(step, paths, settings, deps, log, prefer_id=prefer_id)
     finally:
         deps.close()
     return paths
@@ -323,10 +327,12 @@ def _require_script(paths: RunPaths, settings: Settings) -> None:
         raise PipelineError("script", "Naskah belum lolos cek: " + " ".join(problems))
 
 
-def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: Callable[[str], None]) -> None:
+def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: Callable[[str], None], *,
+              prefer_id: bool = False) -> None:
     if step == "source":
         run_source(paths.root.name, paths, fetch=deps.fetch_transcript, download_source=deps.download_source,
-                   hook_seconds=settings.hook_seconds, log=log, fetch_id=deps.fetch_transcript_id)
+                   hook_seconds=settings.hook_seconds, log=log, fetch_id=deps.fetch_transcript_id,
+                   prefer_id=prefer_id)
     elif step == "tts":
         run_tts(paths, read_json(paths.script_json), deps.tts(), log=log,
                 max_gap_s=settings.faktacuil_max_gap_s)

@@ -70,14 +70,34 @@ def run_source(
     video_id: str, paths: RunPaths, fetch: Callable[[str], list[dict]] = youtube_transcript, *,
     download_source: Callable[[str, Path], Path] | None = None, hook_seconds: float = 0.0,
     log: Callable[[str], None] = print, fetch_id: Callable[[str], list[dict]] | None = None,
+    prefer_id: bool = False,
 ) -> dict:
-    data = build_source(video_id, fetch(video_id))
-    data["transcript_id"] = []
-    if fetch_id is not None:
+    data = None
+    if prefer_id and fetch_id is not None:
+        # Transkrip asli lebih dipercaya daripada terjemahan mesin, dan source berbahasa
+        # Indonesia sering nggak punya track EN sama sekali (NoTranscriptFound).
         try:
-            data["transcript_id"] = _clean_snippets(fetch_id(video_id))
-        except Exception as exc:  # opsional: gagal ambil transkrip Indonesia nggak boleh bikin step gagal
-            log(f"[source] transcript Indonesia dilewat: {exc}")
+            id_snippets = _clean_snippets(fetch_id(video_id))
+        except Exception as exc:  # opsional: gagal ambil Indonesia jatuh ke jalur EN
+            log(f"[source] transcript Indonesia gagal: {exc}")
+            id_snippets = []
+        if id_snippets:
+            data = build_source(video_id, id_snippets)
+            data["transcript_id"] = id_snippets
+            try:
+                english = _clean_snippets(fetch(video_id))
+            except Exception as exc:  # EN cuma referensi; plan tetap jalan pakai teks Indonesia
+                english = []
+                log(f"[source] transcript English nggak ada ({type(exc).__name__}), plan pakai transkrip Indonesia.")
+            data["transcript"] = english or id_snippets
+    if data is None:
+        data = build_source(video_id, fetch(video_id))
+        data["transcript_id"] = []
+        if fetch_id is not None:
+            try:
+                data["transcript_id"] = _clean_snippets(fetch_id(video_id))
+            except Exception as exc:  # opsional: gagal ambil transkrip Indonesia nggak boleh bikin step gagal
+                log(f"[source] transcript Indonesia dilewat: {exc}")
     data["hook_segments"] = []
     if download_source is not None and hook_seconds > 0:
         from mayzfact.source_frames import prepare_source_segments

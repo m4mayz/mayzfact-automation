@@ -15,14 +15,15 @@ def test_cli_rejects_unknown_step():
 def test_cli_passes_flags_to_pipeline(monkeypatch, tmp_path, capsys):
     seen = {}
 
-    def fake_run(video, *, settings, from_step, no_render):
-        seen.update(video=video, from_step=from_step, no_render=no_render)
+    def fake_run(video, *, settings, from_step, no_render, mode=None):
+        seen.update(video=video, from_step=from_step, no_render=no_render, mode=mode)
         return RunPaths(tmp_path)
 
     monkeypatch.setattr(cli, "load_settings", lambda: Settings())
     monkeypatch.setattr(cli, "run_pipeline", fake_run)
-    assert cli.main(["run", "https://youtu.be/i2xag_1OJfM"]) == 0
-    assert seen == {"video": "https://youtu.be/i2xag_1OJfM", "from_step": None, "no_render": False}
+    assert cli.main(["run", "https://youtu.be/i2xag_1OJfM", "--mode", "faktacuil"]) == 0
+    assert seen == {"video": "https://youtu.be/i2xag_1OJfM", "from_step": None, "no_render": False,
+                    "mode": "faktacuil"}
     assert "Selesai:" in capsys.readouterr().out
 
 
