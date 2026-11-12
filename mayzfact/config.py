@@ -48,7 +48,9 @@ class Settings:
     faktacuil_voicestudio_instruct: str = ""
     faktacuil_max_shot_seconds: float = 3.0  # 1 beat = 1 shot; median ±1,9 detik kayak FaktaBor (D-053)
     faktacuil_max_gap_s: float = 0.2  # hening antar kalimat dipotong, maksimal 0,2 detik (Akmal 2026-11-12)
-    faktacuil_slot_hours: tuple[int, ...] = (12, 18)  # jam tayang WIB, maksimal 2 video per hari
+    # Jam tayang WIB, maksimal 2 video/hari. Akmal 2026-11-12: 08.00 & 12.00,
+    # nyamain jendela upload FaktaBor (07.00-09.00 WIB) tanpa nabrak jam 18.00.
+    faktacuil_slot_hours: tuple[int, ...] = (8, 12)
     faktacuil_youtube_channel_id: str = "UCsEAAYtfNZis0dB5TkxtKQA"  # bukan rahasia; ID channel FaktaCuil hasil login
 
     def __post_init__(self) -> None:

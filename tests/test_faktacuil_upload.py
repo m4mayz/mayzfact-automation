@@ -225,6 +225,6 @@ def test_secret_not_in_repr():
 
 def test_settings_defaults_and_env_field():
     s = Settings()
-    assert (s.faktacuil_slot_hours, s.faktacuil_youtube_channel_id, s.youtube_token_json_faktacuil) == ((12, 18), "UCsEAAYtfNZis0dB5TkxtKQA", "")
+    assert (s.faktacuil_slot_hours, s.faktacuil_youtube_channel_id, s.youtube_token_json_faktacuil) == ((8, 12), "UCsEAAYtfNZis0dB5TkxtKQA", "")
     assert "YOUTUBE_TOKEN_JSON_FAKTACUIL" in ENV_FIELDS
     assert settings_from_env({"YOUTUBE_TOKEN_JSON_FAKTACUIL": "T2"}).youtube_token_json_faktacuil == "T2"

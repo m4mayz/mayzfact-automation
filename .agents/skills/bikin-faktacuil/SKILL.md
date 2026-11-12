@@ -166,7 +166,7 @@ uv run mayzfact next-slot --channel faktacuil
 uv run mayzfact upload <id> --at "<YYYY-MM-DD HH:MM>"
 ```
 
-- Slot FaktaCuil **12.00 dan 18.00 WIB**, maksimal 2 video per hari. Upload nggak tentu tiap hari, jadi pakai slot kosong berikutnya tanpa nanya Akmal, terus kabarin jam tayangnya setelah upload (D-037). Slot FaktaCuil dan MayzFact (01.00/04.00) saling terpisah.
+- Slot FaktaCuil **08.00 dan 12.00 WIB**, maksimal 2 video per hari (Akmal 2026-11-12: ikut jendela upload FaktaBor 07.00-09.00). Upload nggak tentu tiap hari, jadi pakai slot kosong berikutnya tanpa nanya Akmal, terus kabarin jam tayangnya setelah upload (D-037). Slot FaktaCuil dan MayzFact (01.00/04.00) saling terpisah.
 - `upload` baca `narration_mode` dari `script.json` dan otomatis pakai token + channel FaktaCuil. Jangan tambah flag.
 - Sebelum `videos().insert`, kode ngecek akun yang login beneran channel FaktaCuil. Upload nggak bisa ditarik, jadi cek ini wajib.
 - Error "Belum login channel FaktaCuil" atau "Token YouTube ditolak": minta Akmal jalanin `uv run mayzfact login youtube --channel faktacuil` (browser kebuka), terus ulang.

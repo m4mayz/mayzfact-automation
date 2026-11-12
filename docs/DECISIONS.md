@@ -611,3 +611,11 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **BGM:** `FAKTACUIL_BGM_VOLUME = 0.06` (±-32,6 LUFS, ~14 dB di bawah voice) menggantikan 0,12 khusus FaktaCuil; volume Top 3 tidak berubah.
 - **Verifikasi:** `tests/test_faktacuil_pauses.py` (7 tes fungsi murni) + suite penuh `839 passed, 1 skipped, 4 deselected`. Hasil nyata: voice 31,76 → 26,74 detik (9 jeda dipotong, 5,02 detik), plan 16 → 15 shot, link Akmal di-remap per beat (link lama shot 4 dibuang), render 1080x1920.
 - **Authority:** Akmal (chat 2026-11-12: "bgm terlalu besar atau voicenya terlalu kecil", "buat aturan untuk memotong jeda pada voice ... langsung sambung 0,2 detik").
+
+## D-055 — 2026-11-12 — Slot FaktaCuil pindah ke 08.00 & 12.00 WIB
+
+- **Status:** accepted; `master`.
+- **Data:** 78 video publik `@faktabor` hampir semua diupload 07.00–09.00 WIB (08.00 = 42 video, 07.00 = 15, 09.00 = 10), 1 video/hari. Slot lama FaktaCuil (12.00 & 18.00) nggak nyamain jendela itu.
+- **Keputusan:** `faktacuil_slot_hours = (8, 12)` — pagi ikut jendela kompetitor, siang buat video kedua. MayzFact (01.00/04.00) nggak berubah; audiensnya beda pasar.
+- **Bukti belum ada:** channel FaktaCuil baru 1 video tayang, jadi ini ikut pola kompetitor + prime time, bukan hasil Analytics sendiri. Evaluasi setelah 6–8 video: bandingkan views 48 jam pertama per slot.
+- **Authority:** Akmal (chat 2026-11-12: "buat next video, better upload jam 8 sama jam 12 siang aja").
