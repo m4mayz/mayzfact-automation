@@ -47,6 +47,7 @@ class Settings:
     faktacuil_voicestudio_voice: str = ""  # profil bahasa Indonesia, diisi Akmal di settings.local.json
     faktacuil_voicestudio_instruct: str = ""
     faktacuil_max_shot_seconds: float = 3.0  # 1 beat = 1 shot; median ±1,9 detik kayak FaktaBor (D-053)
+    faktacuil_max_gap_s: float = 0.2  # hening antar kalimat dipotong, maksimal 0,2 detik (Akmal 2026-11-12)
     faktacuil_slot_hours: tuple[int, ...] = (12, 18)  # jam tayang WIB, maksimal 2 video per hari
     faktacuil_youtube_channel_id: str = "UCsEAAYtfNZis0dB5TkxtKQA"  # bukan rahasia; ID channel FaktaCuil hasil login
 

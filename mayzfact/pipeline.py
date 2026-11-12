@@ -328,7 +328,8 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
         run_source(paths.root.name, paths, fetch=deps.fetch_transcript, download_source=deps.download_source,
                    hook_seconds=settings.hook_seconds, log=log, fetch_id=deps.fetch_transcript_id)
     elif step == "tts":
-        run_tts(paths, read_json(paths.script_json), deps.tts(), log=log)
+        run_tts(paths, read_json(paths.script_json), deps.tts(), log=log,
+                max_gap_s=settings.faktacuil_max_gap_s)
     elif step == "plan":
         deps.plan(paths, log)
     elif step == "fetch":

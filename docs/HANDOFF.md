@@ -688,3 +688,11 @@
   - Belum dites: render video penuh (`uv run pytest -m render` belum dijalanin karena berat, 5–8 menit).
 - **Masalah terbuka:**
   - Spec R6: Jika ada `script.json` Top 3 di luar `runs/` (misalnya backup/mesin lain) yang masih memiliki field `"label": ""`, file tersebut akan ditolak oleh `extra="forbid"`. Solusinya cukup hapus key `label` dari file JSON tersebut (tidak mengubah hash suara).
+
+# Handoff — Jeda voice + BGM FaktaCuil (D-054)
+
+- **Updated:** 2026-11-12.
+- **Branch:** `fase-jeda-voice`.
+- **Selesai:** modul `mayzfact/pauses.py` (parse `silencedetect`, rencana potongan, geser alignment, trim ffmpeg), `run_tts(..., max_gap_s)` dipakai step tts untuk mode FaktaCuil, setting `faktacuil_max_gap_s = 0.2`, dan `FAKTACUIL_BGM_VOLUME = 0.06` di timeline.
+- **Verifikasi:** suite penuh 839 passed; run `gNA8gTQriOQ` voice 31,76 → 26,74 detik, 15 shot, link di-remap per beat.
+- **Catatan:** run lama lain tidak diubah; aturan jalan otomatis untuk voice FaktaCuil baru.

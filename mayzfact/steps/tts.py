@@ -32,6 +32,7 @@ def run_tts(
     *,
     log: Callable[[str], None] = print,
     measure: Callable[[Path], float] = audio_duration,
+    max_gap_s: float = 0.0,
 ) -> dict:
     text = script_text(script["beats"])
     stability = getattr(tts, "stability", None)  # provider lama/fake di test boleh nggak punya
@@ -79,6 +80,8 @@ def run_tts(
     normalize = getattr(tts, "normalize_alignment", None)
     if normalize is not None:
         alignment = normalize(text, raw_alignment)
+    if max_gap_s > 0 and script.get("narration_mode") == "faktacuil":
+        alignment = _apply_pause_rule(incoming, alignment, max_gap_s, log)
     data = {
         "provider": provider,
         "text_sha256": text_hash(text),
@@ -106,3 +109,35 @@ def run_tts(
         os.replace(incoming, paths.voice_mp3)
     incoming_meta.unlink(missing_ok=True)
     return data
+
+
+def _apply_pause_rule(incoming: Path, alignment: dict, max_gap_s: float,
+                      log: Callable[[str], None]) -> dict:
+    """FaktaCuil: hening antar kalimat dipotong sampai maksimal `max_gap_s` detik.
+
+    Dipotong di file audio yang belum dipindah ke voice.mp3, lalu timestamp karakter
+    digeser sesuai total potongan supaya plan/timeline tetap nyambung sama suaranya.
+    """
+    from mayzfact.pauses import (
+        detect_silences,
+        keep_segments,
+        plan_cuts,
+        shift_alignment,
+        trim_audio,
+    )
+
+    cuts = plan_cuts(detect_silences(incoming), max_gap_s)
+    if not cuts:
+        log(f"[tts] jeda udah <= {max_gap_s:g} detik, audio nggak dipotong")
+        return alignment
+    duration = audio_duration(incoming)
+    total = sum(end - start for start, end in cuts)
+    # Jaga-jaga: klip yang hampir semua hening (fixture/dummy) jangan sampai dipotong habis.
+    if duration - total < 1.0 or total > 0.6 * duration:
+        log("[tts] potongan jeda dilewati: audionya kependekan atau hampir semua hening")
+        return alignment
+    trimmed = tmp_path_for(incoming)
+    trim_audio(incoming, trimmed, keep_segments(duration, cuts), _run)
+    os.replace(trimmed, incoming)
+    log(f"[tts] potong {len(cuts)} jeda panjang (maks {max_gap_s:g} detik): {duration:.2f} -> {duration - total:.2f} detik")
+    return shift_alignment(alignment, cuts)

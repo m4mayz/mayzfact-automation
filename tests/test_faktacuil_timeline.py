@@ -74,7 +74,7 @@ def test_faktacuil_long_words_are_not_colored():
 def test_faktacuil_single_bgm_whole_video():
     tl = timeline({"bgm": None, "bgm_main": "audio/bgm/main.mp3", "sfx": {}})
     assert tl["bgm"] == [{"src": "audio/bgm/main.mp3", "from": 0, "durationInFrames": tl["durationInFrames"],
-                          "volume": 0.12, "fadeOutFrames": 30}]
+                          "volume": 0.06, "fadeOutFrames": 30}]  # FAKTACUIL_BGM_VOLUME: BGM ~14 dB di bawah voice
 
 
 def test_faktacuil_ignores_marks_and_overlays_passed_in():
