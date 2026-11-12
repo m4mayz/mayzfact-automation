@@ -147,8 +147,10 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 return False
             if hostname in {"127.0.0.1", "localhost"}:
                 return True
-            # ngrok tunnel: *.ngrok-free.app, *.ngrok-free.dev, atau *.ngrok.io
+            # tunnel: ngrok (*.ngrok-free.app/dev/io) atau cloudflared quick tunnel (*.trycloudflare.com)
             if hostname.endswith(".ngrok-free.app") or hostname.endswith(".ngrok-free.dev") or hostname.endswith(".ngrok.io"):
+                return True
+            if hostname.endswith(".trycloudflare.com"):
                 return True
             if host == "0.0.0.0":
                 parts = hostname.split(".")
@@ -224,10 +226,11 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             if origin:
                 host_header = self.headers.get("Host", "")
                 hostname = host_header.split(":")[0].lower()
-                is_ngrok = hostname.endswith(".ngrok-free.app") or hostname.endswith(".ngrok-free.dev") or hostname.endswith(".ngrok.io")
+                is_tunnel = (hostname.endswith(".ngrok-free.app") or hostname.endswith(".ngrok-free.dev")
+                             or hostname.endswith(".ngrok.io") or hostname.endswith(".trycloudflare.com"))
                 origin_ok = origin == f"http://{host_header}"
-                if is_ngrok:
-                    # ngrok proxy: origin https, host tanpa port
+                if is_tunnel:
+                    # tunnel (ngrok/cloudflared): origin https, host tanpa port
                     origin_ok = origin_ok or origin == f"https://{hostname}"
                 if not origin_ok:  # tolak POST dari web lain (CSRF)
                     return self._reject(403, "request dari luar halaman brief ditolak", length)

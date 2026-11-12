@@ -202,3 +202,13 @@ def test_shot_time_buttons_play_the_narration_not_the_source(server):
     html = httpx.get(base + "/").text
     assert '<audio id="voice" src="/files/voice.mp3" preload="metadata">' in html
     assert 'onclick="playBeat(this, 2.0, 4.0)"' in html and "disabled" not in html.split("time-seek-pill")[2][:40]
+
+
+def test_cloudflared_quick_tunnel_host_allowed(server):
+    """cloudflared quick tunnel (*.trycloudflare.com) boleh, domain mirip tetap ditolak."""
+    paths, base = server
+    host = {"Host": "calm-lake-1234.trycloudflare.com"}
+    assert httpx.get(base + "/api/state", headers=host).status_code == 200
+    post = {"Host": "calm-lake-1234.trycloudflare.com", "Origin": "https://calm-lake-1234.trycloudflare.com"}
+    assert httpx.post(base + "/api/links", json={"groups": {}}, headers=post).status_code == 200
+    assert httpx.get(base + "/api/state", headers={"Host": "trycloudflare.com.evil.example"}).status_code == 403
