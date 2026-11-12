@@ -601,3 +601,13 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Panjang shot:** `faktacuil_max_shot_seconds` 2,0 → 3,0 (Akmal milih opsi "1 beat = 1 shot"). Preview pertama: 19 shot, median 1,19 detik final, kecepetan dibanding FaktaBor (`gu2M14rfRlU` 12 shot median 1,95; `pJe_Qok8qDA` median 1,94). Dengan 3,0: 12 shot, median ±1,9 detik. Ini ngegantiin angka 2,0 di D-051.
 - **Metadata YouTube disamain FaktaBor:** judul Title Case + 😱, deskripsi 2–4 kalimat + 1 emoji, hashtag `#faktaunik #faktamenarik` + topik + generik (`#shorts #shortvideo #youtubeshorts #fyp #viral #viralshorts`), kategori 22 People & Blogs. Tags tetap diisi (Akmal: beda dari FaktaBor yang kosong). Ngegantiin format metadata D-051. Video pertama (`RNZ4iZy4iIU`) di-upload pakai format lama; metadatanya diganti manual di Studio.
 - **Izin edit YouTube:** `SCOPES` ditambah `youtube.force-ssl` biar agent bisa `videos.update` (ganti judul/deskripsi video terjadwal). Token MayzFact dan FaktaCuil harus login ulang sekali.
+
+## D-054 — 2026-11-12 — Jeda voice FaktaCuil maksimal 0,2 detik + BGM lebih pelan
+
+- **Status:** accepted; branch `fase-jeda-voice`, belum push/merge.
+- **Masalah:** preview pertama `gNA8gTQriOQ` punya jeda 0,4–1,3 detik antar kalimat (terasa nunggu), dan BGM `bully-main-theme.m4a` (terukur -8,2 LUFS) cuma ~8 dB di bawah voice Eric (-18,4 LUFS) sehingga musik kerasa lebih dominan dari suara.
+- **Aturan jeda:** hening di voice FaktaCuil dipotong sampai maksimal `faktacuil_max_gap_s` (0,2 detik). Deteksi pakai `silencedetect` (-35 dB, minimal 0,15 detik), potongan = kelebihan di atas 0,2 detik, timestamp alignment karakter digeser sesuai total potongan. Berlaku hanya `narration_mode: "faktacuil"`, tidak mengubah Top 3.
+- **Pengaman:** potongan dilewati kalau sisa audio < 1 detik atau total potongan > 60% durasi (fixture/dummy yang hampir semua hening jangan habis). Audio berbayar tetap disimpan: run yang sudah ada diproses manual dan backup-nya `voice.pretrim.mp3`.
+- **BGM:** `FAKTACUIL_BGM_VOLUME = 0.06` (±-32,6 LUFS, ~14 dB di bawah voice) menggantikan 0,12 khusus FaktaCuil; volume Top 3 tidak berubah.
+- **Verifikasi:** `tests/test_faktacuil_pauses.py` (7 tes fungsi murni) + suite penuh `839 passed, 1 skipped, 4 deselected`. Hasil nyata: voice 31,76 → 26,74 detik (9 jeda dipotong, 5,02 detik), plan 16 → 15 shot, link Akmal di-remap per beat (link lama shot 4 dibuang), render 1080x1920.
+- **Authority:** Akmal (chat 2026-11-12: "bgm terlalu besar atau voicenya terlalu kecil", "buat aturan untuk memotong jeda pada voice ... langsung sambung 0,2 detik").

@@ -70,6 +70,9 @@ CTA_CLICK = {"like": 4, "subscribe": 14}
 CLICK_LEAD_FRAMES = 3  # puncak bunyi mouse-click di ±0.1 detik
 NUMBER_SFX_LEAD_FRAMES = 9  # fire whoosh baru kedengeran ±0.28 detik, puncaknya pas api di kartu lagi gede
 BGM_VOLUME = 0.12
+# BGM FaktaCuil lebih pelan: lagu yang dipakai Akmal -8,2 LUFS, voice Eric -18,4 LUFS.
+# 0,12 bikin BGM cuma ~8 dB di bawah suara; 0,06 = ~14 dB (music bed, suara tetap dominan).
+FAKTACUIL_BGM_VOLUME = 0.06
 BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
 
@@ -190,7 +193,8 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
 
 def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overlays: list[dict],
            emojis: list[dict], cta: list[dict], hook_end: int, total: int,
-           same_clip: set[int] = frozenset()) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
+           same_clip: set[int] = frozenset(), bgm_volume: float = BGM_VOLUME
+           ) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
     """BGM (hook + utama), SFX, frame transisi magic reveal, dan flash putih di pergantian klip hook."""
     if not audio:
         return [], [], [], []
@@ -215,14 +219,14 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
     switch = countdown[0]["numberFrom"] if countdown else hook_end
     bgm: list[dict] = []
     if audio.get("bgm") and audio.get("bgm_main") and 0 < switch < total:
-        bgm = [{"src": audio["bgm"], "from": 0, "durationInFrames": switch, "volume": BGM_VOLUME,
+        bgm = [{"src": audio["bgm"], "from": 0, "durationInFrames": switch, "volume": bgm_volume,
                 "fadeOutFrames": BGM_SWITCH_FADE_FRAMES},
-               {"src": audio["bgm_main"], "from": switch, "durationInFrames": total - switch, "volume": BGM_VOLUME,
+               {"src": audio["bgm_main"], "from": switch, "durationInFrames": total - switch, "volume": bgm_volume,
                 "fadeOutFrames": BGM_FADE_FRAMES}]
         if audio.get("riser_s"):  # ujung bunyi riser pas kartu angka pertama muncul (api + whoosh)
             add("riser", switch - round(audio["riser_s"] * FPS))
     elif audio.get("bgm") or audio.get("bgm_main"):
-        bgm = [{"src": audio.get("bgm") or audio["bgm_main"], "from": 0, "durationInFrames": total, "volume": BGM_VOLUME,
+        bgm = [{"src": audio.get("bgm") or audio["bgm_main"], "from": 0, "durationInFrames": total, "volume": bgm_volume,
                 "fadeOutFrames": BGM_FADE_FRAMES}]
 
     add("hook", 0)
@@ -528,7 +532,8 @@ def build_timeline(
         (e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None), default=0)
     # shot yang ngelanjutin link/klip yang sama kayak shot sebelumnya nggak dapat bunyi/efek transisi
     same_clip = {e["from"] for i, (e, s) in enumerate(zip(entries, shots)) if i and _continues(shots[i - 1], s)}
-    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total, same_clip)
+    bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total, same_clip,
+                                        bgm_volume=FAKTACUIL_BGM_VOLUME if faktacuil else BGM_VOLUME)
     data = {
         "fps": FPS,
         "width": FRAME_W,
