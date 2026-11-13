@@ -627,3 +627,12 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Keputusan:** `run_source(..., prefer_id=True)` mencoba transkrip **Indonesia** dulu, English cuma referensi (kalau EN nggak ada, plan pakai teks Indonesia). Flag ini cuma aktif lewat `mayzfact run <id> --mode faktacuil` atau kalau `script.json` run itu `narration_mode: "faktacuil"` — Top 3 tetap wajib EN.
 - **Verifikasi:** 13 tes di `tests/test_faktacuil_source_id.py` (termasuk Top 3 tetap gagal tanpa EN), run `P9udoZRaH6o` dan `q3QsqNQxqUc` sekarang dapat `transcript_id` dan lanjut.
 - **Authority:** Akmal (chat 2026-11-12: "emang harus pake transkrip EN? kan emang source nya indo", "transcript indo itu buat faktacuil aja ya").
+
+## D-057 — 2026-11-13 — Tema ilustrasi CTA `toilet`
+
+- **Status:** accepted; branch `feat/cta-theme-toilet`, belum push/merge.
+- **Masalah:** source FaktaCuil `6CzrwICt7Dk` (kenapa bule Eropa susah jongkok) nggak punya objek yang cocok dari 6 tema ilustrasi lama (`volcano`, `unicorn`, `honey`, `puppy`, `lion`, `shark`). Akmal nolak memilih tema cuma karena asetnya sudah ada dan minta objek yang nyambung topik.
+- **Keputusan:** tambah tema `toilet` (kloset jongkok). Schema `CtaScene.theme` + `THEME_NOUNS_ID` (`kloset jongkok`, `toilet`), komponen besar `remotion/src/Toilet.tsx` (top3) dan stiker flat di `remotion/src/FaktaCuilStickers.tsx` (FaktaCuil). Gimmick yang dipakai: "apakah like-mu berubah jadi kloset jongkok?".
+- **Pengaman:** tema tak dikenal tetap error lewat routing exhaustive, bukan fallback kartu teks; `data-toilet-*` dipasang di ilustrasi supaya tes markup membuktikan gambarnya, bukan label.
+- **Verifikasi:** `tests/test_cta_illustration_policy.py` (tema `toilet` diterima, varian top3 `into a toilet` lolos), `remotion/tests/cta-scene.cjs` (11 kasus, determinisme frame, keramik/pijakan statis sementara air + flush bergerak), `tests/test_cta_scene.py` (71 tes lolos), `npx tsc --noEmit`, dan fixture render `out/toilet-fixture` (34 frame transform, 1080x1920) — dibaca vision sebagai kloset jongkok.
+- **Authority:** Akmal (chat 2026-11-13: "skip, ganti ke 6CzrwICt7Dk", "saranin tema lain, jangan karena tema itu udah ada", "oke toilet").

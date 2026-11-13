@@ -13,6 +13,7 @@
   - Login YouTube minta `youtube.force-ssl` (edit metadata video terjadwal). Token MayzFact + FaktaCuil udah login ulang 2026-11-11.
 - **Udah dites beneran:** TTS Eric naskah utuh, render sampai `final.mp4`, login + upload + `videos.update` ke channel FaktaCuil (channel dicek sebelum nulis).
 - **Belum dites:** SFX hook/transisi + BGM baru belum didengerin agent (Akmal udah nonton preview). VoiceStudio bahasa Indonesia (profil belum ada).
+- **2026-11-13:** tema ilustrasi CTA `toilet` (kloset jongkok) ditambah buat FaktaCuil `6CzrwICt7Dk` — schema, `THEME_NOUNS_ID`, `Toilet.tsx` (top3) + stiker FaktaCuil, tes markup/policy, fixture render terverifikasi. Lihat D-057.
 - **Masalah terbuka:**
   - Run FaktaCuil baru menjalankan step `source` sebelum naskah ada, jadi memakai `hook_seconds` 10 dan men-download `source.mp4` + frame `seg_*` yang tidak dipakai.
   - 1,15 yang di-set eksplisit sebagai `video_speed` MayzFact voicestudio ikut turun ke 1,1 untuk FaktaCuil ElevenLabs.

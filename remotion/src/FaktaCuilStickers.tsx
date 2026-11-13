@@ -98,6 +98,28 @@ const Shark: React.FC = () => (
   </>
 );
 
+const Toilet: React.FC<{frame: number}> = ({frame}) => {
+  const ripple = (frame % 24) / 24;
+  return (
+    <>
+      <path d="M6 46 H194 L186 178 Q100 192 14 178 Z" fill="#e3ebf0" stroke="#c6d5dd" strokeWidth={4}/>
+      <g transform="rotate(-5 46 40)"><rect x={18} y={22} width={124} height={34} rx={12} fill="#cddbe3" stroke="#a9bcc7" strokeWidth={3}/><rect x={30} y={31} width={8} height={16} rx={3} fill="#a9bcc7"/><rect x={52} y={31} width={8} height={16} rx={3} fill="#a9bcc7"/><rect x={74} y={31} width={8} height={16} rx={3} fill="#a9bcc7"/><rect x={96} y={31} width={8} height={16} rx={3} fill="#a9bcc7"/><rect x={118} y={31} width={8} height={16} rx={3} fill="#a9bcc7"/></g>
+      <g transform="rotate(5 46 158)"><rect x={18} y={142} width={124} height={34} rx={12} fill="#cddbe3" stroke="#a9bcc7" strokeWidth={3}/><rect x={30} y={151} width={8} height={16} rx={3} fill="#a9bcc7"/><rect x={52} y={151} width={8} height={16} rx={3} fill="#a9bcc7"/><rect x={74} y={151} width={8} height={16} rx={3} fill="#a9bcc7"/><rect x={96} y={151} width={8} height={16} rx={3} fill="#a9bcc7"/><rect x={118} y={151} width={8} height={16} rx={3} fill="#a9bcc7"/></g>
+      <path d="M24 70 H156 Q176 70 176 100 Q176 130 156 130 H24 Q14 130 14 100 Q14 70 24 70 Z" fill="#fbfdfe" stroke="#b9cbd5" strokeWidth={4}/>
+      <path d="M30 78 H150 Q166 78 166 100 Q166 122 150 122 H30 Q22 122 22 100 Q22 78 30 78 Z" fill="#dbe6ec"/>
+      <path d="M30 86 H120 Q132 86 132 100 Q132 118 118 118 H30 Q24 118 24 100 Q24 86 30 86 Z" fill="#8fd6f5" stroke="#e7f8ff" strokeWidth={3}/>
+      <ellipse cx={70} cy={100} rx={10 + ripple * 22} ry={4 + ripple * 9} fill="none" stroke="#dff3ff" strokeWidth={2.5} opacity={1 - ripple}/>
+      <ellipse cx={136} cy={100} rx={8} ry={6} fill="#3f7593" stroke="#dff3ff" strokeWidth={2}/>
+      <path d="M156 68 Q192 72 192 100 Q192 128 156 132 L156 118 Q174 114 174 100 Q174 86 156 82 Z" fill="#f4fafc" stroke="#b9cbd5" strokeWidth={4}/>
+      <path d="M156 82 Q176 88 176 100 Q176 112 156 118" fill="none" stroke="#a9bcc7" strokeWidth={3}/>
+      {[0, 1, 2].map((i) => {
+        const t = ((frame + i * 8) % 24) / 24;
+        return <circle key={i} cx={44 + t * 96} cy={100 - 4 - (i - 1) * 4} r={3.5 - (i % 2)} fill="#dff3ff" opacity={Math.sin(t * Math.PI) * .9}/>;
+      })}
+    </>
+  );
+};
+
 export const Sticker: React.FC<{theme: CtaSceneData['theme']; frame: number; size: number}> = ({theme, frame, size}) => {
   let body: React.ReactNode;
   switch (theme) {
@@ -107,6 +129,7 @@ export const Sticker: React.FC<{theme: CtaSceneData['theme']; frame: number; siz
     case 'puppy': body = <Puppy/>; break;
     case 'lion': body = <Lion/>; break;
     case 'shark': body = <Shark/>; break;
+    case 'toilet': body = <Toilet frame={frame}/>; break;
     default: {
       const unsupported: never = theme;
       throw new Error(`Unsupported FaktaCuil sticker: ${String(unsupported)}`);

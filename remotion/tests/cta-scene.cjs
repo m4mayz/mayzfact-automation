@@ -165,6 +165,32 @@ assert.ok(!shark.includes(thumbMarkup), 'Like thumb must disappear once shark is
 for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
   assert.equal(markup(kind, frame, sharkOptions), markup(kind, frame, {...sharkOptions, theme: 'volcano'}), `${kind} must not depend on shark theme`);
 }
+const toiletOptions = {theme: 'toilet', commentText: 'JONGKOK'};
+const toilet = markup('transform', 25, toiletOptions);
+assert.match(toilet, /<svg[^>]*data-toilet="true"[^>]*width="880"[^>]*height="840"/);
+for (const part of ['bowl', 'footprints', 'water', 'flush']) {
+  assert.match(toilet, new RegExp(`data-toilet-${part}="true"`));
+}
+assert.doesNotMatch(toilet, /TOILET|JONGKOK|data-volcano|data-unicorn|data-honey|data-puppy|data-lion|data-shark|<text/);
+assert.equal(toilet, markup('transform', 25, toiletOptions), 'Toilet must repeat identically at the same frame');
+assert.notEqual(toilet, markup('transform', 26, toiletOptions), 'Toilet must animate between frames');
+// Air dan flush bergerak sendiri; keramik dan pijakan tetap.
+for (const part of ['water', 'flush']) {
+  const partTag = new RegExp(`<[^>]*data-toilet-${part}="true"[^>]*>`);
+  assert.notEqual(toilet.match(partTag)[0], markup('transform', 26, toiletOptions).match(partTag)[0]);
+}
+for (const part of ['bowl', 'footprints']) {
+  const partTag = new RegExp(`<[^>]*data-toilet-${part}="true"[^>]*>`);
+  assert.equal(toilet.match(partTag)[0], markup('transform', 26, toiletOptions).match(partTag)[0]);
+}
+assert.equal(rootOpacity(markup('transform', 0, toiletOptions)), 0);
+assert.ok(rootOpacity(markup('transform', 18, toiletOptions)) > .9);
+assert.ok(rootOpacity(markup('transform', 89, toiletOptions)) < .05);
+assert.ok(markup('transform', 0, toiletOptions).includes(thumbMarkup), 'Like thumb must remain during toilet morph entrance');
+assert.ok(!toilet.includes(thumbMarkup), 'Like thumb must disappear once toilet is fully transformed');
+for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
+  assert.equal(markup(kind, frame, toiletOptions), markup(kind, frame, {...toiletOptions, theme: 'volcano'}), `${kind} must not depend on toilet theme`);
+}
 // Theme asing dan word legacy harus ditolak, bukan diam-diam jadi kartu teks.
 for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__', 'word']) {
   for (const frame of [0, 25]) {
@@ -176,4 +202,4 @@ for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__', 'wo
     assert.equal(markup(kind, frame, {theme}), markup(kind, frame, {theme: 'volcano'}));
   }
 }
-console.log('10 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, animated deterministic unicorn, animated deterministic honey, animated deterministic puppy, animated deterministic lion, animated deterministic shark, unknown transform theme rejection)');
+console.log('11 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, animated deterministic unicorn, animated deterministic honey, animated deterministic puppy, animated deterministic lion, animated deterministic shark, animated deterministic toilet, unknown transform theme rejection)');

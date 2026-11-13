@@ -9,7 +9,7 @@ class CtaScene(BaseModel):
     """Ilustrasi CTA yang diputar sebagai scene besar."""
 
     model_config = ConfigDict(extra="forbid")
-    theme: Literal["volcano", "unicorn", "honey", "puppy", "lion", "shark"]
+    theme: Literal["volcano", "unicorn", "honey", "puppy", "lion", "shark", "toilet"]
     transform_word: str = Field(min_length=1, max_length=40, pattern=r"^\w+$")
     comment_text: str = Field(min_length=1, max_length=24, pattern=r"\S")
 
