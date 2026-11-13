@@ -13,7 +13,6 @@ sources/
 remotion/node_modules/
 models/
 .env*.tmp
-out/quality-smoke/
-out/cta-scene-fixture/
+out/
 # lagu FaktaCuil berhak cipta, repo ini public
 assets/channels/faktacuil/bgm/
