@@ -47,8 +47,10 @@ def sample_times(kind: str, duration_s: float) -> list[float]:
 KEYWORD_WORDS = 2  # keyword panjang ("giant bird radio tower cgi") bikin OWLv2 nangkep benda lain; "giant bird" pas
 
 
-def shot_query(clip: dict, beats: list[dict], subjects: list[str | None], plan: dict | None) -> str | None:
-    if subjects[clip["beat"]]:
+def shot_query(clip: dict, beats: list[dict], subjects: list[str | None], plan: dict | None,
+               prefer_plan: bool = False) -> str | None:
+    """Query OWLv2 buat 1 klip. prefer_plan: keyword Inggris dari plan didahulukan (dipakai FaktaCuil)."""
+    if not prefer_plan and subjects[clip["beat"]]:
         return subjects[clip["beat"]]
     keyword = None
     if plan:
@@ -59,6 +61,8 @@ def shot_query(clip: dict, beats: list[dict], subjects: list[str | None], plan: 
     if keyword is None:
         queries = beats[clip["beat"]].get("queries") or []
         keyword = queries[0] if queries else None
+    if keyword is None and subjects[clip["beat"]]:
+        return subjects[clip["beat"]]  # plan nggak punya keyword: pakai subjek beat
     return " ".join(keyword.split()[:KEYWORD_WORDS]) if keyword else None
 
 
@@ -80,9 +84,12 @@ def _detect(paths: RunPaths, clip: dict, source: Path, query: str, detector: Any
 
 def prepare_overlays(
     paths: RunPaths, clips: dict, script: dict, plan: dict | None, detector: Any, *, fg_min_ratio: float,
-    log: Callable[[str], None], point_beats: set[int] | None = None,
+    log: Callable[[str], None], point_beats: set[int] | None = None, first_only: bool = False,
 ) -> dict[str, dict]:
-    """{file: {"key", "points": [{"t", "x", "y", "w", "h"}] | None}}. Hasil di-cache di overlays.json."""
+    """{file: {"key", "points": [{"t", "x", "y", "w", "h"}] | None}}. Hasil di-cache di overlays.json.
+
+    first_only: cuma shot pertama (dipakai FaktaCuil buat panah pembuka), biar deteksi nggak makan waktu 11x.
+    """
     beats = script["beats"]
     subjects = beat_subjects(beats)
     cache_path = paths.root / "overlays.json"
@@ -91,6 +98,8 @@ def prepare_overlays(
     out: dict[str, dict] = {}
     shots = clips["shots"]
     for position, clip in enumerate(shots):
+        if first_only and position != 0:
+            continue
         if clip.get('auto_cta'):
             continue  # background sudah diblur penuh; nggak ada subject pointer
         if point_beats is not None:  # cuma klip yang nutup beat point (D-023 #4); klip panjang bisa nutup beberapa beat
@@ -100,7 +109,7 @@ def prepare_overlays(
         countdown = parse_countdown(beats[clip["beat"]].get("text", ""))
         if countdown and countdown.number is not None:
             continue  # shot ini ketutup card countdown
-        query = shot_query(clip, beats, subjects, plan)
+        query = shot_query(clip, beats, subjects, plan, prefer_plan=first_only)
         source = paths.root / clip["file"]
         if not query or not source.exists():
             continue

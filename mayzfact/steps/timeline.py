@@ -56,6 +56,9 @@ SFX_LEAD_FRAMES = 3  # SFX transisi mulai sedikit sebelum gambar ganti (puncakny
 INTRO_FRAMES = 7
 OVERLAY_COLORS = ("#ff2a2a", "#ffd400")
 CIRCLE_EVERY = 5  # tiap overlay ke-5 jadi lingkaran, sisanya panah (kayak source)
+# FaktaCuil: cuma 1 panah pembuka di shot pertama (nunjuk konteks kalimat hook), nggak ada lingkaran.
+FAKTACUIL_ARROW_FRAMES = 48  # ±1.6 detik
+FAKTACUIL_ARROW_BOX = (300, 560, 480, 900)  # fallback kalau subjek nggak kedeteksi (px layar 1080x1920)
 # Panah/lingkaran muncul (bareng quick-ting) dan selesai fade 0.5 detik sebelum ganti klip.
 OVERLAY_DELAY_FRAMES = 6
 OVERLAY_END_GAP_FRAMES = 15
@@ -348,6 +351,34 @@ def _overlays(detections: dict | None, entries: list[dict], countdown: list[dict
     return out
 
 
+def _faktacuil_arrow(detections: dict | None, entries: list[dict], shots: list[dict]) -> list[dict]:
+    """Satu panah di shot pertama, nunjuk subjek yang dibahas voice (kalimat hook)."""
+    if not entries or not shots or shots[0].get("auto_cta"):
+        return []
+    entry = entries[0]
+    points = ((detections or {}).get(shots[0]["file"]) or {}).get("points") or []
+    min_area = 0.02 * FRAME_W * FRAME_H  # kotak kecil (mis. salah deteksi) nggak dipakai: panah nunjuk ke udara
+    if points and all(p["w"] * p["h"] < min_area for p in points):
+        points = []
+    if points:
+        keyframes = [{"frame": entry["from"] + to_frame(p["t"]) - (entry["from"] + OVERLAY_DELAY_FRAMES),
+                      "x": p["x"], "y": p["y"], "w": p["w"], "h": p["h"]} for p in points]
+        begin = entry["from"] + OVERLAY_DELAY_FRAMES
+    else:  # subjek nggak kedeteksi: panah tetap muncul, arah ke tengah frame
+        x, y, w, h = FAKTACUIL_ARROW_BOX
+        begin = entry["from"] + OVERLAY_DELAY_FRAMES
+        keyframes = [{"frame": 0, "x": x, "y": y, "w": w, "h": h}]
+    end = entry["from"] + entry["durationInFrames"] - OVERLAY_END_GAP_FRAMES
+    duration = min(FAKTACUIL_ARROW_FRAMES, end - begin)
+    if duration < OVERLAY_MIN_FRAMES:  # shot pertama kepotong pendek: tampil dari frame pertama shot
+        begin = entry["from"]
+        duration = min(FAKTACUIL_ARROW_FRAMES, entry["from"] + entry["durationInFrames"] - 4)
+    if duration < OVERLAY_MIN_FRAMES:
+        return []
+    return [{"type": "arrow", "color": OVERLAY_COLORS[0], "from": begin, "durationInFrames": duration,
+             "keyframes": keyframes}]
+
+
 def _continues(prev: dict, shot: dict) -> bool:
     """Link sama dan detik source-nya lanjut dari shot sebelumnya. Mulai yang lompat = potongan beneran."""
     if not shot.get("page_url") or shot.get("page_url") != prev.get("page_url"):
@@ -478,8 +509,8 @@ def build_timeline(
     if not shots:
         raise PipelineError("timeline", "clips.json kosong.")
     faktacuil = bool(script) and script.get("narration_mode") == "faktacuil"
-    if faktacuil:  # tanpa panah/emoji, meski datanya kebawa dari luar
-        marks, overlays = None, None
+    if faktacuil:  # tanpa emoji/tanda beat; panah cuma 1 di shot pertama (nunjuk konteks hook)
+        marks = None
     total = math.ceil(audio_duration_s * FPS - 1e-6)
     entries = _shot_entries(shots, total, fg_min_ratio)
     countdown: list[dict] = []
@@ -525,7 +556,8 @@ def build_timeline(
                 if begin <= e['from'] < end:
                     e['decorative'] = True
     _add_blurs(blurs or {}, shots, entries, countdown, fg_min_ratio)
-    shown = _overlays(overlays, entries, countdown, _point_ranges(timings, marks))
+    shown = (_faktacuil_arrow(overlays, entries, shots) if faktacuil
+             else _overlays(overlays, entries, countdown, _point_ranges(timings, marks)))
     if scene:
         shown = [e for e in shown if e['from'] + e['durationInFrames'] <= begin or e['from'] >= end]
     hook_end = 0 if faktacuil else max(

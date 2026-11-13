@@ -28,7 +28,12 @@ def timeline(audio=AUDIO_ALL_SFX, script=None, **kwargs):
 def test_faktacuil_timeline_shape():
     tl = timeline()
     assert tl["captionStyle"] == "faktacuil"
-    assert tl["countdown"] == [] and tl["overlays"] == [] and tl["emojis"] == []
+    assert tl["countdown"] == [] and tl["emojis"] == []
+    # FaktaCuil: 1 panah pembuka di shot pertama, nunjuk subjek dari voice
+    assert len(tl["overlays"]) == 1
+    arrow = tl["overlays"][0]
+    assert arrow["type"] == "arrow" and arrow["from"] == 6
+    assert 15 <= arrow["durationInFrames"] <= 48  # OVERLAY_MIN_FRAMES..FAKTACUIL_ARROW_FRAMES
     assert tl["intro"] == {"durationInFrames": 7} and tl["flashes"] == [] and tl["transitions"] == []
     srcs = [s["src"] for s in tl["sfx"]]
     assert "audio/sfx/hook.mp3" in srcs and "audio/sfx/hook_cut.mp3" not in srcs
@@ -77,13 +82,35 @@ def test_faktacuil_single_bgm_whole_video():
                           "volume": 0.06, "fadeOutFrames": 30}]  # FAKTACUIL_BGM_VOLUME: BGM ~14 dB di bawah voice
 
 
-def test_faktacuil_ignores_marks_and_overlays_passed_in():
+def test_faktacuil_ignores_marks_but_uses_first_shot_detection_for_arrow():
     script, alignment, clips = faktacuil_timeline_fixture(25)
     marks = {"beats": [dict(point=True, emoji="x", emoji_word="") for _ in script["beats"]], "emoji": {"x": "x.json"}}
-    detections = {s["file"]: {"points": [dict(t=0, x=300, y=600, w=200, h=200)]} for s in clips["shots"]}
+    detections = {s["file"]: {"points": [dict(t=0, x=300 + i, y=600, w=200, h=200)]}
+                  for i, s in enumerate(clips["shots"])}
     tl = build_timeline(clips, 25, 0.5, script=script, alignment=alignment, marks=marks, overlays=detections,
                         audio=AUDIO_ALL_SFX, log=lambda m: None)
-    assert tl["emojis"] == [] and tl["overlays"] == []
+    assert tl["emojis"] == []
+    assert len(tl["overlays"]) == 1  # cuma shot pertama
+    arrow = tl["overlays"][0]
+    assert arrow["type"] == "arrow" and arrow["color"] == "#ff2a2a"
+    assert [(k["x"], k["y"]) for k in arrow["keyframes"]] == [(300, 600)]  # koordinat klip shot 1, bukan shot lain
+
+
+def test_faktacuil_arrow_falls_back_to_center_without_detection():
+    script, alignment, clips = faktacuil_timeline_fixture(25)
+    tl = build_timeline(clips, 25, 0.5, script=script, alignment=alignment, overlays={},
+                        audio=AUDIO_ALL_SFX, log=lambda m: None)
+    assert len(tl["overlays"]) == 1
+    assert tl["overlays"][0]["type"] == "arrow"
+    assert tl["overlays"][0]["keyframes"][0]["x"] == 300  # FAKTACUIL_ARROW_BOX
+
+
+def test_faktacuil_no_arrow_when_first_shot_is_cta_background():
+    script, alignment, clips = faktacuil_timeline_fixture(25)
+    clips["shots"][0]["auto_cta"] = True
+    tl = build_timeline(clips, 25, 0.5, script=script, alignment=alignment,
+                        audio=AUDIO_ALL_SFX, log=lambda m: None)
+    assert tl["overlays"] == []
 
 
 @pytest.fixture
@@ -91,17 +118,24 @@ def world(tmp_path, long_mp3, make_video, make_photo):
     return build_world(tmp_path, long_mp3, 30.0, make_video, make_photo)
 
 
-def test_pipeline_skips_marks_and_overlay_for_faktacuil(world):
+def test_pipeline_skips_marks_but_detects_only_first_shot_for_faktacuil(world):
     write_faktacuil_run(RunPaths(world.runs / VIDEO_ID))
+    calls = {}
 
     def forbidden(*args, **kwargs):
-        pytest.fail("marks/overlay nggak boleh dipanggil buat FaktaCuil")
+        pytest.fail("marks nggak boleh dipanggil buat FaktaCuil")
 
-    world.deps.marks, world.deps.overlay = forbidden, forbidden
+    def overlay(paths, log, point_beats=None, first_only=False):
+        calls["first_only"] = first_only
+        return {}
+
+    world.deps.marks, world.deps.overlay = forbidden, overlay
     paths = run_pipeline(VIDEO_ID, settings=Settings(elevenlabs_api_keys=("k",)), deps=world.deps,
                          runs_dir=world.runs, no_render=True, **QUIET)
     tl = read_json(paths.timeline_json)
-    assert tl["captionStyle"] == "faktacuil" and tl["emojis"] == [] and tl["overlays"] == []
+    assert calls == {"first_only": True}  # deteksi cuma shot pertama
+    assert tl["captionStyle"] == "faktacuil" and tl["emojis"] == []
+    assert len(tl["overlays"]) == 1 and tl["overlays"][0]["type"] == "arrow"
 
 
 def test_faktacuil_ignores_hook_segments_in_clips():

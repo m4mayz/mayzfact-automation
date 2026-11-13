@@ -205,14 +205,16 @@ def real_deps(settings: Settings) -> Deps:
         detector = text_detectors.setdefault("rapid", RapidTextDetector())
         return prepare_text_blurs(paths, read_json(paths.clips_json), detector, log=log)
 
-    def overlay(paths: RunPaths, log: Callable[[str], None], point_beats: set[int] | None = None) -> dict:
+    def overlay(paths: RunPaths, log: Callable[[str], None], point_beats: set[int] | None = None,
+                first_only: bool = False) -> dict:
         from mayzfact.detect import Owlv2Detector
         from mayzfact.overlay import prepare_overlays
 
         detector = detectors.setdefault("owl", Owlv2Detector())
         plan = read_json(paths.shots_plan_json) if paths.shots_plan_json.exists() else None
         return prepare_overlays(paths, read_json(paths.clips_json), read_json(paths.script_json), plan, detector,
-                                fg_min_ratio=settings.fg_min_height_ratio, log=log, point_beats=point_beats)
+                                fg_min_ratio=settings.fg_min_height_ratio, log=log, point_beats=point_beats,
+                                first_only=first_only)
 
     def marks(paths: RunPaths, log: Callable[[str], None]) -> dict:
         from mayzfact.emoji import EMOJI_DIR
@@ -356,9 +358,9 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
                 log(f"[timeline] tanda beat (emoji/panah) dilewat: {type(exc).__name__}: {exc}")
         point_beats = {i for i, mark in enumerate(marks["beats"]) if mark.get("point")} if marks else None
         overlays = None
-        if deps.overlay and not faktacuil:
+        if deps.overlay:  # FaktaCuil: panah pembuka di shot pertama saja (deteksi 1 klip, bukan semua)
             try:
-                overlays = deps.overlay(paths, log, point_beats)
+                overlays = deps.overlay(paths, log, point_beats, first_only=faktacuil)
             except Exception as exc:  # panah/lingkaran cuma hiasan
                 log(f"[timeline] panah/lingkaran dilewat: {type(exc).__name__}: {exc}")
         blurs = None

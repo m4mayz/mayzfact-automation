@@ -90,7 +90,7 @@ def faktacuil_problems(script: Script) -> list[str]:
         problems.append("FaktaCuil CTA must be one contiguous block of 1-3 beats.")
     for n, b in enumerate(beats, start=1):
         if b.point or b.emoji or b.emoji_word:
-            problems.append(f"FaktaCuil does not use arrows or emoji; beat {n} must have point=false and empty emoji fields.")
+            problems.append(f"FaktaCuil: panah cuma otomatis di shot pertama; beat {n} must have point=false and empty emoji fields.")
     if cta:
         problems.extend(_cta_problems(script, cta))
     for n, b in enumerate(beats, start=1):
