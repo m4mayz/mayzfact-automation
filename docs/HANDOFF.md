@@ -13,6 +13,7 @@
   - Login YouTube minta `youtube.force-ssl` (edit metadata video terjadwal). Token MayzFact + FaktaCuil udah login ulang 2026-11-11.
 - **Udah dites beneran:** TTS Eric naskah utuh, render sampai `final.mp4`, login + upload + `videos.update` ke channel FaktaCuil (channel dicek sebelum nulis).
 - **Belum dites:** SFX hook/transisi + BGM baru belum didengerin agent (Akmal udah nonton preview). VoiceStudio bahasa Indonesia (profil belum ada).
+- **2026-11-15:** tema ilustrasi CTA `cat` (kucing oranye) ditambah buat FaktaCuil `LVp0vwcAYl0` — schema, `THEME_NOUNS_ID`, `Cat.tsx` + stiker FaktaCuil, tes markup/policy. Lihat D-059.
 - **2026-11-13:** tema ilustrasi CTA `toilet` (kloset jongkok) ditambah buat FaktaCuil `6CzrwICt7Dk` — schema, `THEME_NOUNS_ID`, `Toilet.tsx` (top3) + stiker FaktaCuil, tes markup/policy, fixture render terverifikasi. Lihat D-057.
 - **2026-11-13:** FaktaCuil dapat panah pembuka 1x di shot pertama (OWLv2, keyword Inggris dari plan, fallback tengah). Lihat D-058.
 - **Masalah terbuka:**

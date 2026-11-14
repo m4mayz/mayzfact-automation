@@ -1,6 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, interpolate, Sequence, useCurrentFrame} from 'remotion';
 import {Cursor, Thumb} from './Cta';
+import {Cat} from './Cat';
 import {Celebration, ClickRipple, motionForStage} from './CtaMotion';
 import {MONTSERRAT} from './fonts';
 import {Honey} from './Honey';
@@ -63,6 +64,7 @@ export const CtaSceneVisual: React.FC<{scene: CtaSceneData; stage: CtaStage; fra
       case 'lion': transformVisual = <Lion frame={frame}/>; break;
       case 'shark': transformVisual = <Shark frame={frame}/>; break;
       case 'toilet': transformVisual = <Toilet frame={frame}/>; break;
+      case 'cat': transformVisual = <Cat frame={frame}/>; break;
       default: {
         const unsupportedTheme: never = scene.theme;
         throw new Error(`Unsupported CTA transform theme: ${String(unsupportedTheme)}`);

@@ -191,6 +191,32 @@ assert.ok(!toilet.includes(thumbMarkup), 'Like thumb must disappear once toilet 
 for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
   assert.equal(markup(kind, frame, toiletOptions), markup(kind, frame, {...toiletOptions, theme: 'volcano'}), `${kind} must not depend on toilet theme`);
 }
+const catOptions = {theme: 'cat', commentText: 'MEOW'};
+const cat = markup('transform', 25, catOptions);
+assert.match(cat, /<svg[^>]*data-cat="true"[^>]*width="880"[^>]*height="840"/);
+for (const part of ['tail', 'ears', 'eyes', 'whiskers', 'body', 'paws']) {
+  assert.match(cat, new RegExp(`data-cat-${part}="true"`));
+}
+assert.doesNotMatch(cat, /CAT|MEOW|KUCING|data-volcano|data-unicorn|data-honey|data-puppy|data-lion|data-shark|data-toilet|<text/);
+assert.equal(cat, markup('transform', 25, catOptions), 'Cat must repeat identically at the same frame');
+assert.notEqual(cat, markup('transform', 26, catOptions), 'Cat must animate between frames');
+// Ekor, telinga, mata, dan kumis bergerak sendiri; badan dan kaki tetap.
+for (const part of ['tail', 'ears', 'eyes', 'whiskers']) {
+  const partTag = new RegExp(`<[^>]*data-cat-${part}="true"[^>]*>`);
+  assert.notEqual(cat.match(partTag)[0], markup('transform', 26, catOptions).match(partTag)[0]);
+}
+for (const part of ['body', 'paws']) {
+  const partTag = new RegExp(`<[^>]*data-cat-${part}="true"[^>]*>`);
+  assert.equal(cat.match(partTag)[0], markup('transform', 26, catOptions).match(partTag)[0]);
+}
+assert.equal(rootOpacity(markup('transform', 0, catOptions)), 0);
+assert.ok(rootOpacity(markup('transform', 18, catOptions)) > .9);
+assert.ok(rootOpacity(markup('transform', 89, catOptions)) < .05);
+assert.ok(markup('transform', 0, catOptions).includes(thumbMarkup), 'Like thumb must remain during cat morph entrance');
+assert.ok(!cat.includes(thumbMarkup), 'Like thumb must disappear once cat is fully transformed');
+for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
+  assert.equal(markup(kind, frame, catOptions), markup(kind, frame, {...catOptions, theme: 'volcano'}), `${kind} must not depend on cat theme`);
+}
 // Theme asing dan word legacy harus ditolak, bukan diam-diam jadi kartu teks.
 for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__', 'word']) {
   for (const frame of [0, 25]) {
@@ -202,4 +228,4 @@ for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__', 'wo
     assert.equal(markup(kind, frame, {theme}), markup(kind, frame, {theme: 'volcano'}));
   }
 }
-console.log('11 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, animated deterministic unicorn, animated deterministic honey, animated deterministic puppy, animated deterministic lion, animated deterministic shark, animated deterministic toilet, unknown transform theme rejection)');
+console.log('12 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, animated deterministic unicorn, animated deterministic honey, animated deterministic puppy, animated deterministic lion, animated deterministic shark, animated deterministic toilet, animated deterministic cat, unknown transform theme rejection)');

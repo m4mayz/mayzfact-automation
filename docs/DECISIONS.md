@@ -636,6 +636,14 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Pengaman:** tema tak dikenal tetap error lewat routing exhaustive, bukan fallback kartu teks; `data-toilet-*` dipasang di ilustrasi supaya tes markup membuktikan gambarnya, bukan label.
 - **Verifikasi:** `tests/test_cta_illustration_policy.py` (tema `toilet` diterima, varian top3 `into a toilet` lolos), `remotion/tests/cta-scene.cjs` (11 kasus, determinisme frame, keramik/pijakan statis sementara air + flush bergerak), `tests/test_cta_scene.py` (71 tes lolos), `npx tsc --noEmit`, dan fixture render `out/toilet-fixture` (34 frame transform, 1080x1920) — dibaca vision sebagai kloset jongkok.
 - **Authority:** Akmal (chat 2026-11-13: "skip, ganti ke 6CzrwICt7Dk", "saranin tema lain, jangan karena tema itu udah ada", "oke toilet").
+## D-059 — 2026-11-15 — Tema ilustrasi CTA `cat` (kucing)
+
+- **Status:** accepted; langsung di `master` (tanpa branch, sesuai koreksi Akmal).
+- **Masalah:** source FaktaCuil `LVp0vwcAYl0` (kenapa kucing gampang nyelip ke celah sempit) nggak punya objek yang cocok dari tema lama, dan tema `puppy` bakal nyebut anak anjing di video kucing. Akmal pilih bikin tema kucing.
+- **Keputusan:** tambah tema `cat` — schema `CtaScene.theme` + `THEME_NOUNS_ID` (`kucing`, `anak kucing`), komponen besar `remotion/src/Cat.tsx` (kucing oranye; ekor, telinga, kumis, kelopak mata bergerak dari frame) dan stiker flat 200x200 di `remotion/src/FaktaCuilStickers.tsx`. Gimmick yang dipakai: "apakah like-mu berubah jadi seekor kucing?".
+- **Pengaman:** routing `const unsupported: never` tetap error untuk tema tak dikenal; `data-cat-*` dipasang di bagian bermakna supaya tes markup membuktikan gambar, bukan label.
+- **Verifikasi:** `node tests/cta-scene.cjs` 12 kasus lolos (ekor/telinga/mata/kumis harus bergerak, badan + kaki statis), `npx tsc --noEmit` bersih, `tests/test_cta_illustration_policy.py` + `tests/test_cta_scene.py` 48 tes lolos.
+- **Authority:** Akmal (chat 2026-11-15: "Bikin tema baru `kucing`").
 
 ## D-058 — 2026-11-13 — Panah pembuka FaktaCuil di shot pertama
 

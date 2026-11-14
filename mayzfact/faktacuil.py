@@ -72,6 +72,7 @@ THEME_NOUNS_ID: dict[str, tuple[str, ...]] = {
     "lion": ("singa",),
     "shark": ("hiu", "ikan hiu"),
     "toilet": ("kloset jongkok", "toilet"),
+    "cat": ("kucing", "anak kucing"),
 }
 
 

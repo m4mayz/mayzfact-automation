@@ -120,6 +120,34 @@ const Toilet: React.FC<{frame: number}> = ({frame}) => {
   );
 };
 
+const SmallCat: React.FC<{frame: number}> = ({frame}) => {
+  const swish = Math.sin(frame * 0.8) * 14;
+  return (
+    <>
+      <g transform={`rotate(${swish} 140 156)`} fill="none" strokeLinecap="round">
+        <path d="M132 158 C174 152 186 120 172 100" stroke="#f2912f" strokeWidth={17}/>
+      </g>
+      <path d="M62 112 C50 142 52 172 64 186 L136 186 C148 172 150 142 138 112 Z" fill="#f2912f" stroke="#b35a0d" strokeWidth={5}/>
+      <path d="M88 126 C80 152 84 176 90 184 L110 184 C116 176 120 152 112 126 Z" fill="#ffe9c6"/>
+      <ellipse cx={78} cy={186} rx={22} ry={11} fill="#ffe9c6" stroke="#b35a0d" strokeWidth={4}/>
+      <ellipse cx={122} cy={186} rx={22} ry={11} fill="#ffe9c6" stroke="#b35a0d" strokeWidth={4}/>
+      <path d="M56 86 L72 32 L102 72 Z" fill="#f2912f" stroke="#b35a0d" strokeWidth={5} strokeLinejoin="round"/>
+      <path d="M144 86 L128 32 L98 72 Z" fill="#f2912f" stroke="#b35a0d" strokeWidth={5} strokeLinejoin="round"/>
+      <path d="M100 44 Q134 34 148 66 Q158 102 132 118 Q100 130 68 118 Q42 102 52 66 Q66 34 100 44 Z" fill="#f2912f" stroke="#b35a0d" strokeWidth={5}/>
+      <ellipse cx={84} cy={86} rx={15} ry={17} fill="#f8ffe9"/>
+      <ellipse cx={116} cy={86} rx={15} ry={17} fill="#f8ffe9"/>
+      <ellipse cx={84} cy={88} rx={7} ry={10} fill="#1d1206"/>
+      <ellipse cx={116} cy={88} rx={7} ry={10} fill="#1d1206"/>
+      <path d="M94 108 H106 L100 116 Z" fill="#ff7f9c" stroke="#c2556f" strokeWidth={3} strokeLinejoin="round"/>
+      <path d="M100 116 V122 M100 122 Q93 128 87 122 M100 122 Q107 128 113 122" fill="none" stroke="#a3520b" strokeWidth={3} strokeLinecap="round"/>
+      <g fill="none" stroke="#fff6e6" strokeWidth={3} strokeLinecap="round">
+        <path d="M56 100 Q36 94 22 88"/><path d="M54 110 Q32 110 16 112"/>
+        <path d="M144 100 Q164 94 178 88"/><path d="M146 110 Q168 110 184 112"/>
+      </g>
+    </>
+  );
+};
+
 export const Sticker: React.FC<{theme: CtaSceneData['theme']; frame: number; size: number}> = ({theme, frame, size}) => {
   let body: React.ReactNode;
   switch (theme) {
@@ -130,6 +158,7 @@ export const Sticker: React.FC<{theme: CtaSceneData['theme']; frame: number; siz
     case 'lion': body = <Lion/>; break;
     case 'shark': body = <Shark/>; break;
     case 'toilet': body = <Toilet frame={frame}/>; break;
+    case 'cat': body = <SmallCat frame={frame}/>; break;
     default: {
       const unsupported: never = theme;
       throw new Error(`Unsupported FaktaCuil sticker: ${String(unsupported)}`);
