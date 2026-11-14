@@ -636,3 +636,12 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Pengaman:** tema tak dikenal tetap error lewat routing exhaustive, bukan fallback kartu teks; `data-toilet-*` dipasang di ilustrasi supaya tes markup membuktikan gambarnya, bukan label.
 - **Verifikasi:** `tests/test_cta_illustration_policy.py` (tema `toilet` diterima, varian top3 `into a toilet` lolos), `remotion/tests/cta-scene.cjs` (11 kasus, determinisme frame, keramik/pijakan statis sementara air + flush bergerak), `tests/test_cta_scene.py` (71 tes lolos), `npx tsc --noEmit`, dan fixture render `out/toilet-fixture` (34 frame transform, 1080x1920) — dibaca vision sebagai kloset jongkok.
 - **Authority:** Akmal (chat 2026-11-13: "skip, ganti ke 6CzrwICt7Dk", "saranin tema lain, jangan karena tema itu udah ada", "oke toilet").
+
+## D-058 — 2026-11-13 — Panah pembuka FaktaCuil di shot pertama
+
+- **Status:** accepted; langsung di `master` (tanpa branch, sesuai koreksi Akmal).
+- **Masalah:** FaktaCuil sebelumnya nggak punya penunjuk visual sama sekali (validator nolak `point=true`, timeline membuang overlay), jadi penonton nggak langsung tahu objek yang dibahas di kalimat hook.
+- **Keputusan:** FaktaCuil dapat **tepat 1 panah, hanya di shot pertama**, mulai `OVERLAY_DELAY_FRAMES` (6) selama maksimal `FAKTACUIL_ARROW_FRAMES` (48 frame) — selalu `type: "arrow"`, warna `#ff2a2a`, tanpa lingkaran. Posisi nunjuk subjek hasil OWLv2 dengan keyword **Inggris** dari `shots_plan` (`person squatting on the floor`), deteksi dibatasi 1 klip (`first_only=True`) supaya build nggak nambah 11x. Kalau subjek nggak kedeteksi atau kotaknya < 2% luas frame, panah pakai `FAKTACUIL_ARROW_BOX` (tengah frame) — panah tetap muncul. Shot pertama berupa background CTA = tanpa panah.
+- **Kenapa bukan dari naskah:** kolom `queries`/`subject` FaktaCuil berbahasa Indonesia dan OWLv2 cuma paham Inggris; query Indonesia bikin deteksi nyangkut kotak kecil di pinggir frame.
+- **Verifikasi:** `tests/test_faktacuil_timeline.py` (1 panah di shot 1, koordinat dari deteksi shot 1, fallback tengah, tanpa panah kalau auto_cta), `test_faktacuil_script.py` (validator tetap nolak `point=true`), pipeline test memastikan `overlay` dipanggil dengan `first_only=True`; render `6CzrwICt7Dk` menunjukkan panah nunjuk dua orang yang jongkok.
+- **Authority:** Akmal (chat 2026-11-13: "faktacuil gua mau diawal panah selalu muncul, nunjuk konteks dari voice, hanya di shot awal saja").
