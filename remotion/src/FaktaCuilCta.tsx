@@ -33,6 +33,48 @@ const Pill: React.FC<{liked: boolean; scale: number; opacity: number}> = ({liked
   </div>
 );
 
+type StickerMotion = {dx: number; dy: number; rotate: number; scale: number; opacity: number};
+
+// Tiap format CTA punya gerak stiker sendiri; pill LIKE/LIKED tetap sama.
+const stickerMotion = (format: CtaSceneData['format'], f: number, len: number): StickerMotion => {
+  const fadeIn = interpolate(f, [0, 2], [0, 1], clamp);
+  const fadeOut = interpolate(f, [len - 6, len], [1, 0], clamp);
+  const sway = Math.sin(f / 6) * 4;
+  switch (format) {
+    case 'reveal': // muncul: pop gede + naik dikit, lalu diam
+      return {
+        dx: 0, dy: interpolate(f, [0, 8], [70, 0], clamp),
+        rotate: interpolate(f, [0, 5, 9], [-14, 6, 0], clamp),
+        scale: interpolate(f, [0, 4, 8, 12], [0.2, 1.32, 0.96, 1], clamp)
+          * interpolate(f, [len - 6, len], [1, 0.5], clamp),
+        opacity: fadeIn * fadeOut,
+      };
+    case 'escape': // kabur: miring gelisah, lalu hilang ke kanan bawah sambil muter
+      return {
+        dx: interpolate(f, [len - 14, len], [0, 520], clamp),
+        dy: interpolate(f, [len - 14, len], [0, 640], clamp),
+        rotate: sway - 7 + interpolate(f, [len - 14, len], [0, 41], clamp),
+        scale: interpolate(f, [0, 3], [0.5, 0.9], clamp)
+          * interpolate(f, [len - 14, len], [1, 0.45], clamp),
+        opacity: fadeIn * interpolate(f, [len - 14, len], [1, 0], clamp),
+      };
+    case 'escalate': // makin deket: terus membesar sampai akhir
+      return {
+        dx: 0, dy: interpolate(f, [0, len], [0, -90], clamp),
+        rotate: sway * 0.5,
+        scale: interpolate(f, [0, 4], [0.45, 0.62], clamp) + interpolate(f, [4, len], [0, 0.95], clamp),
+        opacity: fadeIn * interpolate(f, [len - 8, len], [1, 0.15], clamp),
+      };
+    default: // question: pop lembut + goyang
+      return {
+        dx: 0, dy: 0, rotate: sway,
+        scale: interpolate(f, [0, 3, 7], [0.2, 1.15, 1], clamp)
+          * interpolate(f, [len - 6, len], [1, 0.4], clamp),
+        opacity: fadeIn * fadeOut,
+      };
+  }
+};
+
 export const FaktaCuilCtaVisual: React.FC<{scene: CtaSceneData; frame: number}> = ({scene, frame}) => {
   const likeCue = scene.cues.find((cue) => cue.kind === 'like');
   const likeStage = scene.stages.find((stage) => stage.kind === 'like');
@@ -55,16 +97,17 @@ export const FaktaCuilCtaVisual: React.FC<{scene: CtaSceneData; frame: number}> 
           <Arrow x={interpolate(arrowT, [0, 1], [tipX + 200, tipX])} y={interpolate(arrowT, [0, 1], [tipY + 220, tipY])}/> : null}
         {frame >= clickAt - 3 ? <Cursor x={tipX} y={tipY} pressed={frame >= clickAt && frame < clickAt + 3}/> : null}
       </> : null}
-      {stickerFrame >= 0 && stickerLen > 0 ? (
-        <div data-cta-sticker="true" style={{
-          position: 'absolute', left: PILL_X, top: STICKER_Y, translate: '-50% -50%',
-          rotate: `${Math.sin(stickerFrame / 6) * 4}deg`,
-          scale: interpolate(stickerFrame, [0, 3, 7], [0.2, 1.15, 1], clamp) * interpolate(stickerFrame, [stickerLen - 6, stickerLen], [1, 0.4], clamp),
-          opacity: interpolate(stickerFrame, [0, 2], [0, 1], clamp) * interpolate(stickerFrame, [stickerLen - 6, stickerLen], [1, 0], clamp),
-        }}>
-          <Sticker theme={scene.theme} frame={stickerFrame} size={STICKER_SIZE}/>
-        </div>
-      ) : null}
+      {stickerFrame >= 0 && stickerLen > 0 ? (() => {
+        const m = stickerMotion(scene.format, stickerFrame, stickerLen);
+        return (
+          <div data-cta-sticker="true" data-cta-format={scene.format ?? 'question'} style={{
+            position: 'absolute', left: PILL_X + m.dx, top: STICKER_Y + m.dy, translate: '-50% -50%',
+            rotate: `${m.rotate}deg`, scale: m.scale, opacity: m.opacity,
+          }}>
+            <Sticker theme={scene.theme} frame={stickerFrame} size={STICKER_SIZE}/>
+          </div>
+        );
+      })() : null}
     </div>
   );
 };

@@ -79,7 +79,7 @@ def build_scene(script: dict, shots: list[dict], entries: list[dict], words: lis
         if kind in cues:
             stage['triggerAt'] = cues[kind]['from'] - begin
         stages.append(stage)
-    return dict(theme=config['theme'], commentText=config['comment_text'],
+    return dict(theme=config['theme'], commentText=config['comment_text'], format=config.get('format', 'question'),
                 durationInFrames=stop-start, stages=stages,
                 cues=sorted(cues.values(), key=lambda c: c['from']), **{'from': start})
 

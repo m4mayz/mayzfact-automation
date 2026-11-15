@@ -63,7 +63,7 @@ Kata pembuka "Padahal…"/"Ternyata…" cuma pola; kode nggak ngecek, jadi boleh
 | F4 | Minimal 1 beat salah kaprah antara hook dan CTA. |
 | F5 | Minimal 2 beat jawaban setelah CTA. |
 | F6 | Blok CTA punya tepat 1 ajakan like Indonesia ("tekan/pencet/klik/kasih like", "tekan tombol like"). Nol `subscribe`, nol `komen`/`komentar`/`comment`. |
-| F7 | Ada 1 beat CTA yang ngandung `transform_word`, diakhiri `?`, dan ada frasa `jadi [seekor/sebuah] <objek tema>`. |
+| F7 | Tergantung `cta_scene.format` (lihat **Format CTA**): `question` tetap `transform_word` + diakhiri `?` + frasa `jadi [seekor/sebuah] <objek tema>`; `reveal`/`escape`/`escalate` wajib `transform_word` dari daftar kata pemicu format itu dan nama objek tema disebut di blok CTA. |
 | F8 | Beat CTA: `subject` kosong, `point` false. |
 | F9 | Semua beat: `point` false, `emoji` dan `emoji_word` kosong. |
 | F10 | `keyword` (kalau diisi) 1 kata yang ada di teks beat itu, bukan di beat CTA. |
@@ -77,10 +77,25 @@ Tapi coba tekan like dulu,
 apakah like-mu berubah jadi madu?
 ```
 
-Kata "like" cuma muncul di CTA. Pertanyaan gimmick nggak punya ajakan sendiri tapi tetap bagian blok CTA. `cta_scene` wajib:
+Kata "like" cuma muncul di CTA. Pertanyaan gimmick nggak punya ajakan sendiri tapi tetap bagian blok CTA.
+
+**Format CTA (4, dipilih acak per naskah).** `cta_scene.format`:
+
+| format | contoh beat CTA | `transform_word` | aturan tambahan |
+| --- | --- | --- | --- |
+| `question` (default) | "apakah like-mu berubah jadi madu?" | kata kerja transformasi bebas (`berubah`) | beat diakhiri `?` + frasa `jadi <objek tema>` |
+| `reveal` | "like-mu bikin madu ini muncul di layar hp-mu." | `muncul`, `tampil`, `nongol`, `keluar` | objek tema disebut, tanpa `?` |
+| `escape` | "atau like-mu hilang bareng madu ini." | `kabur`, `hilang`, `pergi`, `lolos` | objek tema disebut, tanpa `?` |
+| `escalate` | "madu ini makin deket ke like-mu." | `deket`, `mendekat`, `besar`, `membesar`, `gede` | objek tema disebut, tanpa `?` |
+
+Pilih format pakai `pick_cta_format(video_id)` dari `mayzfact.faktacuil` — acak tapi stabil per video, jadi tiap naskah beda gimmick tanpa agent milih manual. Naskah lama tanpa field `format` dianggap `question` (valid, jangan dimigrasi).
+
+Deteksi blok CTA FaktaCuil pakai anchor kata `like`: **tiap beat di blok CTA wajib menyebut `like`** (mis. `like-mu`). Kalau satu beat CTA nggak nyebut `like`, beat itu dianggap jawaban dan validator ngeluh objek tema nggak ada di blok CTA.
+
+`cta_scene` wajib:
 
 ```json
-"cta_scene": {"theme": "honey", "transform_word": "berubah", "comment_text": "MADU"}
+"cta_scene": {"theme": "honey", "transform_word": "berubah", "comment_text": "MADU", "format": "question"}
 ```
 
 - `transform_word` kata tunggal yang ada di pertanyaan; morph mulai di kata itu.
@@ -144,7 +159,7 @@ Exit 3 "Nunggu input" = plan udah jadi, lanjut ke brief.
 Sama kayak `bikin-short` langkah 5, 6, 8 (langkah 7 Studio cuma kalau Akmal minta). Bedanya:
 
 - Brief nggak punya grup HOOK dan badge CARD. Shot CTA masuk grup **CTA** dan minta link kayak shot lain (bukan AUTO CTA, D-053).
-- Timeline nggak punya `countdown`, `emojis`, dan `overlays`. `intro` + SFX hook di detik 0 sama kayak MayzFact. `timeline.json` punya `captionStyle: "faktacuil"` dan `ctaScene.style: "faktacuil"`: pill like gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`FaktaCuilCta.tsx`, ditiru dari FaktaBor `pJe_Qok8qDA`). Klip CTA tampil normal, nggak di-blur.
+- Timeline nggak punya `countdown`, `emojis`, dan `overlays`. `intro` + SFX hook di detik 0 sama kayak MayzFact. `timeline.json` punya `captionStyle: "faktacuil"` dan `ctaScene.style: "faktacuil"`: pill like gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`FaktaCuilCta.tsx`, ditiru dari FaktaBor `pJe_Qok8qDA`). Klip CTA tampil normal, nggak di-blur. Gerak stiker ikut `ctaScene.format`: `question` pop+goyang, `reveal` pop gede lalu naik, `escape` miring lalu kabur ke kanan bawah, `escalate` terus membesar sampai akhir.
 - Caption: kalimat tanya kebawa "?", caption ngilang pas jeda ≥0,25 detik, lebar maksimal 60% frame.
 - BGM: file audio pertama (urut nama) di `assets/channels/faktacuil/bgm/`. Folder itu **lokal dan di-gitignore** (lagu berhak cipta, repo public). Jangan download atau copy lagu sendiri, dan jangan commit; Akmal yang naruh file. Kalau folder kosong, sementara pakai `assets/bgm/main.mp3` dan log bilang begitu; sebutin ke Akmal.
 - Kirim preview dan jam penting dari `timeline.json` (`ctaScene`, klik like di `sfx`), plus apa yang dilewat.

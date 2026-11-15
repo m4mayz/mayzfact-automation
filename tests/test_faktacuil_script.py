@@ -1,7 +1,7 @@
 import pytest
 
 from mayzfact.errors import PipelineError
-from mayzfact.faktacuil import faktacuil_word_range
+from mayzfact.faktacuil import CTA_FORMATS, CTA_TRIGGERS, faktacuil_problems, faktacuil_word_range, pick_cta_format
 from mayzfact.models import Beat, Script
 from mayzfact.steps.script import check_script, load_script
 from mayzfact.store import RunPaths, write_json_atomic
@@ -109,3 +109,52 @@ def test_approved_word_count_overrides_faktacuil_range():
 def test_word_range_ignores_float_noise(monkeypatch):
     monkeypatch.setattr("mayzfact.faktacuil.FAKTACUIL_RAW_WPS", 2.5)
     assert faktacuil_word_range(0.56) == (35, 28, 42)  # 20 * 1.4 = 28.000000000000004
+
+
+CTA_FORMAT_TEXTS = {
+    "question": ("Tapi coba tekan like dulu,", "apakah like-mu berubah jadi madu?"),
+    "reveal": ("Tapi coba tekan like dulu,", "like-mu bikin madu ini muncul di layar hp-mu."),
+    "escape": ("Tapi coba tekan like dulu,", "atau like-mu hilang bareng madu ini."),
+    "escalate": ("Tapi coba tekan like dulu,", "madu ini makin deket ke like-mu."),
+}
+
+
+@pytest.mark.parametrize("fmt", CTA_FORMATS)
+def test_all_cta_formats_pass(fmt):
+    data = faktacuil_script().model_dump()
+    first, second = CTA_FORMAT_TEXTS[fmt]
+    data["beats"][4]["text"] = first
+    data["beats"][5]["text"] = second
+    word = "berubah" if fmt == "question" else next(t for t in CTA_TRIGGERS[fmt] if t in second)
+    data["cta_scene"] = {**data["cta_scene"], "format": fmt, "transform_word": word}
+    assert faktacuil_problems(Script(**data)) == []
+
+
+def test_cta_format_needs_matching_trigger_word():
+    data = faktacuil_script().model_dump()
+    data["beats"][4]["text"] = "Tapi coba tekan like dulu,"
+    data["beats"][5]["text"] = "maka madu ini tampil di layar hp-mu."
+    data["cta_scene"] = {**data["cta_scene"], "format": "reveal", "transform_word": "berubah"}
+    assert any("needs transform_word" in p for p in faktacuil_problems(Script(**data)))
+
+
+def test_cta_format_needs_theme_object():
+    data = faktacuil_script().model_dump()
+    data["beats"][4]["text"] = "Tapi coba tekan like dulu,"
+    data["beats"][5]["text"] = "maka ini muncul di layar hp-mu."
+    data["cta_scene"] = {**data["cta_scene"], "format": "reveal", "transform_word": "muncul"}
+    assert any("must name the theme object" in p for p in faktacuil_problems(Script(**data)))
+
+
+def test_cta_format_question_still_requires_jadi_phrase():
+    data = faktacuil_script().model_dump()
+    data["beats"][4]["text"] = "Tapi coba tekan like dulu,"
+    data["beats"][5]["text"] = "maka madu ini muncul di layar hp-mu."
+    problems = faktacuil_problems(Script(**data))
+    assert any("does not match the narrated transformation" in p for p in problems)
+
+
+def test_pick_cta_format_is_stable_and_covers_every_format():
+    assert pick_cta_format("pJe_Qok8qDA") in CTA_FORMATS
+    assert pick_cta_format("pJe_Qok8qDA") == pick_cta_format("pJe_Qok8qDA")
+    assert {pick_cta_format(f"video{i}") for i in range(40)} == set(CTA_FORMATS)

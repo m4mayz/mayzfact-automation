@@ -12,6 +12,8 @@ class CtaScene(BaseModel):
     theme: Literal["volcano", "unicorn", "honey", "puppy", "lion", "shark", "toilet", "cat"]
     transform_word: str = Field(min_length=1, max_length=40, pattern=r"^\w+$")
     comment_text: str = Field(min_length=1, max_length=24, pattern=r"\S")
+    # Penokohan stiker CTA: pertanyaan transformasi (default) atau gimmick baru FaktaCuil.
+    format: Literal["question", "reveal", "escape", "escalate"] = "question"
 
 
 class Beat(BaseModel):

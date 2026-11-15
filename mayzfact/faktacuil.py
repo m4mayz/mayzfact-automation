@@ -1,6 +1,7 @@
 """Konstanta dan aturan murni buat format FaktaCuil."""
 
 import math
+import random
 import re
 
 from mayzfact.countdown import parse_countdown
@@ -52,6 +53,24 @@ def faktacuil_cta_indices(beats: list) -> list[int]:
         if any(t.startswith("like") or t in SUBSCRIBE or t in ID_COMMENT for t in tokens):
             anchors.append(i)
     return list(range(anchors[0], anchors[-1] + 1)) if anchors else []
+
+
+# Format gimmick CTA FaktaCuil. `question` = format lama ("apakah like-mu berubah jadi X?"),
+# tiga sisanya dipilih acak per naskah lewat pick_cta_format().
+CTA_FORMATS: tuple[str, ...] = ("question", "reveal", "escape", "escalate")
+
+# Kata pemicu morph stiker per format (harus jadi `cta_scene.transform_word`).
+CTA_TRIGGERS: dict[str, tuple[str, ...]] = {
+    "question": (),  # bebas: divalidasi lewat frasa "jadi <objek tema>" + tanda "?"
+    "reveal": ("muncul", "munculnya", "tampil", "nongol", "keluar"),
+    "escape": ("kabur", "hilang", "pergi", "lolos"),
+    "escalate": ("deket", "mendekat", "besar", "membesar", "gede"),
+}
+
+
+def pick_cta_format(video_id: str) -> str:
+    """Format CTA acak tapi deterministik per video, biar nggak semua naskah pakai gimmick sama."""
+    return random.Random(video_id).choice(CTA_FORMATS)
 
 
 def faktacuil_word_range(video_speed: float) -> tuple[int, int, int]:
@@ -114,12 +133,27 @@ def _cta_problems(script: Script, cta: list[int]) -> list[str]:
     if sum(len(id_like_positions(ts)) for ts in tokens) != 1 or cleaned & (SUBSCRIBE | ID_COMMENT):
         problems.append('FaktaCuil CTA must invite exactly one like ("tekan like") and must not ask to subscribe or comment.')
     theme, word = script.cta_scene.theme, script.cta_scene.transform_word
+    cta_format = script.cta_scene.format
     nouns = "|".join(re.escape(n) for n in THEME_NOUNS_ID[theme])
-    pattern = rf"\bjadi\s+(?:seekor\s+|sebuah\s+)?(?:{nouns})\b"
-    if not any(re.search(rf"\b{re.escape(word)}\b", beats[i].text, re.I) and beats[i].text.rstrip().endswith("?")
-               and re.search(pattern, beats[i].text, re.I) for i in cta):
-        problems.append(f"CTA illustration {theme!r} does not match the narrated transformation object. "
-                        "Use the matching supported illustration; unsupported objects need an illustration first.")
+    if any(re.search(rf"\b{re.escape(word)}\b", beats[i].text, re.I) for i in cta):
+        word_in_cta = True
+    else:
+        word_in_cta = False
+    if cta_format == "question":
+        pattern = rf"\bjadi\s+(?:seekor\s+|sebuah\s+)?(?:{nouns})\b"
+        if not any(re.search(rf"\b{re.escape(word)}\b", beats[i].text, re.I) and beats[i].text.rstrip().endswith("?")
+                   and re.search(pattern, beats[i].text, re.I) for i in cta):
+            problems.append(f"CTA illustration {theme!r} does not match the narrated transformation object. "
+                            "Use the matching supported illustration; unsupported objects need an illustration first.")
+    else:
+        triggers = CTA_TRIGGERS[cta_format]
+        if clean(word) not in triggers:
+            problems.append(f"CTA format {cta_format!r} needs transform_word from {sorted(triggers)}, not {word!r}.")
+        elif not word_in_cta:
+            problems.append(f"CTA format {cta_format!r}: transform_word {word!r} must appear in a CTA beat.")
+        if not any(re.search(rf"\b(?:{nouns})\b", beats[i].text, re.I) for i in cta):
+            problems.append(f"CTA format {cta_format!r} must name the theme object {theme!r} in the CTA block "
+                            "(every CTA beat must mention 'like' so it stays inside the block).")
     for i in cta:
         tokens_i = [clean(t) for t in beats[i].text.split()]
         has_trigger = bool(id_like_positions(beats[i].text.split())) or bool(
