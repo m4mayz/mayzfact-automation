@@ -96,13 +96,11 @@ THEME_NOUNS_ID: dict[str, tuple[str, ...]] = {
 
 
 def faktacuil_problems(script: Script) -> list[str]:
-    """Aturan F1-F10 naskah FaktaCuil; F11 (panjang) dicek di check_script."""
+    """Aturan F2-F10 naskah FaktaCuil; F11 (panjang) dicek di check_script."""
     from mayzfact.narration import cta_indices
 
     beats = script.beats
     problems: list[str] = []
-    if not (re.match(r"\s*kenapa\b", beats[0].text, re.I) and any("?" in b.text for b in beats[:2])):
-        problems.append('FaktaCuil hook must open with "Kenapa" and end the question with "?" within the first two beats.')
     if any((c := parse_countdown(b.text)) and c.number is not None for b in beats):
         problems.append('FaktaCuil beats must not use "Number N," countdown announcements.')
     cta = cta_indices(script)
@@ -123,9 +121,8 @@ def faktacuil_problems(script: Script) -> list[str]:
 def _cta_problems(script: Script, cta: list[int]) -> list[str]:
     beats = script.beats
     problems: list[str] = []
-    hook_end = next((i for i, b in enumerate(beats) if "?" in b.text), 1)
-    if not [i for i in range(hook_end + 1, cta[0]) if i not in cta]:
-        problems.append("FaktaCuil needs at least one misconception beat between the hook question and the CTA.")
+    if not [i for i in range(1, cta[0]) if i not in cta]:
+        problems.append("FaktaCuil needs at least one misconception beat between the hook and the CTA.")
     if len(range(cta[-1] + 1, len(beats))) < 2:
         problems.append("FaktaCuil needs at least two answer beats after the CTA.")
     tokens = [beats[i].text.split() for i in cta]

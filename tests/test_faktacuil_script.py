@@ -43,7 +43,6 @@ def test_word_range_at_default_speed():
 
 
 @pytest.mark.parametrize("mutate,needle", [
-    (lambda b: b[0].update(text="Kucing suka masuk kardus,"), 'open with "Kenapa"'),
     (lambda b: b[4].update(text="Tapi coba tekan like dan subscribe,"), "must not ask to subscribe"),
     (lambda b: b[5].update(text="apakah like-mu berubah jadi singa?"), "does not match the narrated transformation"),
     (lambda b: b[2].update(point=True), "point=false"),
@@ -59,9 +58,17 @@ def test_faktacuil_rules(mutate, needle):
 
 def test_cta_needs_misconception_before_and_two_answer_beats_after():
     data = faktacuil_script().model_dump()
-    data["beats"] = data["beats"][:2] + data["beats"][4:7]  # buang salah kaprah + 1 jawaban
+    data["beats"] = data["beats"][:1] + data["beats"][4:7]  # hook langsung CTA + 1 jawaban
     problems = check_script(Script(**data), SOURCE_TEXT_EN)[0]
     assert any("misconception" in p for p in problems) and any("two answer beats" in p for p in problems)
+
+
+def test_statement_hook_without_question_passes():
+    """Hook bebas: pernyataan tanpa 'Kenapa' dan tanpa '?' tetap valid."""
+    data = faktacuil_script().model_dump()
+    data["beats"][0]["text"] = "Di rumah kucing, kardus itu benda wajib,"
+    data["beats"][1]["text"] = "dan sempit buat badan mereka."
+    assert check_script(Script(**data), SOURCE_TEXT_EN)[0] == []
 
 
 def test_transform_word_in_hook_is_not_cta():
@@ -92,7 +99,6 @@ def test_top3_rejects_keyword():
     (lambda b: b[5].update(text="apakah like-mu berubah jadi madu."), "does not match the narrated transformation"),
     (lambda b: b[4].update(subject="cat"), "CTA beat 5 must have an empty subject"),
     (lambda b: b[5].update(keyword="madu"), "Beat 6 keyword"),
-    (lambda b: b[1].update(text="masuk ke kardus yang sempit,"), 'open with "Kenapa"'),
 ])
 def test_faktacuil_rules_edge_cases(mutate, needle):
     data = faktacuil_script().model_dump()

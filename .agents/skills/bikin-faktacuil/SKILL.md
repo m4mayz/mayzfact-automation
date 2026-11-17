@@ -45,19 +45,19 @@ Agent nulis `runs/<id>/script.json`. Kalau `transcript_id` nggak kosong, tulis d
 
 **Struktur.** Urutannya:
 
-1. **Hook** pertanyaan "Kenapa…?" (beat 1–2).
+1. **Hook** bebas (beat 1, maks 10 kata). Boleh pertanyaan, boleh pernyataan kejut kayak source. **Nggak ada aturan kata pembuka, `?`, atau panjang minimal** — yang penting kalimatnya nyambung ke beat berikutnya.
 2. **Salah kaprah** ("Padahal…", "Kamu mungkin mengira…"), minimal 1 beat.
 3. **CTA** like gimmick, 1–3 beat.
 4. **Jawaban** ("Ternyata…", "Karena itu…", "Jadi…"), minimal 2 beat.
 5. Penutup singkat (boleh bagian dari jawaban).
 
-Kata pembuka "Padahal…"/"Ternyata…" cuma pola; kode nggak ngecek, jadi boleh divariasi.
+Kata pembuka "Padahal…"/"Ternyata…" cuma pola; kode nggak ngecek, jadi boleh divariasi. Hook juga bebas: satu-satunya patokan cuma ≤10 kata per beat dan blok CTA tetap setelah salah kaprah.
 
 **Aturan yang dicek `check-script`** (pesannya English):
 
 | Aturan | Isi |
 | --- | --- |
-| F1 | Beat 1 dibuka kata `Kenapa`; tanda `?` paling lambat di beat 2. |
+| F1 | Tidak dipakai lagi: hook bebas (tanpa syarat kata `Kenapa` / `?`). |
 | F2 | Nggak ada beat "Number N,". |
 | F3 | Blok CTA tepat 1, 1–3 beat. |
 | F4 | Minimal 1 beat salah kaprah antara hook dan CTA. |
