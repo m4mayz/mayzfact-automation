@@ -10,6 +10,7 @@ import {Puppy} from './Puppy';
 import {Shark} from './Shark';
 import {Toilet} from './Toilet';
 import {Unicorn} from './Unicorn';
+import {Zebra} from './Zebra';
 import type {CtaSceneData, CtaStage} from './types';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
@@ -65,6 +66,7 @@ export const CtaSceneVisual: React.FC<{scene: CtaSceneData; stage: CtaStage; fra
       case 'shark': transformVisual = <Shark frame={frame}/>; break;
       case 'toilet': transformVisual = <Toilet frame={frame}/>; break;
       case 'cat': transformVisual = <Cat frame={frame}/>; break;
+      case 'zebra': transformVisual = <Zebra frame={frame}/>; break;
       default: {
         const unsupportedTheme: never = scene.theme;
         throw new Error(`Unsupported CTA transform theme: ${String(unsupportedTheme)}`);

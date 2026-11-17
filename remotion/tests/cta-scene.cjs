@@ -217,6 +217,32 @@ assert.ok(!cat.includes(thumbMarkup), 'Like thumb must disappear once cat is ful
 for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
   assert.equal(markup(kind, frame, catOptions), markup(kind, frame, {...catOptions, theme: 'volcano'}), `${kind} must not depend on cat theme`);
 }
+const zebraOptions = {theme: 'zebra', commentText: 'ZEBRA'};
+const zebra = markup('transform', 25, zebraOptions);
+assert.match(zebra, /<svg[^>]*data-zebra="true"[^>]*width="880"[^>]*height="840"/);
+for (const part of ['crossing', 'stripes', 'head', 'ears', 'mane', 'eyes', 'muzzle']) {
+  assert.match(zebra, new RegExp(`data-zebra-${part}="true"`));
+}
+assert.doesNotMatch(zebra, /ZEBRA|data-volcano|data-unicorn|data-honey|data-puppy|data-lion|data-shark|data-toilet|data-cat|<text/);
+assert.equal(zebra, markup('transform', 25, zebraOptions), 'Zebra must repeat identically at the same frame');
+assert.notEqual(zebra, markup('transform', 26, zebraOptions), 'Zebra must animate between frames');
+// Telinga, surai, dan zebra cross bergerak sendiri; badan, garis, dan moncong tetap.
+for (const part of ['ears', 'mane', 'crossing']) {
+  const partTag = new RegExp(`<[^>]*data-zebra-${part}="true"[^>]*>`);
+  assert.notEqual(zebra.match(partTag)[0], markup('transform', 26, zebraOptions).match(partTag)[0]);
+}
+for (const part of ['stripes', 'muzzle']) {
+  const partTag = new RegExp(`<[^>]*data-zebra-${part}="true"[^>]*>`);
+  assert.equal(zebra.match(partTag)[0], markup('transform', 26, zebraOptions).match(partTag)[0]);
+}
+assert.equal(rootOpacity(markup('transform', 0, zebraOptions)), 0);
+assert.ok(rootOpacity(markup('transform', 18, zebraOptions)) > .9);
+assert.ok(rootOpacity(markup('transform', 89, zebraOptions)) < .05);
+assert.ok(markup('transform', 0, zebraOptions).includes(thumbMarkup), 'Like thumb must remain during zebra morph entrance');
+assert.ok(!zebra.includes(thumbMarkup), 'Like thumb must disappear once zebra is fully transformed');
+for (const [kind, frame] of [['like', 20], ['subscribe', 25], ['comment', 25]]) {
+  assert.equal(markup(kind, frame, zebraOptions), markup(kind, frame, {...zebraOptions, theme: 'volcano'}), `${kind} must not depend on zebra theme`);
+}
 // Theme asing dan word legacy harus ditolak, bukan diam-diam jadi kartu teks.
 for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__', 'word']) {
   for (const frame of [0, 25]) {
@@ -228,4 +254,4 @@ for (const theme of ['dragon', '', undefined, null, 'toString', '__proto__', 'wo
     assert.equal(markup(kind, frame, {theme}), markup(kind, frame, {theme: 'volcano'}));
   }
 }
-console.log('12 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, animated deterministic unicorn, animated deterministic honey, animated deterministic puppy, animated deterministic lion, animated deterministic shark, animated deterministic toilet, animated deterministic cat, unknown transform theme rejection)');
+console.log('13 CTA visual cases passed (like, animated deterministic volcano, subscribe, comment, animated deterministic unicorn, animated deterministic honey, animated deterministic puppy, animated deterministic lion, animated deterministic shark, animated deterministic toilet, animated deterministic cat, animated deterministic zebra, unknown transform theme rejection)');

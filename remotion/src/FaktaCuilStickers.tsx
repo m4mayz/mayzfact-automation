@@ -148,6 +148,51 @@ const SmallCat: React.FC<{frame: number}> = ({frame}) => {
   );
 };
 
+const SmallZebra: React.FC<{frame: number}> = ({frame}) => {
+  const earTwitch = Math.sin(frame / 5) * 9;
+  const bob = Math.sin(frame / 7) * 2.5;
+  const tailSwish = Math.sin(frame * 0.6) * 12;
+  return (
+    <>
+      <defs>
+        <clipPath id="fk-zebra-body-clip">
+          <rect x={42} y={94} width={100} height={52} rx={22}/>
+          <path d="M126 112 L158 62 L180 80 L142 130 Z"/>
+          <ellipse cx={166} cy={70} rx={21} ry={18}/>
+          <ellipse cx={187} cy={79} rx={11} ry={9}/>
+        </clipPath>
+      </defs>
+      <rect x={6} y={156} width={188} height={30} rx={8} fill="#3d3f4a"/>
+      {[0, 1, 2, 3, 4].map((i) => <rect key={i} x={14 + i * 36} y={161} width={21} height={20} rx={3} fill="#f7f4ee"/>)}
+      <g transform={`translate(0 ${bob})`} stroke="#2f2f36" strokeWidth={4} strokeLinejoin="round" strokeLinecap="round">
+        <path d={`M44 108 C30 104 24 118 26 ${128 + tailSwish * 0.2}`} fill="none" stroke="#f3eee4" strokeWidth={9}/>
+        <path d={`M26 ${126 + tailSwish * 0.2} C24 ${132 + tailSwish * 0.2} 26 138 32 140`} fill="none" stroke="#2f2f36" strokeWidth={7}/>
+        <g fill="#f3eee4" strokeWidth={3.5}>
+          <path d="M50 140 L48 158 L64 158 L66 140 Z"/>
+          <path d="M74 140 L72 158 L88 158 L90 140 Z"/>
+          <path d="M108 140 L106 158 L122 158 L124 140 Z"/>
+          <path d="M130 140 L128 158 L144 158 L146 140 Z"/>
+        </g>
+        <rect x={42} y={94} width={100} height={52} rx={22} fill="#f3eee4"/>
+        <path d="M126 112 L158 62 L180 80 L142 130 Z" fill="#f3eee4"/>
+        <ellipse cx={166} cy={70} rx={21} ry={18} fill="#f3eee4"/>
+        <g clipPath="url(#fk-zebra-body-clip)" fill="#2f2f36" stroke="none">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <rect key={i} x={46 + i * 28} y={40} width={13} height={110} rx={6} transform={`rotate(-14 ${52 + i * 28} 100)`}/>
+          ))}
+        </g>
+        <g transform={`rotate(${earTwitch} 166 62)`} fill="#f3eee4" strokeWidth={3.5}>
+          <path d="M152 66 L152 44 L170 60 Z"/>
+          <path d="M174 60 L180 40 L190 60 Z"/>
+        </g>
+        <path d="M128 104 L140 84 L148 92 L136 112 Z" fill="#2f2f36" stroke="none"/>
+        <circle cx={171} cy={67} r={4} fill="#20222a" stroke="none"/>
+        <ellipse cx={188} cy={81} rx={7} ry={6} fill="#a9a29d" strokeWidth={3}/>
+      </g>
+    </>
+  );
+};
+
 export const Sticker: React.FC<{theme: CtaSceneData['theme']; frame: number; size: number}> = ({theme, frame, size}) => {
   let body: React.ReactNode;
   switch (theme) {
@@ -159,6 +204,7 @@ export const Sticker: React.FC<{theme: CtaSceneData['theme']; frame: number; siz
     case 'shark': body = <Shark/>; break;
     case 'toilet': body = <Toilet frame={frame}/>; break;
     case 'cat': body = <SmallCat frame={frame}/>; break;
+    case 'zebra': body = <SmallZebra frame={frame}/>; break;
     default: {
       const unsupported: never = theme;
       throw new Error(`Unsupported FaktaCuil sticker: ${String(unsupported)}`);

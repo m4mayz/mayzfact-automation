@@ -100,7 +100,7 @@ Deteksi blok CTA FaktaCuil pakai anchor kata `like`: **tiap beat di blok CTA waj
 
 - `transform_word` kata tunggal yang ada di pertanyaan; morph mulai di kata itu.
 - `comment_text` wajib ada di schema tapi nggak ditampilin di FaktaCuil. Isi kata objek huruf kapital (maks 24 karakter).
-- Objek harus salah satu dari 8 ilustrasi (`volcano`, `unicorn`, `honey`, `puppy`, `lion`, `shark`, `toilet`, `cat`). Objek lain = **STOP**, bikin ilustrasinya dulu (sama kayak top3).
+- Objek harus salah satu dari 9 ilustrasi (`volcano`, `unicorn`, `honey`, `puppy`, `lion`, `shark`, `toilet`, `cat`, `zebra`). Objek lain = **STOP**, bikin ilustrasinya dulu (sama kayak top3).
 
 | theme | frasa setelah `jadi` |
 | --- | --- |
@@ -112,6 +112,7 @@ Deteksi blok CTA FaktaCuil pakai anchor kata `like`: **tiap beat di blok CTA waj
 | `shark` | `hiu`, `ikan hiu` |
 | `toilet` | `kloset jongkok`, `toilet` |
 | `cat` | `kucing`, `anak kucing` |
+| `zebra` | `zebra`, `zebra cross` |
 
 **Per beat.**
 

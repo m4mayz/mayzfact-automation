@@ -50,6 +50,12 @@ def test_cat_scene_is_supported_without_text_label():
     assert scene.theme == 'cat'
 
 
+def test_zebra_scene_is_supported_without_text_label():
+    from mayzfact.models import CtaScene
+    scene = CtaScene(theme='zebra', transform_word='hilang', comment_text='ZEBRA')
+    assert scene.theme == 'zebra'
+
+
 def test_illustration_must_match_named_object_in_cta():
     raw = playful_script().model_dump()
     raw['cta_scene'] = dict(theme='unicorn', transform_word='turn', comment_text='MAGIC')
@@ -59,7 +65,7 @@ def test_illustration_must_match_named_object_in_cta():
 
 def test_supported_illustration_matches_transform_without_changing_text_hash():
     from mayzfact.text import script_text, text_hash
-    for theme, phrase in [('volcano', 'a volcano'), ('unicorn', 'a unicorn'), ('honey', 'honey'), ('puppy', 'a puppy'), ('lion', 'a lion'), ('shark', 'a shark'), ('toilet', 'a toilet'), ('cat', 'a cat')]:
+    for theme, phrase in [('volcano', 'a volcano'), ('unicorn', 'a unicorn'), ('honey', 'honey'), ('puppy', 'a puppy'), ('lion', 'a lion'), ('shark', 'a shark'), ('toilet', 'a toilet'), ('cat', 'a cat'), ('zebra', 'a zebra')]:
         raw = playful_script().model_dump()
         raw['beats'][8]['text'] = f'Did the button turn into {phrase}?'
         before = text_hash(script_text(raw['beats']))

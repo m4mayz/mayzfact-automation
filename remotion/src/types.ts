@@ -91,7 +91,7 @@ export type CtaStage = {
 };
 
 export type CtaSceneData = {
-  theme: 'volcano' | 'unicorn' | 'honey' | 'puppy' | 'lion' | 'shark' | 'toilet' | 'cat';
+  theme: 'volcano' | 'unicorn' | 'honey' | 'puppy' | 'lion' | 'shark' | 'toilet' | 'cat' | 'zebra';
   commentText: string;
   format?: 'question' | 'reveal' | 'escape' | 'escalate'; // gimmick CTA FaktaCuil
   from: number;
