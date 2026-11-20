@@ -130,7 +130,7 @@ def test_faktacuil_single_bgm_whole_video():
 def test_faktacuil_ignores_marks_but_uses_first_shot_detection_for_arrow():
     script, alignment, clips = faktacuil_timeline_fixture(25)
     marks = {"beats": [dict(point=True, emoji="x", emoji_word="") for _ in script["beats"]], "emoji": {"x": "x.json"}}
-    detections = {s["file"]: {"points": [dict(t=0, x=300 + i, y=600, w=200, h=200)]}
+    detections = {s["file"]: {"points": [dict(t=0, x=320 + i, y=600, w=300, h=300)]}
                   for i, s in enumerate(clips["shots"])}
     tl = build_timeline(clips, 25, 0.5, script=script, alignment=alignment, marks=marks, overlays=detections,
                         audio=AUDIO_ALL_SFX, log=lambda m: None)
@@ -138,7 +138,7 @@ def test_faktacuil_ignores_marks_but_uses_first_shot_detection_for_arrow():
     assert len(tl["overlays"]) == 1  # cuma shot pertama
     arrow = tl["overlays"][0]
     assert arrow["type"] == "arrow" and arrow["color"] == "#ff2a2a"
-    assert [(k["x"], k["y"]) for k in arrow["keyframes"]] == [(300, 600)]  # koordinat klip shot 1, bukan shot lain
+    assert [(k["x"], k["y"]) for k in arrow["keyframes"]] == [(320, 600)]  # koordinat klip shot 1, bukan fallback/shot lain
 
 
 def test_faktacuil_arrow_falls_back_to_center_without_detection():

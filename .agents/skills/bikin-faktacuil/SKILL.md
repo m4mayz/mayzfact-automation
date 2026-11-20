@@ -55,7 +55,7 @@ Kata pembuka "Padahal…"/"Ternyata…" cuma pola; kode nggak ngecek, jadi boleh
 | Aturan | Isi |
 | --- | --- |
 | F2 | Nggak ada beat "Number N,". |
-| F3 | CTA opsional: `cta_scene` diisi = harus ada blok CTA; `cta_scene` kosong = nggak boleh ada kalimat ajakan like/subscribe/emoji. |
+| F3 | CTA opsional: `cta_scene` diisi = harus ada blok CTA; `cta_scene` kosong = jangan ada kata `like*`/`subscribe`/`komen`/`komentar`/`comment` di beat mana pun. Detektor blok pakai kata-kata itu sebagai anchor (nggak harus ajakan like), jadi "like" biasa pun bisa dianggap CTA. Kata `emoji` sendiri bukan anchor; dia cuma nempel ke blok yang udah ada. |
 | F4 | `lucky`/`subscribe`: blok CTA 1–3 beat + minimal 1 beat salah kaprah sebelumnya. |
 | F5 | `lucky`/`subscribe`: minimal 2 beat jawaban setelah CTA (beat kuis nggak dihitung). |
 | F6 | Tepat 1 ajakan like Indonesia ("tekan/pencet/klik/kasih like", "tekan tombol like"). Nol `komen`/`komentar`/`comment`. `subscribe` cuma boleh di format `subscribe` dan harus **setelah** ajakan like. |
@@ -65,7 +65,7 @@ Kata pembuka "Padahal…"/"Ternyata…" cuma pola; kode nggak ngecek, jadi boleh
 | F10 | `keyword` (kalau diisi) 1 kata yang ada di teks beat itu, bukan di beat CTA/kuis. |
 | F11 | Jumlah kata total di rentang (lihat bawah). |
 | kuis | `cta_quiz` dan beat kuis harus muncul bareng; beat kuis terakhir, nyebut `cta_quiz.word`, kata itu diucapin minimal 2x sebelum kuis, dan `answer` sama dengan hasil hitungan. `emoji` nggak boleh digabung kuis. |
-| queries | 2–4 query English per beat, ASCII only. `queries_zh` diabaikan buat FaktaCuil. |
+| queries | Minimal 2 query English per beat, ASCII only. `queries_zh` diabaikan buat FaktaCuil. |
 | umum | ≤10 kata per beat, foto 15–45% beat, overlap 4-gram dengan source ≤15%. |
 
 **CTA opsional (D-061).** Kombinasi yang valid: tanpa CTA; `lucky`; `subscribe`; `emoji`; kuis; `lucky`+kuis; `subscribe`+kuis. `emoji` nggak pernah digabung CTA lain, termasuk kuis.
@@ -77,7 +77,13 @@ Kata pembuka "Padahal…"/"Ternyata…" cuma pola; kode nggak ngecek, jadi boleh
 | `emoji` | akhir, satu-satunya CTA | "tapi mengapa ada emoji madu saat tekan like?" | `emoji` + `tekan like` + diakhiri `?` | pill LIKE → klik → LIKED → emoji besar |
 | kuis (CTA-2) | akhir | "nah coba tebak berapa kali aku bilang kardus" | `berapa kali aku bilang` + kata target | caption biasa, tanpa visual tambahan |
 
-Kalimat panjang boleh dipecah jadi 2 beat: beat objek ("jika beruntung bisa muncul madu.") boleh tanpa "like" asal nyebut `muncul`; beat lead-in emoji ("tapi mengapa ada emoji madu") boleh tanpa "like" asal nyebut `emoji`. Urutan `subscribe` jangan dibalik: ajakan like dulu, baru `subscribe`.
+Kalimat contoh di tabel itu kepanjangan buat satu beat (maks 10 kata). **Wajib dipecah 2–3 beat**, contohnya:
+
+- `lucky`: "Tapi sebelum lanjut, coba tekan like," / "jika beruntung bisa muncul madu."
+- `subscribe`: "Tapi sebelum lanjut, coba tekan like," / "nanti muncul madu," / "subscribe jika berhasil."
+- `emoji`: "Tapi mengapa ada emoji madu" / "saat tekan like?"
+
+Urutannya tetap: beat yang nyebut `muncul` **selalu setelah** ajakan like, dan lead-in `emoji` **selalu sebelum** "tekan like". Beat objek/lead-in boleh tanpa kata "like" asal nyebut `muncul`/`emoji`. Urutan `subscribe` jangan dibalik: ajakan like dulu, baru `subscribe`.
 
 `cta_scene` opsional:
 
@@ -125,7 +131,7 @@ Top3 nggak ikut berubah.
 - `keyword`: 1 kata yang ditekankan (caption-nya kuning), isi di ±1 dari 3 beat, bukan beat CTA/kuis. Kata yang dipilih sering bukan subjek ("ternyata", "aman"). Tanda hubung boleh (`kupu-kupu`).
 - `point` selalu false, `emoji` dan `emoji_word` selalu kosong.
 - `subject`: hewan/objek yang dibahas, kosong di beat CTA dan beat kuis.
-- `queries`: 2–4 query bahasa Inggris (ASCII), nyebut hal yang beneran keliatan di kalimat beat itu (subjek + aksi/objek). Contoh beat "Padahal kardus itu sempit dan nggak empuk" → `cat squeezing into small cardboard box`, bukan cuma `cat`. Beat CTA juga wajib punya `queries`: isi background yang cocok sama kalimat CTA (shot CTA minta link di brief kayak shot lain, D-053). `queries_zh` nggak dipakai FaktaCuil (diabaikan).
+- `queries`: minimal 2 query bahasa Inggris (ASCII) per beat; panduannya 2–4 query (`check-script` cuma ngecek minimal 2), nyebut hal yang beneran keliatan di kalimat beat itu (subjek + aksi/objek). Contoh beat "Padahal kardus itu sempit dan nggak empuk" → `cat squeezing into small cardboard box`, bukan cuma `cat`. Beat CTA juga wajib punya `queries`: isi background yang cocok sama kalimat CTA (shot CTA minta link di brief kayak shot lain, D-053). `queries_zh` nggak dipakai FaktaCuil (diabaikan).
 - `hook_queries` selalu `{}`: FaktaCuil nggak punya segmen hook dari source.
 - Beat pertama otomatis jadi video.
 
@@ -166,7 +172,7 @@ Exit 3 "Nunggu input" = plan udah jadi, lanjut ke brief.
 Sama kayak `bikin-short` langkah 5, 6, 8 (langkah 7 Studio cuma kalau Akmal minta). Bedanya:
 
 - Brief nggak punya grup HOOK dan badge CARD. Shot CTA masuk grup **CTA** dan minta link kayak shot lain (bukan AUTO CTA, D-053).
-- Timeline nggak punya `countdown`, `emojis`, dan `overlays`. `intro` + SFX hook di detik 0 sama kayak MayzFact. `timeline.json` punya `captionStyle: "faktacuil"`; `ctaScene` cuma ada kalau `cta_scene` diisi. `lucky`/`subscribe`: pill LIKE gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`FaktaCuilCta.tsx`, ditiru dari FaktaBor `pJe_Qok8qDA`); `subscribe` nambah pill merah SUBSCRIBE pas kata "subscribe" diucapin → "SUBSCRIBED". `emoji`: pill LIKE → LIKED → emoji besar yang tahan sampai video selesai; klik dan emoji muncul di kata "emoji". Stiker/emoji pakai Lottie Noto kalau ada; kalau nggak ada, log `PERINGATAN` dan CTA tetap jalan pakai emoji statis (nggak bikin run gagal). Scene CTA tengah berhenti di shot jawaban pertama; scene `emoji` sampai akhir video. Klip CTA tampil normal, nggak di-blur.
+- Timeline nggak punya `countdown`, `emojis`, dan `overlays`. `intro` + SFX hook di detik 0 sama kayak MayzFact. `timeline.json` punya `captionStyle: "faktacuil"`; `ctaScene` cuma ada kalau `cta_scene` diisi. `lucky`/`subscribe`: pill LIKE gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`FaktaCuilCta.tsx`, ditiru dari FaktaBor `pJe_Qok8qDA`); `subscribe` nambah pill merah SUBSCRIBE pas kata "subscribe" diucapin → "SUBSCRIBED". `emoji`: pill LIKE → LIKED → emoji besar yang tahan sampai video selesai; klik dan emoji muncul di kata "emoji". Stiker objek itu **SVG** (`FaktaCuilStickers.tsx`), bukan Lottie. Lottie Noto cuma buat emoji CTA: kalau nggak ada, log `PERINGATAN` dan CTA tetap jalan pakai emoji statis (nggak bikin run gagal). Scene CTA tengah berhenti di shot jawaban pertama; scene `emoji` sampai akhir video. Klip CTA tampil normal, nggak di-blur.
 - Caption: kalimat tanya kebawa "?", caption ngilang pas jeda ≥0,25 detik, lebar maksimal 60% frame.
 - BGM: file audio pertama (urut nama) di `assets/channels/faktacuil/bgm/`. Folder itu **lokal dan di-gitignore** (lagu berhak cipta, repo public). Jangan download atau copy lagu sendiri, dan jangan commit; Akmal yang naruh file. Kalau folder kosong, sementara pakai `assets/bgm/main.mp3` dan log bilang begitu; sebutin ke Akmal.
 - Kirim preview dan jam penting dari `timeline.json` (`ctaScene`, klik like di `sfx`), plus apa yang dilewat.
