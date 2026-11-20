@@ -1,5 +1,7 @@
 import math
 
+import pytest
+
 from mayzfact.cta import clean
 from mayzfact.cta_scene import build_scene, faktacuil_cta_stop
 from mayzfact.steps.timeline import FPS, _beat_of, _shot_entries
@@ -91,3 +93,17 @@ def test_faktacuil_cta_stop_falls_back_to_total():
     script, clips, entries, words, beat_of, total = scene_inputs()
     last = max(s["beat"] for s in clips["shots"])
     assert faktacuil_cta_stop(clips["shots"], entries, {last}, total) == total
+
+
+def test_faktacuil_cta_markup_runs_in_node():
+    import shutil
+    import subprocess
+    from pathlib import Path
+
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node dibutuhkan untuk tes komponen Remotion")
+    root = Path(__file__).resolve().parents[1] / "remotion"
+    result = subprocess.run([node, "tests/faktacuil-cta.cjs"], cwd=root, capture_output=True, text=True, encoding="utf-8")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "faktacuil cta: OK" in result.stdout

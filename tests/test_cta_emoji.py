@@ -52,7 +52,8 @@ def test_prepare_cta_emoji_missing_lottie_warns(tmp_path):
     src = prepare_cta_emoji(tmp_path / "run", {"format": "emoji", "emoji": "🫠"}, client=client,
                             emoji_dir=tmp_path / "cache", log=logs.append, sleep=lambda s: None)
     assert src is None
-    assert any("PERINGATAN" in line and "statis" in line for line in logs)
+    assert any("PERINGATAN" in line and "statis" in line and "U+1FAE0" in line for line in logs)
+    assert all("🫠" not in line for line in logs)  # console Windows cp1252 aman
 
 
 def test_prepare_cta_emoji_ignores_other_formats(tmp_path):

@@ -8,25 +8,39 @@ const CENTER_Y = 1180; // tepat di atas caption (caption di 75% = 1440)
 const FADE_FRAMES = 6;
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
+// Dimuat sekali per src; dipakai emoji overlay dan emoji CTA FaktaCuil.
+export const useLottieJson = (src?: string): LottieAnimationData | null => {
+  const [data, setData] = useState<LottieAnimationData | null>(null);
+  // delayRender cuma kalau src ada: CTA emoji statis nggak perlu nunggu fetch
+  const [handle] = useState<number | null>(() => (src ? delayRender(`emoji ${src}`) : null));
+  useEffect(() => {
+    if (!src) {
+      return;
+    }
+    fetch(staticFile(src))
+      .then((response) => response.json())
+      .then((json: LottieAnimationData) => {
+        setData(json);
+        if (handle !== null) {
+          continueRender(handle);
+        }
+      })
+      .catch((error) => {
+        // File emoji rusak/hilang: emoji-nya dilewat, render jangan sampai nge-hang.
+        console.error(`emoji ${src} gagal dimuat`, error);
+        if (handle !== null) {
+          continueRender(handle);
+        }
+      });
+  }, [src, handle]);
+  return data;
+};
+
 // Emoji animasi Noto (Lottie): pop masuk, animasinya jalan terus, fade di akhir.
 const EmojiAnim: React.FC<{emoji: EmojiOverlay}> = ({emoji}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const [data, setData] = useState<LottieAnimationData | null>(null);
-  const [handle] = useState(() => delayRender(`emoji ${emoji.src}`));
-  useEffect(() => {
-    fetch(staticFile(emoji.src))
-      .then((response) => response.json())
-      .then((json) => {
-        setData(json);
-        continueRender(handle);
-      })
-      .catch((error) => {
-        // File emoji rusak/hilang: emoji-nya dilewat, render jangan sampai nge-hang.
-        console.error(`emoji ${emoji.src} gagal dimuat`, error);
-        continueRender(handle);
-      });
-  }, [emoji.src, handle]);
+  const data = useLottieJson(emoji.src);
   if (!data) {
     return null;
   }

@@ -177,3 +177,10 @@ def test_like_in_quiz_beat_is_allowed():
     data = faktacuil_script(cta="quiz").model_dump()
     data["beats"][-1]["text"] = "Nah coba tebak berapa kali aku bilang kardus, like?"
     assert check_script(Script(**data), SOURCE_TEXT_EN)[0] == []
+
+
+def test_subscribe_must_come_after_the_like_invite():
+    data = faktacuil_script(cta="subscribe").model_dump()
+    data["beats"][4]["text"] = "Tapi subscribe dulu, coba tekan like,"
+    problems = check_script(Script(**data), SOURCE_TEXT_EN)[0]
+    assert any("must ask to subscribe after the like invite" in p for p in problems)

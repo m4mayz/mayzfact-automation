@@ -70,5 +70,6 @@ def prepare_cta_emoji(run_root: Path, cta_scene: dict | None, *, client: httpx.C
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, target)
         return f"emoji/{cp}.json"
-    log(f"[timeline] PERINGATAN: Lottie Noto buat emoji {emoji} ({codepoints[0]}) nggak ada, CTA pakai emoji statis.")
+    log(f"[timeline] PERINGATAN: Lottie Noto buat emoji {'+'.join(f'U+{ord(c):04X}' for c in emoji)} "
+        f"({codepoints[0]}) nggak ada, CTA pakai emoji statis.")
     return None

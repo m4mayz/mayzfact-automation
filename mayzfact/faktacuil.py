@@ -182,6 +182,12 @@ def _cta_problems(script: Script, cta: list[int], fmt: str | None) -> list[str]:
         problems.append(f'FaktaCuil CTA must invite exactly one like ("tekan like") and {tail}')
     if fmt == "subscribe" and not cleaned & SUBSCRIBE:
         problems.append('FaktaCuil subscribe CTA must ask to subscribe ("subscribe if it worked").')
+    if fmt == "subscribe" and cleaned & SUBSCRIBE:
+        flat = [t for i in cta for t in beats[i].text.split()]
+        first_sub = next(j for j, t in enumerate(flat) if clean(t) in SUBSCRIBE)
+        likes_at = id_like_positions(flat)
+        if likes_at and first_sub < likes_at[0]:
+            problems.append("FaktaCuil subscribe CTA must ask to subscribe after the like invite.")
     if fmt in ("lucky", "subscribe"):
         theme = script.cta_scene.theme
         nouns = "|".join(re.escape(n) for n in THEME_NOUNS_ID[theme])

@@ -1,5 +1,5 @@
 import React from 'react';
-import type {CtaSceneData} from './types';
+import type {StickerTheme} from './types';
 
 // Stiker flat objek transformasi CTA FaktaCuil (viewBox 200x200), outline putih biar kebaca di atas video apa pun.
 const Volcano: React.FC<{frame: number}> = ({frame}) => (
@@ -193,7 +193,7 @@ const SmallZebra: React.FC<{frame: number}> = ({frame}) => {
   );
 };
 
-export const Sticker: React.FC<{theme: CtaSceneData['theme']; frame: number; size: number}> = ({theme, frame, size}) => {
+export const Sticker: React.FC<{theme: StickerTheme; frame: number; size: number}> = ({theme, frame, size}) => {
   let body: React.ReactNode;
   switch (theme) {
     case 'volcano': body = <Volcano frame={frame}/>; break;
