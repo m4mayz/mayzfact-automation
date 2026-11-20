@@ -385,7 +385,8 @@ def _continues(prev: dict, shot: dict) -> bool:
         return False
     if shot.get("source_s") is None or prev.get("source_s") is None:  # clips.json lama tanpa detik source
         return True
-    return abs(shot["source_s"] - (prev["source_s"] + prev["end_s"] - prev["start_s"])) < 0.05
+    prev_src = (prev["end_s"] - prev["start_s"]) * float(prev.get("speed") or 1)  # durasi source, bukan durasi shot
+    return abs(shot["source_s"] - (prev["source_s"] + prev_src)) < 0.05
 
 
 def _beat_of(words: list[dict], beats: list[dict]) -> list[int]:

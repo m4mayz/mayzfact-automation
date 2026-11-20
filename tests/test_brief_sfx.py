@@ -1,3 +1,4 @@
+import re
 import threading
 from pathlib import Path
 
@@ -42,8 +43,37 @@ def test_page_shows_sfx_pills_and_preview(brief):
     assert 'name="sfx-0" value="uy.mp3" checked' in html and 'data-sfx-at="0" value="0.8"' in html
     assert 'name="sfx-1" value="" checked' in html  # shot tanpa SFX: pill "Tanpa"
     assert ">check mark<" in html  # label tanpa id acak myinstants
-    assert 'data-preview="0"' in html and 'data-preview="1"' not in html  # shot tanpa link: belum ada yang di-preview
+    assert 'data-preview="0"' in html and 'data-preview="1"' in html and preview_disabled(html, 1)  # belum ada link: tombolnya disabled
     assert "<video" not in html  # video preview baru dibikin pas dibuka
+
+
+def preview_disabled(html, idx):
+    return bool(re.search(rf'data-preview-btn="{idx}"[^>]*\bdisabled\b', html))
+
+
+def test_preview_box_always_rendered_and_enabled_when_ready(brief):
+    paths, base, pf = brief
+    (paths.root / "manual").mkdir()
+    (paths.root / "manual" / "shot_3.jpg").write_bytes(b"jpg")
+    write_json_atomic(paths.links_json, {"shots": {"0": {"url": "https://a.b/v"}, "2": {"file": "manual/shot_3.jpg"}}})
+    html = httpx.get(base + "/").text
+    assert all(f'data-preview="{i}"' in html for i in range(3))
+    assert preview_disabled(html, 0) and preview_disabled(html, 1) and not preview_disabled(html, 2)
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v", "2": "file:manual/shot_3.jpg"}})
+    assert wait_until(lambda: pf.snapshot().get("https://a.b/v", {}).get("state") == "siap")
+    assert not preview_disabled(httpx.get(base + "/").text, 0)
+
+
+def test_speed_select_shows_saved_speed_and_is_off_for_photos(brief):
+    paths, base, _ = brief
+    write_json_atomic(paths.links_json, {"shots": {"0": {"url": "https://a.b/v", "speed": 1.5},
+                                                   "2": {"file": "manual/shot_3.jpg", "speed": 2.0}}})
+    html = httpx.get(base + "/").text
+    assert re.search(r'<select data-speed="0"[^>]*>.*?value="1.5" selected', html, re.S)
+    assert re.search(r'<select data-speed="1"[^>]*>.*?value="1" selected', html, re.S)
+    assert re.search(r'<select data-speed="2"[^>]*\bdisabled\b', html)
+    for name in ("syncPreviewButtons", "playbackRate", "collectSpeed"):
+        assert name in html
 
 
 def test_sfx_files_are_served_from_library_only(brief):
