@@ -49,20 +49,22 @@ def _message(exc: Exception) -> str:
 
 
 def normalize_local(
-    index: int, start_s: float, end_s: float, raw: Path, kind: str, offset_s: float, paths: RunPaths, fg_min_ratio: float
+    index: int, start_s: float, end_s: float, raw: Path, kind: str, offset_s: float, paths: RunPaths, fg_min_ratio: float,
+    speed: float = 1.0
 ) -> dict:
-    """File lokal → clips/shot_XX. Video dipotong di sekitar offset_s, dibatasi biar nggak lewat ujung file."""
+    """File lokal → clips/shot_XX. Video dipotong di sekitar offset_s (tengah window source), dibatasi biar nggak lewat ujung file."""
     duration_s = end_s - start_s
+    src_s = duration_s * speed if kind == "video" else duration_s  # foto: speed diabaikan
     try:
         if kind == "video":
             info = probe(raw, "clips")
             total = info["duration_s"] or 0.0
-            if total < duration_s + 0.2:
-                raise PipelineError("clips", f"video cuma {total:.1f} detik, shot butuh {duration_s:.1f}")
-            start = min(max(0.0, offset_s - duration_s / 2), total - duration_s - 0.2)
+            if total < src_s + 0.2:
+                raise PipelineError("clips", f"video cuma {total:.1f} detik, shot butuh {src_s:.1f}")
+            start = min(max(0.0, offset_s - src_s / 2), total - src_s - 0.2)
             dest = paths.clips_dir / f"shot_{index + 1:02d}.mp4"
-            normalize_video(raw, dest, start_s=start, duration_s=duration_s + 0.2,
-                            scale=downscale_factor(info["width"], info["height"], fg_min_ratio))
+            normalize_video(raw, dest, start_s=start, duration_s=src_s + 0.2,
+                            scale=downscale_factor(info["width"], info["height"], fg_min_ratio), speed=speed)
             out = probe(dest, "clips")
             width, height = out["width"], out["height"]
         else:
@@ -366,7 +368,8 @@ def run_fetch(
                             src.used = shown.setdefault(src.path, [])
 
                         target, low = _target(s, paths, encoder)
-                        duration = s["end_s"] - s["start_s"]
+                        speed = float(entry.get("speed") or 1) if sources and sources[0].kind == "video" else 1.0
+                        duration = (s["end_s"] - s["start_s"]) * speed
                         warn = []
                         chosen = None
 
@@ -411,10 +414,11 @@ def run_fetch(
                             warn.append(f"skor rendah ({score:.2f})")
 
                         out = normalize_local(s["index"], s["start_s"], s["end_s"], source.path, source.kind,
-                                              start + duration / 2, paths, fg_min_ratio)
+                                              start + duration / 2, paths, fg_min_ratio, speed=speed)
                         url = source.entry.get("url")
                         clips.append({
-                            "index": s["index"], "beat": s["beat"], "start_s": s["start_s"], "end_s": s["end_s"], **out,
+                            "index": s["index"], "beat": s["beat"], "start_s": s["start_s"], "end_s": s["end_s"],
+                            "speed": speed, **out,
                             "provider": link_kind(url) if url else "upload",
                             "provider_id": cache_key(url) if url else Path(source.entry["file"]).name,
                             "page_url": url or source.entry["file"], "author": "", "query": "manual",

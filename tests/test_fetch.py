@@ -342,6 +342,89 @@ def test_fetch_with_custom_timestamp_override(tmp_path, cut_video):
     assert abs(s2["source_s"] - 0.3) < 1e-3
 
 
+def test_normalize_local_speed_reads_longer_source(tmp_path, make_video):
+    from mayzfact.errors import PipelineError
+    from mayzfact.steps.fetch import normalize_local
+
+    paths = RunPaths(tmp_path / "run")
+    out = normalize_local(0, 0.0, 1.0, make_video(1080, 1920, 5.0), "video", 2.5, paths, 0.5, speed=2.0)
+    assert abs(probe(paths.root / out["file"], "clips")["duration_s"] - 1.1) < 0.1  # (2.0 + 0.2) / 2
+    with pytest.raises(PipelineError, match="cuma"):
+        normalize_local(0, 0.0, 2.5, make_video(1080, 1920, 5.0), "video", 2.5, paths, 0.5, speed=2.0)
+
+
+def test_speed_uses_source_duration_for_start_and_continuation(tmp_path, cut_video):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = [{"id": "content", "label": "content", "shots": [2, 3]}]
+    plan["shots"] = [
+        {**plan["shots"][2], "start_s": 0.0, "end_s": 0.4, "media": "video", "group": "content"},
+        {**plan["shots"][3], "start_s": 0.4, "end_s": 0.8, "media": "video", "group": "content"},
+    ]
+    save_links(paths.links_json, {"shots": {
+        "2": {"url": "https://a.b/video", "start_s": 0.2, "speed": 2.0},
+        "3": {"url": "https://a.b/video"},
+    }})
+    data = run_fetch(paths, plan, obtain=lambda e, r: [cut_video], encoder=FakeEncoder(), **QUIET)
+    s2, s3 = data["shots"]
+    assert s2["speed"] == 2.0 and abs(s2["source_s"] - 0.2) < 1e-3
+    assert abs(s3["source_s"] - 1.0) < 1e-3 and s3["speed"] == 1.0  # lanjut dari 0.2 + 0.4×2
+    assert abs(probe(paths.root / s2["file"], "clips")["duration_s"] - 0.5) < 0.1  # (0.8 + 0.2) / 2
+
+
+def test_speed_start_clamped_by_source_window(tmp_path, cut_video):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = [{"id": "content", "label": "content", "shots": [2]}]
+    plan["shots"] = [{**plan["shots"][2], "start_s": 0.0, "end_s": 0.4, "media": "video", "group": "content"}]
+    save_links(paths.links_json, {"shots": {"2": {"url": "https://a.b/video", "start_s": 1.5, "speed": 2.0}}})
+    data = run_fetch(paths, plan, obtain=lambda e, r: [cut_video], encoder=FakeEncoder(), **QUIET)
+    assert abs(data["shots"][0]["source_s"] - 1.0) < 1e-3  # 2.0 - 0.8 - 0.2
+
+
+def test_first_free_skips_sped_up_window(tmp_path, cut_video):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = [{"id": "content", "label": "content", "shots": [1, 2, 3]}]
+    plan["shots"] = [
+        {**plan["shots"][1], "start_s": 0.0, "end_s": 0.4, "media": "video", "hook_segment": None, "ref_frames": [],
+         "group": "content"},
+        {**plan["shots"][2], "start_s": 0.4, "end_s": 0.8, "group": "content"},
+        {**plan["shots"][3], "start_s": 0.8, "end_s": 1.2, "media": "video", "group": "content"},
+    ]
+    files = {"https://a.b/a": [cut_video], "https://a.b/p": photos(tmp_path, "crab")}
+    save_links(paths.links_json, {"shots": {
+        "1": {"url": "https://a.b/a", "speed": 2.0},
+        "2": {"url": "https://a.b/p"},
+        "3": {"url": "https://a.b/a"},
+    }})
+    data = run_fetch(paths, plan, obtain=lambda e, r: files[e["url"]], encoder=FakeEncoder(), **QUIET)
+    by_index = {s["index"]: s for s in data["shots"]}
+    assert abs(by_index[3]["source_s"] - 1.0) < 1e-3  # window shot 1 = 0..0.8 + ekor 0.2
+
+
+def test_photo_ignores_speed(tmp_path):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = [{"id": "content", "label": "content", "shots": [2]}]
+    plan["shots"] = [plan["shots"][2]]
+    save_links(paths.links_json, {"shots": {"2": {"url": "https://a.b/p", "speed": 2.0}}})
+    data = run_fetch(paths, plan, obtain=lambda e, r: photos(tmp_path, "x"), encoder=FakeEncoder(), **QUIET)
+    clip = data["shots"][0]
+    assert clip["kind"] == "photo" and clip["speed"] == 1.0
+
+
+def test_speed_window_longer_than_video_marks_shot_error(tmp_path, cut_video):
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = [{"id": "content", "label": "content", "shots": [2]}]
+    plan["shots"] = [{**plan["shots"][2], "start_s": 0.0, "end_s": 1.0, "media": "video", "group": "content"}]
+    save_links(paths.links_json, {"shots": {"2": {"url": "https://a.b/video", "speed": 2.0}}})
+    with pytest.raises(AwaitingInput):
+        run_fetch(paths, plan, obtain=lambda e, r: [cut_video], encoder=FakeEncoder(), **QUIET)
+    assert read_json(paths.links_status_json)["shots"]["2"]["state"] == "error"
+
+
 def test_target_prefers_action_keywords(tmp_path):
     from mayzfact.steps.fetch import _target
 

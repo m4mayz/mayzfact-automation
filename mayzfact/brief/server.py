@@ -16,6 +16,7 @@ from mayzfact.manual.links import (
     IMAGE_EXTS,
     VIDEO_EXTS,
     attach_sfx,
+    attach_speed,
     load_links,
     missing_groups,
     missing_shots,
@@ -250,11 +251,17 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                     data = normalize_links(body, group_ids(), shot_count=len(current.get("shots", [])))
                     if "shots" in data and "sfx" in body:
                         attach_sfx(data, body["sfx"], set(sfx_names()), plan())
-                    elif "shots" in data:  # request tanpa sfx (lama / upload): SFX yang udah kesimpen dibawa
+                    if "shots" in data and "speed" in body:
+                        attach_speed(data, body["speed"])
+                    if "shots" in data:  # key yang nggak dikirim (tab brief lama / upload): nilai lama dibawa
                         old = load_links(paths.links_json).get("shots", {})
                         for key, entry in data["shots"].items():
-                            if isinstance(old.get(key), dict) and old[key].get("sfx"):
+                            if not isinstance(old.get(key), dict):
+                                continue
+                            if "sfx" not in body and old[key].get("sfx"):
                                 entry["sfx"] = old[key]["sfx"]
+                            if "speed" not in body and old[key].get("speed"):
+                                entry["speed"] = old[key]["speed"]
                 except (ValueError, TypeError, AttributeError) as exc:
                     return self._json(400, {"error": str(exc)})
                 save_links(paths.links_json, data)
@@ -308,6 +315,8 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                             entry["end_s"] = old_entry["end_s"]
                         if old_entry.get("sfx"):
                             entry["sfx"] = old_entry["sfx"]
+                        if old_entry.get("speed"):
+                            entry["speed"] = old_entry["speed"]
                     links.setdefault("shots", {})[str(shot_idx)] = entry
                     save_links(paths.links_json, links)
                     return self._json(200, {"file": rel})

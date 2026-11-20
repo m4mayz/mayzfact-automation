@@ -107,6 +107,31 @@ def test_sfx_label_drops_myinstants_noise():
     assert sfx_label("sound-effect.mp3") == "sound effect"  # isinya cuma kata pengisi: biarin
 
 
+def test_saving_speed(brief):
+    paths, base, _ = brief
+    ok = httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v", "1": "https://a.b/w"},
+                                               "speed": {"0": 1.25, "1": 1}})
+    assert ok.status_code == 200
+    shots = read_json(paths.links_json)["shots"]
+    assert shots["0"]["speed"] == 1.25 and "speed" not in shots["1"]
+    bad = httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "speed": {"0": 3}})
+    assert bad.status_code == 400 and "speed" in bad.json()["error"]
+
+
+def test_save_without_speed_key_keeps_saved_speed(brief):
+    paths, base, _ = brief
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "speed": {"0": 2}})
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}})
+    assert read_json(paths.links_json)["shots"]["0"]["speed"] == 2
+
+
+def test_upload_keeps_speed(brief):
+    paths, base, _ = brief
+    httpx.post(base + "/api/links", json={"shots": {"1": "https://a.b/v"}, "speed": {"1": 0.5}})
+    httpx.post(base + "/api/upload?shot=1", content=b"mp4", headers={"X-Filename": "a.mp4"})
+    assert read_json(paths.links_json)["shots"]["1"] == {"file": "manual/shot_2.mp4", "speed": 0.5}
+
+
 def test_save_without_sfx_key_keeps_saved_sfx(brief):
     """Upload di brief nyimpen {shots} dulu tanpa sfx: SFX yang udah kesimpen jangan ikut kehapus."""
     paths, base, _ = brief

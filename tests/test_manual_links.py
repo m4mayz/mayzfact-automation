@@ -186,6 +186,33 @@ def test_custom_sfx_events_use_absolute_time():
     assert custom_sfx_events(SFX_PLAN, {"groups": {}}) == []
 
 
+def test_attach_speed_validates_and_skips_default():
+    from mayzfact.manual.links import attach_speed
+    data = normalize_links({"shots": {"0": "https://a.b/v", "1": "https://a.b/w"}}, shot_count=5)
+    attach_speed(data, {"0": 1.5, "1": 1, "3": 2})
+    assert data["shots"]["0"]["speed"] == 1.5
+    assert "speed" not in data["shots"]["1"] and "3" not in data["shots"]
+    with pytest.raises(ValueError, match="shot 1: speed 3"):
+        attach_speed(data, {"0": 3})
+
+
+def test_normalize_links_drops_unchecked_speed_from_raw_entries():
+    res = normalize_links({"shots": {"0": {"url": "https://a.b/v", "speed": 9}}}, shot_count=5)
+    assert res == {"shots": {"0": {"url": "https://a.b/v"}}}
+
+
+def test_same_clip_ignores_speed():
+    from mayzfact.manual.links import same_clip
+    assert same_clip({"url": "u", "speed": 2.0}, {"url": "u"})
+
+
+def test_preview_starts_use_source_duration():
+    from mayzfact.manual.links import preview_starts
+    links = {"shots": {"1": {"url": "https://a.b/v", "start_s": 4.0, "speed": 2.0},  # shot 1,5 detik → 3 detik source
+                       "2": {"url": "https://a.b/v"}}}
+    assert preview_starts(SFX_PLAN, links) == {1: 4.0, 2: 7.0}
+
+
 def test_same_clip_ignores_time_and_sfx():
     from mayzfact.manual.links import same_clip
     assert same_clip({"url": "u", "start_s": 3}, {"url": "u", "sfx": {"file": "uy.mp3", "at_s": 0}})
