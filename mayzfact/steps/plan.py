@@ -11,7 +11,7 @@ from mayzfact.errors import PipelineError
 from mayzfact.ffmpeg import extract_frame, probe
 from mayzfact.matching import hook_slot_map
 from mayzfact.shots import beat_subjects, split_shots, tighten_countdown
-from mayzfact.source_frames import prepare_source_segments
+from mayzfact.source_frames import prepare_source_segments, source_shot_frames
 from mayzfact.store import RunPaths, write_json_atomic
 from mayzfact.text import beat_texts, clean_text, words
 from mayzfact.timing import beat_timings, word_timings
@@ -226,14 +226,22 @@ def run_plan(
         elif slot.beat in ctas:
             shots[-1]['auto_cta'] = True
             shots[-1]['keywords'] = {'en': [], 'zh': []}
-    _shot_frames(paths, source, shots, tts["duration_s"], download_source, log)
+    narration_mode = script.get("narration_mode", "top3")
+    source_shots = None
+    if narration_mode == "faktacuil":  # 1 kartu frame referensi dari shot source, bukan 3 frame per shot
+        source_shots = source_shot_frames(paths, source, download_source, log=log)
+    else:
+        _shot_frames(paths, source, shots, tts["duration_s"], download_source, log)
     groups = _groups(shots)
     data = {
+        "narration_mode": narration_mode,
         "hook_seconds": hook_seconds,
         "segments": [{"index": s["index"], "start_s": s["start_s"], "end_s": s["end_s"], "frames": [rel(f) for f in s["frames"]]} for s in segs],
         "groups": groups,
         "shots": shots,
     }
+    if source_shots is not None:
+        data["source_shots"] = source_shots
     data['cta_scene'] = script['cta_scene']
     write_json_atomic(paths.shots_plan_json, data)
     log(f"[plan] {len(shots)} shot ({len(mapping)} hook), {len(data['groups'])} kelompok. Isi link: mayzfact brief {paths.root.name}")

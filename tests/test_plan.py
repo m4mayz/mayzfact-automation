@@ -70,6 +70,11 @@ def test_plan_without_hook_area(tmp_path, cut_video):
     assert all(shot["hook_segment"] is None for shot in data["shots"])
 
 
+def test_top3_plan_has_no_source_shot_card(tmp_path, cut_video):
+    _, data = plan_with(tmp_path, cut_video, hook_seconds=0.0)
+    assert data["narration_mode"] == "top3" and "source_shots" not in data
+
+
 def test_plan_groups_shots_by_context(tmp_path, cut_video):
     _, data = plan_with(tmp_path, cut_video, hook_seconds=1.5)
     assert [s["group"] for s in data["shots"]] == ["hook", "horseshoe-crab"]

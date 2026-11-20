@@ -10,6 +10,7 @@ from mayzfact.store import read_json, write_json_atomic
 
 VIDEO_EXTS = {".mp4", ".mov", ".webm", ".m4v"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
+SPEEDS: tuple[float, ...] = (0.5, 0.75, 1.0, 1.25, 1.5, 2.0)  # pilihan speed per shot di brief
 _URL = re.compile(r"https?://[^\s，。！？、]+", re.IGNORECASE)
 _PICK = re.compile(r"\s+#(\d+)\s*$")
 
@@ -151,7 +152,7 @@ def normalize_links(raw: dict, group_ids: list[str] | None = None, shot_count: i
                     continue
                 entry = _entry(line, f"shot {idx + 1}")
             elif isinstance(value, dict):
-                entry = {k: v for k, v in value.items() if k != "sfx"}  # SFX cuma lewat attach_sfx (dicek dulu)
+                entry = {k: v for k, v in value.items() if k not in ("sfx", "speed")}  # SFX/speed cuma lewat attach_*
             else:
                 continue
             shots[str(idx)] = entry
@@ -185,6 +186,19 @@ def attach_sfx(data: dict, raw_sfx: dict | None, names: set[str], plan: dict) ->
         entry["sfx"] = {"file": file, "at_s": round(at_s, 2)}
 
 
+def attach_speed(data: dict, raw_speed: dict | None) -> None:
+    """Speed per shot dari brief {idx: speed} → entry["speed"]. Speed 1 nggak ditulis, shot tanpa link dilewat."""
+    for key, value in (raw_speed or {}).items():
+        entry = data.get("shots", {}).get(str(key))
+        if entry is None or value is None:
+            continue
+        speed = float(value)
+        if speed not in SPEEDS:
+            raise ValueError(f"shot {int(key) + 1}: speed {_format_time(float(value))} nggak ada di pilihan")
+        if speed != 1:
+            entry["speed"] = speed
+
+
 def custom_sfx_events(plan: dict, links: dict) -> list[dict]:
     """SFX kustom per shot → [{"file", "at_s"}] dengan detik dari awal video (awal shot + detik di shot)."""
     starts = {s["index"]: s["start_s"] for s in plan.get("shots", [])}
@@ -197,9 +211,9 @@ def custom_sfx_events(plan: dict, links: dict) -> list[dict]:
 
 
 def same_clip(a: dict, b: dict) -> bool:
-    """Link + pilihan item sama; detik mulai/selesai dan SFX nggak dihitung."""
+    """Link + pilihan item sama; detik mulai/selesai, SFX, dan speed nggak dihitung."""
     def strip(e: dict) -> dict:
-        return {k: v for k, v in e.items() if k not in ("start_s", "end_s", "sfx")}
+        return {k: v for k, v in e.items() if k not in ("start_s", "end_s", "sfx", "speed")}
     return strip(a) == strip(b)
 
 
@@ -221,7 +235,7 @@ def preview_starts(plan: dict, links: dict) -> dict[int, float]:
         if not isinstance(entry, dict):
             prev = None
             continue
-        duration = shot["end_s"] - shot["start_s"]
+        duration = (shot["end_s"] - shot["start_s"]) * float(entry.get("speed") or 1)
         windows = used.setdefault(str(entry.get("url") or entry.get("file")), [])
         if entry.get("start_s") is not None:
             start = float(entry["start_s"])
