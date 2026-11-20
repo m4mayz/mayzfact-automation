@@ -160,6 +160,10 @@ Exit 3 "Nunggu input" = plan udah jadi, lanjut ke brief.
 Sama kayak `bikin-short` langkah 5, 6, 8 (langkah 7 Studio cuma kalau Akmal minta). Bedanya:
 
 - Brief nggak punya grup HOOK dan badge CARD. Shot CTA masuk grup **CTA** dan minta link kayak shot lain (bukan AUTO CTA, D-053).
+- Shot di brief urut 1..N dalam satu kartu; badge kelompok cuma info, bukan pemisah kartu.
+- Tiap shot punya pilihan speed 0.5x–2x (default 1x). Foto diabaikan (pilihannya disabled). Fetch ngambil `durasi shot × speed` detik source lalu dipadatkan ke durasi shot, jadi caption/timeline nggak berubah.
+- Tombol Preview klip aktif sendiri begitu badge unduhan `siap` (nggak perlu refresh). Ganti link nutup preview lama, dan "Dari preview" ngasih detik SFX dalam detik shot (dibagi speed).
+- Frame referensi FaktaCuil ada di kartu "Frame referensi source" (2 frame acak per shot source, maksimal 60 shot yang nyebar sampai shot terakhir), bukan 3 frame per shot. Kartu ketutup default; brief tetap jalan walau kartunya kosong (pesannya nyuruh `--from plan`).
 - Timeline nggak punya `countdown`, `emojis`, dan `overlays`. `intro` + SFX hook di detik 0 sama kayak MayzFact. `timeline.json` punya `captionStyle: "faktacuil"` dan `ctaScene.style: "faktacuil"`: pill like gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`FaktaCuilCta.tsx`, ditiru dari FaktaBor `pJe_Qok8qDA`). Klip CTA tampil normal, nggak di-blur. Gerak stiker ikut `ctaScene.format`: `question` pop+goyang, `reveal` pop gede lalu naik, `escape` miring lalu kabur ke kanan bawah, `escalate` terus membesar sampai akhir.
 - Caption: kalimat tanya kebawa "?", caption ngilang pas jeda ≥0,25 detik, lebar maksimal 60% frame.
 - BGM: file audio pertama (urut nama) di `assets/channels/faktacuil/bgm/`. Folder itu **lokal dan di-gitignore** (lagu berhak cipta, repo public). Jangan download atau copy lagu sendiri, dan jangan commit; Akmal yang naruh file. Kalau folder kosong, sementara pakai `assets/bgm/main.mp3` dan log bilang begitu; sebutin ke Akmal.

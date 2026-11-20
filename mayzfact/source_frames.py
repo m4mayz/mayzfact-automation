@@ -18,10 +18,12 @@ REF_EDGE = 0.15  # frame nggak diambil di 15% pinggir shot, biar nggak kena tran
 
 
 def _spread(n: int, cap: int) -> list[int]:
-    """Semua index kalau muat; selain itu `cap` index yang nyebar rata sampai ujung."""
+    """Semua index kalau muat; selain itu `cap` index yang nyebar rata dari shot pertama sampai terakhir."""
     if n <= cap:
         return list(range(n))
-    return [i * n // cap for i in range(cap)]
+    if cap <= 1:
+        return [0]
+    return [round(i * (n - 1) / (cap - 1)) for i in range(cap)]
 
 
 def source_shot_frames(
@@ -58,7 +60,7 @@ def source_shot_frames(
                 extract_frame(src, t, dest)
                 frames.append({"file": dest.relative_to(paths.root).as_posix(), "t": round(t, 2)})
         except Exception as exc:
-            log(f"[plan] frame shot source {index + 1} dilewat: {exc}")
+            log(f"[plan] frame shot source {index + 1} dilewat: {str(exc).splitlines()[0][:160]}")
             continue
         out.append({"index": index, "start_s": start, "end_s": end, "frames": frames})
     return out
