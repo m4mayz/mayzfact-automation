@@ -4,7 +4,11 @@ from mayzfact.cta import clean
 from mayzfact.cta_scene import build_scene, faktacuil_cta_stop
 from mayzfact.steps.timeline import FPS, _beat_of, _shot_entries
 from mayzfact.timing import word_timings
-from tests.faktacuil_fixtures import faktacuil_timeline_fixture, faktacuil_v2_dict
+from tests.faktacuil_fixtures import faktacuil_script, faktacuil_timeline_fixture
+
+
+def v2(fmt):
+    return faktacuil_script(cta=fmt).model_dump()
 
 
 def scene_inputs(script=None, duration=25):
@@ -25,7 +29,7 @@ def build(script):
 
 
 def test_lucky_scene_has_like_stage_only():
-    script = faktacuil_v2_dict("lucky")
+    script = v2("lucky")
     scene = build(script)
     assert scene["style"] == "faktacuil" and scene["format"] == "lucky" and scene["theme"] == "honey"
     assert [s["kind"] for s in scene["stages"]] == ["like"] and [c["kind"] for c in scene["cues"]] == ["like"]
@@ -35,7 +39,7 @@ def test_lucky_scene_has_like_stage_only():
 
 
 def test_subscribe_scene_cues_subscribe_word():
-    script = faktacuil_v2_dict("subscribe")
+    script = v2("subscribe")
     scene = build(script)
     assert [c["kind"] for c in scene["cues"]] == ["like", "subscribe"]
     words = scene_inputs(script)[3]
@@ -45,14 +49,14 @@ def test_subscribe_scene_cues_subscribe_word():
 
 
 def test_emoji_scene_runs_to_video_end():
-    script = faktacuil_v2_dict("emoji")
+    script = v2("emoji")
     scene = build(script)
     total = scene_inputs(script)[5]
     assert scene["from"] + scene["durationInFrames"] == total and scene["emoji"] == "🍯" and "theme" not in scene
 
 
 def test_scene_is_none_without_cta_scene():
-    s = faktacuil_v2_dict("lucky")
+    s = v2("lucky")
     s["cta_scene"] = None
     assert build(s) is None
 

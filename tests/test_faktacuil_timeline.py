@@ -13,7 +13,6 @@ from mayzfact.timing import word_timings
 from tests.faktacuil_fixtures import (
     faktacuil_script,
     faktacuil_timeline_fixture,
-    faktacuil_v2_dict,
 )
 from tests.test_faktacuil_pipeline import write_faktacuil_run
 from tests.test_pipeline import QUIET, VIDEO_ID, build_world
@@ -29,6 +28,10 @@ KEYWORDS = {"kardus", "kucing"}  # keyword di faktacuil_script
 def timeline(audio=AUDIO_ALL_SFX, script=None, **kwargs):
     script, alignment, clips = faktacuil_timeline_fixture(25, script)
     return build_timeline(clips, 25, 0.5, script=script, alignment=alignment, audio=audio, log=lambda m: None, **kwargs)
+
+
+def v2(fmt):
+    return faktacuil_script(cta=fmt).model_dump()
 
 
 def test_faktacuil_timeline_shape():
@@ -59,21 +62,21 @@ def test_faktacuil_click_lands_on_like_word():
 
 
 def test_subscribe_format_adds_second_click():
-    script, alignment, _ = faktacuil_timeline_fixture(25, faktacuil_v2_dict("subscribe"))
+    script, alignment, _ = faktacuil_timeline_fixture(25, v2("subscribe"))
     sub = next(w for w in word_timings(alignment) if w["text"].strip(",.").lower() == "subscribe")
-    tl = timeline(script=faktacuil_v2_dict("subscribe"))
+    tl = timeline(script=v2("subscribe"))
     clicks = [s for s in tl["sfx"] if s["src"] == "audio/sfx/click.mp3"]
     assert len(clicks) == 2
     assert abs(clicks[1]["from"] - (to_frame(sub["start_s"]) + FAKTACUIL_SUBSCRIBE_CLICK)) <= 8
 
 
 def test_emoji_scene_gets_lottie_src_only_when_given():
-    assert timeline(script=faktacuil_v2_dict("emoji"), cta_emoji_src="emoji/1f36f.json")["ctaScene"]["emojiSrc"] == "emoji/1f36f.json"
-    assert "emojiSrc" not in timeline(script=faktacuil_v2_dict("emoji"))["ctaScene"]
+    assert timeline(script=v2("emoji"), cta_emoji_src="emoji/1f36f.json")["ctaScene"]["emojiSrc"] == "emoji/1f36f.json"
+    assert "emojiSrc" not in timeline(script=v2("emoji"))["ctaScene"]
 
 
 def test_no_cta_scene_means_no_scene_and_no_click():
-    s = faktacuil_v2_dict("lucky")
+    s = v2("lucky")
     s["cta_scene"] = None  # beat CTA tetap ada, tapi scene-nya nggak dibikin
     tl = timeline(script=s)
     assert "ctaScene" not in tl and not any(x["src"] == "audio/sfx/click.mp3" for x in tl["sfx"])

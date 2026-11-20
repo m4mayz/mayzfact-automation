@@ -59,3 +59,14 @@ def test_subject_named_cta_does_not_merge_into_cta_group(tmp_path, cut_video):
                     download_source=lambda vid, dest: shutil.copyfile(cut_video, dest), log=lambda m: None)
     assert all(s["group"] == "subject-cta" for s in data["shots"] if s["beat"] == 2)
     assert all(s["group"] == "cta" for s in data["shots"] if s["beat"] in (4, 5))
+
+
+def test_faktacuil_plan_drops_queries_zh(tmp_path, cut_video):
+    script = faktacuil_script().model_dump()
+    for beat in script["beats"]:
+        beat["queries_zh"] = ["猫"]
+    tts = dict(duration_s=25, alignment=fake_alignment(script_text(script["beats"]), 25))
+    data = run_plan(RunPaths(tmp_path / "run"), script, tts, SOURCE, max_shot_s=2.0, hook_seconds=0.0,
+                    download_source=lambda vid, dest: shutil.copyfile(cut_video, dest), log=lambda m: None)
+    assert all(shot["keywords"]["zh"] == [] for shot in data["shots"])
+    assert all(group["keywords"]["zh"] == [] for group in data["groups"])

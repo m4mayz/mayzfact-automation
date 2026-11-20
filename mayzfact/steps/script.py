@@ -7,7 +7,11 @@ import re
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import cta_kinds
 from mayzfact.errors import PipelineError
-from mayzfact.faktacuil import faktacuil_problems, faktacuil_word_range
+from mayzfact.faktacuil import (
+    LEGACY_CTA_FORMATS,
+    faktacuil_problems,
+    faktacuil_word_range,
+)
 from mayzfact.models import Script
 from mayzfact.store import RunPaths, read_json
 from mayzfact.text import clean_text, ngram_overlap, words
@@ -168,7 +172,16 @@ def load_script(paths: RunPaths) -> Script:
             raise PipelineError("script", f"script.json pakai format lama (narration_mode: {shown}). Pipeline sekarang cuma "
                                           f'support narration_mode "top3" dan "faktacuil" (D-050, D-051). File run ini '
                                           f"dibiarin apa adanya; bikin run baru pakai salah satu format itu.")
-        if raw.get("cta_scene") is None:
+        scene = raw.get("cta_scene")
+        if mode == "faktacuil" and isinstance(scene, dict):
+            fmt = scene.get("format", "question" if "transform_word" in scene else None)
+            if "transform_word" in scene or fmt in LEGACY_CTA_FORMATS:
+                raise PipelineError("script", f"script.json pakai format CTA FaktaCuil lama ({fmt!r}) yang udah dihapus "
+                                              f'di CTA v2 (D-061). Format sekarang: "lucky", "subscribe", atau "emoji" '
+                                              f"(lihat skill bikin-faktacuil langkah 2), atau hapus cta_scene kalau "
+                                              f"videonya tanpa CTA. File run ini dibiarin apa adanya; tulis ulang "
+                                              f"script.json pakai format baru.")
+        if mode == "top3" and scene is None:
             raise PipelineError("script", f"script.json belum punya cta_scene. Format {mode} sekarang wajib cta_scene (D-050). "
                                           "Tambahin cta_scene sesuai skill bikin-short langkah 2; ini metadata visual, "
                                           "hash suara nggak berubah.")

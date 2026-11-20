@@ -38,11 +38,12 @@ def test_clearing_subject_does_not_hide_like_outside_cta():
 
 
 def test_valid_three_beat_cta_with_lead_in_still_passes():
-    def mutate(beats):  # beat tengah tanpa kata like/transform = lead-in gimmick yang sah
-        beats[4].update(text="Tapi coba tekan like dulu,")
-        beats[5].update(text="kamu pasti penasaran banget,")
-        beats.insert(6, {**beats[5], "text": "apakah like-mu berubah jadi madu?"})
-    assert problems_for(mutate) == []
+    data = faktacuil_script(cta="subscribe").model_dump()
+    beats = data["beats"]
+    beats[4]["text"] = "Tapi sebelum lanjut, coba tekan like,"
+    beats[5]["text"] = "nanti muncul madu,"
+    beats.insert(6, {**beats[5], "text": "subscribe jika berhasil."})
+    assert check_script(Script(**data), SOURCE_TEXT_EN)[0] == []
 
 
 # --- 2. check-script pakai settings per format ---

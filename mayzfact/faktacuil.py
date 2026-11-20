@@ -1,12 +1,11 @@
 """Konstanta dan aturan murni buat format FaktaCuil."""
 
 import math
-import random
 import re
 
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import SUBSCRIBE, clean
-from mayzfact.models import Script
+from mayzfact.models import FaktaCuilCtaScene, Script
 
 VOICE_SAMPLE_TEXT_ID: str = (
     "Kenapa kucing suka banget masuk ke kardus? Padahal kardus itu sempit dan nggak empuk. "
@@ -89,22 +88,8 @@ def quiz_count(beats: list, word: str) -> int:
     return sum(count_word(_beat_text(b), word) for b in beats[:quiz])
 
 
-# Format gimmick CTA FaktaCuil. `question` = format lama ("apakah like-mu berubah jadi X?"),
-# tiga sisanya dipilih acak per naskah lewat pick_cta_format().
-CTA_FORMATS: tuple[str, ...] = ("question", "reveal", "escape", "escalate")
-
-# Kata pemicu morph stiker per format (harus jadi `cta_scene.transform_word`).
-CTA_TRIGGERS: dict[str, tuple[str, ...]] = {
-    "question": (),  # bebas: divalidasi lewat frasa "jadi <objek tema>" + tanda "?"
-    "reveal": ("muncul", "munculnya", "tampil", "nongol", "keluar"),
-    "escape": ("kabur", "hilang", "pergi", "lolos"),
-    "escalate": ("deket", "mendekat", "besar", "membesar", "gede"),
-}
-
-
-def pick_cta_format(video_id: str) -> str:
-    """Format CTA acak tapi deterministik per video, biar nggak semua naskah pakai gimmick sama."""
-    return random.Random(video_id).choice(CTA_FORMATS)
+# Format CTA FaktaCuil lama yang udah dihapus di CTA v2 (D-061); naskah lama ditolak, file dibiarin.
+LEGACY_CTA_FORMATS: tuple[str, ...] = ("question", "reveal", "escape", "escalate")
 
 
 def faktacuil_word_range(video_speed: float) -> tuple[int, int, int]:
@@ -131,70 +116,102 @@ THEME_NOUNS_ID: dict[str, tuple[str, ...]] = {
 
 
 def faktacuil_problems(script: Script) -> list[str]:
-    """Aturan F2-F10 naskah FaktaCuil; F11 (panjang) dicek di check_script."""
-    from mayzfact.narration import cta_indices
-
+    """Aturan naskah FaktaCuil v2; F11 (panjang) dicek di check_script."""
     beats = script.beats
     problems: list[str] = []
     if any((c := parse_countdown(b.text)) and c.number is not None for b in beats):
         problems.append('FaktaCuil beats must not use "Number N," countdown announcements.')
-    cta = cta_indices(script)
-    if not 1 <= len(cta) <= 3:
-        problems.append("FaktaCuil CTA must be one contiguous block of 1-3 beats.")
     for n, b in enumerate(beats, start=1):
         if b.point or b.emoji or b.emoji_word:
             problems.append(f"FaktaCuil: panah cuma otomatis di shot pertama; beat {n} must have point=false and empty emoji fields.")
-    if cta:
-        problems.extend(_cta_problems(script, cta))
+        if len(b.queries) < 2:
+            problems.append(f"Beat {n} needs at least 2 search queries.")
+        if any(not q.isascii() for q in b.queries):
+            problems.append(f"Beat {n} search query must be English (ASCII only).")
+    cta = faktacuil_cta_indices(beats)
+    quiz = quiz_index(beats)
+    scene = script.cta_scene
+    fmt = scene.format if isinstance(scene, FaktaCuilCtaScene) else None
+    if scene is None and cta:
+        problems.append("FaktaCuil has CTA beats but no cta_scene. Set cta_scene or rewrite the beats.")
+    elif scene is not None and not cta:
+        problems.append("FaktaCuil cta_scene is set but no CTA beat was found. Write the CTA sentences from the skill.")
+    if (quiz is None) != (script.cta_quiz is None):
+        problems.append('FaktaCuil needs cta_quiz and the quiz beat ("berapa kali aku bilang") together, or neither.')
+    if fmt == "emoji" and (quiz is not None or script.cta_quiz is not None):
+        problems.append("FaktaCuil emoji CTA cannot be combined with the quiz.")
+    if scene is not None and cta:
+        problems.extend(_cta_problems(script, cta, fmt))
+    if quiz is not None:
+        problems.extend(_quiz_problems(script, quiz))
     for n, b in enumerate(beats, start=1):
-        if b.keyword and (n - 1 in cta or clean(b.keyword) not in {clean(t) for t in b.text.split()}
+        if b.keyword and (n - 1 in cta or n - 1 == quiz or clean(b.keyword) not in {clean(t) for t in b.text.split()}
                           or len(b.keyword.split()) != 1):
             problems.append(f"Beat {n} keyword {b.keyword!r} must be one word that appears in the beat text (and not in CTA beats).")
     return problems
 
 
-def _cta_problems(script: Script, cta: list[int]) -> list[str]:
+def _cta_problems(script: Script, cta: list[int], fmt: str | None) -> list[str]:
     beats = script.beats
     problems: list[str] = []
-    if not [i for i in range(1, cta[0]) if i not in cta]:
-        problems.append("FaktaCuil needs at least one misconception beat between the hook and the CTA.")
-    if len(range(cta[-1] + 1, len(beats))) < 2:
-        problems.append("FaktaCuil needs at least two answer beats after the CTA.")
+    quiz = quiz_index(beats)
+    if fmt == "emoji":
+        if len(cta) > 2 or cta[-1] != len(beats) - 1:
+            problems.append("FaktaCuil emoji CTA must be the last 1-2 beats.")
+    else:
+        if not 1 <= len(cta) <= 3:
+            problems.append("FaktaCuil CTA must be one contiguous block of 1-3 beats.")
+        if not [i for i in range(1, cta[0]) if i not in cta]:
+            problems.append("FaktaCuil needs at least one misconception beat between the hook and the CTA.")
+        answers = [i for i in range(cta[-1] + 1, len(beats)) if i != quiz]
+        if len(answers) < 2:
+            problems.append("FaktaCuil needs at least two answer beats after the CTA.")
     tokens = [beats[i].text.split() for i in cta]
     cleaned = {clean(t) for ts in tokens for t in ts}
-    if sum(len(id_like_positions(ts)) for ts in tokens) != 1 or cleaned & (SUBSCRIBE | ID_COMMENT):
-        problems.append('FaktaCuil CTA must invite exactly one like ("tekan like") and must not ask to subscribe or comment.')
-    theme, word = script.cta_scene.theme, script.cta_scene.transform_word
-    cta_format = script.cta_scene.format
-    nouns = "|".join(re.escape(n) for n in THEME_NOUNS_ID[theme])
-    if any(re.search(rf"\b{re.escape(word)}\b", beats[i].text, re.I) for i in cta):
-        word_in_cta = True
-    else:
-        word_in_cta = False
-    if cta_format == "question":
-        pattern = rf"\bjadi\s+(?:seekor\s+|sebuah\s+)?(?:{nouns})\b"
-        if not any(re.search(rf"\b{re.escape(word)}\b", beats[i].text, re.I) and beats[i].text.rstrip().endswith("?")
-                   and re.search(pattern, beats[i].text, re.I) for i in cta):
-            problems.append(f"CTA illustration {theme!r} does not match the narrated transformation object. "
-                            "Use the matching supported illustration; unsupported objects need an illustration first.")
-    else:
-        triggers = CTA_TRIGGERS[cta_format]
-        if clean(word) not in triggers:
-            problems.append(f"CTA format {cta_format!r} needs transform_word from {sorted(triggers)}, not {word!r}.")
-        elif not word_in_cta:
-            problems.append(f"CTA format {cta_format!r}: transform_word {word!r} must appear in a CTA beat.")
+    invites = sum(len(id_like_positions(ts)) for ts in tokens)
+    if invites != 1 or cleaned & ID_COMMENT or (fmt != "subscribe" and cleaned & SUBSCRIBE):
+        tail = "must not ask to comment." if fmt == "subscribe" else "must not ask to subscribe or comment."
+        problems.append(f'FaktaCuil CTA must invite exactly one like ("tekan like") and {tail}')
+    if fmt == "subscribe" and not cleaned & SUBSCRIBE:
+        problems.append('FaktaCuil subscribe CTA must ask to subscribe ("subscribe if it worked").')
+    if fmt in ("lucky", "subscribe"):
+        theme = script.cta_scene.theme
+        nouns = "|".join(re.escape(n) for n in THEME_NOUNS_ID[theme])
+        if not any(clean(t).startswith("muncul") for ts in tokens for t in ts):
+            problems.append("FaktaCuil CTA must say 'muncul' so the object beat stays inside the block.")
         if not any(re.search(rf"\b(?:{nouns})\b", beats[i].text, re.I) for i in cta):
-            problems.append(f"CTA format {cta_format!r} must name the theme object {theme!r} in the CTA block "
-                            "(every CTA beat must mention 'like' so it stays inside the block).")
+            problems.append(f"FaktaCuil CTA must name the sticker object {theme!r}; "
+                            "if that object has no sticker yet, make one first.")
+    if fmt == "emoji":
+        if "emoji" not in cleaned or not beats[cta[-1]].text.rstrip().endswith("?"):
+            problems.append("FaktaCuil emoji CTA must say 'emoji' and its last beat must end with '?'.")
     for i in cta:
         tokens_i = [clean(t) for t in beats[i].text.split()]
-        has_trigger = bool(id_like_positions(beats[i].text.split())) or bool(
-            re.search(rf"\b{re.escape(word)}\b", beats[i].text, re.I))
-        if any(t.startswith("like") for t in tokens_i) and not has_trigger:  # "like" nyasar di beat jawaban yang nempel
+        linked = any(t.startswith("muncul") or t.startswith("emoji") or t in SUBSCRIBE for t in tokens_i)
+        if any(t.startswith("like") for t in tokens_i) and not (id_like_positions(beats[i].text.split()) or linked):
             problems.append(f"Beat {i + 1} uses 'like' outside the CTA; rephrase it so it is not part of the CTA block.")
             continue
         if beats[i].subject:
             problems.append(f"CTA beat {i + 1} must have an empty subject.")
-        if beats[i].point:
-            problems.append(f"CTA beat {i + 1} must have point=false.")
+    return problems
+
+
+def _quiz_problems(script: Script, quiz: int) -> list[str]:
+    beats = script.beats
+    problems: list[str] = []
+    if quiz != len(beats) - 1:
+        problems.append("FaktaCuil quiz beat must be the last beat.")
+    if beats[quiz].subject:
+        problems.append(f"CTA beat {quiz + 1} must have an empty subject.")
+    config = script.cta_quiz
+    if config is None:
+        return problems
+    if clean(config.word) not in {clean(t) for t in beats[quiz].text.split()}:
+        problems.append(f"FaktaCuil quiz beat must name cta_quiz.word {config.word!r}.")
+    count = quiz_count(beats, config.word)
+    if count < 2:
+        problems.append(f"FaktaCuil {config.word!r} must be said at least twice before the quiz.")
+    elif config.answer != count:
+        problems.append(f"cta_quiz.answer is {config.answer} but {config.word!r} is said {count} times before the quiz beat. "
+                        f"Set answer to {count}.")
     return problems
