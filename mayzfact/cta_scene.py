@@ -12,20 +12,20 @@ from mayzfact.narration import cta_beat_indices
 
 def build_scene(script: dict, shots: list[dict], entries: list[dict], words: list[dict], beat_of: list[int],
                 countdown: list[dict], total: int) -> dict | None:
+    if script.get('narration_mode') == 'faktacuil':
+        return build_faktacuil_scene(script, shots, entries, words, beat_of, total)
     config = script.get('cta_scene')
     if not config:
         return None
     beats = script['beats']
-    fk = script.get('narration_mode') == 'faktacuil'
-    allowed = set(faktacuil_cta_indices(beats) if fk else cta_beat_indices(beats))
+    allowed = set(cta_beat_indices(beats))
     spans = [(s, e) for s, e in zip(shots, entries) if s.get('beat') in allowed]
     if not spans:
         return None
     start = min(e['from'] for _, e in spans)
     one = next((i for i, b in enumerate(beats) if (c := parse_countdown(b['text'])) and c.number == 1), len(beats))
-    stop = (faktacuil_cta_stop(shots, entries, allowed, total) if fk else
-            next((c['numberFrom'] for c in countdown if c['number'] == 1),
-                 min((e['from'] for s, e in zip(shots, entries) if s.get('beat', -1) >= one), default=total)))
+    stop = next((c['numberFrom'] for c in countdown if c['number'] == 1),
+                min((e['from'] for s, e in zip(shots, entries) if s.get('beat', -1) >= one), default=total))
     if stop <= start:
         return None
     cues = {}
@@ -33,22 +33,18 @@ def build_scene(script: dict, shots: list[dict], entries: list[dict], words: lis
     for beat in sorted(allowed):
         local = [w for w, b in zip(words, beat_of) if b == beat]
         local_texts = [x['text'] for x in local]
-        id_likes = set(id_like_positions(local_texts)) if fk else set()
         for i, w in enumerate(local):
             token = clean(w['text'])
-            if fk:  # FaktaCuil cuma like + transform; subscribe/comment bukan bagian scene
-                kind = ('transform' if token == config['transform_word'].lower() else 'like' if i in id_likes else None)
-            else:
-                kind = ('transform' if token == config['transform_word'].lower() else
-                        'subscribe' if token in SUBSCRIBE else 'comment' if token in COMMENT else
-                        'like' if is_like_cta(local_texts, i) else None)
+            kind = ('transform' if token == config['transform_word'].lower() else
+                    'subscribe' if token in SUBSCRIBE else 'comment' if token in COMMENT else
+                    'like' if is_like_cta(local_texts, i) else None)
             frame = int(math.floor(w['start_s'] * 30 + .5))
             if kind and start <= frame < stop and kind not in cues:
                 cues[kind] = dict(kind=kind, word=w['text'], **{'from': frame})
                 if kind == 'like':
                     # Mulai saat frasa ajakan terdengar; klik tetap di kata like.
-                    begin = id_like_begin(local_texts, i) if fk else i
-                    if not fk and i >= 1 and clean(local[i-1]['text']) in {'tap', 'tapping', 'hit', 'press', 'smash'}:
+                    begin = i
+                    if i >= 1 and clean(local[i-1]['text']) in {'tap', 'tapping', 'hit', 'press', 'smash'}:
                         begin = i-1
                         if i >= 2 and clean(local[i-2]['text']) == 'try':
                             begin = i-2
@@ -56,7 +52,7 @@ def build_scene(script: dict, shots: list[dict], entries: list[dict], words: lis
     bounds = {}
     for beat in sorted(allowed):
         text = beats[beat]['text']
-        kinds = ({'like'} if id_like_positions(text.split()) else set()) if fk else cta_kinds(text)
+        kinds = cta_kinds(text)
         if re.search(rf"\b{re.escape(config['transform_word'])}\b", text, re.I):
             kinds.add('transform')
         first = min((e['from'] for s, e in spans if s.get('beat') == beat), default=None)
@@ -79,9 +75,82 @@ def build_scene(script: dict, shots: list[dict], entries: list[dict], words: lis
         if kind in cues:
             stage['triggerAt'] = cues[kind]['from'] - begin
         stages.append(stage)
-    return dict(theme=config['theme'], commentText=config['comment_text'], format=config.get('format', 'question'),
+    return dict(theme=config['theme'], commentText=config['comment_text'],
                 durationInFrames=stop-start, stages=stages,
                 cues=sorted(cues.values(), key=lambda c: c['from']), **{'from': start})
+
+
+def build_faktacuil_scene(script: dict, shots: list[dict], entries: list[dict], words: list[dict],
+                          beat_of: list[int], total: int) -> dict | None:
+    """Scene CTA FaktaCuil: like selalu ada; subscribe nambah stage; emoji tahan sampai video selesai."""
+    config = script.get('cta_scene')
+    if not config:
+        return None
+    beats = script['beats']
+    allowed = faktacuil_cta_indices(beats)
+    spans = [(s, e) for s, e in zip(shots, entries) if s.get('beat') in set(allowed)]
+    if not spans:
+        return None
+    # format lama (question dkk) diperlakukan kayak lucky sampai schema-nya diganti
+    fmt = config.get('format') if config.get('format') in ('lucky', 'subscribe', 'emoji') else 'lucky'
+    start = min(e['from'] for _, e in spans)
+    stop = total if fmt == 'emoji' else faktacuil_cta_stop(shots, entries, allowed, total)
+    if stop <= start:
+        return None
+    cues: dict[str, dict] = {}
+    like_begin = None
+    sub_beat = None
+    for beat in allowed:
+        local = [w for w, b in zip(words, beat_of) if b == beat]
+        texts = [x['text'] for x in local]
+        likes = set(id_like_positions(texts))
+        if sub_beat is None and fmt == 'subscribe' and any(clean(t) in SUBSCRIBE for t in beats[beat]['text'].split()):
+            sub_beat = beat
+        for i, w in enumerate(local):
+            frame = int(math.floor(w['start_s'] * 30 + .5))
+            if not start <= frame < stop:
+                continue
+            if 'like' not in cues and i in likes:
+                cues['like'] = dict(kind='like', word=w['text'], **{'from': frame})
+                begin = id_like_begin(texts, i)  # mundur ke "coba" biar pill muncul sebelum kata like
+                like_begin = max(start, int(math.floor(local[begin]['start_s'] * 30 + .5)))
+            if fmt == 'subscribe' and 'subscribe' not in cues and clean(w['text']) in SUBSCRIBE:
+                cues['subscribe'] = dict(kind='subscribe', word=w['text'], **{'from': frame})
+    if like_begin is None:  # alignment kosong: mulai dari shot pertama beat yang nyebut ajakan like
+        like_beat = next((b for b in allowed if id_like_positions(beats[b]['text'].split())), None)
+        if like_beat is not None:
+            like_begin = min((e['from'] for s, e in spans if s.get('beat') == like_beat), default=None)
+    if like_begin is None:
+        return None
+    sub_from = None
+    if fmt == 'subscribe':
+        if 'subscribe' in cues:
+            sub_from = max(start, cues['subscribe']['from'])
+        elif sub_beat is not None:
+            sub_from = min((e['from'] for s, e in spans if s.get('beat') == sub_beat), default=None)
+        if sub_from is not None and sub_from <= like_begin:
+            sub_from = None
+    stages = []
+    like_end = sub_from if sub_from is not None else stop
+    if like_end > like_begin:
+        stage = dict(kind='like', durationInFrames=like_end-like_begin,
+                     timing='word' if 'like' in cues else 'structure', **{'from': like_begin})
+        if 'like' in cues:
+            stage['triggerAt'] = cues['like']['from'] - like_begin
+        stages.append(stage)
+    if sub_from is not None and stop > sub_from:
+        stage = dict(kind='subscribe', durationInFrames=stop-sub_from,
+                     timing='word' if 'subscribe' in cues else 'structure', **{'from': sub_from})
+        if 'subscribe' in cues:
+            stage['triggerAt'] = cues['subscribe']['from'] - sub_from
+        stages.append(stage)
+    scene = dict(style='faktacuil', format=fmt, durationInFrames=stop-start, stages=stages,
+                 cues=sorted(cues.values(), key=lambda c: c['from']), **{'from': start})
+    if config.get('theme'):
+        scene['theme'] = config['theme']
+    if fmt == 'emoji' and config.get('emoji'):
+        scene['emoji'] = config['emoji']
+    return scene
 
 
 def faktacuil_cta_stop(shots: list[dict], entries: list[dict], allowed, total: int) -> int:

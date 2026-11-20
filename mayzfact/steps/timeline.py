@@ -10,9 +10,8 @@ from typing import Any, Callable
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import _EDGE_PUNCT, SUBSCRIBE, is_like_cta
 from mayzfact.cta import clean as _clean
-from mayzfact.cta_scene import build_scene, faktacuil_cta_stop
+from mayzfact.cta_scene import build_scene
 from mayzfact.errors import PipelineError
-from mayzfact.faktacuil import faktacuil_cta_indices, id_like_positions
 from mayzfact.media import (
     FRAME_H,
     FRAME_W,
@@ -70,6 +69,7 @@ EMOJI_FIT_FRAMES = 30  # kata pemicu mepet card/CTA: mulainya dimajuin sampai em
 # CTA ngikutin source i2xag frame per frame: like 16 frame (klik di frame 3), subscribe 27 frame (klik di frame 13).
 CTA_FRAMES = {"like": 16, "subscribe": 27}
 CTA_CLICK = {"like": 4, "subscribe": 14}
+FAKTACUIL_SUBSCRIBE_CLICK = 12  # harus sama kayak SUB_CLICK di FaktaCuilCta.tsx: kursor klik setelah pill SUBSCRIBE muncul
 CLICK_LEAD_FRAMES = 3  # puncak bunyi mouse-click di ±0.1 detik
 NUMBER_SFX_LEAD_FRAMES = 9  # fire whoosh baru kedengeran ±0.28 detik, puncaknya pas api di kartu lagi gede
 BGM_VOLUME = 0.12
@@ -425,22 +425,20 @@ def _top3_cta(words: list[dict], beat_of: list[int], beats: list[dict], countdow
     return out
 
 
-def _faktacuil_cta(words: list[dict], beat_of: list[int], beats: list[dict], shots: list[dict], entries: list[dict],
-                   total: int) -> list[dict]:
-    """Klik like FaktaCuil di kata ajakan Indonesia ("tekan like"); selesai pas scene CTA berhenti."""
-    allowed = faktacuil_cta_indices(beats)
-    if not allowed:
-        return []
-    stop = faktacuil_cta_stop(shots, entries, allowed, total)
+def _faktacuil_clicks(scene: dict) -> list[dict]:
+    """Klik FaktaCuil diturunin dari cue scene: like di kata like, subscribe di kata subscribe."""
+    scene_end = scene["from"] + scene["durationInFrames"]
     out = []
-    for beat in allowed:
-        local = [w for w, b in zip(words, beat_of) if b == beat]
-        for i in id_like_positions([w["text"] for w in local]):
-            start = max(0, to_frame(local[i]["start_s"]))
-            end = min(stop, start + CTA_FRAMES["like"])
-            if start < stop and end > start:
-                out.append({"kind": "like", "from": start, "durationInFrames": end - start,
-                            "clickAt": min(CTA_CLICK["like"], end - start - 1)})
+    for cue in scene.get("cues", []):
+        kind = cue["kind"]
+        if kind not in CTA_FRAMES:
+            continue
+        start = max(0, cue["from"])
+        end = min(scene_end, start + CTA_FRAMES[kind])
+        if start < scene_end and end > start:
+            click = CTA_CLICK["like"] if kind == "like" else FAKTACUIL_SUBSCRIBE_CLICK
+            out.append({"kind": kind, "from": start, "durationInFrames": end - start,
+                        "clickAt": min(click, end - start - 1)})
     return out
 
 
@@ -503,6 +501,7 @@ def build_timeline(
     voice_envelope: Any = None,
     blurs: dict | None = None,
     audio_file: str = "voice.mp3",
+    cta_emoji_src: str | None = None,
     log: Callable[[str], None] = print,
 ) -> dict:
     shots = clips["shots"]
@@ -534,8 +533,7 @@ def build_timeline(
             keywords = {i: b.get("keyword", "") for i, b in enumerate(script["beats"])} if faktacuil else None
             captions = _captions(words, audio_duration_s, spans, subject_words, total, keywords, beat_of)
             timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
-            cta = (_faktacuil_cta(words, beat_of, script["beats"], shots, entries, total) if faktacuil
-                   else _top3_cta(words, beat_of, script["beats"], countdown, total))
+            cta = [] if faktacuil else _top3_cta(words, beat_of, script["beats"], countdown, total)
             emojis = _emojis(words, beat_of, marks, cta, countdown, total)
         except (PipelineError, IndexError, KeyError) as exc:  # caption/card cuma hiasan: timeline tetap jadi tanpa itu
             reason = exc.message.splitlines()[0] if isinstance(exc, PipelineError) else f"alignment nggak lengkap ({exc!r})"
@@ -550,7 +548,9 @@ def build_timeline(
         begin, end = scene['from'], scene['from'] + scene['durationInFrames']
         emojis = [e for e in emojis if e['from'] + e['durationInFrames'] <= begin or e['from'] >= end]
         if faktacuil:  # gaya FaktaBor: pill like di atas klip CTA dari brief, klipnya tampil normal
-            scene['style'] = 'faktacuil'
+            cta = _faktacuil_clicks(scene)
+            if scene.get('format') == 'emoji' and cta_emoji_src:
+                scene['emojiSrc'] = cta_emoji_src
         else:
             for e in entries:
                 if begin <= e['from'] < end:
@@ -593,7 +593,8 @@ def build_timeline(
 
 def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float, script: dict | None = None,
                  audio: dict | None = None, overlays: dict | None = None, marks: dict | None = None,
-                 blurs: dict | None = None, log: Callable[[str], None] = print) -> dict:
+                 blurs: dict | None = None, cta_emoji_src: str | None = None,
+                 log: Callable[[str], None] = print) -> dict:
     audio_file = tts.get("audio_file", "voice.mp3")
     if audio_file not in ("voice.mp3", "voice.wav"):
         raise PipelineError("timeline", "audio_file di tts.json harus voice.mp3 atau voice.wav.")
@@ -610,6 +611,6 @@ def run_timeline(paths: RunPaths, clips: dict, tts: dict, *, fg_min_ratio: float
             log(f"[timeline] energi suara gagal dibaca, timing pakai alignment: {exc}")
     data = build_timeline(clips, tts["duration_s"], fg_min_ratio, script=script, alignment=tts.get("alignment"),
                           audio=audio, overlays=overlays, marks=marks, voice_envelope=envelope, blurs=blurs,
-                          audio_file=audio_file, log=log)
+                          audio_file=audio_file, cta_emoji_src=cta_emoji_src, log=log)
     write_json_atomic(paths.timeline_json, data)
     return data

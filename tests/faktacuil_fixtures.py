@@ -40,6 +40,26 @@ def faktacuil_script(total_words: int = 69) -> Script:
     )
 
 
+def faktacuil_v2_dict(fmt: str) -> dict:
+    """Naskah FaktaCuil bentuk CTA v2 buat test scene/timeline (schema-nya nyusul di Task 3)."""
+    script = faktacuil_script().model_dump()
+    if fmt == "lucky":
+        script["beats"][4]["text"] = "Tapi sebelum lanjut, coba tekan like,"
+        script["beats"][5]["text"] = "jika beruntung bisa muncul madu."
+        script["cta_scene"] = {"format": "lucky", "theme": "honey"}
+    elif fmt == "subscribe":
+        script["beats"][5]["text"] = "nanti muncul madu, subscribe jika berhasil."
+        script["cta_scene"] = {"format": "subscribe", "theme": "honey"}
+    elif fmt == "emoji":
+        del script["beats"][4:6]
+        script["beats"].append({**script["beats"][-1], "text": "Tapi mengapa ada emoji madu saat tekan like?",
+                                "subject": "", "keyword": ""})
+        script["cta_scene"] = {"format": "emoji", "emoji": "🍯"}
+    else:
+        raise ValueError(f"format nggak dikenal: {fmt!r}")
+    return script
+
+
 def faktacuil_timeline_fixture(duration: float = 25, script: dict | None = None):
     """(script, alignment, clips) dengan 1 shot per beat, pola timeline_fixture di test_cta_scene."""
     from mayzfact.text import script_text

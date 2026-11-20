@@ -2,12 +2,18 @@ import pytest
 
 from mayzfact.config import Settings
 from mayzfact.pipeline import run_pipeline
-from mayzfact.steps.timeline import CAPTION_KEYWORD, build_timeline, to_frame
+from mayzfact.steps.timeline import (
+    CAPTION_KEYWORD,
+    FAKTACUIL_SUBSCRIBE_CLICK,
+    build_timeline,
+    to_frame,
+)
 from mayzfact.store import RunPaths, read_json
 from mayzfact.timing import word_timings
 from tests.faktacuil_fixtures import (
     faktacuil_script,
     faktacuil_timeline_fixture,
+    faktacuil_v2_dict,
 )
 from tests.test_faktacuil_pipeline import write_faktacuil_run
 from tests.test_pipeline import QUIET, VIDEO_ID, build_world
@@ -50,6 +56,27 @@ def test_faktacuil_click_lands_on_like_word():
     assert abs(click["from"] - to_frame(like["start_s"])) <= 8  # klik di kata like, bukan di "like-mu"
     scene = tl["ctaScene"]
     assert scene["from"] <= click["from"] < scene["from"] + scene["durationInFrames"]
+
+
+def test_subscribe_format_adds_second_click():
+    script, alignment, _ = faktacuil_timeline_fixture(25, faktacuil_v2_dict("subscribe"))
+    sub = next(w for w in word_timings(alignment) if w["text"].strip(",.").lower() == "subscribe")
+    tl = timeline(script=faktacuil_v2_dict("subscribe"))
+    clicks = [s for s in tl["sfx"] if s["src"] == "audio/sfx/click.mp3"]
+    assert len(clicks) == 2
+    assert abs(clicks[1]["from"] - (to_frame(sub["start_s"]) + FAKTACUIL_SUBSCRIBE_CLICK)) <= 8
+
+
+def test_emoji_scene_gets_lottie_src_only_when_given():
+    assert timeline(script=faktacuil_v2_dict("emoji"), cta_emoji_src="emoji/1f36f.json")["ctaScene"]["emojiSrc"] == "emoji/1f36f.json"
+    assert "emojiSrc" not in timeline(script=faktacuil_v2_dict("emoji"))["ctaScene"]
+
+
+def test_no_cta_scene_means_no_scene_and_no_click():
+    s = faktacuil_v2_dict("lucky")
+    s["cta_scene"] = None  # beat CTA tetap ada, tapi scene-nya nggak dibikin
+    tl = timeline(script=s)
+    assert "ctaScene" not in tl and not any(x["src"] == "audio/sfx/click.mp3" for x in tl["sfx"])
 
 
 def test_top3_timeline_has_no_caption_style():

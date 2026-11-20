@@ -46,13 +46,47 @@ def id_like_begin(tokens: list[str], j: int) -> int:
 
 
 def faktacuil_cta_indices(beats: list) -> list[int]:
-    anchors = []
-    for i, beat in enumerate(beats):
-        text = beat["text"] if isinstance(beat, dict) else beat.text
-        tokens = [clean(t) for t in text.split()]
-        if any(t.startswith("like") or t in SUBSCRIBE or t in ID_COMMENT for t in tokens):
-            anchors.append(i)
-    return list(range(anchors[0], anchors[-1] + 1)) if anchors else []
+    tokens = [[clean(t) for t in _beat_text(b).split()] for b in beats]
+    quiz = quiz_index(beats)
+    # beat kuis nggak pernah jadi anchor walau kalimatnya nyebut "like"
+    anchors = [i for i, toks in enumerate(tokens)
+               if i != quiz and any(t.startswith("like") or t in SUBSCRIBE or t in ID_COMMENT for t in toks)]
+    if not anchors:
+        return []
+    lo, hi = anchors[0], anchors[-1]
+    for word in LINK_WORDS:  # beat objek/emoji tanpa "like" tetap kehitung bagian blok CTA
+        if not any(t.startswith(word) for i in range(lo, hi + 1) for t in tokens[i]):
+            if hi + 1 < len(beats) and hi + 1 != quiz and any(t.startswith(word) for t in tokens[hi + 1]):
+                hi += 1
+            elif lo > 0 and any(t.startswith(word) for t in tokens[lo - 1]):
+                lo -= 1
+    return list(range(lo, hi + 1))
+
+
+QUIZ_PHRASE: str = "berapa kali aku bilang"
+LINK_WORDS: tuple[str, ...] = ("muncul", "emoji")  # kata penghubung beat objek/emoji ke blok CTA
+
+
+def _beat_text(beat) -> str:
+    return beat["text"] if isinstance(beat, dict) else beat.text
+
+
+def quiz_index(beats: list) -> int | None:
+    """Index beat pertama yang nyebut frasa kuis, atau None."""
+    return next((i for i, beat in enumerate(beats) if QUIZ_PHRASE in _beat_text(beat).lower()), None)
+
+
+def count_word(text: str, word: str) -> int:
+    """Kata utuh doang: "Kardus," dan "KARDUS" dihitung, "kardusnya"/"kardus-kardus" nggak."""
+    return sum(1 for t in text.split() if clean(t) == word.lower())
+
+
+def quiz_count(beats: list, word: str) -> int:
+    """Jumlah `word` sebelum beat kuis; kalimat kuisnya sendiri nggak dihitung."""
+    quiz = quiz_index(beats)
+    if quiz is None:
+        return 0
+    return sum(count_word(_beat_text(b), word) for b in beats[:quiz])
 
 
 # Format gimmick CTA FaktaCuil. `question` = format lama ("apakah like-mu berubah jadi X?"),
