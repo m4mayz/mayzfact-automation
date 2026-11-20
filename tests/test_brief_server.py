@@ -204,6 +204,16 @@ def test_shot_time_buttons_play_the_narration_not_the_source(server):
     assert 'onclick="playBeat(this, 2.0, 4.0)"' in html and "disabled" not in html.split("time-seek-pill")[2][:40]
 
 
+def test_shots_render_in_index_order_with_group_label():
+    from mayzfact.brief.page import render_page
+    plan = {**PLAN, "groups": [{"id": "kucing", "label": "kucing", "shots": [0, 2], "keywords": {"en": [], "zh": []}},
+                               {"id": "kardus", "label": "kardus", "shots": [1], "keywords": {"en": [], "zh": []}}]}
+    html = render_page("abc", plan, {"shots": {}}, {})
+    assert html.index('data-shot-box="0"') < html.index('data-shot-box="1"') < html.index('data-shot-box="2"')
+    assert html.count('class="z-badge group"') == 3 and ">kardus</span>" in html
+    assert "0/2 kelompok" in html  # metric per grup di header tetap ada
+
+
 def test_cloudflared_quick_tunnel_host_allowed(server):
     """cloudflared quick tunnel (*.trycloudflare.com) boleh, domain mirip tetap ditolak."""
     paths, base = server

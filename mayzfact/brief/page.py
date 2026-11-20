@@ -2102,6 +2102,7 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
       <div class="shot-top-bar">
         <div class="shot-meta-left">
           <span class="shot-num">Shot {s_idx + 1:02d}</span>
+          <span class="z-badge group">{escape(group.get("label") or group["id"])}</span>
           <button type="button" class="time-seek-pill" {pill_attr}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             {shot['start_s']:.1f}s – {shot['end_s']:.1f}s
@@ -2152,13 +2153,15 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
     </div>"""
 
 
-def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: bool = False,
-          prefetch: dict | None = None, sfx_names: list[str] | None = None, previews: dict | None = None) -> str:
-    is_hook = group["id"] == "hook"
-
+def _shots_card(plan: dict, links: dict, status: dict, voice_ok: bool = False,
+                prefetch: dict | None = None, sfx_names: list[str] | None = None,
+                previews: dict | None = None) -> str:
+    """Semua shot dalam 1 kartu urut index; kelompok tiap shot cuma label info, bukan pemisah kartu."""
     shot_rows = []
-    for shot in shots:
+    for shot in sorted(plan["shots"], key=lambda s: s["index"]):
         s_idx = shot["index"]
+        group = next(g for g in plan["groups"] if s_idx in g["shots"])
+
         entry = None
         if "shots" in links:
             entry = links["shots"].get(str(s_idx))
@@ -2177,11 +2180,11 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: b
         shot_rows.append(_shot_row(shot, group, entry, st, voice_ok, prefetch, sfx_names, (previews or {}).get(s_idx)))
 
     return f"""
-<section class="card-group card" data-group="{escape(group['id'], quote=True)}">
+<section class="card-group card" data-group="all">
   <div class="group-header">
     <div class="group-title-wrap">
-      <h2 class="group-title">{escape(group['label'])}</h2>
-      <span class="group-tag {'hook' if is_hook else ''}">Kelompok · {len(shots)} Shot</span>
+      <h2 class="group-title">Shot</h2>
+      <span class="group-tag">Semua · {len(plan["shots"])} Shot</span>
     </div>
   </div>
   <div class="shots">{''.join(shot_rows)}</div>
@@ -2191,7 +2194,6 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: b
 def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str | None = None,
                 voice: str | None = None, prefetch: dict | None = None, sfx_names: list[str] | None = None,
                 previews: dict | None = None) -> str:
-    shots = {shot["index"]: shot for shot in plan["shots"]}
     groups = plan["groups"]
     auto = {s['index'] for s in plan['shots'] if s.get('auto_cta')}
 
@@ -2252,10 +2254,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
           </div>
         </div>""")
 
-    cards = "".join(
-        _card(group, [shots[i] for i in group["shots"]], links, status, voice is not None, prefetch, sfx_names, previews)
-        for group in groups
-    )
+    cards = _shots_card(plan, links, status, voice is not None, prefetch, sfx_names, previews)
 
     if source:
         aside = f"""
