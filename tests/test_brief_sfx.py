@@ -64,6 +64,13 @@ def test_preview_box_always_rendered_and_enabled_when_ready(brief):
     assert not preview_disabled(httpx.get(base + "/").text, 0)
 
 
+def test_closing_preview_while_loading_never_builds_media(brief):
+    _, base, _ = brief
+    html = httpx.get(base + "/").text
+    # preview ditutup pas Range request masih jalan: jangan bikin video/foto yang muter diam-diam
+    assert "btn.getAttribute('aria-expanded') !== 'true'" in html
+
+
 def test_speed_select_shows_saved_speed_and_is_off_for_photos(brief):
     paths, base, _ = brief
     write_json_atomic(paths.links_json, {"shots": {"0": {"url": "https://a.b/v", "speed": 1.5},

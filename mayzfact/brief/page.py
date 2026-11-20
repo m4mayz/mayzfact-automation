@@ -592,6 +592,11 @@ body {
   font-weight: 700;
   font-size: 13px;
 }
+.source-frames figure {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
 .source-shot { margin-top: 10px; }
 .source-shot-label { font-size: 11.5px; color: var(--text-muted); }
 .ref-time { font-size: 10.5px; color: var(--text-muted); }
@@ -1810,6 +1815,7 @@ async function togglePreview(idx) {
     stage.textContent = 'Klipnya belum ke-download. Tunggu badge "siap", terus buka lagi.';
     return;
   }
+  if (btn.getAttribute('aria-expanded') !== 'true') return;  // preview ditutup pas nunggu (link diganti): jangan bikin media
   stage.replaceChildren();
   if (type.startsWith('image/')) {
     const sel = document.querySelector(`select[data-speed="${idx}"]`);

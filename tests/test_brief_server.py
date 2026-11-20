@@ -229,6 +229,7 @@ def test_faktacuil_brief_shows_source_frame_card():
     html = render_page("abc", {**PLAN, "narration_mode": "faktacuil", "source_shots": shots}, {"shots": {}}, {})
     assert 'id="source-frames"' in html and "Frame referensi source (1 shot)" in html
     assert '/files/plan/ref_01_0.jpg' in html and "openLightbox(this.src)" in html and ">0.4s<" in html
+    assert "<figure>" in html and ".source-frames figure" in html  # caption detik di bawah gambar, bukan nyamping
     empty = render_page("abc", {**PLAN, "narration_mode": "faktacuil", "source_shots": []}, {"shots": {}}, {})
     assert "--from plan" in empty
     assert 'id="source-frames"' not in render_page("abc", PLAN, {"shots": {}}, {})  # top3 / plan lama
