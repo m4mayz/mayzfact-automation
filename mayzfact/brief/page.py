@@ -582,6 +582,20 @@ body {
   flex-shrink: 0;
 }
 
+/* Frame referensi source (FaktaCuil): 1 kartu ketutup default biar daftar shot nggak kedorong */
+.source-frames {
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+.source-frames summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+}
+.source-shot { margin-top: 10px; }
+.source-shot-label { font-size: 11.5px; color: var(--text-muted); }
+.ref-time { font-size: 10.5px; color: var(--text-muted); }
+
 /* Shots List */
 .shots {
   display: grid;
@@ -1626,7 +1640,9 @@ document.addEventListener('input', (e) => {
   if (e.target.matches('input[data-shot]')) {
     e.target.dataset.dirty = '1';  // link baru: preview lama udah bukan klipnya
     const idx = e.target.dataset.shot;
-    if (previews[idx]) closePreview(idx);
+    const btn = document.querySelector(`[data-preview-btn="${idx}"]`);
+    if (previews[idx] || (btn && btn.getAttribute('aria-expanded') === 'true')) closePreview(idx);
+    syncSpeedSelect(idx, e.target.value);
     syncPreviewButtons();
   }
   if (e.target.matches('input[data-shot], input[data-time-start], input[data-time-end], input[data-sfx-at]')) {
@@ -1663,6 +1679,13 @@ function collectSpeed() {
   });
   return out;
 }
+const IMAGE_LINK = /\.(jpe?g|png|webp)(?:[?#].*)?$/i;  // link/file foto: speed diabaikan
+function syncSpeedSelect(idx, value) {
+  const sel = document.querySelector(`select[data-speed="${idx}"]`);
+  if (!sel) return;
+  const clean = value.trim().replace(/\s+(@\S+|#\S+)\s*$/, '').replace(/^file:/i, '');  // buang @detik / #pick
+  sel.disabled = IMAGE_LINK.test(clean);
+}
 function syncPreviewButtons() {
   document.querySelectorAll('[data-preview-btn]').forEach(btn => {
     const idx = btn.dataset.previewBtn;
@@ -1673,7 +1696,7 @@ function syncPreviewButtons() {
     const ready = !dirty && (value.startsWith('file:') ||
       (!!value && !!badge && !!badge.dataset.prefetchUrl && badge.classList.contains('pf-siap')));
     btn.disabled = !ready;
-    if (!ready && previews[idx]) closePreview(idx);
+    if (!ready && (previews[idx] || btn.getAttribute('aria-expanded') === 'true')) closePreview(idx);
   });
 }
 function windowStart(idx, video) {
@@ -2267,6 +2290,36 @@ def _shots_card(plan: dict, links: dict, status: dict, voice_ok: bool = False,
 </section>"""
 
 
+def _source_frames_card(run_id: str, plan: dict) -> str:
+    """Kartu frame referensi dari shot source (FaktaCuil): 2 frame acak per shot, ketutup default di HP."""
+    if plan.get("narration_mode") != "faktacuil":
+        return ""
+    shots = plan.get("source_shots") or []
+    if not shots:
+        return f"""
+    <details class="z-card source-frames" id="source-frames">
+      <summary>Frame referensi source (0 shot)</summary>
+      <p>Frame referensi belum ada (source.mp4 nggak ada atau cut detection gagal).
+      Jalanin: mayzfact run {escape(run_id)} --from plan --no-render</p>
+    </details>"""
+    blocks = []
+    for shot in shots:
+        refs = "".join(
+            f'<figure><img src="/files/{escape(f["file"])}" onclick="openLightbox(this.src)" loading="lazy">'
+            f'<span class="ref-time">{f["t"]:.1f}s</span></figure>'
+            for f in shot.get("frames", [])
+        )
+        blocks.append(f"""
+      <div class="source-shot">
+        <div class="source-shot-label">Shot source {shot["index"] + 1} · {shot["start_s"]:.1f}–{shot["end_s"]:.1f}s</div>
+        <div class="refs">{refs}</div>
+      </div>""")
+    return f"""
+    <details class="z-card source-frames" id="source-frames">
+      <summary>Frame referensi source ({len(shots)} shot)</summary>{''.join(blocks)}
+    </details>"""
+
+
 def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str | None = None,
                 voice: str | None = None, prefetch: dict | None = None, sfx_names: list[str] | None = None,
                 previews: dict | None = None) -> str:
@@ -2436,6 +2489,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
     {aside}
     <main class="cards-stack">
       <section id="progress"></section>
+      {_source_frames_card(run_id, plan)}
       {cards}
     </main>
   </div>

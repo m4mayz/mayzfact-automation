@@ -1,3 +1,4 @@
+import re
 import threading
 
 import httpx
@@ -212,6 +213,35 @@ def test_shots_render_in_index_order_with_group_label():
     assert html.index('data-shot-box="0"') < html.index('data-shot-box="1"') < html.index('data-shot-box="2"')
     assert html.count('class="z-badge group"') == 3 and ">kardus</span>" in html
     assert "0/2 kelompok" in html  # metric per grup di header tetap ada
+
+
+def test_missing_frames_skipped_for_faktacuil(tmp_path):
+    from mayzfact.brief.server import missing_frames
+    plan = {**PLAN, "narration_mode": "faktacuil", "shots": [{**s, "ref_frames": []} for s in PLAN["shots"]]}
+    assert missing_frames(RunPaths(tmp_path), plan) == []
+    assert missing_frames(RunPaths(tmp_path), {**plan, "narration_mode": "top3"}) == [0, 1, 2]
+
+
+def test_faktacuil_brief_shows_source_frame_card():
+    from mayzfact.brief.page import render_page
+    shots = [{"index": 0, "start_s": 0.0, "end_s": 1.0, "frames": [{"file": "plan/ref_01_0.jpg", "t": 0.42},
+                                                                {"file": "plan/ref_01_1.jpg", "t": 0.77}]}]
+    html = render_page("abc", {**PLAN, "narration_mode": "faktacuil", "source_shots": shots}, {"shots": {}}, {})
+    assert 'id="source-frames"' in html and "Frame referensi source (1 shot)" in html
+    assert '/files/plan/ref_01_0.jpg' in html and "openLightbox(this.src)" in html and ">0.4s<" in html
+    empty = render_page("abc", {**PLAN, "narration_mode": "faktacuil", "source_shots": []}, {"shots": {}}, {})
+    assert "--from plan" in empty
+    assert 'id="source-frames"' not in render_page("abc", PLAN, {"shots": {}}, {})  # top3 / plan lama
+
+
+def test_speed_select_enabled_for_video_and_disabled_for_photo(server):
+    paths, base = server
+    write_json_atomic(paths.links_json, {"shots": {"0": {"file": "manual/shot_1.mp4"},
+                                                   "1": {"file": "manual/shot_2.jpg"}}})
+    html = httpx.get(base + "/").text
+    assert re.search(r'<select data-speed="0"(?![^>]*\bdisabled\b)', html)
+    assert re.search(r'<select data-speed="1"[^>]*\bdisabled\b', html)
+    assert "syncSpeedSelect" in html  # link diganti jadi video: select speed aktif lagi
 
 
 def test_cloudflared_quick_tunnel_host_allowed(server):

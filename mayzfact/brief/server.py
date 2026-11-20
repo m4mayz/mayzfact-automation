@@ -32,6 +32,8 @@ PORT_TRIES = 10
 
 def missing_frames(paths: RunPaths, plan: dict) -> list[int]:
     """Shot yang belum punya frame referensi (atau file-nya hilang). Brief nolak jalan kalau ada."""
+    if plan.get("narration_mode") == "faktacuil":  # frame referensi ada di kartu source_shots, bukan per shot
+        return []
     return [s["index"] for s in plan.get("shots", [])
             if not s.get("auto_cta") and (not s.get("ref_frames") or not all((paths.root / f).exists() for f in s["ref_frames"]))]
 
