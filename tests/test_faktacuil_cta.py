@@ -88,3 +88,20 @@ def test_quiz_count_excludes_quiz_beat():
     b = beats_of("Kenapa kucing suka kardus?", "Padahal Kardus itu keras,", "Nah coba tebak berapa kali aku bilang kardus")
     assert quiz_count(b, "kardus") == 2
     assert quiz_count(beats_of("tanpa kuis kardus"), "kardus") == 0
+
+
+def test_answer_muncul_does_not_pull_emoji_cta_backwards():
+    b = beats_of("Ternyata jerawat muncul karena hormon.", "Tapi mengapa ada emoji jerawat saat tekan like?")
+    assert faktacuil_cta_indices(b) == [1]
+
+
+def test_misconception_with_emoji_stays_out_of_lucky_block():
+    b = beats_of("Hook,", "Padahal emoji itu cuma hiasan,", "Tapi sebelum lanjut, coba tekan like,",
+                 "jika beruntung bisa muncul madu.", "Ternyata a,", "jadi b.")
+    assert faktacuil_cta_indices(b) == [2, 3]
+
+
+def test_quiz_phrase_matches_cleaned_tokens():
+    b = beats_of("Hook,", "Nah, berapa kali,  aku bilang kardus, like?")
+    assert quiz_index(b) == 1
+    assert faktacuil_cta_indices(b) == []

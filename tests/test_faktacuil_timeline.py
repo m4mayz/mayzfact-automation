@@ -1,6 +1,7 @@
 import pytest
 
 from mayzfact.config import Settings
+from mayzfact.cta import clean
 from mayzfact.pipeline import run_pipeline
 from mayzfact.steps.timeline import (
     CAPTION_KEYWORD,
@@ -73,6 +74,20 @@ def test_subscribe_format_adds_second_click():
 def test_emoji_scene_gets_lottie_src_only_when_given():
     assert timeline(script=v2("emoji"), cta_emoji_src="emoji/1f36f.json")["ctaScene"]["emojiSrc"] == "emoji/1f36f.json"
     assert "emojiSrc" not in timeline(script=v2("emoji"))["ctaScene"]
+
+
+def test_emoji_click_lands_on_emoji_word():
+    script, alignment, _ = faktacuil_timeline_fixture(25, v2("emoji"))
+    emoji = next(w for w in word_timings(alignment) if clean(w["text"]) == "emoji")
+    click = next(s for s in timeline(script=v2("emoji"))["sfx"] if s["src"] == "audio/sfx/click.mp3")
+    assert abs(click["from"] - to_frame(emoji["start_s"])) <= 8
+
+
+def test_subscribe_before_like_has_no_subscribe_click():
+    script = v2("subscribe")
+    script["beats"][4]["text"] = "Tapi subscribe dulu, coba tekan like,"
+    clicks = [s for s in timeline(script=script)["sfx"] if s["src"] == "audio/sfx/click.mp3"]
+    assert len(clicks) == 1
 
 
 def test_no_cta_scene_means_no_scene_and_no_click():

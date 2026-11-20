@@ -110,7 +110,11 @@ def build_faktacuil_scene(script: dict, shots: list[dict], entries: list[dict], 
             frame = int(math.floor(w['start_s'] * 30 + .5))
             if not start <= frame < stop:
                 continue
-            if 'like' not in cues and i in likes:
+            if fmt == 'emoji':  # klik like + emoji muncul di kata "emoji", bukan di kata like
+                if 'like' not in cues and clean(w['text']) == 'emoji':
+                    cues['like'] = dict(kind='like', word=w['text'], **{'from': frame})
+                    like_begin = start  # pill udah tampil dari awal blok CTA
+            elif 'like' not in cues and i in likes:
                 cues['like'] = dict(kind='like', word=w['text'], **{'from': frame})
                 begin = id_like_begin(texts, i)  # mundur ke "coba" biar pill muncul sebelum kata like
                 like_begin = max(start, int(math.floor(local[begin]['start_s'] * 30 + .5)))
@@ -130,11 +134,12 @@ def build_faktacuil_scene(script: dict, shots: list[dict], entries: list[dict], 
             sub_from = min((e['from'] for s, e in spans if s.get('beat') == sub_beat), default=None)
         if sub_from is not None and sub_from <= like_begin:
             sub_from = None
+            cues.pop('subscribe', None)  # subscribe diucapin sebelum like: cue dibuang biar nggak ada SFX klik tanpa pill
     stages = []
     like_end = sub_from if sub_from is not None else stop
     if like_end > like_begin:
         stage = dict(kind='like', durationInFrames=like_end-like_begin,
-                     timing='word' if 'like' in cues else 'structure', **{'from': like_begin})
+                     timing='word' if 'like' in cues and fmt != 'emoji' else 'structure', **{'from': like_begin})
         if 'like' in cues:
             stage['triggerAt'] = cues['like']['from'] - like_begin
         stages.append(stage)

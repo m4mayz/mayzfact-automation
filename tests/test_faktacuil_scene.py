@@ -55,6 +55,24 @@ def test_emoji_scene_runs_to_video_end():
     assert scene["from"] + scene["durationInFrames"] == total and scene["emoji"] == "🍯" and "theme" not in scene
 
 
+def test_emoji_scene_clicks_on_emoji_word():
+    script = v2("emoji")
+    scene = build(script)
+    words = scene_inputs(script)[3]
+    cue = scene["cues"][0]
+    assert cue["word"].strip(",?").lower() == "emoji" and cue["from"] == frame(words, "emoji")
+    like = scene["stages"][0]
+    assert like["from"] <= cue["from"] and like["triggerAt"] == cue["from"] - like["from"]
+
+
+def test_subscribe_before_like_drops_stage_and_cue():
+    script = v2("subscribe")
+    script["beats"][4]["text"] = "Tapi subscribe dulu, coba tekan like,"
+    scene = build(script)
+    assert [s["kind"] for s in scene["stages"]] == ["like"]
+    assert [c["kind"] for c in scene["cues"]] == ["like"]
+
+
 def test_scene_is_none_without_cta_scene():
     s = v2("lucky")
     s["cta_scene"] = None

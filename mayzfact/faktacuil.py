@@ -54,11 +54,14 @@ def faktacuil_cta_indices(beats: list) -> list[int]:
         return []
     lo, hi = anchors[0], anchors[-1]
     for word in LINK_WORDS:  # beat objek/emoji tanpa "like" tetap kehitung bagian blok CTA
-        if not any(t.startswith(word) for i in range(lo, hi + 1) for t in tokens[i]):
+        if any(t.startswith(word) for i in range(lo, hi + 1) for t in tokens[i]):
+            continue
+        if word == "muncul":  # beat objek ("... bisa muncul madu") selalu setelah ajakan like
             if hi + 1 < len(beats) and hi + 1 != quiz and any(t.startswith(word) for t in tokens[hi + 1]):
                 hi += 1
-            elif lo > 0 and any(t.startswith(word) for t in tokens[lo - 1]):
-                lo -= 1
+        elif lo > 0 and hi == len(beats) - 1 and any(t.startswith(word) for t in tokens[lo - 1]):
+            # emoji cuma lead-in CTA akhir; beat salah kaprah sebelum CTA nggak ikut kesedot
+            lo -= 1
     return list(range(lo, hi + 1))
 
 
@@ -71,8 +74,13 @@ def _beat_text(beat) -> str:
 
 
 def quiz_index(beats: list) -> int | None:
-    """Index beat pertama yang nyebut frasa kuis, atau None."""
-    return next((i for i, beat in enumerate(beats) if QUIZ_PHRASE in _beat_text(beat).lower()), None)
+    """Index beat pertama yang nyebut frasa kuis; token di-clean biar "Nah," dan spasi dobel tetap ketemu."""
+    phrase = QUIZ_PHRASE.split()
+    for i, beat in enumerate(beats):
+        tokens = [clean(t) for t in _beat_text(beat).split()]
+        if any(tokens[j:j + len(phrase)] == phrase for j in range(len(tokens) - len(phrase) + 1)):
+            return i
+    return None
 
 
 def count_word(text: str, word: str) -> int:
