@@ -183,6 +183,36 @@ def test_pipeline_skips_marks_but_detects_only_first_shot_for_faktacuil(world):
     assert len(tl["overlays"]) == 1 and tl["overlays"][0]["type"] == "arrow"
 
 
+def test_pipeline_passes_cta_emoji_to_timeline(world):
+    write_faktacuil_run(RunPaths(world.runs / VIDEO_ID), script=faktacuil_script(cta="emoji").model_dump())
+    seen = {}
+
+    def cta_emoji(paths, log):
+        seen["paths"] = paths.root.name
+        return "emoji/1f36f.json"
+
+    world.deps.cta_emoji = cta_emoji
+    paths = run_pipeline(VIDEO_ID, settings=Settings(elevenlabs_api_keys=("k",)), deps=world.deps,
+                         runs_dir=world.runs, no_render=True, **QUIET)
+    assert seen == {"paths": VIDEO_ID}
+    assert read_json(paths.timeline_json)["ctaScene"]["emojiSrc"] == "emoji/1f36f.json"
+
+
+def test_pipeline_emoji_cta_failure_falls_back_to_static(world):
+    write_faktacuil_run(RunPaths(world.runs / VIDEO_ID), script=faktacuil_script(cta="emoji").model_dump())
+    logs = []
+
+    def boom(paths, log):
+        raise RuntimeError("noto mati")
+
+    world.deps.cta_emoji = boom
+    paths = run_pipeline(VIDEO_ID, settings=Settings(elevenlabs_api_keys=("k",)), deps=world.deps,
+                         runs_dir=world.runs, no_render=True, log=logs.append)
+    scene = read_json(paths.timeline_json)["ctaScene"]
+    assert scene["format"] == "emoji" and "emojiSrc" not in scene
+    assert any("emoji CTA dilewat" in line and "noto mati" in line for line in logs)
+
+
 def test_faktacuil_ignores_hook_segments_in_clips():
     script, alignment, clips = faktacuil_timeline_fixture(25)
     for shot in clips["shots"][:2]:

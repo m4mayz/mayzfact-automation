@@ -36,6 +36,45 @@ def test_schema_shapes():
         CtaQuiz(word="kardus", answer="2")
 
 
+def test_faktacuil_scene_error_names_the_emoji_reason():
+    raw = faktacuil_script().model_dump()
+    with pytest.raises(ValidationError) as err:
+        Script(**{**raw, "cta_scene": {"format": "emoji", "emoji": "box"}})
+    msg = str(err.value)
+    assert "emoji" in msg and "theme" not in msg
+
+
+def test_faktacuil_scene_error_names_the_theme_reason():
+    raw = faktacuil_script().model_dump()
+    with pytest.raises(ValidationError) as err:
+        Script(**{**raw, "cta_scene": {"format": "lucky"}})
+    assert "theme" in str(err.value)
+
+
+def test_top3_scene_error_names_the_top3_reason():
+    raw = top3_script().model_dump()
+    with pytest.raises(ValidationError) as err:
+        Script(**{**raw, "cta_scene": {"theme": "honey"}})
+    msg = str(err.value)
+    assert "transform_word" in msg and "FaktaCuil" not in msg
+
+
+def test_empty_queries_gets_only_one_message():
+    data = faktacuil_script().model_dump()
+    data["beats"][2]["queries"] = []
+    problems = check_script(Script(**data), SOURCE_TEXT_EN)[0]
+    assert sum("search queries" in p for p in problems) == 1
+
+
+def test_load_script_reports_original_faktacuil_scene_reason(tmp_path):
+    paths = RunPaths(tmp_path)
+    write_json_atomic(paths.script_json, {**faktacuil_script().model_dump(),
+                                          "cta_scene": {"format": "emoji", "emoji": "box"}})
+    with pytest.raises(PipelineError) as err:
+        load_script(paths)
+    assert "emoji CTA needs one emoji character" in str(err.value)
+
+
 def test_top3_still_requires_its_own_cta_scene():
     raw = top3_script().model_dump()
     for scene in [None, {"format": "lucky", "theme": "honey"}]:

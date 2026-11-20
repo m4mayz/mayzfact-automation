@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import time
 from pathlib import Path
 from typing import Callable
@@ -40,3 +41,34 @@ def ensure_emoji(emoji_dir: Path, client: httpx.Client, codepoints: list[str], l
                 break
             log(f"[timeline] emoji {cp} gagal di-download, dilewat: {exc.message[:120]}")
     return out
+
+
+def emoji_codepoint(char: str) -> str:
+    """Codepoint Noto dari karakter emoji: "📦" → "1f4e6", "❤️" → "2764_fe0f"."""
+    return "_".join(f"{ord(c):x}" for c in char)
+
+
+def prepare_cta_emoji(run_root: Path, cta_scene: dict | None, *, client: httpx.Client, emoji_dir: Path,
+                      log: Callable[[str], None], sleep: Callable[[float], None] = time.sleep) -> str | None:
+    """Siapin Lottie Noto buat emoji CTA FaktaCuil. None = format lain atau Lottie nggak ada (pakai emoji statis)."""
+    if not cta_scene or cta_scene.get("format") != "emoji" or not cta_scene.get("emoji"):
+        return None
+    emoji = cta_scene["emoji"]
+    codepoints = [emoji_codepoint(emoji)]
+    plain = codepoints[0].replace("_fe0f", "")  # Noto sering nyimpen tanpa variation selector
+    if plain != codepoints[0]:
+        codepoints.append(plain)
+    for cp in codepoints:
+        try:
+            src = download(client, NOTO_LOTTIE.format(cp=cp), emoji_dir / f"{cp}.json", step="timeline", sleep=sleep)
+        except PipelineError as exc:
+            if isinstance(exc.__cause__, httpx.TransportError):  # offline: jangan nunggu emoji berikutnya
+                log(f"[timeline] fonts.gstatic nggak bisa dihubungi, emoji CTA pakai emoji statis: {exc.message[:120]}")
+                return None
+            continue
+        target = run_root / "emoji" / f"{cp}.json"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, target)
+        return f"emoji/{cp}.json"
+    log(f"[timeline] PERINGATAN: Lottie Noto buat emoji {emoji} ({codepoints[0]}) nggak ada, CTA pakai emoji statis.")
+    return None

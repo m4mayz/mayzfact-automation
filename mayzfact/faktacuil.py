@@ -132,7 +132,7 @@ def faktacuil_problems(script: Script) -> list[str]:
     for n, b in enumerate(beats, start=1):
         if b.point or b.emoji or b.emoji_word:
             problems.append(f"FaktaCuil: panah cuma otomatis di shot pertama; beat {n} must have point=false and empty emoji fields.")
-        if len(b.queries) < 2:
+        if b.queries and len(b.queries) < 2:
             problems.append(f"Beat {n} needs at least 2 search queries.")
         if any(not q.isascii() for q in b.queries):
             problems.append(f"Beat {n} search query must be English (ASCII only).")

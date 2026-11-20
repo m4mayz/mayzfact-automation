@@ -36,14 +36,14 @@ class FaktaCuilCtaScene(BaseModel):
     def _fields_match_format(self):
         if self.format == "emoji":
             if self.theme is not None:
-                raise ValueError("emoji CTA nggak pakai theme.")
+                raise ValueError("emoji CTA must not set theme.")
             if not _is_emoji(self.emoji):
-                raise ValueError('emoji CTA butuh satu karakter emoji, misal "📦".')
+                raise ValueError("emoji CTA needs one emoji character (a single pictograph).")
         else:
             if self.theme is None:
-                raise ValueError(f"{self.format} CTA butuh theme stiker.")
+                raise ValueError(f"{self.format} CTA needs a sticker theme.")
             if self.emoji:
-                raise ValueError(f"{self.format} CTA nggak pakai field emoji.")
+                raise ValueError(f"{self.format} CTA must not set emoji.")
         return self
 
 
@@ -81,6 +81,15 @@ class Script(BaseModel):
     bgm: str = ""  # sisa lama, nggak dipakai: BGM selalu mystery.mp3 (hook) + main.mp3 (D-038)
     hook_queries: dict[str, HookQuery] = {}  # per index segmen hook (plan/seg_XX), ditulis agent
 
+    @model_validator(mode="before")
+    @classmethod
+    def _pick_scene_model(cls, data):
+        # Union bikin error cabang lain nutupin alasan asli; pilih model sesuai narration_mode duluan.
+        if not isinstance(data, dict) or not isinstance(data.get("cta_scene"), dict):
+            return data
+        model = {"faktacuil": FaktaCuilCtaScene, "top3": CtaScene}.get(data.get("narration_mode"))
+        return {**data, "cta_scene": model.model_validate(data["cta_scene"])} if model else data
+
     @model_validator(mode="after")
     def _cta_matches_mode(self):
         if self.narration_mode == "top3":
@@ -89,6 +98,6 @@ class Script(BaseModel):
             if self.cta_quiz is not None:
                 raise ValueError("Top 3 scripts must not set cta_quiz.")
         elif isinstance(self.cta_scene, CtaScene):
-            raise ValueError("FaktaCuil cta_scene nggak pakai transform_word/comment_text/format lama; "
-                             "pakai format lucky, subscribe, atau emoji (D-061).")
+            raise ValueError("FaktaCuil cta_scene must not use transform_word/comment_text or a removed format; "
+                             "use format lucky, subscribe, or emoji (D-061).")
         return self

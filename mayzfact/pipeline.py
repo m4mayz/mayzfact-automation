@@ -115,6 +115,7 @@ class Deps:
     audio: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # None = video tanpa BGM/SFX
     overlay: Callable[..., dict] | None = None  # (paths, log, point_beats) → deteksi subjek; None = tanpa panah/lingkaran
     marks: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # tanda beat: point + emoji (Fase 3C-2)
+    cta_emoji: Callable[[RunPaths, Callable[[str], None]], str | None] | None = None  # Lottie emoji CTA FaktaCuil
     textblur: Callable[[RunPaths, Callable[[str], None]], dict] | None = None  # kotak blur teks di klip (D-038)
     fetch_transcript_id: Callable[[str], list[dict]] | None = None  # transcript asli Indonesia (D-052); None = lewat
     download_source: Callable[[str, Path], Path] | None = None  # download source.mp4 di step source; None = lewat
@@ -222,6 +223,12 @@ def real_deps(settings: Settings) -> Deps:
 
         return prepare_marks(paths, read_json(paths.script_json), client=http(), emoji_dir=EMOJI_DIR, log=log)
 
+    def cta_emoji(paths: RunPaths, log: Callable[[str], None]) -> str | None:
+        from mayzfact.emoji import EMOJI_DIR, prepare_cta_emoji
+
+        return prepare_cta_emoji(paths.root, read_json(paths.script_json).get("cta_scene"), client=http(),
+                                 emoji_dir=EMOJI_DIR, log=log)
+
     def close() -> None:
         while closers:
             closers.pop()()
@@ -241,6 +248,7 @@ def real_deps(settings: Settings) -> Deps:
         overlay=overlay,
         textblur=textblur,
         marks=marks,
+        cta_emoji=cta_emoji,
         close=close,
     )
 
@@ -369,7 +377,14 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
                 blurs = deps.textblur(paths, log)
             except Exception as exc:  # blur teks cuma hiasan
                 log(f"[timeline] blur teks dilewat: {type(exc).__name__}: {exc}")
+        cta_emoji_src = None
+        if faktacuil and deps.cta_emoji:
+            try:
+                cta_emoji_src = deps.cta_emoji(paths, log)
+            except Exception as exc:  # emoji CTA cuma hiasan: timeline tetap jadi pakai emoji statis
+                log(f"[timeline] emoji CTA dilewat, pakai emoji statis: {type(exc).__name__}: {exc}")
         run_timeline(paths, read_json(paths.clips_json), read_json(paths.tts_json), fg_min_ratio=settings.fg_min_height_ratio,
-                     script=read_json(paths.script_json), audio=audio, overlays=overlays, marks=marks, blurs=blurs, log=log)
+                     script=read_json(paths.script_json), audio=audio, overlays=overlays, marks=marks, blurs=blurs,
+                     cta_emoji_src=cta_emoji_src, log=log)
     elif step == "render":
         deps.render(paths)
