@@ -20,6 +20,14 @@ export const useLottieJson = (src?: string): LottieAnimationData | null => {
     fetch(staticFile(src))
       .then((response) => response.json())
       .then((json: LottieAnimationData) => {
+        // Server bisa balikin HTML/JSON lain: tanpa `layers` bukan Lottie, biar CTA pakai fallback statis.
+        if (!Array.isArray((json as {layers?: unknown}).layers)) {
+          console.error(`emoji ${src} bukan Lottie valid (nggak ada layers)`);
+          if (handle !== null) {
+            continueRender(handle);
+          }
+          return;
+        }
         setData(json);
         if (handle !== null) {
           continueRender(handle);

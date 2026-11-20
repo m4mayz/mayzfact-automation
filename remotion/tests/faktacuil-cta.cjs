@@ -41,14 +41,19 @@ assert.match(lucky, /data-cta-sticker="true" data-cta-format="lucky"/);
 assert.match(lucky, /top:\s?1030px/);
 assert.doesNotMatch(lucky, /data-cta-emoji/);
 
-// subscribe: cue subscribe di 50 → pill SUBSCRIBE di 55, SUBSCRIBED di 64 (50 + 12 + 2), stiker tetap ada.
+// subscribe: cue subscribe di 50 → pill SUBSCRIBE di 55, SUBSCRIBED di 62 (50 + 12 = klik Python), stiker tetap ada.
 const sub = {format: 'subscribe', theme: 'shark', cues: [...base.cues, {kind: 'subscribe', from: 50, word: 'subscribe'}]};
 assert.match(markup(sub, 55), /data-cta-pill="subscribe"[^>]*>[\s\S]*SUBSCRIBE/);
-assert.match(markup(sub, 64), /SUBSCRIBED/);
+assert.match(markup(sub, 61), /data-cta-pill="subscribe"[^>]*>[\s\S]*SUBSCRIBE/);
+assert.doesNotMatch(markup(sub, 61), /SUBSCRIBED/);
+assert.match(markup(sub, 62), /SUBSCRIBED/);
 assert.match(markup(sub, 64), /data-cta-sticker="true"/);
 
-// emoji: tanpa emojiSrc → statis, ada karakternya, nggak ada stiker, dan masih tampil penuh di frame terakhir.
+// emoji: tanpa emojiSrc → statis, pop-in tepat pas klik (cue like = kata "emoji"), ada karakternya,
+// nggak ada stiker, dan masih tampil penuh di frame terakhir.
 const emo = {format: 'emoji', emoji: '🍯'};
+assert.doesNotMatch(markup(emo, 9), /data-cta-emoji/);
+assert.match(markup(emo, 12), /data-cta-emoji="static"/);
 assert.match(markup(emo, 40), /data-cta-emoji="static"[\s\S]*🍯/);
 assert.doesNotMatch(markup(emo, 40), /data-cta-sticker/);
 assert.match(markup(emo, 149), /data-cta-emoji="static"[^>]*opacity:\s?1[;"]/);

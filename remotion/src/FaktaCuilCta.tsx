@@ -65,24 +65,26 @@ export const FaktaCuilCtaVisual: React.FC<{scene: FaktaCuilSceneData; frame: num
   const likeStage = scene.stages.find((stage) => stage.kind === 'like');
   const clickAt = likeCue ? likeCue.from - scene.from
     : likeStage ? likeStage.from - scene.from + (likeStage.triggerAt ?? 12) : 12;
-  const pillEnd = Math.min(clickAt + LIKED_HOLD, scene.durationInFrames);
+  const subCue = scene.cues.find((cue) => cue.kind === 'subscribe');
+  const subStage = scene.stages.find((stage) => stage.kind === 'subscribe');
+  // Ikut cue Python apa adanya; pill LIKED yang dipotong biar nggak nabrak pill SUBSCRIBE.
+  const subFrom = subCue ? subCue.from - scene.from
+    : subStage ? subStage.from - scene.from : null;
+  const pillEnd = Math.min(clickAt + LIKED_HOLD, subFrom ?? scene.durationInFrames, scene.durationInFrames);
   const liked = frame >= clickAt;
   const pop = interpolate(frame, [0, 2, 4], [0.8, 1.05, 1], clamp) * interpolate(frame - clickAt, [0, 3, 6], [1, 1.1, 1], clamp);
   const arrowT = interpolate(frame, [clickAt - 10, clickAt - 3], [0, 1], clamp);
   const tipX = PILL_X + 90;
   const tipY = PILL_Y + 40;
 
-  const subCue = scene.cues.find((cue) => cue.kind === 'subscribe');
-  const subStage = scene.stages.find((stage) => stage.kind === 'subscribe');
-  const subFrom = subCue ? Math.max(subCue.from - scene.from, pillEnd)
-    : subStage ? Math.max(subStage.from - scene.from, pillEnd) : null;
   const subDur = subStage ? subStage.durationInFrames : Math.max(0, scene.durationInFrames - (subFrom ?? 0));
   // Clamp sama kayak clickAt di _faktacuil_clicks supaya bunyi klik pas sama kursor.
   const subClickAt = Math.min(SUB_CLICK, Math.max(0, subDur - 1));
   const subClicked = subFrom !== null && frame >= subFrom + subClickAt;
   const subEnd = subFrom !== null ? Math.min(subFrom + subClickAt + LIKED_HOLD, scene.durationInFrames) : 0;
 
-  const stickerFrom = pillEnd + STICKER_GAP;
+  // Emoji muncul tepat pas klik (kata "emoji"); format lain stiker mulai setelah pill LIKED selesai.
+  const stickerFrom = scene.format === 'emoji' ? clickAt : pillEnd + STICKER_GAP;
   const stickerFrame = frame - stickerFrom;
   const stickerLen = scene.durationInFrames - stickerFrom;
   return (
