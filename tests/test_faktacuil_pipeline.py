@@ -15,8 +15,8 @@ from tests.test_pipeline import QUIET, VIDEO_ID, build_world
 ERIC = "cjVigY5qzO86Huf0OWal"
 
 
-def write_faktacuil_run(paths, duration_s=None):
-    script = faktacuil_script().model_dump()
+def write_faktacuil_run(paths, duration_s=None, script=None):
+    script = script or faktacuil_script().model_dump()
     write_json_atomic(paths.script_json, script)
     write_json_atomic(paths.source_json, {"video_id": VIDEO_ID, "transcript": [{"text": SOURCE_TEXT_EN, "start": 0.0, "duration": 10.0}]})
     if duration_s is not None:

@@ -90,15 +90,31 @@ export type CtaStage = {
   triggerAt?: number;
 };
 
+// Stiker FaktaCuil dipisah dari tema top3 biar stiker baru FaktaCuil nggak ikut ke top3 (D-061).
+export type StickerTheme =
+  | 'volcano' | 'unicorn' | 'honey' | 'puppy' | 'lion' | 'shark' | 'toilet' | 'cat' | 'zebra';
+
 export type CtaSceneData = {
-  theme: 'volcano' | 'unicorn' | 'honey' | 'puppy' | 'lion' | 'shark' | 'toilet' | 'cat' | 'zebra';
+  theme: StickerTheme;
   commentText: string;
-  format?: 'question' | 'reveal' | 'escape' | 'escalate'; // gimmick CTA FaktaCuil
   from: number;
   durationInFrames: number;
   stages: CtaStage[];
   cues: {kind: CtaStage['kind']; from: number; word: string}[];
-  style?: 'faktacuil'; // pill like + stiker gaya FaktaBor, bukan scene MayzFact
+  style?: undefined; // top3 nggak pernah pakai gaya FaktaCuil
+};
+
+// Scene CTA FaktaCuil v2: tengah (lucky/subscribe) atau akhir (emoji). Lihat D-061.
+export type FaktaCuilSceneData = {
+  style: 'faktacuil';
+  format: 'lucky' | 'subscribe' | 'emoji';
+  theme?: StickerTheme;
+  emoji?: string;
+  emojiSrc?: string; // Lottie Noto dari step timeline; tanpa ini CTA pakai emoji statis
+  from: number;
+  durationInFrames: number;
+  stages: CtaStage[];
+  cues: {kind: CtaStage['kind']; from: number; word: string}[];
 };
 
 export type Intro = {
@@ -123,6 +139,6 @@ export type TimelineProps = {
   flashes?: Transition[];
   overlays?: Overlay[];
   emojis?: EmojiOverlay[];
-  ctaScene?: CtaSceneData;
+  ctaScene?: CtaSceneData | FaktaCuilSceneData;
   captionStyle?: 'faktacuil';
 };

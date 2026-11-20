@@ -212,7 +212,8 @@ def run_plan(
                 keywords = {"en": [snippet] if snippet else [], "zh": []}
             ref_frames = [rel(f) for f in segs[segment]["frames"]]
         else:
-            keywords = {"en": list(beat["queries"]), "zh": list(beat.get("queries_zh", []))}
+            keywords = {"en": list(beat["queries"]),
+                        "zh": [] if script.get("narration_mode") == "faktacuil" else list(beat.get("queries_zh", []))}
             ref_frames = []
         shots.append({
             "index": slot.index, "beat": slot.beat, "start_s": slot.start_s, "end_s": slot.end_s, "media": slot.media,

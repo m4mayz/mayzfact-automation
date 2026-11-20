@@ -1,12 +1,14 @@
 import React from 'react';
 import {interpolate, Sequence, useCurrentFrame} from 'remotion';
+import {Lottie} from '@remotion/lottie';
 import {Cursor, Thumb} from './Cta';
+import {useLottieJson} from './Emojis';
 import {Sticker} from './FaktaCuilStickers';
 import {MONTSERRAT} from './fonts';
-import type {CtaSceneData} from './types';
+import type {FaktaCuilSceneData} from './types';
 
 // Ditiru dari CTA tengah FaktaBor pJe_Qok8qDA (dicek 10 fps): pill gelap "LIKE" muncul di awal ajakan,
-// kursor panah masuk, jadi tangan, klik di kata "like" → pill biru "LIKED" ±0,7 detik, lalu stiker objek membesar.
+// kursor panah masuk, jadi tangan, klik di kata pemicu → pill biru "LIKED" ±0,7 detik, lalu stiker membesar.
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 const PILL_X = 540;
 const PILL_Y = 750; // ±39% tinggi frame
@@ -14,6 +16,8 @@ const LIKED_HOLD = 20;
 const STICKER_GAP = 2;
 const STICKER_SIZE = 440;
 const STICKER_Y = 1030;
+// Harus sama kayak FAKTACUIL_SUBSCRIBE_CLICK di mayzfact/steps/timeline.py.
+const SUB_CLICK = 12;
 
 const Arrow: React.FC<{x: number; y: number}> = ({x, y}) => (
   <svg width={62} height={86} viewBox="-3 -3 34 46" style={{position: 'absolute', left: x - 3, top: y - 3}}>
@@ -21,86 +25,96 @@ const Arrow: React.FC<{x: number; y: number}> = ({x, y}) => (
   </svg>
 );
 
-const Pill: React.FC<{liked: boolean; scale: number; opacity: number}> = ({liked, scale, opacity}) => (
-  <div style={{
+const Pill: React.FC<{kind: 'like' | 'subscribe'; label: string; bg: string; scale: number; opacity: number}> = ({
+  kind, label, bg, scale, opacity,
+}) => (
+  <div data-cta-pill={kind} style={{
     position: 'absolute', left: PILL_X, top: PILL_Y, translate: '-50% -50%', rotate: '-4deg', scale, opacity,
     display: 'flex', alignItems: 'center', gap: 26, height: 196, padding: '0 50px', borderRadius: 30,
-    background: liked ? '#1468f0' : 'rgba(28,28,30,0.94)', boxShadow: '0 12px 32px rgba(0,0,0,.35)',
-    fontFamily: MONTSERRAT, fontWeight: 800, fontSize: 98, color: 'white', whiteSpace: 'nowrap',
+    background: bg, boxShadow: '0 12px 32px rgba(0,0,0,.35)',
+    fontFamily: MONTSERRAT, fontWeight: 800, fontSize: 92, color: 'white', whiteSpace: 'nowrap',
   }}>
-    <Thumb size={92} color="white"/>
-    {liked ? 'LIKED' : 'LIKE'}
+    {kind === 'like' ? <Thumb size={92} color="white"/> : null}
+    {label}
   </div>
 );
 
 type StickerMotion = {dx: number; dy: number; rotate: number; scale: number; opacity: number};
 
-// Tiap format CTA punya gerak stiker sendiri; pill LIKE/LIKED tetap sama.
-const stickerMotion = (format: CtaSceneData['format'], f: number, len: number): StickerMotion => {
+// Satu gerak stiker buat semua format CTA: pop lembut + goyang, pudar di frame terakhir scene.
+const stickerMotion = (f: number, len: number): StickerMotion => {
   const fadeIn = interpolate(f, [0, 2], [0, 1], clamp);
   const fadeOut = interpolate(f, [len - 6, len], [1, 0], clamp);
-  const sway = Math.sin(f / 6) * 4;
-  switch (format) {
-    case 'reveal': // muncul: pop gede + naik dikit, lalu diam
-      return {
-        dx: 0, dy: interpolate(f, [0, 8], [70, 0], clamp),
-        rotate: interpolate(f, [0, 5, 9], [-14, 6, 0], clamp),
-        scale: interpolate(f, [0, 4, 8, 12], [0.2, 1.32, 0.96, 1], clamp)
-          * interpolate(f, [len - 6, len], [1, 0.5], clamp),
-        opacity: fadeIn * fadeOut,
-      };
-    case 'escape': // kabur: miring gelisah, lalu hilang ke kanan bawah sambil muter
-      return {
-        dx: interpolate(f, [len - 14, len], [0, 520], clamp),
-        dy: interpolate(f, [len - 14, len], [0, 640], clamp),
-        rotate: sway - 7 + interpolate(f, [len - 14, len], [0, 41], clamp),
-        scale: interpolate(f, [0, 3], [0.5, 0.9], clamp)
-          * interpolate(f, [len - 14, len], [1, 0.45], clamp),
-        opacity: fadeIn * interpolate(f, [len - 14, len], [1, 0], clamp),
-      };
-    case 'escalate': // makin deket: terus membesar sampai akhir
-      return {
-        dx: 0, dy: interpolate(f, [0, len], [0, -90], clamp),
-        rotate: sway * 0.5,
-        scale: interpolate(f, [0, 4], [0.45, 0.62], clamp) + interpolate(f, [4, len], [0, 0.95], clamp),
-        opacity: fadeIn * interpolate(f, [len - 8, len], [1, 0.15], clamp),
-      };
-    default: // question: pop lembut + goyang
-      return {
-        dx: 0, dy: 0, rotate: sway,
-        scale: interpolate(f, [0, 3, 7], [0.2, 1.15, 1], clamp)
-          * interpolate(f, [len - 6, len], [1, 0.4], clamp),
-        opacity: fadeIn * fadeOut,
-      };
-  }
+  return {
+    dx: 0, dy: 0, rotate: Math.sin(f / 6) * 4,
+    scale: interpolate(f, [0, 3, 7], [0.2, 1.15, 1], clamp) * interpolate(f, [len - 6, len], [1, 0.4], clamp),
+    opacity: fadeIn * fadeOut,
+  };
 };
 
-export const FaktaCuilCtaVisual: React.FC<{scene: CtaSceneData; frame: number}> = ({scene, frame}) => {
+// Emoji CTA pop masuk lalu tahan penuh sampai scene selesai (tanpa fade-out).
+const emojiMotion = (f: number): StickerMotion => ({
+  dx: 0, dy: 0, rotate: Math.sin(f / 6) * 4,
+  scale: interpolate(f, [0, 3, 7], [0.2, 1.15, 1], clamp),
+  opacity: interpolate(f, [0, 2], [0, 1], clamp),
+});
+
+export const FaktaCuilCtaVisual: React.FC<{scene: FaktaCuilSceneData; frame: number}> = ({scene, frame}) => {
+  const lottie = useLottieJson(scene.emojiSrc);
   const likeCue = scene.cues.find((cue) => cue.kind === 'like');
   const likeStage = scene.stages.find((stage) => stage.kind === 'like');
   const clickAt = likeCue ? likeCue.from - scene.from
     : likeStage ? likeStage.from - scene.from + (likeStage.triggerAt ?? 12) : 12;
-  const pillEnd = Math.min(clickAt + LIKED_HOLD, scene.durationInFrames);
-  const stickerFrom = pillEnd + STICKER_GAP;
-  const stickerFrame = frame - stickerFrom;
-  const stickerLen = scene.durationInFrames - stickerFrom;
+  const subCue = scene.cues.find((cue) => cue.kind === 'subscribe');
+  const subStage = scene.stages.find((stage) => stage.kind === 'subscribe');
+  // Ikut cue Python apa adanya; pill LIKED yang dipotong biar nggak nabrak pill SUBSCRIBE.
+  const subFrom = subCue ? subCue.from - scene.from
+    : subStage ? subStage.from - scene.from : null;
+  const pillEnd = Math.min(clickAt + LIKED_HOLD, subFrom ?? scene.durationInFrames, scene.durationInFrames);
   const liked = frame >= clickAt;
   const pop = interpolate(frame, [0, 2, 4], [0.8, 1.05, 1], clamp) * interpolate(frame - clickAt, [0, 3, 6], [1, 1.1, 1], clamp);
   const arrowT = interpolate(frame, [clickAt - 10, clickAt - 3], [0, 1], clamp);
   const tipX = PILL_X + 90;
   const tipY = PILL_Y + 40;
+
+  const subDur = subStage ? subStage.durationInFrames : Math.max(0, scene.durationInFrames - (subFrom ?? 0));
+  // Clamp sama kayak clickAt di _faktacuil_clicks supaya bunyi klik pas sama kursor.
+  const subClickAt = Math.min(SUB_CLICK, Math.max(0, subDur - 1));
+  const subClicked = subFrom !== null && frame >= subFrom + subClickAt;
+  const subEnd = subFrom !== null ? Math.min(subFrom + subClickAt + LIKED_HOLD, scene.durationInFrames) : 0;
+
+  // Emoji muncul tepat pas klik (kata "emoji"); format lain stiker mulai setelah pill LIKED selesai.
+  const stickerFrom = scene.format === 'emoji' ? clickAt : pillEnd + STICKER_GAP;
+  const stickerFrame = frame - stickerFrom;
+  const stickerLen = scene.durationInFrames - stickerFrom;
   return (
     <div style={{position: 'absolute', inset: 0, pointerEvents: 'none'}}>
-      {frame < pillEnd ? <>
-        <Pill liked={liked} scale={pop} opacity={interpolate(frame, [0, 2], [0, 1], clamp)}/>
-        {frame >= clickAt - 10 && frame < clickAt - 3 ?
-          <Arrow x={interpolate(arrowT, [0, 1], [tipX + 200, tipX])} y={interpolate(arrowT, [0, 1], [tipY + 220, tipY])}/> : null}
-        {frame >= clickAt - 3 ? <Cursor x={tipX} y={tipY} pressed={frame >= clickAt && frame < clickAt + 3}/> : null}
-      </> : null}
-      {stickerFrame >= 0 && stickerLen > 0 ? (() => {
-        const m = stickerMotion(scene.format, stickerFrame, stickerLen);
+      {/* Stiker/emoji digambar duluan; pill + kursor di atasnya biar asap stiker nggak nutup pill. */}
+      {scene.format === 'emoji' ? (
+        stickerFrame >= 0 && stickerLen > 0 ? (() => {
+          const m = emojiMotion(stickerFrame);
+          const box = {
+            position: 'absolute' as const, left: PILL_X + m.dx, top: STICKER_Y + m.dy, translate: '-50% -50%',
+            rotate: `${m.rotate}deg`, scale: m.scale, opacity: m.opacity, width: STICKER_SIZE, height: STICKER_SIZE,
+          };
+          if (scene.emojiSrc && lottie) {
+            return (
+              <div data-cta-emoji="lottie" style={box}>
+                <Lottie animationData={lottie} loop style={{width: STICKER_SIZE, height: STICKER_SIZE}}/>
+              </div>
+            );
+          }
+          return (
+            <div data-cta-emoji="static" style={{
+              ...box, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: STICKER_SIZE, lineHeight: 1,
+              fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif',
+            }}>{scene.emoji}</div>
+          );
+        })() : null
+      ) : stickerFrame >= 0 && stickerLen > 0 && scene.theme ? (() => {
+        const m = stickerMotion(stickerFrame, stickerLen);
         return (
-          <div data-cta-sticker="true" data-cta-format={scene.format ?? 'question'} style={{
+          <div data-cta-sticker="true" data-cta-format={scene.format} style={{
             position: 'absolute', left: PILL_X + m.dx, top: STICKER_Y + m.dy, translate: '-50% -50%',
             rotate: `${m.rotate}deg`, scale: m.scale, opacity: m.opacity,
           }}>
@@ -108,13 +122,28 @@ export const FaktaCuilCtaVisual: React.FC<{scene: CtaSceneData; frame: number}> 
           </div>
         );
       })() : null}
+      {frame < pillEnd ? <>
+        <Pill kind="like" label={liked ? 'LIKED' : 'LIKE'} bg={liked ? '#1468f0' : 'rgba(28,28,30,0.94)'}
+          scale={pop} opacity={interpolate(frame, [0, 2], [0, 1], clamp)}/>
+        {frame >= clickAt - 10 && frame < clickAt - 3 ?
+          <Arrow x={interpolate(arrowT, [0, 1], [tipX + 200, tipX])} y={interpolate(arrowT, [0, 1], [tipY + 220, tipY])}/> : null}
+        {frame >= clickAt - 3 ? <Cursor x={tipX} y={tipY} pressed={frame >= clickAt && frame < clickAt + 3}/> : null}
+      </> : null}
+      {subFrom !== null && frame >= subFrom && frame < subEnd ? <>
+        <Pill kind="subscribe" label={subClicked ? 'SUBSCRIBED' : 'SUBSCRIBE'}
+          bg={subClicked ? 'rgba(28,28,30,0.94)' : '#ff0000'}
+          scale={interpolate(frame - subFrom, [0, 2, 4], [0.8, 1.05, 1], clamp)}
+          opacity={interpolate(frame - subFrom, [0, 2], [0, 1], clamp)}/>
+        {frame >= subFrom + subClickAt - 3 ?
+          <Cursor x={tipX} y={tipY} pressed={subClicked && frame < subFrom + subClickAt + 3}/> : null}
+      </> : null}
     </div>
   );
 };
 
-const Visual: React.FC<{scene: CtaSceneData}> = ({scene}) => <FaktaCuilCtaVisual scene={scene} frame={useCurrentFrame()}/>;
+const Visual: React.FC<{scene: FaktaCuilSceneData}> = ({scene}) => <FaktaCuilCtaVisual scene={scene} frame={useCurrentFrame()}/>;
 
-export const FaktaCuilCta: React.FC<{scene: CtaSceneData}> = ({scene}) => (
+export const FaktaCuilCta: React.FC<{scene: FaktaCuilSceneData}> = ({scene}) => (
   <Sequence from={scene.from} durationInFrames={scene.durationInFrames} layout="none">
     <Visual scene={scene}/>
   </Sequence>

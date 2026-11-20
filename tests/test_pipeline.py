@@ -388,17 +388,17 @@ def test_audio_failure_never_breaks_timeline(world):
 
 
 def test_timeline_step_uses_overlay_deps_and_survives_errors(world):
-    def fake_overlay(paths, log, point_beats=None):
+    def fake_overlay(paths, log, point_beats=None, first_only=False):
         return {"clips/shot_01.mp4": {"points": [{"t": 0.5, "x": 1, "y": 2, "w": 3, "h": 4}]}}
 
     world.deps.overlay = fake_overlay
     paths = start(world, no_render=True)
     first_src = read_json(paths.timeline_json)["shots"][0]["src"]
-    world.deps.overlay = lambda p, log, point_beats=None: {first_src: {"points": [{"t": 0.5, "x": 1, "y": 2, "w": 3, "h": 4}]}}
+    world.deps.overlay = lambda p, log, point_beats=None, first_only=False: {first_src: {"points": [{"t": 0.5, "x": 1, "y": 2, "w": 3, "h": 4}]}}
     paths = run(world, from_step="timeline", no_render=True)
     assert read_json(paths.timeline_json)["overlays"][0]["type"] == "arrow"
 
-    def broken(paths, log, point_beats=None):
+    def broken(paths, log, point_beats=None, first_only=False):
         raise RuntimeError("model rusak")
 
     world.deps.overlay = broken
@@ -416,7 +416,7 @@ def test_timeline_step_uses_beat_marks_for_emoji_and_arrows(world):
         marks[0] = {"point": True, "emoji": "🧐", "emoji_word": ""}
         return {"beats": marks, "emoji": {"🧐": "emoji/1f9d0.json"}}
 
-    def fake_overlay(paths, log, point_beats=None):
+    def fake_overlay(paths, log, point_beats=None, first_only=False):
         seen["point_beats"] = point_beats
         return {}
 

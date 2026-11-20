@@ -19,7 +19,7 @@ Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal per
 - Source tetap video Inggris. Agent nerjemahin + nulis ulang ke bahasa Indonesia santai.
 - Nggak ada card countdown, panah/lingkaran, emoji, intro, flash, dan SFX hook. Yang tetap: SFX transisi dan blur teks klip.
 - Caption 1 kata, font Fredoka, kata `keyword` kuning (`#FFC53D`).
-- CTA cuma like (gimmick "coba tekan like, like-mu berubah jadi X?") di tengah, bukan di akhir. Tanpa subscribe dan comment.
+- CTA opsional (D-061). Kalau dipakai: `lucky`/`subscribe` di tengah (like + `muncul` + stiker), `emoji` di akhir, plus CTA-2 kuis hitung kata di akhir. Subscribe/comment cuma boleh sesuai format itu.
 - BGM 1 lagu sepanjang video, dari folder lokal.
 - Suara, jadwal, dan channel upload sendiri.
 
@@ -43,66 +43,68 @@ Agent nulis `runs/<id>/script.json`. Kalau `transcript_id` nggak kosong, tulis d
 
 **Bahasa.** Indonesia santai: `nggak`, `udah`, `banget` boleh. Jangan maksa slang. Kata teknis yang biasa dipakai orang Indonesia tetap dipakai.
 
-**Struktur.** Urutannya:
+**Struktur.** Ikut posisi CTA:
 
-1. **Hook** bebas (beat 1, maks 10 kata). Boleh pertanyaan, boleh pernyataan kejut kayak source. **Nggak ada aturan kata pembuka, `?`, atau panjang minimal** — yang penting kalimatnya nyambung ke beat berikutnya.
-2. **Salah kaprah** ("Padahal…", "Kamu mungkin mengira…"), minimal 1 beat.
-3. **CTA** like gimmick, 1–3 beat.
-4. **Jawaban** ("Ternyata…", "Karena itu…", "Jadi…"), minimal 2 beat.
-5. Penutup singkat (boleh bagian dari jawaban).
+- **CTA tengah (`lucky`/`subscribe`):** hook → salah kaprah (minimal 1 beat) → CTA 1–3 beat → jawaban minimal 2 beat. CTA-2 kuis (kalau ada) di beat paling akhir dan nggak dihitung sebagai beat jawaban.
+- **CTA akhir (`emoji`, kuis) atau tanpa CTA:** hook → isi bebas. Nggak ada cek salah kaprah atau jumlah beat jawaban. Beat `emoji` (1–2 beat) dan beat kuis wajib jadi beat terakhir.
 
-Kata pembuka "Padahal…"/"Ternyata…" cuma pola; kode nggak ngecek, jadi boleh divariasi. Hook juga bebas: satu-satunya patokan cuma ≤10 kata per beat dan blok CTA tetap setelah salah kaprah.
+Kata pembuka "Padahal…"/"Ternyata…" cuma pola; kode nggak ngecek, jadi boleh divariasi. Hook juga bebas: satu-satunya patokan cuma ≤10 kata per beat.
 
 **Aturan yang dicek `check-script`** (pesannya English):
 
 | Aturan | Isi |
 | --- | --- |
-| F1 | Tidak dipakai lagi: hook bebas (tanpa syarat kata `Kenapa` / `?`). |
 | F2 | Nggak ada beat "Number N,". |
-| F3 | Blok CTA tepat 1, 1–3 beat. |
-| F4 | Minimal 1 beat salah kaprah antara hook dan CTA. |
-| F5 | Minimal 2 beat jawaban setelah CTA. |
-| F6 | Blok CTA punya tepat 1 ajakan like Indonesia ("tekan/pencet/klik/kasih like", "tekan tombol like"). Nol `subscribe`, nol `komen`/`komentar`/`comment`. |
-| F7 | Tergantung `cta_scene.format` (lihat **Format CTA**): `question` tetap `transform_word` + diakhiri `?` + frasa `jadi [seekor/sebuah] <objek tema>`; `reveal`/`escape`/`escalate` wajib `transform_word` dari daftar kata pemicu format itu dan nama objek tema disebut di blok CTA. |
-| F8 | Beat CTA: `subject` kosong, `point` false. |
+| F3 | CTA opsional: `cta_scene` diisi = harus ada blok CTA; `cta_scene` kosong = jangan ada kata `like*`/`subscribe`/`komen`/`komentar`/`comment` di beat mana pun. Detektor blok pakai kata-kata itu sebagai anchor (nggak harus ajakan like), jadi "like" biasa pun bisa dianggap CTA. Kata `emoji` sendiri bukan anchor; dia cuma nempel ke blok yang udah ada. |
+| F4 | `lucky`/`subscribe`: blok CTA 1–3 beat + minimal 1 beat salah kaprah sebelumnya. |
+| F5 | `lucky`/`subscribe`: minimal 2 beat jawaban setelah CTA (beat kuis nggak dihitung). |
+| F6 | Tepat 1 ajakan like Indonesia ("tekan/pencet/klik/kasih like", "tekan tombol like"). Nol `komen`/`komentar`/`comment`. `subscribe` cuma boleh di format `subscribe` dan harus **setelah** ajakan like. |
+| F7 | Kecocokan format: `lucky`/`subscribe` wajib `muncul*` + nama objek tema di blok CTA; `subscribe` wajib kata `subscribe`; `emoji` wajib kata `emoji`, beat terakhir diakhiri `?`, dan bloknya 1–2 beat paling akhir. |
+| F8 | Beat CTA dan beat kuis: `subject` kosong, `point` false, tanpa `keyword`. |
 | F9 | Semua beat: `point` false, `emoji` dan `emoji_word` kosong. |
-| F10 | `keyword` (kalau diisi) 1 kata yang ada di teks beat itu, bukan di beat CTA. |
+| F10 | `keyword` (kalau diisi) 1 kata yang ada di teks beat itu, bukan di beat CTA/kuis. |
 | F11 | Jumlah kata total di rentang (lihat bawah). |
-| umum | ≤10 kata per beat, foto 15–45% beat, tiap beat punya `queries`, overlap 4-gram dengan source ≤15%. |
+| kuis | `cta_quiz` dan beat kuis harus muncul bareng; beat kuis terakhir, nyebut `cta_quiz.word`, kata itu diucapin minimal 2x sebelum kuis, dan `answer` sama dengan hasil hitungan. `emoji` nggak boleh digabung kuis. |
+| queries | Minimal 2 query English per beat, ASCII only. `queries_zh` diabaikan buat FaktaCuil. |
+| umum | ≤10 kata per beat, foto 15–45% beat, overlap 4-gram dengan source ≤15%. |
 
-**CTA.** Contoh (dua beat):
+**CTA opsional (D-061).** Kombinasi yang valid: tanpa CTA; `lucky`; `subscribe`; `emoji`; kuis; `lucky`+kuis; `subscribe`+kuis. `emoji` nggak pernah digabung CTA lain, termasuk kuis.
 
-```
-Tapi coba tekan like dulu,
-apakah like-mu berubah jadi madu?
-```
+| format | posisi | contoh kalimat | kata kunci wajib | visual |
+| --- | --- | --- | --- | --- |
+| `lucky` | tengah | "tapi sebelum lanjut coba tekan like, jika beruntung bisa muncul madu" | ajakan like + `muncul` + nama objek tema | pill LIKE → klik → LIKED → stiker objek |
+| `subscribe` | tengah | "tapi sebelum lanjut coba tekan like, nanti muncul madu, subscribe jika berhasil" | ajakan like + `muncul` + nama objek + `subscribe` **setelah** ajakan like | pill LIKE → LIKED → stiker → pill SUBSCRIBE → SUBSCRIBED |
+| `emoji` | akhir, satu-satunya CTA | "tapi mengapa ada emoji madu saat tekan like?" | `emoji` + `tekan like` + diakhiri `?` | pill LIKE → klik → LIKED → emoji besar |
+| kuis (CTA-2) | akhir | "nah coba tebak berapa kali aku bilang kardus" | `berapa kali aku bilang` + kata target | caption biasa, tanpa visual tambahan |
 
-Kata "like" cuma muncul di CTA. Pertanyaan gimmick nggak punya ajakan sendiri tapi tetap bagian blok CTA.
+Kalimat contoh di tabel itu kepanjangan buat satu beat (maks 10 kata). **Wajib dipecah 2–3 beat**, contohnya:
 
-**Format CTA (4, dipilih acak per naskah).** `cta_scene.format`:
+- `lucky`: "Tapi sebelum lanjut, coba tekan like," / "jika beruntung bisa muncul madu."
+- `subscribe`: "Tapi sebelum lanjut, coba tekan like," / "nanti muncul madu," / "subscribe jika berhasil."
+- `emoji`: "Tapi mengapa ada emoji madu" / "saat tekan like?"
 
-| format | contoh beat CTA | `transform_word` | aturan tambahan |
-| --- | --- | --- | --- |
-| `question` (default) | "apakah like-mu berubah jadi madu?" | kata kerja transformasi bebas (`berubah`) | beat diakhiri `?` + frasa `jadi <objek tema>` |
-| `reveal` | "like-mu bikin madu ini muncul di layar hp-mu." | `muncul`, `tampil`, `nongol`, `keluar` | objek tema disebut, tanpa `?` |
-| `escape` | "atau like-mu hilang bareng madu ini." | `kabur`, `hilang`, `pergi`, `lolos` | objek tema disebut, tanpa `?` |
-| `escalate` | "madu ini makin deket ke like-mu." | `deket`, `mendekat`, `besar`, `membesar`, `gede` | objek tema disebut, tanpa `?` |
+Urutannya tetap: beat yang nyebut `muncul` **selalu setelah** ajakan like, dan lead-in `emoji` **selalu sebelum** "tekan like". Beat objek/lead-in boleh tanpa kata "like" asal nyebut `muncul`/`emoji`. Urutan `subscribe` jangan dibalik: ajakan like dulu, baru `subscribe`.
 
-Pilih format pakai `pick_cta_format(video_id)` dari `mayzfact.faktacuil` — acak tapi stabil per video, jadi tiap naskah beda gimmick tanpa agent milih manual. Naskah lama tanpa field `format` dianggap `question` (valid, jangan dimigrasi).
-
-Deteksi blok CTA FaktaCuil pakai anchor kata `like`: **tiap beat di blok CTA wajib menyebut `like`** (mis. `like-mu`). Kalau satu beat CTA nggak nyebut `like`, beat itu dianggap jawaban dan validator ngeluh objek tema nggak ada di blok CTA.
-
-`cta_scene` wajib:
+`cta_scene` opsional:
 
 ```json
-"cta_scene": {"theme": "honey", "transform_word": "berubah", "comment_text": "MADU", "format": "question"}
+"cta_scene": {"format": "lucky", "theme": "honey"}
+"cta_scene": {"format": "subscribe", "theme": "honey"}
+"cta_scene": {"format": "emoji", "emoji": "🍯"}
 ```
 
-- `transform_word` kata tunggal yang ada di pertanyaan; morph mulai di kata itu.
-- `comment_text` wajib ada di schema tapi nggak ditampilin di FaktaCuil. Isi kata objek huruf kapital (maks 24 karakter).
-- Objek harus salah satu dari 9 ilustrasi (`volcano`, `unicorn`, `honey`, `puppy`, `lion`, `shark`, `toilet`, `cat`, `zebra`). Objek lain = **STOP**, bikin ilustrasinya dulu (sama kayak top3).
+`cta_quiz` opsional (cuma FaktaCuil, sendiri atau bareng `lucky`/`subscribe`):
 
-| theme | frasa setelah `jadi` |
+```json
+"cta_quiz": {"word": "kardus", "answer": 2}
+```
+
+- `answer` = jumlah kata `cta_quiz.word` sebelum beat kuis. Hitung manual, `check-script` yang mastiin (case-insensitive, kata utuh; "kardusnya" atau "kardus-kardus" nggak ikut, kalimat kuis sendiri nggak dihitung).
+- `emoji` = karakter emoji apa aja, nggak dibatasi daftar `EMOJI`. Kecocokan "emoji madu" ↔ 🍯 dicek Akmal waktu review naskah, bukan code.
+- Format lama (`question`/`reveal`/`escape`/`escalate`) udah dihapus. Naskah lama ditolak dengan pesan jelas dan file run-nya dibiarin.
+- Objek stiker harus salah satu dari 9 tema di bawah. Nggak ada yang cocok = **STOP**, bikin stiker baru dulu (lihat **Stiker baru**).
+
+| theme | nama objek di kalimat CTA |
 | --- | --- |
 | `volcano` | `gunung berapi`, `gunung meletus`, `gunung api` |
 | `unicorn` | `unicorn` |
@@ -114,12 +116,22 @@ Deteksi blok CTA FaktaCuil pakai anchor kata `like`: **tiap beat di blok CTA waj
 | `cat` | `kucing`, `anak kucing` |
 | `zebra` | `zebra`, `zebra cross` |
 
+**Stiker baru.** Kalau objek nggak cocok sama 9 tema, STOP sebelum render dan kerjain dulu:
+
+1. Komponen SVG 200x200 di `remotion/src/FaktaCuilStickers.tsx` + `case` di `Sticker`.
+2. Literal tema di `StickerTheme` (`remotion/src/types.ts`).
+3. Literal tema di `FaktaCuilTheme` (`mayzfact/models.py`).
+4. Nama Indonesia di `THEME_NOUNS_ID` (`mayzfact/faktacuil.py`).
+5. Cek pakai `uv run pytest tests/test_faktacuil_cta_v2.py`, `cd remotion && npx tsc --noEmit -p .`, dan `npx remotion still` buat lihat gambarnya.
+
+Top3 nggak ikut berubah.
+
 **Per beat.**
 
-- `keyword`: 1 kata yang ditekankan (caption-nya kuning), isi di ±1 dari 3 beat, bukan beat CTA. Kata yang dipilih sering bukan subjek ("ternyata", "aman"). Tanda hubung boleh (`kupu-kupu`).
+- `keyword`: 1 kata yang ditekankan (caption-nya kuning), isi di ±1 dari 3 beat, bukan beat CTA/kuis. Kata yang dipilih sering bukan subjek ("ternyata", "aman"). Tanda hubung boleh (`kupu-kupu`).
 - `point` selalu false, `emoji` dan `emoji_word` selalu kosong.
-- `subject`: hewan/objek yang dibahas, kosong di beat CTA.
-- `queries` bahasa Inggris dan `queries_zh` Mandarin, sama kayak top3. Beat CTA juga wajib punya `queries`: shot CTA minta link di brief kayak shot lain (D-053), jadi isi keyword klip yang cocok buat background pill like.
+- `subject`: hewan/objek yang dibahas, kosong di beat CTA dan beat kuis.
+- `queries`: minimal 2 query bahasa Inggris (ASCII) per beat; panduannya 2–4 query (`check-script` cuma ngecek minimal 2), nyebut hal yang beneran keliatan di kalimat beat itu (subjek + aksi/objek). Contoh beat "Padahal kardus itu sempit dan nggak empuk" → `cat squeezing into small cardboard box`, bukan cuma `cat`. Beat CTA juga wajib punya `queries`: isi background yang cocok sama kalimat CTA (shot CTA minta link di brief kayak shot lain, D-053). `queries_zh` nggak dipakai FaktaCuil (diabaikan).
 - `hook_queries` selalu `{}`: FaktaCuil nggak punya segmen hook dari source.
 - Beat pertama otomatis jadi video.
 
@@ -135,7 +147,7 @@ uv run mayzfact check-script <id>
 
 ## 3. Checkpoint: Akmal review naskah
 
-Tunjukin di chat, per beat: **teks Indonesia | kalimat source Inggris yang jadi dasarnya | keyword visual (`queries`)**. Tambahin kolom `keyword` caption. Beat CTA dasarnya "CTA gimmick". Tunggu "oke" atau koreksi. **Jangan lanjut sebelum Akmal oke** (langkah 4 bikin suara, pakai kredit ElevenLabs).
+Tunjukin di chat, per beat: **teks Indonesia | kalimat source Inggris yang jadi dasarnya | keyword visual (`queries`)**. Tambahin kolom `keyword` caption. Beat CTA dasarnya "CTA gimmick" (kalau ada). Buat format `emoji`, cek karakternya cocok sama kalimat (misal "emoji madu" ↔ 🍯). Tunggu "oke" atau koreksi. **Jangan lanjut sebelum Akmal oke** (langkah 4 bikin suara, pakai kredit ElevenLabs).
 
 ## 4. Suara dan plan
 
@@ -164,7 +176,7 @@ Sama kayak `bikin-short` langkah 5, 6, 8 (langkah 7 Studio cuma kalau Akmal mint
 - Tiap shot punya pilihan speed 0.5x–2x (default 1x). Foto diabaikan (pilihannya disabled). Fetch ngambil `durasi shot × speed` detik source lalu dipadatkan ke durasi shot, jadi caption/timeline nggak berubah.
 - Tombol Preview klip aktif sendiri begitu badge unduhan `siap` (nggak perlu refresh). Ganti link nutup preview lama, dan "Dari preview" ngasih detik SFX dalam detik shot (dibagi speed).
 - Frame referensi FaktaCuil ada di kartu "Frame referensi source" (2 frame acak per shot source, maksimal 60 shot yang nyebar sampai shot terakhir), bukan 3 frame per shot. Kartu ketutup default; brief tetap jalan walau kartunya kosong (pesannya nyuruh `--from plan`).
-- Timeline nggak punya `countdown`, `emojis`, dan `overlays`. `intro` + SFX hook di detik 0 sama kayak MayzFact. `timeline.json` punya `captionStyle: "faktacuil"` dan `ctaScene.style: "faktacuil"`: pill like gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`FaktaCuilCta.tsx`, ditiru dari FaktaBor `pJe_Qok8qDA`). Klip CTA tampil normal, nggak di-blur. Gerak stiker ikut `ctaScene.format`: `question` pop+goyang, `reveal` pop gede lalu naik, `escape` miring lalu kabur ke kanan bawah, `escalate` terus membesar sampai akhir.
+- Timeline nggak punya `countdown`, `emojis`, dan `overlays`. `intro` + SFX hook di detik 0 sama kayak MayzFact. `timeline.json` punya `captionStyle: "faktacuil"`; `ctaScene` cuma ada kalau `cta_scene` diisi. `lucky`/`subscribe`: pill LIKE gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`FaktaCuilCta.tsx`, ditiru dari FaktaBor `pJe_Qok8qDA`); `subscribe` nambah pill merah SUBSCRIBE pas kata "subscribe" diucapin → "SUBSCRIBED". `emoji`: pill LIKE → LIKED → emoji besar yang tahan sampai video selesai; klik dan emoji muncul di kata "emoji". Stiker objek itu **SVG** (`FaktaCuilStickers.tsx`), bukan Lottie. Lottie Noto cuma buat emoji CTA: kalau nggak ada, log `PERINGATAN` dan CTA tetap jalan pakai emoji statis (nggak bikin run gagal). Pill + kursor selalu di atas stiker/emoji. Scene CTA tengah berhenti di shot jawaban pertama; scene `emoji` sampai akhir video. Klip CTA tampil normal, nggak di-blur.
 - Caption: kalimat tanya kebawa "?", caption ngilang pas jeda ≥0,25 detik, lebar maksimal 60% frame.
 - BGM: file audio pertama (urut nama) di `assets/channels/faktacuil/bgm/`. Folder itu **lokal dan di-gitignore** (lagu berhak cipta, repo public). Jangan download atau copy lagu sendiri, dan jangan commit; Akmal yang naruh file. Kalau folder kosong, sementara pakai `assets/bgm/main.mp3` dan log bilang begitu; sebutin ke Akmal.
 - Kirim preview dan jam penting dari `timeline.json` (`ctaScene`, klik like di `sfx`), plus apa yang dilewat.

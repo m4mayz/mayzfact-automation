@@ -1,8 +1,14 @@
 import pytest
 
 from mayzfact.config import Settings
+from mayzfact.cta import clean
 from mayzfact.pipeline import run_pipeline
-from mayzfact.steps.timeline import CAPTION_KEYWORD, build_timeline, to_frame
+from mayzfact.steps.timeline import (
+    CAPTION_KEYWORD,
+    FAKTACUIL_SUBSCRIBE_CLICK,
+    build_timeline,
+    to_frame,
+)
 from mayzfact.store import RunPaths, read_json
 from mayzfact.timing import word_timings
 from tests.faktacuil_fixtures import (
@@ -23,6 +29,10 @@ KEYWORDS = {"kardus", "kucing"}  # keyword di faktacuil_script
 def timeline(audio=AUDIO_ALL_SFX, script=None, **kwargs):
     script, alignment, clips = faktacuil_timeline_fixture(25, script)
     return build_timeline(clips, 25, 0.5, script=script, alignment=alignment, audio=audio, log=lambda m: None, **kwargs)
+
+
+def v2(fmt):
+    return faktacuil_script(cta=fmt).model_dump()
 
 
 def test_faktacuil_timeline_shape():
@@ -50,6 +60,41 @@ def test_faktacuil_click_lands_on_like_word():
     assert abs(click["from"] - to_frame(like["start_s"])) <= 8  # klik di kata like, bukan di "like-mu"
     scene = tl["ctaScene"]
     assert scene["from"] <= click["from"] < scene["from"] + scene["durationInFrames"]
+
+
+def test_subscribe_format_adds_second_click():
+    script, alignment, _ = faktacuil_timeline_fixture(25, v2("subscribe"))
+    sub = next(w for w in word_timings(alignment) if w["text"].strip(",.").lower() == "subscribe")
+    tl = timeline(script=v2("subscribe"))
+    clicks = [s for s in tl["sfx"] if s["src"] == "audio/sfx/click.mp3"]
+    assert len(clicks) == 2
+    assert abs(clicks[1]["from"] - (to_frame(sub["start_s"]) + FAKTACUIL_SUBSCRIBE_CLICK)) <= 8
+
+
+def test_emoji_scene_gets_lottie_src_only_when_given():
+    assert timeline(script=v2("emoji"), cta_emoji_src="emoji/1f36f.json")["ctaScene"]["emojiSrc"] == "emoji/1f36f.json"
+    assert "emojiSrc" not in timeline(script=v2("emoji"))["ctaScene"]
+
+
+def test_emoji_click_lands_on_emoji_word():
+    script, alignment, _ = faktacuil_timeline_fixture(25, v2("emoji"))
+    emoji = next(w for w in word_timings(alignment) if clean(w["text"]) == "emoji")
+    click = next(s for s in timeline(script=v2("emoji"))["sfx"] if s["src"] == "audio/sfx/click.mp3")
+    assert abs(click["from"] - to_frame(emoji["start_s"])) <= 8
+
+
+def test_subscribe_before_like_has_no_subscribe_click():
+    script = v2("subscribe")
+    script["beats"][4]["text"] = "Tapi subscribe dulu, coba tekan like,"
+    clicks = [s for s in timeline(script=script)["sfx"] if s["src"] == "audio/sfx/click.mp3"]
+    assert len(clicks) == 1
+
+
+def test_no_cta_scene_means_no_scene_and_no_click():
+    s = v2("lucky")
+    s["cta_scene"] = None  # beat CTA tetap ada, tapi scene-nya nggak dibikin
+    tl = timeline(script=s)
+    assert "ctaScene" not in tl and not any(x["src"] == "audio/sfx/click.mp3" for x in tl["sfx"])
 
 
 def test_top3_timeline_has_no_caption_style():
@@ -85,7 +130,7 @@ def test_faktacuil_single_bgm_whole_video():
 def test_faktacuil_ignores_marks_but_uses_first_shot_detection_for_arrow():
     script, alignment, clips = faktacuil_timeline_fixture(25)
     marks = {"beats": [dict(point=True, emoji="x", emoji_word="") for _ in script["beats"]], "emoji": {"x": "x.json"}}
-    detections = {s["file"]: {"points": [dict(t=0, x=300 + i, y=600, w=200, h=200)]}
+    detections = {s["file"]: {"points": [dict(t=0, x=320 + i, y=600, w=300, h=300)]}
                   for i, s in enumerate(clips["shots"])}
     tl = build_timeline(clips, 25, 0.5, script=script, alignment=alignment, marks=marks, overlays=detections,
                         audio=AUDIO_ALL_SFX, log=lambda m: None)
@@ -93,7 +138,7 @@ def test_faktacuil_ignores_marks_but_uses_first_shot_detection_for_arrow():
     assert len(tl["overlays"]) == 1  # cuma shot pertama
     arrow = tl["overlays"][0]
     assert arrow["type"] == "arrow" and arrow["color"] == "#ff2a2a"
-    assert [(k["x"], k["y"]) for k in arrow["keyframes"]] == [(300, 600)]  # koordinat klip shot 1, bukan shot lain
+    assert [(k["x"], k["y"]) for k in arrow["keyframes"]] == [(320, 600)]  # koordinat klip shot 1, bukan fallback/shot lain
 
 
 def test_faktacuil_arrow_falls_back_to_center_without_detection():
@@ -136,6 +181,36 @@ def test_pipeline_skips_marks_but_detects_only_first_shot_for_faktacuil(world):
     assert calls == {"first_only": True}  # deteksi cuma shot pertama
     assert tl["captionStyle"] == "faktacuil" and tl["emojis"] == []
     assert len(tl["overlays"]) == 1 and tl["overlays"][0]["type"] == "arrow"
+
+
+def test_pipeline_passes_cta_emoji_to_timeline(world):
+    write_faktacuil_run(RunPaths(world.runs / VIDEO_ID), script=faktacuil_script(cta="emoji").model_dump())
+    seen = {}
+
+    def cta_emoji(paths, log):
+        seen["paths"] = paths.root.name
+        return "emoji/1f36f.json"
+
+    world.deps.cta_emoji = cta_emoji
+    paths = run_pipeline(VIDEO_ID, settings=Settings(elevenlabs_api_keys=("k",)), deps=world.deps,
+                         runs_dir=world.runs, no_render=True, **QUIET)
+    assert seen == {"paths": VIDEO_ID}
+    assert read_json(paths.timeline_json)["ctaScene"]["emojiSrc"] == "emoji/1f36f.json"
+
+
+def test_pipeline_emoji_cta_failure_falls_back_to_static(world):
+    write_faktacuil_run(RunPaths(world.runs / VIDEO_ID), script=faktacuil_script(cta="emoji").model_dump())
+    logs = []
+
+    def boom(paths, log):
+        raise RuntimeError("noto mati")
+
+    world.deps.cta_emoji = boom
+    paths = run_pipeline(VIDEO_ID, settings=Settings(elevenlabs_api_keys=("k",)), deps=world.deps,
+                         runs_dir=world.runs, no_render=True, log=logs.append)
+    scene = read_json(paths.timeline_json)["ctaScene"]
+    assert scene["format"] == "emoji" and "emojiSrc" not in scene
+    assert any("emoji CTA dilewat" in line and "noto mati" in line for line in logs)
 
 
 def test_faktacuil_ignores_hook_segments_in_clips():
