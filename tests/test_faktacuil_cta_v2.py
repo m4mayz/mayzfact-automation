@@ -44,6 +44,18 @@ def test_faktacuil_scene_error_names_the_emoji_reason():
     assert "emoji" in msg and "theme" not in msg
 
 
+def test_scene_error_location_is_prefixed():
+    raw = top3_script().model_dump()
+    with pytest.raises(ValidationError) as err:
+        Script(**{**raw, "cta_scene": {"theme": "honey"}})
+    assert err.value.errors()[0]["loc"][:2] == ("cta_scene", "transform_word")
+
+    raw = faktacuil_script().model_dump()
+    with pytest.raises(ValidationError) as err:
+        Script(**{**raw, "cta_scene": {"format": "emoji", "emoji": "box"}})
+    assert err.value.errors()[0]["loc"] == ("cta_scene",)
+
+
 def test_faktacuil_scene_error_names_the_theme_reason():
     raw = faktacuil_script().model_dump()
     with pytest.raises(ValidationError) as err:

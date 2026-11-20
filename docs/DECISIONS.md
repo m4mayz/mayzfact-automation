@@ -653,3 +653,20 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Kenapa bukan dari naskah:** kolom `queries`/`subject` FaktaCuil berbahasa Indonesia dan OWLv2 cuma paham Inggris; query Indonesia bikin deteksi nyangkut kotak kecil di pinggir frame.
 - **Verifikasi:** `tests/test_faktacuil_timeline.py` (1 panah di shot 1, koordinat dari deteksi shot 1, fallback tengah, tanpa panah kalau auto_cta), `test_faktacuil_script.py` (validator tetap nolak `point=true`), pipeline test memastikan `overlay` dipanggil dengan `first_only=True`; render `6CzrwICt7Dk` menunjukkan panah nunjuk dua orang yang jongkok.
 - **Authority:** Akmal (chat 2026-11-13: "faktacuil gua mau diawal panah selalu muncul, nunjuk konteks dari voice, hanya di shot awal saja").
+
+## D-061 — 2026-11-21 — CTA FaktaCuil v2: opsional, `lucky`/`subscribe`/`emoji` + kuis
+
+- **Status:** accepted; branch `fase-cta-v2`, belum push/merge. Implementasi Task 1–5 plan `docs/superpowers/plans/2026-11-21-faktacuil-cta-v2.md`.
+- **Masalah:** CTA FaktaCuil wajib dan formatnya cuma gimmick like di tengah (`question`/`reveal`/`escape`/`escalate`). Akmal mau CTA opsional, format yang lebih jelas visualnya (like → muncul objek, subscribe, emoji), plus CTA-2 kuis hitung kata di akhir. Keyword klip juga harus English biar nyambung ke klip, bukan terjemahan Mandarin.
+- **Keputusan:**
+  - `cta_scene` FaktaCuil **opsional**. Format: `{"format": "lucky"|"subscribe", "theme": "<tema>"}` di tengah, atau `{"format": "emoji", "emoji": "<karakter>"}` di akhir. `cta_quiz = {"word", "answer"}` opsional di akhir; kombinasi valid: tanpa CTA, `lucky`, `subscribe`, `emoji`, kuis, `lucky`+kuis, `subscribe`+kuis. `emoji` nggak pernah digabung.
+  - Aturan struktur ikut posisi CTA: tengah (`lucky`/`subscribe`) tetap butuh ≥1 beat salah kaprah + ≥2 beat jawaban (beat kuis nggak dihitung); akhir (`emoji`/kuis) atau tanpa CTA nggak dicek begitu.
+  - Format lama (`question`/`reveal`/`escape`/`escalate`) dihapus. Naskah lama ditolak `check-script`/pipeline dengan pesan jelas (sebut "CTA v2"), file run dibiarin apa adanya.
+  - Deteksi blok CTA pakai anchor like/subscribe/comment **plus kata penghubung**: `muncul*` cuma nambah beat objek setelah like, `emoji` cuma nambah lead-in sebelum anchor di CTA akhir. Beat kuis nggak pernah jadi anchor.
+  - `CtaQuiz.answer` dihitung `check-script` (case-insensitive, kata utuh, kalimat kuis nggak dihitung); agent wajib isi angka yang sama, kalau beda ditolak dengan saran angka benar.
+  - `FaktaCuilTheme`/`StickerTheme` dipisah dari tema top3, biar stiker baru FaktaCuil nggak ikut ke top3. Stiker baru: SVG di `FaktaCuilStickers.tsx`, literal di `types.ts`, `models.py`, dan `THEME_NOUNS_ID`.
+  - `emoji` menerima karakter apa aja (nggak dibatasi `EMOJI`). Lottie Noto di-download ke `assets/emoji/`, divalidasi JSON-nya, disalin ke `runs/<id>/emoji/`, dan timeline pakai `emojiSrc`. Kalau nggak ada/HTML/offline: log `PERINGATAN` dan CTA pakai emoji statis — langkah hiasan nggak boleh bikin run gagal.
+  - `queries` FaktaCuil English only: 2–4 per beat, ASCII. `queries_zh` diabaikan (tidak dicek, `plan.json` `zh` selalu kosong).
+- **Pengaman:** schema strict `extra="forbid"`; validator `Script` memilih model `cta_scene` sesuai `narration_mode` (error menyebut alasan asli, lokasi `cta_scene.*`); top3 wajib `CtaScene` dan nolak `cta_quiz`; test top3 golden nggak di-regenerate; klik subscribe di timeline dan `SUB_CLICK` di Remotion sama-sama clamp ke durasi scene; `prepare_cta_emoji` nolak file non-Lottie sebelum masuk cache.
+- **Verifikasi:** `uv run pytest -q` (cuma 3 gagal lama di luar scope), `tests/test_faktacuil_cta_v2.py`, `tests/test_cta_emoji.py`, `node remotion/tests/faktacuil-cta.cjs`, `node remotion/tests/cta-scene.cjs` (13 kasus top3 tetap), `npx tsc --noEmit -p .`. Render beneran per format belum (Task 7).
+- **Authority:** Akmal, spec `docs/superpowers/specs/2026-11-21-faktacuil-brief-cta-v2-design.md` (disetujui chat 2026-11-21).

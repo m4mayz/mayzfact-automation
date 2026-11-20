@@ -3,7 +3,7 @@
 import unicodedata
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # Stiker FaktaCuil dipisah dari tema top3 biar stiker baru FaktaCuil nggak ikut ke top3 (D-061).
 FaktaCuilTheme = Literal["volcano", "unicorn", "honey", "puppy", "lion", "shark", "toilet", "cat", "zebra"]
@@ -81,14 +81,14 @@ class Script(BaseModel):
     bgm: str = ""  # sisa lama, nggak dipakai: BGM selalu mystery.mp3 (hook) + main.mp3 (D-038)
     hook_queries: dict[str, HookQuery] = {}  # per index segmen hook (plan/seg_XX), ditulis agent
 
-    @model_validator(mode="before")
+    @field_validator("cta_scene", mode="before")
     @classmethod
-    def _pick_scene_model(cls, data):
-        # Union bikin error cabang lain nutupin alasan asli; pilih model sesuai narration_mode duluan.
-        if not isinstance(data, dict) or not isinstance(data.get("cta_scene"), dict):
-            return data
-        model = {"faktacuil": FaktaCuilCtaScene, "top3": CtaScene}.get(data.get("narration_mode"))
-        return {**data, "cta_scene": model.model_validate(data["cta_scene"])} if model else data
+    def _pick_scene_model(cls, value, info):
+        # Union bikin error cabang lain nutupin alasan asli; validasi pakai model sesuai narration_mode duluan.
+        if not isinstance(value, dict):
+            return value
+        model = {"faktacuil": FaktaCuilCtaScene, "top3": CtaScene}.get(info.data.get("narration_mode"))
+        return model.model_validate(value) if model else value
 
     @model_validator(mode="after")
     def _cta_matches_mode(self):

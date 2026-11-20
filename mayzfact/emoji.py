@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import os
 import shutil
 import time
 from pathlib import Path
@@ -25,21 +27,58 @@ EMOJI = {
 }
 
 
+def _valid_lottie(path: Path) -> bool:
+    """Lottie dasar: JSON object dengan `layers` list. Server yang balikin HTML jangan sampai masuk cache."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return isinstance(data, dict) and isinstance(data.get("layers"), list)
+
+
+def _fetch_lottie(emoji_dir: Path, client: httpx.Client, cp: str, log: Callable[[str], None],
+                  sleep: Callable[[float], None]) -> Path | None:
+    """Download + validasi; None = isinya bukan Lottie (file kotor nggak disimpan)."""
+    dest = emoji_dir / f"{cp}.json"
+    if dest.exists():
+        if _valid_lottie(dest):
+            return dest
+        dest.unlink(missing_ok=True)  # cache lama HTML/rusak: buang, coba download lagi
+    emoji_dir.mkdir(parents=True, exist_ok=True)
+    raw = dest.with_name(dest.name + ".raw")
+    raw.unlink(missing_ok=True)  # sisa run yang mati di tengah jangan dianggap cache
+    try:
+        download(client, NOTO_LOTTIE.format(cp=cp), raw, step="timeline", sleep=sleep)
+    except PipelineError:
+        raw.unlink(missing_ok=True)
+        raw.with_name(raw.name + ".part").unlink(missing_ok=True)
+        raise
+    if not _valid_lottie(raw):
+        log(f"[timeline] emoji {cp} bukan Lottie valid, dilewat")
+        raw.unlink(missing_ok=True)
+        return None
+    os.replace(raw, dest)
+    return dest
+
+
 def ensure_emoji(emoji_dir: Path, client: httpx.Client, codepoints: list[str], log: Callable[[str], None],
                  sleep: Callable[[float], None] = time.sleep) -> dict[str, Path]:
-    """Download Lottie yang belum ada. Yang gagal dilewat (emoji-nya nggak tampil, video tetap jadi).
+    """Download Lottie yang belum ada. Yang gagal/dirty dilewat (emoji-nya nggak tampil, video tetap jadi).
 
     Kalau fonts.gstatic nggak bisa dihubungi, sisanya langsung dilewat: emoji cuma hiasan, jangan bikin pipeline nunggu.
     """
     out: dict[str, Path] = {}
     for cp in codepoints:
         try:
-            out[cp] = download(client, NOTO_LOTTIE.format(cp=cp), emoji_dir / f"{cp}.json", step="timeline", sleep=sleep)
+            path = _fetch_lottie(emoji_dir, client, cp, log, sleep)
         except PipelineError as exc:
             if isinstance(exc.__cause__, httpx.TransportError):
                 log(f"[timeline] fonts.gstatic nggak bisa dihubungi, emoji yang belum ke-download dilewat: {exc.message[:120]}")
                 break
             log(f"[timeline] emoji {cp} gagal di-download, dilewat: {exc.message[:120]}")
+            continue
+        if path is not None:
+            out[cp] = path
     return out
 
 
@@ -60,11 +99,13 @@ def prepare_cta_emoji(run_root: Path, cta_scene: dict | None, *, client: httpx.C
         codepoints.append(plain)
     for cp in codepoints:
         try:
-            src = download(client, NOTO_LOTTIE.format(cp=cp), emoji_dir / f"{cp}.json", step="timeline", sleep=sleep)
+            src = _fetch_lottie(emoji_dir, client, cp, log, sleep)
         except PipelineError as exc:
             if isinstance(exc.__cause__, httpx.TransportError):  # offline: jangan nunggu emoji berikutnya
                 log(f"[timeline] fonts.gstatic nggak bisa dihubungi, emoji CTA pakai emoji statis: {exc.message[:120]}")
                 return None
+            continue
+        if src is None:
             continue
         target = run_root / "emoji" / f"{cp}.json"
         target.parent.mkdir(parents=True, exist_ok=True)

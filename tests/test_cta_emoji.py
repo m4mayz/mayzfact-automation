@@ -1,8 +1,13 @@
 import httpx
 
-from mayzfact.emoji import emoji_codepoint, prepare_cta_emoji
+from mayzfact.emoji import emoji_codepoint, ensure_emoji, prepare_cta_emoji
 
 LOTTIE = {"v": "5.7.4", "fr": 30, "ip": 0, "op": 30, "w": 512, "h": 512, "layers": []}
+
+
+def html_client():
+    return httpx.Client(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, text="<html>nope</html>", headers={"content-type": "text/html"})))
 
 
 def lottie_client(*available):
@@ -61,3 +66,30 @@ def test_prepare_cta_emoji_ignores_other_formats(tmp_path):
     for scene in ({"format": "lucky", "theme": "honey"}, None):
         assert prepare(tmp_path, scene, client) is None
     assert hits == []
+
+
+def test_prepare_cta_emoji_rejects_non_json_lottie(tmp_path):
+    logs = []
+    src = prepare_cta_emoji(tmp_path / "run", {"format": "emoji", "emoji": "📦"}, client=html_client(),
+                            emoji_dir=tmp_path / "cache", log=logs.append, sleep=lambda s: None)
+    assert src is None
+    assert not (tmp_path / "cache" / "1f4e6.json").exists()
+    assert not (tmp_path / "run" / "emoji").exists()
+    assert any("statis" in line for line in logs)
+
+
+def test_ensure_emoji_rejects_non_json_lottie(tmp_path):
+    logs = []
+    assert ensure_emoji(tmp_path, html_client(), ["1f4e6"], logs.append, sleep=lambda s: None) == {}
+    assert not (tmp_path / "1f4e6.json").exists()
+    assert any("bukan Lottie valid" in line and "1f4e6" in line for line in logs)
+
+
+def test_invalid_cached_lottie_is_replaced(tmp_path):
+    (tmp_path).mkdir(exist_ok=True)
+    (tmp_path / "1f4e6.json").write_text("<html>nope</html>", encoding="utf-8")
+    client, _ = lottie_client("1f4e6")
+    src = prepare_cta_emoji(tmp_path / "run", {"format": "emoji", "emoji": "📦"}, client=client,
+                            emoji_dir=tmp_path, log=lambda m: None, sleep=lambda s: None)
+    assert src == "emoji/1f4e6.json"
+    assert (tmp_path / "1f4e6.json").read_text(encoding="utf-8").startswith("{")
