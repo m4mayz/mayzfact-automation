@@ -48,6 +48,10 @@ assert.match(markup(sub, 61), /data-cta-pill="subscribe"[^>]*>[\s\S]*SUBSCRIBE/)
 assert.doesNotMatch(markup(sub, 61), /SUBSCRIBED/);
 assert.match(markup(sub, 62), /SUBSCRIBED/);
 assert.match(markup(sub, 64), /data-cta-sticker="true"/);
+// Pill + kursor harus di atas stiker: di markup, pill muncul setelah elemen stiker.
+const sub64 = markup(sub, 64);
+assert.ok(sub64.indexOf('data-cta-pill="subscribe"') > sub64.indexOf('data-cta-sticker="true"'),
+  'pill SUBSCRIBE harus dirender setelah stiker');
 
 // emoji: tanpa emojiSrc → statis, pop-in tepat pas klik (cue like = kata "emoji"), ada karakternya,
 // nggak ada stiker, dan masih tampil penuh di frame terakhir.

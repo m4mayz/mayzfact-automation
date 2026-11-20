@@ -89,21 +89,7 @@ export const FaktaCuilCtaVisual: React.FC<{scene: FaktaCuilSceneData; frame: num
   const stickerLen = scene.durationInFrames - stickerFrom;
   return (
     <div style={{position: 'absolute', inset: 0, pointerEvents: 'none'}}>
-      {frame < pillEnd ? <>
-        <Pill kind="like" label={liked ? 'LIKED' : 'LIKE'} bg={liked ? '#1468f0' : 'rgba(28,28,30,0.94)'}
-          scale={pop} opacity={interpolate(frame, [0, 2], [0, 1], clamp)}/>
-        {frame >= clickAt - 10 && frame < clickAt - 3 ?
-          <Arrow x={interpolate(arrowT, [0, 1], [tipX + 200, tipX])} y={interpolate(arrowT, [0, 1], [tipY + 220, tipY])}/> : null}
-        {frame >= clickAt - 3 ? <Cursor x={tipX} y={tipY} pressed={frame >= clickAt && frame < clickAt + 3}/> : null}
-      </> : null}
-      {subFrom !== null && frame >= subFrom && frame < subEnd ? <>
-        <Pill kind="subscribe" label={subClicked ? 'SUBSCRIBED' : 'SUBSCRIBE'}
-          bg={subClicked ? 'rgba(28,28,30,0.94)' : '#ff0000'}
-          scale={interpolate(frame - subFrom, [0, 2, 4], [0.8, 1.05, 1], clamp)}
-          opacity={interpolate(frame - subFrom, [0, 2], [0, 1], clamp)}/>
-        {frame >= subFrom + subClickAt - 3 ?
-          <Cursor x={tipX} y={tipY} pressed={subClicked && frame < subFrom + subClickAt + 3}/> : null}
-      </> : null}
+      {/* Stiker/emoji digambar duluan; pill + kursor di atasnya biar asap stiker nggak nutup pill. */}
       {scene.format === 'emoji' ? (
         stickerFrame >= 0 && stickerLen > 0 ? (() => {
           const m = emojiMotion(stickerFrame);
@@ -136,6 +122,21 @@ export const FaktaCuilCtaVisual: React.FC<{scene: FaktaCuilSceneData; frame: num
           </div>
         );
       })() : null}
+      {frame < pillEnd ? <>
+        <Pill kind="like" label={liked ? 'LIKED' : 'LIKE'} bg={liked ? '#1468f0' : 'rgba(28,28,30,0.94)'}
+          scale={pop} opacity={interpolate(frame, [0, 2], [0, 1], clamp)}/>
+        {frame >= clickAt - 10 && frame < clickAt - 3 ?
+          <Arrow x={interpolate(arrowT, [0, 1], [tipX + 200, tipX])} y={interpolate(arrowT, [0, 1], [tipY + 220, tipY])}/> : null}
+        {frame >= clickAt - 3 ? <Cursor x={tipX} y={tipY} pressed={frame >= clickAt && frame < clickAt + 3}/> : null}
+      </> : null}
+      {subFrom !== null && frame >= subFrom && frame < subEnd ? <>
+        <Pill kind="subscribe" label={subClicked ? 'SUBSCRIBED' : 'SUBSCRIBE'}
+          bg={subClicked ? 'rgba(28,28,30,0.94)' : '#ff0000'}
+          scale={interpolate(frame - subFrom, [0, 2, 4], [0.8, 1.05, 1], clamp)}
+          opacity={interpolate(frame - subFrom, [0, 2], [0, 1], clamp)}/>
+        {frame >= subFrom + subClickAt - 3 ?
+          <Cursor x={tipX} y={tipY} pressed={subClicked && frame < subFrom + subClickAt + 3}/> : null}
+      </> : null}
     </div>
   );
 };
