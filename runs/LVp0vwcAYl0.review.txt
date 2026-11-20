@@ -1,0 +1,26 @@
+TOTAL 56 kata, 8 beat, tema CTA cat
+
+1. Kenapa kucing gampang banget nyelip ke celah yang sempit?
+   dasar: Kenapa tubuh kucing sangat mudah masuk ke tempat yang sempit?
+   keyword: kucing | subject: kucing | visual: cat squeezing into narrow gap
+2. Kamu mungkin mengira badannya mengecil waktu masuk?
+   dasar: (salah kaprah, bukan fakta source)
+   keyword: - | subject: kucing | visual: cat looking confused
+3. Tapi coba tekan like dulu,
+   dasar: (CTA gimmick like)
+   keyword: - | subject: - | visual: cute cat close up face
+4. apakah like-mu berubah jadi seekor kucing?
+   dasar: (CTA gimmick like)
+   keyword: - | subject: - | visual: cat paw reaching out
+5. Ternyata bahu kucing punya tulang yang bebas bergerak,
+   dasar: Itu karena struktur tulang bahu kucing bisa bergerak bebas
+   keyword: - | subject: kucing | visual: cat front legs walking
+6. itu yang bikin badannya lentur dan gampang dilipat.
+   dasar: membuat badan mereka lebih elastis
+   keyword: lentur | subject: kucing | visual: cat stretching body
+7. Asal kepalanya masuk, sisa badannya ikut lewat.
+   dasar: Selama kepala kucing masih muat, seluruh badannya pasti bisa masuk.
+   keyword: - | subject: kucing | visual: cat head through hole
+8. Jadi patokan utamanya lebar kepala kucingnya.
+   dasar: Selama kepala kucing masih muat, seluruh badannya pasti bisa masuk.
+   keyword: kepala | subject: kucing | visual: cat inside narrow box

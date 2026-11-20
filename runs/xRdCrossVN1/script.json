@@ -1,0 +1,203 @@
+{
+  "narration_mode": "faktacuil",
+  "cta_scene": {
+    "theme": "zebra",
+    "transform_word": "hilang",
+    "comment_text": "ZEBRA",
+    "format": "escape"
+  },
+  "beats": [
+    {
+      "text": "Cara nyebrang jalan di tiap negara beda banget.",
+      "media": "video",
+      "queries": [
+        "street crossing different countries",
+        "pedestrian crossing world",
+        "people crossing road city"
+      ],
+      "subject": "penyeberang jalan",
+      "point": false,
+      "emoji": "",
+      "emoji_word": "",
+      "queries_zh": [
+        "各国 过马路",
+        "行人 过马路 城市",
+        "世界各地 过马路"
+      ],
+      "keyword": "beda"
+    },
+    {
+      "text": "Kamu mungkin kira aturannya sama semua.",
+      "media": "photo",
+      "queries": [
+        "zebra crossing from above",
+        "crosswalk top view",
+        "road markings aerial"
+      ],
+      "subject": "",
+      "point": false,
+      "emoji": "",
+      "emoji_word": "",
+      "queries_zh": [
+        "斑马线 俯视",
+        "人行横道 俯拍",
+        "路口 标线"
+      ],
+      "keyword": "sama"
+    },
+    {
+      "text": "Tapi coba tekan like dulu,",
+      "media": "video",
+      "queries": [
+        "hand tapping phone screen",
+        "finger touching smartphone screen",
+        "thumb on phone screen"
+      ],
+      "subject": "",
+      "point": false,
+      "emoji": "",
+      "emoji_word": "",
+      "queries_zh": [
+        "手指 点击 手机 屏幕",
+        "手指 触碰 屏幕",
+        "拇指 手机"
+      ],
+      "keyword": ""
+    },
+    {
+      "text": "atau like-mu hilang bareng zebra ini.",
+      "media": "video",
+      "queries": [
+        "zebra crossing stripes close up",
+        "crosswalk white lines",
+        "pedestrian crossing markings"
+      ],
+      "subject": "",
+      "point": false,
+      "emoji": "",
+      "emoji_word": "",
+      "queries_zh": [
+        "斑马线 特写",
+        "人行横道 白线",
+        "路口 白色 标线"
+      ],
+      "keyword": ""
+    },
+    {
+      "text": "Di Vietnam, jalan lurus aja, jangan berhenti.",
+      "media": "video",
+      "queries": [
+        "vietnam street motorbike traffic",
+        "hanoi road scooters",
+        "vietnam crossing street"
+      ],
+      "subject": "penyeberang jalan",
+      "point": false,
+      "emoji": "",
+      "emoji_word": "",
+      "queries_zh": [
+        "越南 街道 摩托车",
+        "河内 马路 摩托",
+        "越南 过马路"
+      ],
+      "keyword": "berhenti"
+    },
+    {
+      "text": "Pengendara otomatis ngehindar kalau gerakmu stabil.",
+      "media": "video",
+      "queries": [
+        "motorbike rider passing pedestrian",
+        "scooter traffic close",
+        "motorcycle street traffic"
+      ],
+      "subject": "pengendara motor",
+      "point": false,
+      "emoji": "",
+      "emoji_word": "",
+      "queries_zh": [
+        "摩托车 经过 行人",
+        "摩托 车流 特写",
+        "街 摩托车"
+      ],
+      "keyword": "stabil"
+    },
+    {
+      "text": "Di Jepang, tunggu mobil berhenti total dulu.",
+      "media": "video",
+      "queries": [
+        "japan crosswalk wait signal",
+        "japanese street crossing pedestrian",
+        "tokyo crossing sidewalk"
+      ],
+      "subject": "",
+      "point": false,
+      "emoji": "",
+      "emoji_word": "",
+      "queries_zh": [
+        "日本 人行横道 等 信号",
+        "日本 街道 过马路",
+        "东京 路口 人行道"
+      ],
+      "keyword": "total"
+    },
+    {
+      "text": "Angkat tangan, nyebrang, terus bungkuk terima kasih.",
+      "media": "video",
+      "queries": [
+        "japanese pedestrian bow",
+        "person bowing street japan",
+        "hand raised crossing street"
+      ],
+      "subject": "",
+      "point": false,
+      "emoji": "",
+      "emoji_word": "",
+      "queries_zh": [
+        "日本人 鞠躬",
+        "鞠躬 街道",
+        "举手 过马路"
+      ],
+      "keyword": "bungkuk"
+    },
+    {
+      "text": "Di Kanada, kamu ambil satu bata di pinggir jalan.",
+      "media": "video",
+      "queries": [
+        "brick stack roadside",
+        "bricks pile sidewalk",
+        "brick in hand road"
+      ],
+      "subject": "",
+      "point": false,
+      "emoji": "",
+      "emoji_word": "",
+      "queries_zh": [
+        "砖 堆 路边",
+        "人行道 砖 堆",
+        "手 拿 砖"
+      ],
+      "keyword": "bata"
+    },
+    {
+      "text": "Pegang kayak mau dilempar ke mobil.",
+      "media": "photo",
+      "queries": [
+        "person holding brick road",
+        "hand holding brick street",
+        "holding brick crosswalk"
+      ],
+      "subject": "",
+      "point": false,
+      "emoji": "",
+      "emoji_word": "",
+      "queries_zh": [
+        "手 拿 砖 马路",
+        "手 砖 街道",
+        "拿 砖 人行横道"
+      ],
+      "keyword": "dilempar"
+    }
+  ],
+  "bgm": "mystery.mp3",
+  "hook_queries": {}
+}
