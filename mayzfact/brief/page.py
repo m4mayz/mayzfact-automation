@@ -6,6 +6,8 @@ import json
 from html import escape
 from pathlib import Path
 
+from mayzfact.manual.links import IMAGE_EXTS, SPEEDS
+
 _CSS = """
 :root {
   --bg-page: #f4f4f5;
@@ -544,12 +546,6 @@ body {
   text-transform: uppercase;
 }
 
-.group-tag.hook {
-  background: var(--brand-orange-soft);
-  color: var(--brand-orange-text);
-  border: 1px solid var(--brand-orange-border);
-}
-
 /* Reference Strip */
 .refs-strip-wrap {
   background: #f8fafc;
@@ -585,6 +581,25 @@ body {
   background: #000;
   flex-shrink: 0;
 }
+
+/* Frame referensi source (FaktaCuil): 1 kartu ketutup default biar daftar shot nggak kedorong */
+.source-frames {
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+.source-frames summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+}
+.source-frames figure {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+.source-shot { margin-top: 10px; }
+.source-shot-label { font-size: 11.5px; color: var(--text-muted); }
+.ref-time { font-size: 10.5px; color: var(--text-muted); }
 
 /* Shots List */
 .shots {
@@ -1008,6 +1023,23 @@ body {
   display: grid;
   gap: 8px;
   justify-items: start;
+}
+.speed-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.speed-pick select {
+  padding: 4px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+}
+.speed-pick select:disabled {
+  opacity: 0.5;
 }
 .preview-stage {
   display: grid;
@@ -1577,13 +1609,15 @@ function scheduleAutoSave() {
       const res = await fetch('/api/links', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({shots, sfx: collectSfx()})
+        body: JSON.stringify({shots, sfx: collectSfx(), speed: collectSpeed()})
       });
       if (res.ok) {
         setMsg('Tersimpan otomatis ✓');
         const data = await res.json();
+        document.querySelectorAll('input[data-shot]').forEach(inp => delete inp.dataset.dirty);
         if (data.urls) setPrefetchUrls(data.urls);
         if (data.previews) setPreviewStarts(data.previews);
+        syncPreviewButtons();
         pollProgress();
       } else {
         const err = await res.json().catch(() => ({}));
@@ -1604,12 +1638,25 @@ function setPrefetchUrls(urls) {
     el.textContent = '';
     el.className = 'prefetch pf-';
   });
+  syncPreviewButtons();
 }
 
 document.addEventListener('input', (e) => {
+  if (e.target.matches('input[data-shot]')) {
+    e.target.dataset.dirty = '1';  // link baru: preview lama udah bukan klipnya
+    const idx = e.target.dataset.shot;
+    const btn = document.querySelector(`[data-preview-btn="${idx}"]`);
+    if (previews[idx] || (btn && btn.getAttribute('aria-expanded') === 'true')) closePreview(idx);
+    syncSpeedSelect(idx, e.target.value);
+    syncPreviewButtons();
+  }
   if (e.target.matches('input[data-shot], input[data-time-start], input[data-time-end], input[data-sfx-at]')) {
     scheduleAutoSave();
   }
+});
+
+document.addEventListener('change', (e) => {
+  if (e.target.matches('select[data-speed]')) scheduleAutoSave();
 });
 
 // Preview klip + SFX kustom per shot. Bagian yang dipakai = [mulai, mulai + durasi shot]; mulai dari kolom Mulai,
@@ -1622,6 +1669,41 @@ function toolsOf(idx) {
 function shotDur(idx) {
   return parseFloat(toolsOf(idx).dataset.shotDur) || 0;
 }
+function speedOf(idx) {
+  const sel = document.querySelector(`select[data-speed="${idx}"]`);
+  return sel ? parseFloat(sel.value) || 1 : 1;
+}
+function srcDur(idx) {
+  return shotDur(idx) * speedOf(idx);  // detik source yang dibaca fetch = durasi shot × speed
+}
+function collectSpeed() {
+  const out = {};
+  document.querySelectorAll('select[data-speed]').forEach(sel => {
+    if (sel.disabled) return;  // foto: speed diabaikan
+    out[sel.dataset.speed] = parseFloat(sel.value) || 1;
+  });
+  return out;
+}
+const IMAGE_LINK = /\.(jpe?g|png|webp)(?:[?#].*)?$/i;  // link/file foto: speed diabaikan
+function syncSpeedSelect(idx, value) {
+  const sel = document.querySelector(`select[data-speed="${idx}"]`);
+  if (!sel) return;
+  const clean = value.trim().replace(/\s+(@\S+|#\S+)\s*$/, '').replace(/^file:/i, '');  // buang @detik / #pick
+  sel.disabled = IMAGE_LINK.test(clean);
+}
+function syncPreviewButtons() {
+  document.querySelectorAll('[data-preview-btn]').forEach(btn => {
+    const idx = btn.dataset.previewBtn;
+    const inp = document.querySelector(`input[data-shot="${idx}"]`);
+    const badge = document.querySelector(`.prefetch[data-shot-badge="${idx}"]`);
+    const value = inp ? inp.value.trim() : '';
+    const dirty = !!inp && inp.dataset.dirty === '1';
+    const ready = !dirty && (value.startsWith('file:') ||
+      (!!value && !!badge && !!badge.dataset.prefetchUrl && badge.classList.contains('pf-siap')));
+    btn.disabled = !ready;
+    if (!ready && (previews[idx] || btn.getAttribute('aria-expanded') === 'true')) closePreview(idx);
+  });
+}
 function windowStart(idx, video) {
   const inp = document.querySelector(`input[data-time-start="${idx}"]`);
   let start = inp ? parseFloat(inp.value) : NaN;
@@ -1630,10 +1712,10 @@ function windowStart(idx, video) {
     if (auto === '') return null;
     start = parseFloat(auto);
     // lanjutan yang lewat ujung video: fetch balik ke detik 0
-    if (video && video.duration && start + shotDur(idx) + 0.2 > video.duration + 0.001) return 0;
+    if (video && video.duration && start + srcDur(idx) + 0.2 > video.duration + 0.001) return 0;
   }
   if (!video || !video.duration) return start;
-  return Math.max(0, Math.min(start, video.duration - shotDur(idx) - 0.2));  // dipotong kayak fetch
+  return Math.max(0, Math.min(start, video.duration - srcDur(idx) - 0.2));  // dipotong kayak fetch
 }
 function setPreviewStarts(starts) {
   document.querySelectorAll('[data-clip-tools]').forEach(el => {
@@ -1689,7 +1771,7 @@ function sfxFromPreview(idx) {
   if (!st) { showToast('Buka preview klipnya dulu'); return; }
   const start = windowStart(idx, st.video);
   if (start === null) { showToast('Isi Mulai dulu, biar detik SFX kehitung dari awal shot'); return; }
-  const rel = st.video.currentTime - start;
+  const rel = (st.video.currentTime - start) / speedOf(idx);
   if (rel < 0 || rel > shotDur(idx)) { showToast('Posisi preview di luar bagian yang dipakai'); return; }
   setInput(document.querySelector(`input[data-sfx-at="${idx}"]`), rel.toFixed(1));
 }
@@ -1733,8 +1815,11 @@ async function togglePreview(idx) {
     stage.textContent = 'Klipnya belum ke-download. Tunggu badge "siap", terus buka lagi.';
     return;
   }
+  if (btn.getAttribute('aria-expanded') !== 'true') return;  // preview ditutup pas nunggu (link diganti): jangan bikin media
   stage.replaceChildren();
   if (type.startsWith('image/')) {
+    const sel = document.querySelector(`select[data-speed="${idx}"]`);
+    if (sel) sel.disabled = true;  // foto: speed diabaikan
     const img = document.createElement('img');
     img.src = src;
     img.alt = `Foto shot ${+idx + 1}`;
@@ -1768,17 +1853,20 @@ async function togglePreview(idx) {
   const tick = () => {
     if (previews[idx] !== st) return;
     const start = windowStart(idx, video);
+    const speed = speedOf(idx);
     const dur = shotDur(idx);
+    const src = srcDur(idx);
+    if (video.playbackRate !== speed) video.playbackRate = speed;
     const t = video.currentTime;
     const prev = st.prevT;
     const natural = prev !== null && !video.paused && t >= prev && t - prev < 0.5;  // diputer, bukan di-seek
-    if (start !== null && natural && prev < start + dur && t >= start + dur) {
+    if (start !== null && natural && prev < start + src && t >= start + src) {
       video.currentTime = start;  // bagian yang dipakai diulang terus
       st.prevT = null;
       st.fired = false;
     } else {
       if (start !== null) {
-        const rel = t - start;
+        const rel = (t - start) / speed;  // detik shot, bukan detik source
         const file = selectedSfx(idx);
         const at = Math.min(sfxAt(idx), Math.max(0, dur - 0.05));  // detik terakhir keburu di-loop
         if (rel < at - 0.05) st.fired = false;  // di-seek mundur
@@ -1807,7 +1895,7 @@ async function save() {
     const res = await fetch('/api/links', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({shots, sfx: collectSfx(), retry: true})  // klik Simpan = link yang gagal dicoba lagi
+      body: JSON.stringify({shots, sfx: collectSfx(), speed: collectSpeed(), retry: true})  // klik Simpan = link yang gagal dicoba lagi
     });
     if (res.ok) {
       const data = await res.json();
@@ -1831,7 +1919,7 @@ async function uploadShot(shotIndex, input) {
     const saved = await fetch('/api/links', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({shots, sfx: collectSfx()})
+      body: JSON.stringify({shots, sfx: collectSfx(), speed: collectSpeed()})
     });
     if (saved.ok) {
       const res = await fetch(`/api/upload?shot=${encodeURIComponent(shotIndex)}`, {
@@ -1907,6 +1995,7 @@ function renderPrefetch(states) {
       el.className = 'prefetch pf-' + st.state;
     });
   }
+  syncPreviewButtons();  // badge siap → tombol Preview langsung aktif tanpa refresh
 }
 async function pollProgress() {
   try {
@@ -1999,18 +2088,26 @@ def sfx_label(name: str) -> str:
     return " ".join(kept or words)
 
 
-def _clip_tools(s_idx: int, dur: float, entry: dict | str | None, sfx_names: list[str], start: float | None) -> str:
-    """Preview bagian klip yang dipakai + pill SFX kustom (radio, 1 per shot)."""
-    has_media = isinstance(entry, dict) and bool(entry.get("url") or entry.get("file"))
+def _clip_tools(s_idx: int, dur: float, entry: dict | str | None, sfx_names: list[str], start: float | None,
+                ready: bool = False) -> str:
+    """Preview bagian klip yang dipakai (aktif kalau file/unduhan siap), pilihan speed, + pill SFX kustom per shot."""
     current = entry.get("sfx") if isinstance(entry, dict) else None
     picked = current.get("file", "") if isinstance(current, dict) else ""
     at = f"{current['at_s']:g}" if picked else ""
-    preview = (f"""
+    disabled = "" if ready else " disabled"
+    speed = float(entry.get("speed") or 1) if isinstance(entry, dict) else 1.0
+    is_photo = isinstance(entry, dict) and Path(entry.get("file") or "").suffix.lower() in IMAGE_EXTS
+    options = "".join(f'<option value="{s:g}"{" selected" if s == speed else ""}>{s:g}x</option>' for s in SPEEDS)
+    preview = f"""
         <div class="preview-box" data-preview="{s_idx}">
-          <button type="button" class="btn-well-ghost" data-preview-btn="{s_idx}" aria-expanded="false"
+          <button type="button" class="btn-well-ghost" data-preview-btn="{s_idx}" aria-expanded="false"{disabled}
                   onclick="togglePreview({s_idx})">Preview klip</button>
           <div class="preview-stage" data-preview-stage="{s_idx}" hidden></div>
-        </div>""" if has_media else "")
+        </div>"""
+    speed_pick = f"""
+        <label class="speed-pick">Speed
+          <select data-speed="{s_idx}"{" disabled" if is_photo else ""}>{options}</select>
+        </label>"""
     pills = "".join(
         f'<label class="sfx-pill" title="{escape(name, quote=True)}"><input type="radio" name="sfx-{s_idx}" '
         f'value="{escape(name, quote=True)}"{" checked" if name == picked else ""}><span>{escape(sfx_label(name))}</span></label>'
@@ -2019,7 +2116,7 @@ def _clip_tools(s_idx: int, dur: float, entry: dict | str | None, sfx_names: lis
     none_checked = "" if picked in sfx_names else " checked"
     auto = "" if start is None else f"{start:g}"
     return f"""
-      <div class="clip-tools" data-clip-tools="{s_idx}" data-shot-dur="{dur:.2f}" data-auto-start="{auto}">{preview}
+      <div class="clip-tools" data-clip-tools="{s_idx}" data-shot-dur="{dur:.2f}" data-auto-start="{auto}">{preview}{speed_pick}
         <div class="sfx-row" role="radiogroup" aria-label="SFX kustom shot {s_idx + 1}">
           <span class="kw-row-label">SFX:</span>
           <label class="sfx-pill"><input type="radio" name="sfx-{s_idx}" value=""{none_checked}><span>Tanpa</span></label>
@@ -2086,6 +2183,14 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
             end_val = f"{e_s:g}"
 
     has_val = bool(url_val)
+    ready = False
+    if isinstance(entry, dict):
+        ready = bool(entry.get("file"))
+        media_url = entry.get("url") or ""
+    else:
+        media_url = url_val
+    if not ready and media_url:
+        ready = ((prefetch or {}).get(media_url) or {}).get("state") == "siap"
     css = state.get("state", "") if has_val else "missing"
     if css == "missing" and has_val:
         css = ""
@@ -2102,6 +2207,7 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
       <div class="shot-top-bar">
         <div class="shot-meta-left">
           <span class="shot-num">Shot {s_idx + 1:02d}</span>
+          <span class="z-badge group">{escape(group.get("label") or group["id"])}</span>
           <button type="button" class="time-seek-pill" {pill_attr}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             {shot['start_s']:.1f}s – {shot['end_s']:.1f}s
@@ -2148,17 +2254,19 @@ def _shot_row(shot: dict, group: dict, entry: dict | str | None, state: dict, vo
           </div>
         </div>
       </div>
-      {_clip_tools(s_idx, shot["end_s"] - shot["start_s"], entry, sfx_names or [], preview_start)}
+      {_clip_tools(s_idx, shot["end_s"] - shot["start_s"], entry, sfx_names or [], preview_start, ready)}
     </div>"""
 
 
-def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: bool = False,
-          prefetch: dict | None = None, sfx_names: list[str] | None = None, previews: dict | None = None) -> str:
-    is_hook = group["id"] == "hook"
-
+def _shots_card(plan: dict, links: dict, status: dict, voice_ok: bool = False,
+                prefetch: dict | None = None, sfx_names: list[str] | None = None,
+                previews: dict | None = None) -> str:
+    """Semua shot dalam 1 kartu urut index; kelompok tiap shot cuma label info, bukan pemisah kartu."""
     shot_rows = []
-    for shot in shots:
+    for shot in sorted(plan["shots"], key=lambda s: s["index"]):
         s_idx = shot["index"]
+        group = next((g for g in plan["groups"] if s_idx in g["shots"]), {"id": "", "label": "", "shots": []})
+
         entry = None
         if "shots" in links:
             entry = links["shots"].get(str(s_idx))
@@ -2177,21 +2285,50 @@ def _card(group: dict, shots: list[dict], links: dict, status: dict, voice_ok: b
         shot_rows.append(_shot_row(shot, group, entry, st, voice_ok, prefetch, sfx_names, (previews or {}).get(s_idx)))
 
     return f"""
-<section class="card-group card" data-group="{escape(group['id'], quote=True)}">
+<section class="card-group card" data-group="all">
   <div class="group-header">
     <div class="group-title-wrap">
-      <h2 class="group-title">{escape(group['label'])}</h2>
-      <span class="group-tag {'hook' if is_hook else ''}">Kelompok · {len(shots)} Shot</span>
+      <h2 class="group-title">Shot</h2>
+      <span class="group-tag">Semua · {len(plan["shots"])} Shot</span>
     </div>
   </div>
   <div class="shots">{''.join(shot_rows)}</div>
 </section>"""
 
 
+def _source_frames_card(run_id: str, plan: dict) -> str:
+    """Kartu frame referensi dari shot source (FaktaCuil): 2 frame acak per shot, ketutup default di HP."""
+    if plan.get("narration_mode") != "faktacuil":
+        return ""
+    shots = plan.get("source_shots") or []
+    if not shots:
+        return f"""
+    <details class="z-card source-frames" id="source-frames">
+      <summary>Frame referensi source (0 shot)</summary>
+      <p>Frame referensi belum ada (source.mp4 nggak ada atau cut detection gagal).
+      Jalanin: mayzfact run {escape(run_id)} --from plan --no-render</p>
+    </details>"""
+    blocks = []
+    for shot in shots:
+        refs = "".join(
+            f'<figure><img src="/files/{escape(f["file"])}" onclick="openLightbox(this.src)" loading="lazy">'
+            f'<span class="ref-time">{f["t"]:.1f}s</span></figure>'
+            for f in shot.get("frames", [])
+        )
+        blocks.append(f"""
+      <div class="source-shot">
+        <div class="source-shot-label">Shot source {shot["index"] + 1} · {shot["start_s"]:.1f}–{shot["end_s"]:.1f}s</div>
+        <div class="refs">{refs}</div>
+      </div>""")
+    return f"""
+    <details class="z-card source-frames" id="source-frames">
+      <summary>Frame referensi source ({len(shots)} shot)</summary>{''.join(blocks)}
+    </details>"""
+
+
 def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str | None = None,
                 voice: str | None = None, prefetch: dict | None = None, sfx_names: list[str] | None = None,
                 previews: dict | None = None) -> str:
-    shots = {shot["index"]: shot for shot in plan["shots"]}
     groups = plan["groups"]
     auto = {s['index'] for s in plan['shots'] if s.get('auto_cta')}
 
@@ -2252,10 +2389,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
           </div>
         </div>""")
 
-    cards = "".join(
-        _card(group, [shots[i] for i in group["shots"]], links, status, voice is not None, prefetch, sfx_names, previews)
-        for group in groups
-    )
+    cards = _shots_card(plan, links, status, voice is not None, prefetch, sfx_names, previews)
 
     if source:
         aside = f"""
@@ -2361,6 +2495,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
     {aside}
     <main class="cards-stack">
       <section id="progress"></section>
+      {_source_frames_card(run_id, plan)}
       {cards}
     </main>
   </div>

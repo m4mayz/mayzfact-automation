@@ -654,6 +654,15 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Verifikasi:** `tests/test_faktacuil_timeline.py` (1 panah di shot 1, koordinat dari deteksi shot 1, fallback tengah, tanpa panah kalau auto_cta), `test_faktacuil_script.py` (validator tetap nolak `point=true`), pipeline test memastikan `overlay` dipanggil dengan `first_only=True`; render `6CzrwICt7Dk` menunjukkan panah nunjuk dua orang yang jongkok.
 - **Authority:** Akmal (chat 2026-11-13: "faktacuil gua mau diawal panah selalu muncul, nunjuk konteks dari voice, hanya di shot awal saja").
 
+## D-060 — 2026-11-21 — Brief v2: speed per shot, preview live, shot urut, kartu frame source
+
+- **Status:** accepted; branch `fase-brief-v2`, belum push/merge.
+- **Masalah:** brief lama dirender per kelompok (shot nggak urut 1..N), tombol preview baru ada kalau link udah punya file, dan FaktaCuil nyimpen 3 frame referensi per shot padahal shot-nya banyak. Nggak ada cara ngatur speed klip per shot.
+- **Keputusan:** speed dipasang waktu fetch (approach A spec `2026-11-21-faktacuil-brief-cta-v2-design.md`): sumber dibaca `durasi shot × speed` detik lalu ffmpeg `setpts` memadatkannya ke durasi shot, jadi Remotion/blur/overlay nggak berubah. `end_s` tetap nggak dibaca fetch dan preview. Pilihan speed `0.5, 0.75, 1, 1.25, 1.5, 2`, disimpan sebagai `speed` di entry shot `links.json` (tanpa key = 1, foto diabaikan, hook `_continuous` tetap 1). Brief nge-render semua shot urut `index` dalam 1 kartu (label grup cuma info); tombol preview selalu ada dan aktif sendiri pas prefetch `siap`. Frame referensi FaktaCuil pindah ke 1 kartu dari shot `source.mp4`: 2 frame acak per shot pakai seed `video_id`, maksimal 60 shot yang nyebar rata sampai shot terakhir, `t` disimpan per frame, `narration_mode` ditulis ke `plan.json`. Top3 tetap `ref_frames` per shot.
+- **Konsekuensi:** `_continues` di timeline ngenalin lanjutan link pakai durasi source (`durasi shot × speed`). Brief FaktaCuil nggak nolak run gara-gara `ref_frames` kosong; kartu frame yang kosong cuma nampilin pesan `--from plan`.
+- **Verifikasi:** `uv run pytest -q` 874 passed, 6 failed (failure lama yang sama: 2 golden top3, panah FaktaCuil tanpa model, 2 overlay pipeline, node CTA tanpa `remotion/node_modules`); Ruff F/I bersih; `node --check` JS brief OK. Cek browser/HP belum dites, QA terpisah.
+- **Authority:** Akmal (spec + plan brief v2, 2026-11-21).
+
 ## D-061 — 2026-11-21 — CTA FaktaCuil v2: opsional, `lucky`/`subscribe`/`emoji` + kuis
 
 - **Status:** accepted; branch `fase-cta-v2`, belum push/merge. Implementasi Task 1–5 plan `docs/superpowers/plans/2026-11-21-faktacuil-cta-v2.md`.

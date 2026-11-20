@@ -17,6 +17,12 @@ def test_normalize_video_downscales_trims_and_drops_audio(tmp_path, make_video):
     assert sorted(p.name for p in dest.parent.iterdir()) == ["shot_01.mp4"]
 
 
+def test_normalize_video_speed_compresses_output(tmp_path, make_video):
+    dest = tmp_path / "shot_01.mp4"
+    normalize_video(make_video(1080, 1920, 3.0), dest, start_s=0.5, duration_s=2.0, scale=1.0, speed=2.0)
+    assert abs(probe(dest, "clips")["duration_s"] - 1.0) < 0.1
+
+
 def test_normalize_photo_applies_exif_rotation(tmp_path):
     src = tmp_path / "rotated.jpg"
     exif = Image.Exif()

@@ -2,6 +2,7 @@ import shutil
 
 import pytest
 
+from mayzfact.errors import PipelineError
 from mayzfact.steps.plan import run_plan
 from mayzfact.store import RunPaths
 from mayzfact.text import script_text
@@ -49,6 +50,25 @@ def test_cta_beat_subject_is_cleared_even_if_script_sets_one(tmp_path, cut_video
     data = run_plan(RunPaths(tmp_path / "run"), script, tts, SOURCE, max_shot_s=2.0, hook_seconds=0.0,
                     download_source=lambda vid, dest: shutil.copyfile(cut_video, dest), log=lambda m: None)
     assert all(s["subject"] == "" for s in data["shots"] if s["beat"] in (4, 5))
+
+
+def test_faktacuil_plan_has_source_shot_card_not_per_shot_frames(plan, tmp_path):
+    assert plan["narration_mode"] == "faktacuil"
+    assert all(s["ref_frames"] == [] for s in plan["shots"])
+    assert len(plan["source_shots"]) == 2 and len(plan["source_shots"][0]["frames"]) == 2
+    assert not list((tmp_path / "run" / "plan").glob("shot_*.jpg"))
+
+
+def test_faktacuil_plan_survives_missing_source(tmp_path):
+    script = faktacuil_script().model_dump()
+    tts = dict(duration_s=25, alignment=fake_alignment(script_text(script["beats"]), 25))
+
+    def fail(vid, dest):
+        raise PipelineError("source", "download gagal")
+
+    data = run_plan(RunPaths(tmp_path / "run"), script, tts, SOURCE, max_shot_s=2.0, hook_seconds=0.0,
+                    download_source=fail, log=lambda m: None)
+    assert data["source_shots"] == [] and data["shots"]
 
 
 def test_subject_named_cta_does_not_merge_into_cta_group(tmp_path, cut_video):

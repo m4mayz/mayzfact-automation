@@ -41,14 +41,22 @@ def audio_duration(path: Path) -> float:
     return duration
 
 
-def normalize_video(src: Path, dest: Path, *, start_s: float, duration_s: float, scale: float) -> None:
-    """Potong, ubah ke 30fps H.264 yuv420p tanpa audio, resize pakai faktor `scale` (dimensi dibikin genap)."""
+def normalize_video(src: Path, dest: Path, *, start_s: float, duration_s: float, scale: float,
+                    speed: float = 1.0) -> None:
+    """Potong, ubah ke 30fps H.264 yuv420p tanpa audio, resize pakai faktor `scale` (dimensi dibikin genap).
+
+    `duration_s` = detik source yang dibaca; `speed` ≠ 1 bikin output jadi `duration_s / speed` detik (setpts).
+    """
     vf = f"scale=trunc(iw*{scale:.6f}/2)*2:trunc(ih*{scale:.6f}/2)*2:flags=lanczos,fps=30,format=yuv420p"
+    out_s = duration_s
+    if speed != 1:
+        vf = f"setpts=(PTS-STARTPTS)/{speed:.6f}," + vf
+        out_s = duration_s / speed
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = tmp_path_for(dest)
     _run(
         [
-            "ffmpeg", "-y", "-v", "error", "-ss", f"{start_s:.3f}", "-i", str(src), "-t", f"{duration_s:.3f}",
+            "ffmpeg", "-y", "-v", "error", "-ss", f"{start_s:.3f}", "-i", str(src), "-t", f"{out_s:.3f}",
             "-an", "-vf", vf, "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-movflags", "+faststart", str(tmp),
         ],
         "clips",

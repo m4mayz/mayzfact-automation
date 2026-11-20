@@ -701,3 +701,14 @@
 - **Selesai:** modul `mayzfact/pauses.py` (parse `silencedetect`, rencana potongan, geser alignment, trim ffmpeg), `run_tts(..., max_gap_s)` dipakai step tts untuk mode FaktaCuil, setting `faktacuil_max_gap_s = 0.2`, dan `FAKTACUIL_BGM_VOLUME = 0.06` di timeline.
 - **Verifikasi:** suite penuh 839 passed; run `gNA8gTQriOQ` voice 31,76 → 26,74 detik, 15 shot, link di-remap per beat.
 - **Catatan:** run lama lain tidak diubah; aturan jalan otomatis untuk voice FaktaCuil baru.
+
+# Handoff — Brief v2 (fase-brief-v2)
+
+- **Updated:** 2026-11-21.
+- **Branch:** `fase-brief-v2`, dari `ca7ae18`; belum push/merge. Spec `docs/superpowers/specs/2026-11-21-faktacuil-brief-cta-v2-design.md` (Branch 1), plan `docs/superpowers/plans/2026-11-21-faktacuil-brief-v2.md`, keputusan D-060.
+- **Selesai:**
+  - Speed per shot `0.5x–2x` di `links.json` + `/api/links`/`/api/upload`; fetch baca `durasi shot × speed` detik source lalu `setpts` ke durasi shot (foto & hook `_continuous` tetap 1); `clips.json` nyimpen `speed`; `_continues` timeline pakai durasi source.
+  - Brief: semua shot urut `index` dalam 1 kartu, label grup cuma info, metrik per grup tetap; preview klip selalu ada dan aktif sendiri pas badge prefetch `siap`; dropdown speed (disabled buat foto, aktif lagi kalau link diganti ke video); preview nutup pas link diganti (termasuk foto/loading/error).
+  - FaktaCuil: `source_shots` di `plan.json` (2 frame acak per shot `source.mp4`, seed `video_id`, maks 60 shot nyebar sampai terakhir, simpan `t` per frame), kartu "Frame referensi source" ketutup default di brief, `missing_frames` dilewat buat FaktaCuil, `narration_mode` ditulis di `plan.json`. Top3 nggak berubah (`ref_frames` per shot tetap).
+- **Verifikasi:** `uv run pytest -q` 874 passed, 6 failed, 3 skipped, 4 deselected — 6 failure lama yang sama (2 golden top3, panah FaktaCuil tanpa model, 2 overlay pipeline, node CTA karena `remotion/node_modules` belum ada di worktree ini). Ruff F/I bersih buat file yang diubah; `node --check` JS hasil render OK.
+- **Belum dites:** brief dari HP lewat ngrok/LAN; perilaku preview di browser (nutup pas link ganti, `playbackRate` + loop speed, "Dari preview" saat speed ≠ 1, select foto disabled); render satu short FaktaCuil dengan klip ber-speed. QA/browser diatur lead.

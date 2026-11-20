@@ -272,6 +272,21 @@ def test_no_transition_between_shots_from_the_same_clip():
     assert t["flashes"] == [{"from": 60, "durationInFrames": 3}]
 
 
+def test_different_speed_still_counts_as_same_clip():
+    """Shot 2 speed 2: shot 3 yang linknya sama dianggap lanjutan, dihitung dari durasi source (0.4×2)."""
+    def from_link(name, start, source_s, speed, link):
+        return {**shot(f"clips/{name}.mp4", "video", start, 1080, 1920),
+                "end_s": start + 0.4, "source_s": source_s, "speed": speed, "page_url": link}
+
+    clips = {"shots": [from_link("a", 0.0, 0.0, 1.0, "https://t/1"),
+                       from_link("b", 0.4, 0.0, 2.0, "https://t/2"),
+                       from_link("c", 0.8, 0.8, 1.0, "https://t/2"),
+                       from_link("d", 1.2, 1.2, 1.0, "https://t/3")]}
+    t = build_timeline(clips, 1.6, 0.5, audio={"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3"}})
+    # b→c lanjutan link yang sama: cuma a→b dan c→d yang dapat klik
+    assert [(x["from"], x["src"]) for x in t["sfx"]] == [(9, "audio/sfx/click.mp3"), (33, "audio/sfx/click.mp3")]
+
+
 def test_transition_sfx_only_after_hook():
     clips = {"shots": [{**shot("clips/h1.mp4", "video", 0.0, 1080, 1920), "hook_segment": 0},
                        {**shot("clips/h2.mp4", "video", 1.0, 1080, 1920), "hook_segment": 1},
