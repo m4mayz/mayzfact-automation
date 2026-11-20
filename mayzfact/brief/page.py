@@ -546,12 +546,6 @@ body {
   text-transform: uppercase;
 }
 
-.group-tag.hook {
-  background: var(--brand-orange-soft);
-  color: var(--brand-orange-text);
-  border: 1px solid var(--brand-orange-border);
-}
-
 /* Reference Strip */
 .refs-strip-wrap {
   background: #f8fafc;
@@ -2242,7 +2236,7 @@ def _shots_card(plan: dict, links: dict, status: dict, voice_ok: bool = False,
     shot_rows = []
     for shot in sorted(plan["shots"], key=lambda s: s["index"]):
         s_idx = shot["index"]
-        group = next(g for g in plan["groups"] if s_idx in g["shots"])
+        group = next((g for g in plan["groups"] if s_idx in g["shots"]), {"id": "", "label": "", "shots": []})
 
         entry = None
         if "shots" in links:
