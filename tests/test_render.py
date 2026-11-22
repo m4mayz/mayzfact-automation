@@ -1,8 +1,11 @@
 import json
 import shutil
 import subprocess
+from pathlib import Path
+
 
 import pytest
+from PIL import Image, ImageChops
 
 from mayzfact.steps.render import render_command, run_render, speed_command, speed_up
 from mayzfact.steps.timeline import build_timeline
@@ -115,3 +118,39 @@ def test_render_fixture_timeline(tmp_path, make_video, make_photo, sine_mp3):
         frame = tmp_path / f"frame_{t}.png"
         subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", t, "-i", str(paths.final_mp4), "-frames:v", "1", str(frame)], check=True)
         assert frame.exists()
+
+
+@pytest.mark.render
+@pytest.mark.parametrize("faktacuil", [True, False], ids=["faktacuil", "mayzfact"])
+def test_still_watermark_only_for_faktacuil(tmp_path, faktacuil):
+    remotion = Path(__file__).resolve().parents[1] / "remotion"
+    npx = shutil.which("npx")
+    assert npx, "Aktifkan Node 22"
+    props = tmp_path / "props.json"
+    write_json_atomic(props, {"captionStyle": "faktacuil"} if faktacuil else {})
+    still = tmp_path / "still.png"
+    result = subprocess.run([
+        npx, "remotion", "still", "src/index.ts", "ShortVideo", str(still),
+        f"--props={props}", f"--public-dir={tmp_path}", "--frame=15", "--log=error",
+    ], cwd=remotion, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=90)
+    assert result.returncode == 0, result.stdout + result.stderr
+    with Image.open(still) as image:
+        frame = image.convert("RGB")
+    assert frame.size == (1080, 1920)
+    diff = ImageChops.difference(frame, Image.new("RGB", frame.size))
+    if not faktacuil:
+        assert diff.getbbox() is None
+        return
+    box = diff.getbbox()
+    assert box is not None, "Watermark FaktaCuil tidak kelihatan di hasil render"
+    left, top, right, bottom = box
+    assert abs((left + right) / 2 - 540) <= 5
+    assert 160 < top < 200 and 215 < bottom < 250
+    assert 240 < right - left < 330
+    patch = frame.crop(box)
+    rgb = patch.tobytes()
+    pixels = list(zip(rgb[::3], rgb[1::3], rgb[2::3], strict=True))
+    assert max(max(pixel) for pixel in pixels) in range(160, 166)
+    assert all(frame.getpixel(pos) == (0, 0, 0) for pos in ((left, top), (right - 1, bottom - 1)))
+    assert any(b > r + 60 for r, g, b in pixels), "Logo biru tidak kelihatan"
+    assert any(r == g == b and r >= 160 for r, g, b in pixels), "Nama channel tidak kelihatan"

@@ -19,6 +19,7 @@ Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal per
 - Source tetap video Inggris. Agent nerjemahin + nulis ulang ke bahasa Indonesia santai.
 - Nggak ada card countdown, panah/lingkaran, emoji, intro, flash, dan SFX hook. Yang tetap: SFX transisi dan blur teks klip.
 - Caption 1 kata, font Fredoka, kata `keyword` kuning (`#FFC53D`).
+- Watermark bawaan render: logo + nama FaktaCuil di tengah atas, opacity 64%, tanpa pill. Tidak tampil di MayzFact.
 - CTA opsional (D-061). Kalau dipakai: `lucky`/`subscribe` di tengah (like + `muncul` + stiker), `emoji` di akhir, plus CTA-2 kuis hitung kata di akhir. Subscribe/comment cuma boleh sesuai format itu.
 - BGM 1 lagu sepanjang video, dari folder lokal.
 - Suara, jadwal, dan channel upload sendiri.

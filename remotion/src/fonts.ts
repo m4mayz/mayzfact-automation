@@ -7,4 +7,4 @@ export const {fontFamily: ANTON} = loadFont('normal', {weights: ['400'], subsets
 // Montserrat ExtraBold: tulisan tombol SUBSCRIBE/SUBSCRIBED (huruf lebar tebal kayak di source).
 export const {fontFamily: MONTSERRAT} = loadMontserrat('normal', {weights: ['800'], subsets: ['latin']});
 // Fredoka Bold: caption bulat dan ramah buat format FaktaCuil.
-export const {fontFamily: FREDOKA} = loadFredoka('normal', {weights: ['700'], subsets: ['latin']});
+export const {fontFamily: FREDOKA} = loadFredoka('normal', {weights: ['600', '700'], subsets: ['latin']});

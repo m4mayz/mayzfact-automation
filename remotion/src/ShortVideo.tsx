@@ -5,6 +5,7 @@ import {Captions} from './Captions';
 import {CtaScene} from './CtaScene';
 import {Emojis} from './Emojis';
 import {FaktaCuilCta} from './FaktaCuilCta';
+import {FaktaCuilWatermark} from './FaktaCuilWatermark';
 import {IntroWhip} from './Intro';
 import {NumberCard} from './NumberCard';
 import {Overlays} from './Overlays';
@@ -44,6 +45,7 @@ export const ShortVideo: React.FC<TimelineProps> = ({audio, shots, photoZoom, co
       <Emojis emojis={emojis} />
       {ctaScene?.style === 'faktacuil' ? <FaktaCuilCta scene={ctaScene}/> : ctaScene ? <CtaScene scene={ctaScene}/> : null}
       <Captions captions={captions} style={captionStyle} />
+      {captionStyle === 'faktacuil' ? <FaktaCuilWatermark /> : null}
       {audio ? <Audio src={staticFile(audio)} /> : null}
       <SoundLayer bgm={bgm} sfx={sfx} />
     </AbsoluteFill>
