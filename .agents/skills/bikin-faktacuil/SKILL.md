@@ -32,7 +32,7 @@ Sama kayak `bikin-short` langkah 1:
 uv run mayzfact run <url atau id> --mode faktacuil --no-render
 ```
 
-Source boleh video Inggris atau Indonesia. **Selalu jalankan `mayzfact run <id> --mode faktacuil --no-render`**: flag itu bikin step source nyoba **transkrip Indonesia dulu** (transkrip asli, bukan terjemahan mesin) dan cuma pakai English sebagai referensi. Tanpa flag, Top 3 tetap wajib transkrip English dan run bakal gagal `NoTranscriptFound` untuk source Indonesia yang nggak punya track EN (D-056).
+Source boleh video Inggris atau Indonesia. FaktaCuil adalah default sejak D-062. `mayzfact run <id> --no-render` coba transkrip Indonesia asli dulu; `--mode faktacuil` masih diterima. Run lama tetap mengikuti mode naskahnya.
 
 Transkrip asli Indonesia tetap disimpan di `source.json` field `transcript_id`; kosong kalau videonya nggak punya (D-052).
 
@@ -103,7 +103,7 @@ Urutannya tetap: beat yang nyebut `muncul` **selalu setelah** ajakan like, dan l
 - `answer` = jumlah kata `cta_quiz.word` sebelum beat kuis. Hitung manual, `check-script` yang mastiin (case-insensitive, kata utuh; "kardusnya" atau "kardus-kardus" nggak ikut, kalimat kuis sendiri nggak dihitung).
 - `emoji` = karakter emoji apa aja, nggak dibatasi daftar `EMOJI`. Kecocokan "emoji madu" ↔ 🍯 dicek Akmal waktu review naskah, bukan code.
 - Format lama (`question`/`reveal`/`escape`/`escalate`) udah dihapus. Naskah lama ditolak dengan pesan jelas dan file run-nya dibiarin.
-- Objek stiker harus salah satu dari 9 tema di bawah. Nggak ada yang cocok = **STOP**, bikin stiker baru dulu (lihat **Stiker baru**).
+- Objek stiker harus salah satu dari tema di bawah. Nggak ada yang cocok = **STOP**, bikin stiker baru dulu (lihat **Stiker baru**).
 
 | theme | nama objek di kalimat CTA |
 | --- | --- |
@@ -116,8 +116,9 @@ Urutannya tetap: beat yang nyebut `muncul` **selalu setelah** ajakan like, dan l
 | `toilet` | `kloset jongkok`, `toilet` |
 | `cat` | `kucing`, `anak kucing` |
 | `zebra` | `zebra`, `zebra cross` |
+| `wheel` | `roda mobil`, `ban mobil` |
 
-**Stiker baru.** Kalau objek nggak cocok sama 9 tema, STOP sebelum render dan kerjain dulu:
+**Stiker baru.** Kalau objek nggak cocok sama tema yang ada, STOP sebelum render dan kerjain dulu:
 
 1. Komponen SVG 200x200 di `remotion/src/FaktaCuilStickers.tsx` + `case` di `Sticker`.
 2. Literal tema di `StickerTheme` (`remotion/src/types.ts`).
@@ -160,8 +161,8 @@ uv run mayzfact run <id> --mode faktacuil --no-render
 
 Bedanya:
 
-- Voice default ElevenLabs **Eric** (`Settings.faktacuil_elevenlabs_voice_id`), model `eleven_v3`, stability 0.5, tanpa delivery tag. Setting MayzFact (voice Liam, tag `calm`, provider global) nggak kebawa ke FaktaCuil.
-- VoiceStudio bisa dipakai kalau Akmal isi di `settings.local.json`: `faktacuil_tts_provider` (`"voicestudio"`), `faktacuil_voicestudio_voice` (profil bahasa Indonesia), `faktacuil_voicestudio_instruct`. Kalau provider voicestudio tapi voice kosong, pipeline berhenti sebelum TTS. Belum ada profil bahasa Indonesia, jadi default-nya tetap ElevenLabs.
+- TTS default VoiceStudio lokal, VoxCPM2, `language=id`, WAV. Pool profil: `Finn`, `vivian`, `tyo`, `rocky`, `rafiq`. Undi sekali sebelum TTS dan simpan di `tts-profile.json` supaya retry tetap pakai profil yang sama. `tts.json` menyimpan ID profil yang benar-benar dipakai.
+- Kalau Akmal minta suara tertentu, isi `faktacuil_voicestudio_voice` dengan nama atau ID profil di `settings.local.json`; nilai `random` mengaktifkan undian. Kalau backend atau profil nggak tersedia, laporkan error; jangan fallback ke ElevenLabs.
 - Jangan generate ulang suara, dan jangan hapus `voice.mp3`/`script.json` tanpa izin Akmal.
 - Log `[tts] FaktaCuil estimasi final …` ngasih peringatan kalau estimasi di luar 20–30 detik. Audio tetap disimpan; jangan regenerate atau ubah speed otomatis.
 - Plan nggak bikin segmen hook. Shot maksimal 3 detik (`faktacuil_max_shot_seconds`, D-053), jadi biasanya 1 beat = 1 shot. Kalau beberapa shot pakai link yang sama, isi Mulai beda-beda biar dapet adegan lain dan SFX transisinya bunyi.
@@ -184,14 +185,14 @@ Sama kayak `bikin-short` langkah 5, 6, 8 (langkah 7 Studio cuma kalau Akmal mint
 
 ## 8. Metadata YouTube
 
-Tulis `runs/<id>/upload.json`. Judul, deskripsi, dan kategori disamain sama FaktaBor (D-053, dicek dari `info.json` 3 video FaktaBor). Tags beda: FaktaBor kosong, FaktaCuil tetap isi.
+Tulis `runs/<id>/upload.json`. Cuma format judul yang berubah (D-063); deskripsi, hashtag, tags, kategori, dan bahasa tetap.
 
 ```json
-{"title": "Rumah Jepang Dibangun Tanpa Paku😱", "description": "...", "tags": ["fakta unik", "..."], "category_id": "22", "language": "id"}
+{"title": "Kenapa Kawat Kandang Ayam Dicat Hitam?", "description": "...", "tags": ["fakta unik", "..."], "category_id": "22", "language": "id"}
 ```
 
 - **language** wajib `"id"`. Upload ditolak kalau bukan.
-- **title:** bahasa Indonesia, Title Case, klaim yang bikin penasaran, diakhiri 😱 tanpa spasi. Pola FaktaBor: "Rumah Jepang Ini Tanpa Paku😱", "Alasan Koboi Membuat Jeans Sekaku Ini😱", "Pantas Banyak Orang Gagal Pakai Topi Renang😱". Maksimal 100 karakter, tanpa `<` `>`. Klaimnya harus kejawab di video. Jangan copy judul source; tulis sendiri.
+- **title:** bahasa Indonesia, Title Case, langsung sebut objek atau aksi yang dibahas. Pakai pertanyaan atau pernyataan spesifik yang bikin penasaran dan dijawab di video. Contoh: "Kenapa Kawat Kandang Ayam Dicat Hitam?" atau "Cara Pakai Topi Renang Biar Nggak Lepas". Maksimal 100 karakter, tanpa emoji, hashtag, `<`, atau `>`. Jangan copy judul source; tulis sendiri. Pakai untuk upload baru, bukan untuk edit video yang sudah di-upload.
 - **description:** 2–4 kalimat bahasa Indonesia: ulang hook, kasih jawaban singkat, tutup pakai kalimat seru atau pertanyaan + 1 emoji yang nyambung (misal 🇯🇵). Terus baris baru, hashtag: `#faktaunik #faktamenarik`, 3–8 hashtag topik huruf kecil (`#jepang #rumahjepang #arsitektur`), terus `#shorts #shortvideo #youtubeshorts #fyp #viral #viralshorts`. Maksimal 5000 byte, tanpa `<` `>`.
 - **tags:** wajib diisi (Akmal, beda dari FaktaBor): tags bahasa Indonesia, topik + frasa pencarian (`fakta unik`, `rumah jepang`, `rumah tahan gempa`, …), total ≤450 karakter.
 - **category_id:** `"22"` (People & Blogs), sama kayak FaktaBor.

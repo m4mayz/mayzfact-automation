@@ -56,7 +56,7 @@ class VoiceStudioTTS:
     provider_name = "voicestudio"
 
     def __init__(self, base_url: str, voice: str, engine: str, client: httpx.Client, *, cache_dir: Path,
-                 timeout: float = 900.0, instruct: str = "", audio_format: str = "mp3") -> None:
+                 timeout: float = 900.0, instruct: str = "", audio_format: str = "mp3", language: str = "en") -> None:
         if audio_format not in {"mp3", "wav"}:
             raise PipelineError("tts", "Format audio VoiceStudio harus mp3 atau wav.")
         if not isinstance(instruct, str) or len(instruct) > 4096:
@@ -66,11 +66,12 @@ class VoiceStudioTTS:
         self.model_id = engine
         self.instruct = instruct
         self.audio_format = audio_format
+        self.language = language
         self._client = client
         self._cache_dir = cache_dir
         self._timeout = timeout
         self.cache_identity = {"provider": self.provider_name, "url": self.base_url,
-                               "voice": voice, "model": engine, "language": "en", "speed": 1.0, "seed": 0,
+                               "voice": voice, "model": engine, "language": language, "speed": 1.0, "seed": 0,
                                "instruct": instruct, "audio_format": audio_format}
 
     def _request(self, method: str, path: str, **kwargs) -> httpx.Response:
@@ -100,7 +101,7 @@ class VoiceStudioTTS:
         if len(matches) != 1:
             raise PipelineError("tts", f"Profil VoiceStudio {self.voice_id!r} nggak ketemu atau namanya duplikat.")
         self.voice_id = matches[0]["id"]
-        body = {"model": self.model_id, "input": text, "voice": self.voice_id, "language": "en",
+        body = {"model": self.model_id, "input": text, "voice": self.voice_id, "language": self.language,
                 "response_format": self.audio_format, "speed": 1.0, "seed": 0}
         if self.instruct:
             body["instruct"] = self.instruct
@@ -120,13 +121,21 @@ class VoiceStudioTTS:
             result = self._request("POST", "/v1/audio/transcriptions",
                                    files={"file": (path.name, audio,
                                                     "audio/wav" if self.audio_format == "wav" else "audio/mpeg")},
-                                   data={"model": "whisper-1", "language": "en", "prompt": text,
+                                   data={"model": "whisper-1", "language": self.language,
+                                         **({"prompt": text} if self.language == "en" else {}),
                                          "response_format": "verbose_json", "timestamp_granularities[]": "word"}).json()
             write_json_atomic(directory / "transcript.last.json", result)
         if not isinstance(result, dict):
             raise PipelineError("tts", "Respons/cache transkripsi VoiceStudio harus object JSON dengan words; "
                                 "periksa respons ASR/cache transkrip. Audio yang tersimpan tetap aman.")
-        alignment = alignment_from_words(text, result.get("words", []))
+        words = result.get("words")
+        if not words and self.language == "id":
+            segments = result.get("segments")
+            if isinstance(segments, list) and all(isinstance(seg, dict) and isinstance(seg.get("text"), str)
+                                                  and len(seg["text"].split()) == 1 for seg in segments):
+                words = [{"word": seg["text"].strip(), "start": seg.get("start"), "end": seg.get("end")}
+                         for seg in segments]
+        alignment = alignment_from_words(text, words if isinstance(words, list) else [])
         if max(alignment["character_end_times_seconds"]) > duration + 0.1:
             raise PipelineError("tts", "Timing VoiceStudio lewat akhir audio; audio aman di cache.")
         write_json_atomic(transcript, result)

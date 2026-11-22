@@ -679,3 +679,22 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - **Pengaman:** schema strict `extra="forbid"`; validator `Script` memilih model `cta_scene` sesuai `narration_mode` (error menyebut alasan asli, lokasi `cta_scene.*`); top3 wajib `CtaScene` dan nolak `cta_quiz`; test top3 golden nggak di-regenerate; klik subscribe di timeline dan `SUB_CLICK` di Remotion sama-sama clamp ke durasi scene; `prepare_cta_emoji` nolak file non-Lottie sebelum masuk cache.
 - **Verifikasi:** `uv run pytest -q` (cuma 3 gagal lama di luar scope), `tests/test_faktacuil_cta_v2.py`, `tests/test_cta_emoji.py`, `node remotion/tests/faktacuil-cta.cjs`, `node remotion/tests/cta-scene.cjs` (13 kasus top3 tetap), `npx tsc --noEmit -p .`. Render beneran per format belum (Task 7).
 - **Authority:** Akmal, spec `docs/superpowers/specs/2026-11-21-faktacuil-brief-cta-v2-design.md` (disetujui chat 2026-11-21).
+
+## D-062: FaktaCuil jadi channel aktif, VoiceStudio undi voice per video
+
+- Akmal, 2026-11-22: berhenti produksi untuk MayzFact. Kalau channel nggak disebut, pakai FaktaCuil. CLI `run`, `login youtube`, dan `next-slot` mengikuti default itu. Mode dan rute upload run lama tetap mengikuti naskahnya.
+- TTS baru pakai VoxCPM2 lokal, WAV, bahasa Indonesia untuk sintesis dan ASR. Pool: `Finn`, `vivian`, `tyo`, `rocky`, `rafiq`, `dakocan`. Undi sekali sebelum TTS, simpan di `tts-profile.json` untuk retry. Pilihan profil eksplisit tetap bisa lewat `faktacuil_voicestudio_voice`.
+- Nggak ada fallback ke provider berbayar. Kalau ASR nggak cocok, simpan audio di cache dan hentikan step. Jangan mengubah naskah atau suara yang sudah terkunci.
+
+## D-063: Judul upload baru FaktaCuil langsung sebut objek
+
+- Akmal menyetujui judul spesifik tanpa emoji setelah perbandingan dengan ShortTime. Gantikan aturan judul D-053 saja. Deskripsi, hashtag, tags, kategori, bahasa, dan video yang sudah di-upload tetap.
+
+## D-064: Stiker CTA roda mobil untuk FaktaCuil
+
+- Akmal memilih roda mobil dan narasi “subscribe jika berhasil” untuk run `IeeRKhqFYzI`.
+- `wheel` hanya didukung CTA FaktaCuil. Stiker SVG menampilkan ban dan velg berputar; alur CTA serta tema Top 3 tetap.
+
+## D-065: Dakocan keluar dari pool VoiceStudio FaktaCuil
+
+- Akmal memilih take Finn default untuk `IeeRKhqFYzI` dan minta profil Dakocan dihapus. Pool baru: `Finn`, `vivian`, `tyo`, `rocky`, `rafiq`. Audio run lain tetap.

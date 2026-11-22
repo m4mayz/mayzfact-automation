@@ -18,6 +18,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RUNS_DIR = PROJECT_ROOT / "runs"
 CACHE_DIR = PROJECT_ROOT / "cache"
 MODELS_DIR = PROJECT_ROOT / "models"  # cache model ML (SigLIP, OWLv2), di-gitignore
+DEFAULT_CHANNEL = "faktacuil"
+FAKTACUIL_VOICES = ("Finn", "vivian", "tyo", "rocky", "rafiq")
 
 
 @dataclass(frozen=True)
@@ -27,6 +29,7 @@ class Settings:
     voicestudio_url: str = "http://127.0.0.1:3900"
     voicestudio_voice: str = "default"  # isi nama/ID profil secara eksplisit di override lokal
     voicestudio_engine: str = "cosyvoice"
+    voicestudio_language: str = "en"
     voicestudio_instruct: str = ""  # arahan delivery, bukan tag di naskah/caption
     voicestudio_audio_format: str = "mp3"  # WAV opt-in lokal; default lama tetap
     voicestudio_timeout: float = 900.0  # model lokal cold-start bisa lama
@@ -43,8 +46,8 @@ class Settings:
     # Format FaktaCuil: voice, TTS, hook, dan panjang shot sendiri; settings_for_mode nuker ke field biasa.
     faktacuil_elevenlabs_voice_id: str = "cjVigY5qzO86Huf0OWal"  # Eric (premade, bisa lewat API akun free)
     faktacuil_elevenlabs_delivery_tag: str = ""
-    faktacuil_tts_provider: str = "elevenlabs"  # override lewat settings.local.json
-    faktacuil_voicestudio_voice: str = ""  # profil bahasa Indonesia, diisi Akmal di settings.local.json
+    faktacuil_tts_provider: str = "voicestudio"
+    faktacuil_voicestudio_voice: str = "random"
     faktacuil_voicestudio_instruct: str = ""
     faktacuil_max_shot_seconds: float = 3.0  # 1 beat = 1 shot; median ±1,9 detik kayak FaktaBor (D-053)
     faktacuil_max_gap_s: float = 0.2  # hening antar kalimat dipotong, maksimal 0,2 detik (Akmal 2026-11-12)
@@ -165,6 +168,9 @@ def settings_for_mode(settings: Settings, mode: str) -> Settings:
         settings,
         tts_provider=settings.faktacuil_tts_provider,
         voicestudio_voice=settings.faktacuil_voicestudio_voice,
+        voicestudio_engine="voxcpm2",
+        voicestudio_audio_format="wav",
+        voicestudio_language="id",
         voicestudio_instruct=settings.faktacuil_voicestudio_instruct,
         elevenlabs_voice_id=settings.faktacuil_elevenlabs_voice_id,
         elevenlabs_delivery_tag=settings.faktacuil_elevenlabs_delivery_tag,

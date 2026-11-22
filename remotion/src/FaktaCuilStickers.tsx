@@ -193,6 +193,26 @@ const SmallZebra: React.FC<{frame: number}> = ({frame}) => {
   );
 };
 
+const Wheel: React.FC<{frame: number}> = ({frame}) => (
+  <g transform={`rotate(${frame * 3} 100 100)`}>
+    <circle data-wheel-tire="true" cx={100} cy={100} r={86} fill="#22252b" stroke="#111318" strokeWidth={5}/>
+    <circle cx={100} cy={100} r={76} fill="none" stroke="#464b55" strokeWidth={3}/>
+    {Array.from({length: 16}, (_, i) => (
+      <path key={i} d="M91 19 l12 8" transform={`rotate(${i * 22.5} 100 100)`}
+        stroke="#565b64" strokeWidth={3} strokeLinecap="round"/>
+    ))}
+    <g data-wheel-rim="true">
+      <circle cx={100} cy={100} r={57} fill="#454c58" stroke="#d5deea" strokeWidth={7}/>
+      {Array.from({length: 5}, (_, i) => (
+        <path key={i} d="M93 90 L84 51 Q100 45 116 51 L107 90 Z"
+          transform={`rotate(${i * 72} 100 100)`} fill="#d5deea" stroke="#a1adbe" strokeWidth={3}/>
+      ))}
+      <circle cx={100} cy={100} r={20} fill="#a1adbe" stroke="#d5deea" strokeWidth={4}/>
+      <circle cx={100} cy={100} r={8} fill="#454c58"/>
+    </g>
+  </g>
+);
+
 export const Sticker: React.FC<{theme: StickerTheme; frame: number; size: number}> = ({theme, frame, size}) => {
   let body: React.ReactNode;
   switch (theme) {
@@ -205,6 +225,7 @@ export const Sticker: React.FC<{theme: StickerTheme; frame: number; size: number
     case 'toilet': body = <Toilet frame={frame}/>; break;
     case 'cat': body = <SmallCat frame={frame}/>; break;
     case 'zebra': body = <SmallZebra frame={frame}/>; break;
+    case 'wheel': body = <Wheel frame={frame}/>; break;
     default: {
       const unsupported: never = theme;
       throw new Error(`Unsupported FaktaCuil sticker: ${String(unsupported)}`);

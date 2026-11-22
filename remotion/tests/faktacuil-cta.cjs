@@ -53,6 +53,12 @@ const sub64 = markup(sub, 64);
 assert.ok(sub64.indexOf('data-cta-pill="subscribe"') > sub64.indexOf('data-cta-sticker="true"'),
   'pill SUBSCRIBE harus dirender setelah stiker');
 
+const wheel = markup({...sub, theme: 'wheel'}, 64);
+assert.match(wheel, /data-sticker="wheel"/);
+assert.match(wheel, /<circle[^>]*data-wheel-tire="true"/);
+assert.match(wheel, /<g[^>]*data-wheel-rim="true"/);
+assert.match(wheel, /SUBSCRIBED/);
+
 // emoji: tanpa emojiSrc → statis, pop-in tepat pas klik (cue like = kata "emoji"), ada karakternya,
 // nggak ada stiker, dan masih tampil penuh di frame terakhir.
 const emo = {format: 'emoji', emoji: '🍯'};

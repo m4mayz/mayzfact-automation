@@ -185,7 +185,7 @@ def test_login_youtube_writes_into_project_env(monkeypatch):
     seen = {}
     monkeypatch.setattr(cli, "load_settings", lambda: Settings(youtube_client_secret_json='{"installed": {}}'))
     monkeypatch.setattr(youtube, "login", lambda secret, env: seen.update(secret=secret, env=env))
-    assert cli.main(["login", "youtube"]) == 0
+    assert cli.main(["login", "youtube", "--channel", "mayzfact"]) == 0
     assert seen["secret"] == '{"installed": {}}' and seen["env"].name == ".env"
 
 
@@ -194,7 +194,7 @@ def test_next_slot_prints_wib_time(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(cli, "RUNS_DIR", tmp_path)
     assert cli.main(["next-slot"]) == 0
     out = capsys.readouterr().out.strip()
-    assert out.endswith(("01:00", "04:00")) and len(out) == len("2026-10-15 21:00")
+    assert out.endswith(("08:00", "12:00")) and len(out) == len("2026-10-15 21:00")
 
 
 def test_upload_without_login_fails_cleanly(monkeypatch, tmp_path, capsys):

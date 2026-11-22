@@ -60,13 +60,13 @@ def write_check_run(tmp_path, monkeypatch, total_words):
 
 def test_check_script_cli_uses_faktacuil_speed_not_global_voicestudio(tmp_path, monkeypatch, capsys):
     write_check_run(tmp_path, monkeypatch, 69)
-    monkeypatch.setattr(cli, "load_settings", lambda: Settings(tts_provider="voicestudio"))  # global 1.15
+    monkeypatch.setattr(cli, "load_settings", lambda: Settings(tts_provider="voicestudio", faktacuil_tts_provider="elevenlabs"))
     assert cli.main(["check-script", VIDEO]) == 0
     assert "target 62" in capsys.readouterr().out  # 1.1 x 2.27, bukan 65 (1.15)
 
 
 def test_check_script_cli_range_matches_pipeline(tmp_path, monkeypatch, capsys):
-    write_check_run(tmp_path, monkeypatch, 51)  # lolos 50-74 (ElevenLabs), gagal 53-78 (speed 1.15)
+    write_check_run(tmp_path, monkeypatch, 53)
     monkeypatch.setattr(cli, "load_settings", lambda: Settings(tts_provider="voicestudio"))
     assert cli.main(["check-script", VIDEO]) == 0, capsys.readouterr().out
 

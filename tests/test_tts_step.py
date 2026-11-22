@@ -184,6 +184,41 @@ def test_wav_ffmpeg_failure_retries_saved_native_without_synthesis(tmp_path, sin
     assert not (tmp_path / "tts.incoming.json").exists()
 
 
+def test_wav_retry_keeps_alignment_after_trimming_a_pause(tmp_path, sine_wav, monkeypatch):
+    import mayzfact.steps.tts as tts_step
+
+    source = io.BytesIO(sine_wav)
+    output = io.BytesIO()
+    with wave.open(source, "rb") as wav, wave.open(output, "wb") as sample:
+        sample.setparams(wav.getparams())
+        sample.writeframes(wav.readframes(19200) + bytes(48000))
+        wav.setpos(43200)
+        sample.writeframes(wav.readframes(28800))
+
+    paths = RunPaths(tmp_path)
+    tts = NativeWavTTS(output.getvalue())
+    script = {**SCRIPT, "narration_mode": "faktacuil"}
+    real_run = tts_step._run
+
+    def fail_mp3(cmd, step):
+        if "libmp3lame" in cmd:
+            raise PipelineError("tts", "MP3 gagal")
+        return real_run(cmd, step)
+
+    monkeypatch.setattr(tts_step, "_run", fail_mp3)
+    with pytest.raises(PipelineError, match="MP3 gagal"):
+        run_tts(paths, script, tts, max_gap_s=.2)
+    first = read_json(paths.tts_json)
+    assert first["duration_s"] == pytest.approx(2.2, abs=.02)
+    assert first["alignment"]["character_end_times_seconds"][-1] == pytest.approx(1.6, abs=.02)
+
+    monkeypatch.setattr(tts_step, "_run", real_run)
+    second = run_tts(paths, script, tts, max_gap_s=.2)
+    assert len(tts.texts) == 1
+    assert second["alignment"] == first["alignment"]
+    assert second["duration_s"] == first["duration_s"]
+
+
 @pytest.mark.parametrize("audio_format", ["flac", "../wav", "../../outside", "", None, ["wav"]])
 def test_unsupported_audio_format_is_rejected_before_synthesis_or_write(tmp_path, audio_format):
     tts = FakeTTS(b"never synthesize")

@@ -1,9 +1,6 @@
 {
-  "tts_provider": "voicestudio",
   "voicestudio_url": "http://127.0.0.1:3900",
-  "voicestudio_voice": "Gen",
-  "voicestudio_engine": "cosyvoice",
-  "voicestudio_instruct": "Speak with lively, natural intonation and clear emphasis, without shouting.",
-  "voicestudio_audio_format": "wav",
+  "faktacuil_tts_provider": "voicestudio",
+  "faktacuil_voicestudio_voice": "random",
   "voicestudio_timeout": 900
 }

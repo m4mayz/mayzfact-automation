@@ -4,6 +4,42 @@ from mayzfact.errors import PipelineError
 from mayzfact.timing import beat_timings, word_timings
 
 
+@pytest.mark.parametrize("valid", [True, False])
+def test_indonesian_asr_uses_only_single_word_segments(tmp_path, sine_mp3, valid):
+    import json
+
+    import httpx
+
+    from mayzfact.providers.voicestudio import VoiceStudioTTS
+
+    def endpoint(request):
+        if request.url.path == "/profiles":
+            return httpx.Response(200, json=[{"id": "rafiq-id", "name": "rafiq"}])
+        if request.url.path == "/v1/audio/speech":
+            assert json.loads(request.content)["language"] == "id"
+            return httpx.Response(200, content=sine_mp3.read_bytes())
+        assert request.url.path == "/v1/audio/transcriptions"
+        data = request.read()
+        separator = bytes((13, 10)) * 2
+        assert b'name="language"' + separator + b'id' in data and b'name="prompt"' not in data
+        segments = [{"text": " Adonan", "start": 0.1, "end": 0.4},
+                    {"text": " roti.", "start": 0.4, "end": 0.8}]
+        if not valid:
+            segments = [{"text": " Adonan roti.", "start": 0.1, "end": 0.8}]
+        return httpx.Response(200, json={"language": "id", "text": "Adonan roti.", "segments": segments})
+
+    with httpx.Client(transport=httpx.MockTransport(endpoint)) as client:
+        tts = VoiceStudioTTS("http://localhost:3900", "rafiq", "voxcpm2", client, cache_dir=tmp_path, language="id")
+        if valid:
+            _, alignment = tts.synthesize("Adonan roti.")
+            assert [(w["text"], w["start_s"], w["end_s"]) for w in word_timings(alignment)] == [
+                ("Adonan", 0.1, 0.4), ("roti.", 0.4, 0.8)]
+        else:
+            with pytest.raises(PipelineError, match="Timing VoiceStudio"):
+                tts.synthesize("Adonan roti.")
+            assert list(tmp_path.glob("*/voice.mp3"))
+
+
 def test_word_alignment_keeps_exact_script_and_real_word_boundaries():
     from mayzfact.providers.voicestudio import alignment_from_words
 

@@ -23,6 +23,13 @@ def test_every_valid_combo_passes(cta):
     assert check_script(faktacuil_script(cta=cta), SOURCE_TEXT_EN)[0] == []
 
 
+def test_wheel_subscribe_with_quiz():
+    raw = faktacuil_script(cta="subscribe+quiz").model_dump()
+    raw["cta_scene"]["theme"] = "wheel"
+    raw["beats"][5]["text"] = "Nanti muncul stiker roda mobil, subscribe jika berhasil."
+    assert check_script(Script(**raw), SOURCE_TEXT_EN)[0] == []
+
+
 def test_schema_shapes():
     FaktaCuilCtaScene(format="emoji", emoji="📦")
     FaktaCuilCtaScene(format="lucky", theme="honey")

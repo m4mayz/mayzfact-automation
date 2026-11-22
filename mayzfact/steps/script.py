@@ -155,7 +155,7 @@ def _faktacuil_check(script: Script, source_text: str, video_speed: float) -> tu
     return problems, overlap
 
 
-AWAIT_SCRIPT_HINT = ("Naskah belum ada. Agent nulis runs/<id>/script.json (lihat .agents/skills/bikin-short/SKILL.md), "
+AWAIT_SCRIPT_HINT = ("Naskah belum ada. Agent nulis runs/<id>/script.json (lihat .agents/skills/bikin-faktacuil/SKILL.md), "
                      "terus cek: uv run mayzfact check-script <id>")
 
 

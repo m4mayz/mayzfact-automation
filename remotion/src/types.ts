@@ -92,10 +92,10 @@ export type CtaStage = {
 
 // Stiker FaktaCuil dipisah dari tema top3 biar stiker baru FaktaCuil nggak ikut ke top3 (D-061).
 export type StickerTheme =
-  | 'volcano' | 'unicorn' | 'honey' | 'puppy' | 'lion' | 'shark' | 'toilet' | 'cat' | 'zebra';
+  | 'volcano' | 'unicorn' | 'honey' | 'puppy' | 'lion' | 'shark' | 'toilet' | 'cat' | 'zebra' | 'wheel';
 
 export type CtaSceneData = {
-  theme: StickerTheme;
+  theme: Exclude<StickerTheme, 'wheel'>;
   commentText: string;
   from: number;
   durationInFrames: number;

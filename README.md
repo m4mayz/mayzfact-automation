@@ -1,6 +1,6 @@
 # mayzfact-automation
 
-Pipeline YouTube Shorts. Naskah ditulis AI agent (Claude Code, Codex, dll) dan direview dulu, suaranya dari ElevenLabs, klip dari link yang diisi lewat halaman brief, lalu di-render pakai Remotion.
+Pipeline YouTube Shorts FaktaCuil. Naskah direview dulu, suara dari VoiceStudio lokal, klip dari halaman brief, lalu render pakai Remotion. MayzFact Top 3 tetap bisa dibuka untuk run lama, tapi bukan channel aktif.
 
 - Spec Fase 1: [docs/superpowers/specs/2026-09-30-fase1-pipeline-design.md](docs/superpowers/specs/2026-09-30-fase1-pipeline-design.md)
 - Keputusan project: [docs/DECISIONS.md](docs/DECISIONS.md)
@@ -25,28 +25,12 @@ Terus di folder project:
 
 Model SigLIP + OWLv2 (±1,4 GB), emoji Lottie, dan SFX ke-download otomatis pas pertama kali dipakai.
 
-### Pilihan TTS lokal (opsional)
+### VoiceStudio
 
-Default repo tetap **ElevenLabs**. Buat memakai VoiceStudio hanya di satu PC, copy `settings.local.example.json` ke `settings.local.json` di root repo. File lokal ini di-gitignore; `.env` tetap cuma rahasia.
-
-```json
-{
-  "tts_provider": "voicestudio",
-  "voicestudio_url": "http://127.0.0.1:3900",
-  "voicestudio_voice": "Gen",
-  "voicestudio_engine": "cosyvoice",
-  "voicestudio_timeout": 900
-}
-```
-
-- Jalankan backend VoiceStudio dulu. URL hanya boleh HTTP loopback lokal. Tidak perlu GUI terbuka.
-- Pilih nama/ID profil yang unik dan engine terpasang. Provider meminta engine, profil, English, format output terpilih, speed 1.0 dan seed 0 secara eksplisit; tidak mengganti pilihan engine GUI.
-- VoiceStudio perlu ASR dengan word timestamps untuk caption/timing (setup PC ini: WhisperX). Audio di-cache sebelum alignment; kegagalan ASR tidak memaksa sintesis ulang. Kata hasil ASR harus cocok dengan naskah (case/punctuation dan angka ekuivalen 0–10 boleh beda); mismatch menghentikan step, bukan mengarang timestamp.
-- `voice.mp3` + `tts.json` tetap kompatibel dengan pipeline lama. Angka/simbol sebaiknya ditulis sesuai pelafalan. Timing karakter di adapter mewarisi batas kata, bukan timing fonem.
-- `voicestudio_instruct` mengirim arahan delivery ke CosyVoice tanpa menyisipkan tag ke naskah/caption. Kosong = kontrol netral; profil/reference Gen tetap milik user dan tidak diubah otomatis. Jangan kirim `num_step`/temperature OmniVoice sebagai knob kualitas CosyVoice.
-- `voicestudio_audio_format` mendukung `mp3` (default kompatibel) atau `wav` (lossless opt-in). WAV native disimpan sebagai `voice.wav`; `voice.mp3` tetap dibuat hanya untuk brief/marker step lama. Metadata `audio_file` memilih WAV untuk master timeline, bukan MP3 kompatibilitas. Metadata lama tanpa field itu tetap membaca MP3.
-- Mode VoiceStudio tidak membutuhkan key ElevenLabs dan **tidak pernah otomatis fallback ke ElevenLabs**.
-- Kembali ke ElevenLabs: ubah `tts_provider` menjadi `elevenlabs` di file lokal. Run yang sudah punya suara tetap dikunci; tidak di-voice ulang otomatis.
+- Jalankan backend VoiceStudio di `http://127.0.0.1:3900` dengan VoxCPM2 terpasang. GUI nggak perlu terbuka.
+- FaktaCuil mengundi satu dari `Finn`, `vivian`, `tyo`, `rocky`, `rafiq`. Lima profil ini perlu ada di VoiceStudio lokal. Pilihan disimpan di `runs/<id>/tts-profile.json` dan dipakai ulang saat retry. Untuk memilih profil tertentu, isi `faktacuil_voicestudio_voice` di `settings.local.json` (file ini di-gitignore).
+- Sintesis dan ASR pakai bahasa Indonesia. Audio di-cache sebelum alignment; kalau ASR gagal, retry pakai audio yang sama. Kalau kata/timing nggak cocok, proses berhenti tanpa mengarang timestamp atau fallback ke ElevenLabs.
+- `voice.wav` dipakai untuk render, `voice.mp3` untuk brief, dan `tts.json` menyimpan timing serta ID profil. Run yang sudah punya suara tetap dikunci.
 
 ### Pindah komputer
 
@@ -101,7 +85,7 @@ Studio cuma baca `--props` pas start. Kalau `timeline.json` berubah, restart Stu
 
 ## Pakai bareng AI agent
 
-Aturan main buat agent ada di [`AGENTS.md`](AGENTS.md). Alur bikin 1 video ada di skill [`.agents/skills/bikin-short`](.agents/skills/bikin-short/SKILL.md).
+Aturan main buat agent ada di [`AGENTS.md`](AGENTS.md). Alur produksi ada di skill [`.agents/skills/bikin-faktacuil`](.agents/skills/bikin-faktacuil/SKILL.md).
 
 - **Codex, OpenCode, Antigravity:** baca `AGENTS.md` dan nemu skill di `.agents/skills/` otomatis.
 - **Claude Code:** baca `CLAUDE.md`, yang isinya import `AGENTS.md`.
@@ -113,9 +97,9 @@ Contoh: buka agent di folder ini, terus bilang `bikin short dari https://youtu.b
 Butuh `YOUTUBE_CLIENT_SECRET_JSON` di `.env` (JSON OAuth client dari Google Cloud, project yang udah lolos audit YouTube API).
 
 ```bash
-uv run mayzfact login youtube                          # sekali: browser kebuka, token disimpan ke YOUTUBE_TOKEN_JSON di .env
-uv run mayzfact next-slot                              # slot tayang kosong berikutnya (01.00/04.00 WIB)
-uv run mayzfact upload <id> --at "2026-10-15 01:00"   # upload terjadwal (jam WIB)
+uv run mayzfact login youtube                          # token FaktaCuil disimpan ke YOUTUBE_TOKEN_JSON_FAKTACUIL di .env
+uv run mayzfact next-slot                              # slot tayang FaktaCuil berikutnya (08.00/12.00 WIB)
+uv run mayzfact upload <id> --at "YYYY-MM-DD HH:MM"    # upload terjadwal (jam WIB)
 uv run mayzfact upload <id> --now                      # langsung public, tanpa jadwal
 ```
 

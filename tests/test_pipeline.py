@@ -215,7 +215,7 @@ def test_edited_script_blocks_fetch_without_calling_tts(world):
 
 def test_missing_keys_fail_before_any_step(world):
     with pytest.raises(PipelineError, match="ELEVENLABS_API_KEYS"):
-        run(world, settings=Settings(elevenlabs_api_keys=()))
+        run(world, mode="top3", settings=Settings(elevenlabs_api_keys=()))
     assert not (world.runs / VIDEO_ID / "source.json").exists()
 
 
@@ -240,7 +240,7 @@ def test_real_deps_selects_voicestudio_without_paid_fallback():
 
 def test_unknown_tts_provider_fails_before_source(world):
     with pytest.raises(PipelineError, match="tts_provider"):
-        run(world, settings=Settings(tts_provider="typo"))
+        run(world, mode="top3", settings=Settings(tts_provider="typo"))
     assert not (world.runs / VIDEO_ID / "source.json").exists()
 
 

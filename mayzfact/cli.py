@@ -10,6 +10,7 @@ from datetime import datetime
 from mayzfact import tunnel as tunnel_mod
 from mayzfact.config import (
     CACHE_DIR,
+    DEFAULT_CHANNEL,
     PROJECT_ROOT,
     RUNS_DIR,
     Settings,
@@ -36,7 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("video", help="Video ID atau URL YouTube")
     run.add_argument("--from", dest="from_step", choices=ALL_STEPS, help="Ulang dari step ini (source/tts dikunci kalau voice.mp3 udah ada)")
     run.add_argument("--no-render", action="store_true", help="Berhenti setelah timeline.json, buat review di Remotion Studio")
-    run.add_argument("--mode", choices=["faktacuil"], help="FaktaCuil: pakai transkrip Indonesia dulu (Top 3 tetap English)")
+    run.add_argument("--mode", choices=["faktacuil", "top3"], help="Default FaktaCuil; top3 hanya untuk MayzFact legacy")
     check = sub.add_parser("check-script", help="Cek runs/<id>/script.json yang ditulis agent")
     check.add_argument("video", help="Video ID atau URL YouTube source")
     sub.add_parser("voices", help="List voice ElevenLabs di akun lu")
@@ -45,9 +46,11 @@ def build_parser() -> argparse.ArgumentParser:
     sample.add_argument("--name", required=True, help="Nama file sampel, huruf kecil/angka/strip")
     login = sub.add_parser("login", help="Login YouTube buat upload (token disimpan di .env)")
     login.add_argument("platform", choices=["youtube"])
-    login.add_argument("--channel", choices=["faktacuil"], help="Login channel FaktaCuil (token kedua)")
-    next_slot = sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (01.00/04.00 WIB)")
-    next_slot.add_argument("--channel", choices=["faktacuil"], help="Pakai jam slot FaktaCuil (12.00/18.00 WIB)")
+    login.add_argument("--channel", choices=["faktacuil", "mayzfact"], default=DEFAULT_CHANNEL,
+                       help="Default FaktaCuil")
+    next_slot = sub.add_parser("next-slot", help="Slot jadwal YouTube kosong berikutnya (FaktaCuil: 08.00/12.00 WIB)")
+    next_slot.add_argument("--channel", choices=["faktacuil", "mayzfact"], default=DEFAULT_CHANNEL,
+                           help="Default FaktaCuil")
     upload = sub.add_parser("upload", help="Upload final.mp4 ke YouTube sebagai video terjadwal")
     upload.add_argument("video", help="Video ID atau URL YouTube source")
     when = upload.add_mutually_exclusive_group(required=True)

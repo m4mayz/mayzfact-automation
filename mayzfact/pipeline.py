@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import math
 import shutil
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
+from secrets import choice
 from typing import Callable
 
 import httpx
 
 from mayzfact.config import (
     CACHE_DIR,
+    DEFAULT_CHANNEL,
+    FAKTACUIL_VOICES,
     RUNS_DIR,
     Settings,
     missing_env,
@@ -30,7 +33,7 @@ from mayzfact.steps.source import (
 )
 from mayzfact.steps.timeline import run_timeline
 from mayzfact.steps.tts import TTSProvider, run_tts
-from mayzfact.store import RunPaths, read_json
+from mayzfact.store import RunPaths, read_json, write_json_atomic
 from mayzfact.text import script_text, text_hash
 
 STEPS = ["source", "tts", "plan", "fetch", "timeline", "render"]
@@ -136,7 +139,8 @@ def real_deps(settings: Settings) -> Deps:
             return VoiceStudioTTS(settings.voicestudio_url, settings.voicestudio_voice,
                                   settings.voicestudio_engine, http(), cache_dir=CACHE_DIR / "voicestudio",
                                   timeout=settings.voicestudio_timeout, instruct=settings.voicestudio_instruct,
-                                  audio_format=settings.voicestudio_audio_format)
+                                  audio_format=settings.voicestudio_audio_format,
+                                  language=settings.voicestudio_language)
         if settings.tts_provider != "elevenlabs":
             raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
         if not settings.elevenlabs_voice_id.strip():
@@ -253,6 +257,25 @@ def real_deps(settings: Settings) -> Deps:
     )
 
 
+def _faktacuil_pending_mp3(paths: RunPaths, settings: Settings) -> Settings | None:
+    meta = paths.root / "tts.incoming.json"
+    if not meta.exists() or not (paths.root / "voice.incoming.mp3").exists():
+        return None
+    pending = read_json(meta)
+    identity = pending.get("identity")
+    if not isinstance(identity, dict) or pending.get("audio_format", "mp3") != "mp3":
+        return None
+    if identity.get("provider") == "elevenlabs":
+        return replace(settings, tts_provider="elevenlabs", elevenlabs_voice_id=identity["voice_id"],
+                       elevenlabs_model=identity["model_id"], elevenlabs_stability=identity.get("stability"),
+                       elevenlabs_delivery_tag=identity.get("delivery_tag", ""))
+    if identity.get("provider") == "voicestudio":
+        return replace(settings, tts_provider="voicestudio", voicestudio_audio_format="mp3",
+                       voicestudio_voice=identity["voice"], voicestudio_engine=identity["model"],
+                       voicestudio_language=identity.get("language", "en"), voicestudio_instruct=identity["instruct"])
+    return None
+
+
 def run_pipeline(
     video: str,
     *,
@@ -274,12 +297,16 @@ def run_pipeline(
     paths = RunPaths(runs_dir / video_id)
     done = {step: step_done(step, paths) for step in STEPS}
     steps = plan_steps(done, paths.voice_mp3.exists(), from_step)
-    # Source Indonesia cuma buat FaktaCuil; Top 3 tetap butuh transkrip English.
-    prefer_id = mode == "faktacuil"
+    mode = mode or DEFAULT_CHANNEL
     if paths.script_json.exists():
-        script = load_script(paths)  # schema/mode dicek sebelum output resume lama dihapus; tanpa cek anggaran baru
-        settings = settings_for_mode(settings, script.narration_mode)
-        prefer_id = prefer_id or script.narration_mode == "faktacuil"
+        mode = load_script(paths).narration_mode
+    prefer_id = mode == "faktacuil"
+    if prefer_id and done["tts"] and read_json(paths.tts_json).get("provider") == "elevenlabs":
+        settings = replace(settings, faktacuil_tts_provider="elevenlabs")
+    settings = settings_for_mode(settings, mode)
+    resume_mp3 = _faktacuil_pending_mp3(paths, settings) if prefer_id and "tts" in steps else None
+    if resume_mp3 is not None:
+        settings = resume_mp3
     if no_render:
         # Review lewat Remotion Studio dulu. final.mp4 lama jadi basi kalau step sebelumnya diulang.
         if any(step in steps for step in ("plan", "fetch", "timeline")):
@@ -291,7 +318,7 @@ def run_pipeline(
     if settings.tts_provider not in {"elevenlabs", "voicestudio"}:
         raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
     required = [name for step in steps for name in STEP_ENV.get(step, [])]
-    if settings.tts_provider == "voicestudio":
+    if settings.tts_provider == "voicestudio" or resume_mp3 is not None:
         required = [name for name in required if name != "ELEVENLABS_API_KEYS"]
     missing = missing_env(settings, required)
     if missing:
@@ -299,6 +326,18 @@ def run_pipeline(
     missing_tools = [tool for tool in ("ffmpeg", "ffprobe") if shutil.which(tool) is None]
     if missing_tools:
         raise PipelineError("config", f"{', '.join(missing_tools)} nggak ketemu di PATH. Install ffmpeg dulu.")
+    if ("tts" in steps and paths.script_json.exists() and prefer_id and settings.tts_provider == "voicestudio"
+            and settings.voicestudio_voice == "random"):
+        pick_file = paths.root / "tts-profile.json"
+        if pick_file.exists():
+            picked = read_json(pick_file)
+            if not isinstance(picked, dict) or picked.get("profile") not in FAKTACUIL_VOICES:
+                raise PipelineError("tts", "Profil tersimpan di tts-profile.json bukan profil FaktaCuil.")
+            profile = picked["profile"]
+        else:
+            profile = choice(FAKTACUIL_VOICES)
+            write_json_atomic(pick_file, {"profile": profile})
+        settings = replace(settings, voicestudio_voice=profile)
     # Output step yang mau diulang dihapus duluan, biar kalau gagal di tengah, run berikutnya nggak
     # nganggep step itu udah selesai pakai file lama. File yang dikunci (naskah + suara) nggak disentuh.
     for step in steps:

@@ -120,6 +120,7 @@ THEME_NOUNS_ID: dict[str, tuple[str, ...]] = {
     "toilet": ("kloset jongkok", "toilet"),
     "cat": ("kucing", "anak kucing"),
     "zebra": ("zebra", "zebra cross"),
+    "wheel": ("roda mobil", "ban mobil"),
 }
 
 

@@ -77,11 +77,18 @@ def run_tts(
                    "voice_id": tts.voice_id, "model_id": tts.model_id, "audio_format": audio_format}
         write_json_atomic(incoming_meta, pending)
     raw_alignment = alignment
-    normalize = getattr(tts, "normalize_alignment", None)
-    if normalize is not None:
-        alignment = normalize(text, raw_alignment)
-    if max_gap_s > 0 and script.get("narration_mode") == "faktacuil":
-        alignment = _apply_pause_rule(incoming, alignment, max_gap_s, log)
+    if incoming == native:
+        # WAV udah diproses sebelum konversi MP3 gagal; alignment pending masih mentah.
+        saved = read_json(paths.tts_json)
+        if any(saved.get(k) != pending.get(k) for k in ("text_sha256", "voice_id", "model_id")):
+            raise PipelineError("tts", "Timing voice.wav nggak cocok sama audio tersimpan.")
+        alignment = saved["alignment"]
+    else:
+        normalize = getattr(tts, "normalize_alignment", None)
+        if normalize is not None:
+            alignment = normalize(text, raw_alignment)
+        if max_gap_s > 0 and script.get("narration_mode") == "faktacuil":
+            alignment = _apply_pause_rule(incoming, alignment, max_gap_s, log)
     data = {
         "provider": provider,
         "text_sha256": text_hash(text),

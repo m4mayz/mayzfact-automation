@@ -93,9 +93,9 @@ def test_next_slot_cli_faktacuil_skips_faktacuil_uploads_only(monkeypatch, tmp_p
                       {"publish_at": first.replace(" ", "T") + ":00+07:00", "channel": "faktacuil"})
     cli.main(["next-slot", "--channel", "faktacuil"])
     second = capsys.readouterr().out.strip()
-    cli.main(["next-slot"])
+    cli.main(["next-slot", "--channel", "mayzfact"])
     mayz = capsys.readouterr().out.strip()
-    assert second != first and second.endswith(("12:00", "18:00"))
+    assert second != first and second.endswith(("08:00", "12:00"))
     assert mayz.endswith(("01:00", "04:00"))  # slot MayzFact nggak keblok upload FaktaCuil
 
 
@@ -196,7 +196,8 @@ def test_login_faktacuil_writes_second_token_only(monkeypatch, tmp_path):
     assert s.youtube_token_json == TOKEN and s.youtube_token_json_faktacuil == '{"token": "second"}'
 
 
-def test_login_faktacuil_cli_prints_channel_not_token(monkeypatch, capsys):
+@pytest.mark.parametrize("flags", [[], ["--channel", "faktacuil"]])
+def test_login_faktacuil_cli_prints_channel_not_token(monkeypatch, capsys, flags):
     seen = {}
     monkeypatch.setattr(cli, "load_settings", lambda: Settings(youtube_client_secret_json='{"installed": {}}'))
 
@@ -206,7 +207,7 @@ def test_login_faktacuil_cli_prints_channel_not_token(monkeypatch, capsys):
 
     monkeypatch.setattr(youtube, "login", fake_login)
     monkeypatch.setattr(youtube, "service", lambda token, channel="mayzfact": seen.update(token=token, channel=channel) or FakeYT("UCfakta", "FaktaCuil"))
-    assert cli.main(["login", "youtube", "--channel", "faktacuil"]) == 0
+    assert cli.main(["login", "youtube", *flags]) == 0
     out = capsys.readouterr()
     assert seen["token_env"] == "YOUTUBE_TOKEN_JSON_FAKTACUIL" and seen["token"] == "SECRET-TOKEN-VALUE"
     assert "FaktaCuil" in out.out and "UCfakta" in out.out
