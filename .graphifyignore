@@ -1,0 +1,13 @@
+/assets/
+/runs/
+/sources/
+/models/
+/cache/
+/browser-profiles/
+/out/
+/graphify-out/
+/.superpowers/
+.env*
+settings.local.json
+/uv.lock
+/remotion/package-lock.json
