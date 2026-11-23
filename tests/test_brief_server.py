@@ -1,5 +1,7 @@
 import re
+import subprocess
 import threading
+import wave
 
 import httpx
 import pytest
@@ -110,6 +112,36 @@ def test_faktacuil_bgm_saves_per_run_and_is_used_by_audio(server, tmp_path, monk
     assert (paths.root / used).read_bytes() == b"chosen music"
     assert httpx.post(base + "/api/bgm", json={"track": None}).status_code == 200
     assert prepare()["bgm_main"] == "audio/bgm/bully-main-theme.m4a"
+
+
+def test_faktacuil_bgm_preview_plays_excerpt_without_saving(server, tmp_path, monkeypatch):
+    paths, base = server
+    library = tmp_path / "bgm"
+    library.mkdir()
+    track = "lagu & teman.wav"
+    with wave.open(str(library / track), "wb") as music:
+        music.setparams((1, 2, 8000, 0, "NONE", "not compressed"))
+        music.writeframes(b"\0\0" * 8000 * 16)
+    monkeypatch.setattr("mayzfact.brief.server.FAKTACUIL_BGM_DIR", library)
+    endpoint = base + "/api/bgm-preview"
+
+    assert httpx.get(endpoint, params={"track": track}).status_code == 404
+    write_json_atomic(paths.shots_plan_json, {**PLAN, "narration_mode": "faktacuil"})
+    html = httpx.get(base + "/").text
+    assert 'data-default="lagu &amp; teman.wav"' in html and "Preview BGM" in html
+    for unavailable in ("../lagu & teman.wav", "missing.wav"):
+        assert httpx.get(endpoint, params={"track": unavailable}).status_code == 404
+
+    preview = httpx.get(endpoint, params={"track": track})
+    assert preview.status_code == 200 and preview.headers["content-type"] == "audio/mpeg"
+    output = tmp_path / "preview.mp3"
+    output.write_bytes(preview.content)
+    actual = subprocess.check_output([
+        "ffprobe", "-v", "error", "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1", str(output),
+    ], text=True)
+    assert 11.8 <= float(actual) <= 12.2
+    assert not paths.bgm_choice_json.exists() and not paths.links_json.exists()
 
 
 def test_save_links_per_shot(server):

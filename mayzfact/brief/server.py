@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import mimetypes
 import re
+import subprocess
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path, PurePosixPath
-from threading import Lock
+from threading import BoundedSemaphore, Lock
 from urllib.parse import parse_qs, unquote, urlparse
 
 from mayzfact.audio import (
@@ -72,6 +73,7 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
     """sfx_dir: library SFX buat pill SFX kustom. media_dir: folder hasil download prefetch (buat preview klip)."""
     root = paths.root.resolve()
     bgm_write_lock = Lock()
+    bgm_preview_slots = BoundedSemaphore(2)
 
     def plan() -> dict:
         return read_json(paths.shots_plan_json)
@@ -153,6 +155,26 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
         def _json(self, code: int, data: dict) -> None:
             self._send(code, json.dumps(data, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
 
+        def _bgm_preview(self, track: str) -> None:
+            if (not paths.shots_plan_json.exists() or plan().get("narration_mode") != "faktacuil"
+                    or track not in faktacuil_bgm_names(FAKTACUIL_BGM_DIR)):
+                return self._json(404, {"error": "Lagu nggak ada di koleksi."})
+            if not bgm_preview_slots.acquire(blocking=False):
+                return self._json(503, {"error": "Preview lagi sibuk. Coba lagi."})
+            try:
+                clip = subprocess.run([
+                    "ffmpeg", "-v", "error", "-nostdin", "-i", str(FAKTACUIL_BGM_DIR / track),
+                    "-t", "12", "-map", "0:a:0", "-c:a", "libmp3lame", "-b:a", "96k", "-f", "mp3", "pipe:1",
+                ], capture_output=True, check=True, timeout=8, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            except (OSError, subprocess.SubprocessError):
+                return self._json(503, {"error": "Preview BGM gagal diputar."})
+            finally:
+                bgm_preview_slots.release()
+            try:
+                self._send(200, clip.stdout, "audio/mpeg")
+            except ConnectionError:
+                pass
+
         def _host_ok(self) -> bool:
             """Host cuma boleh 127.0.0.1/localhost atau IP LAN privat kalau host=0.0.0.0."""
             port = str(self.server.server_address[1])
@@ -220,6 +242,8 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 return self._json(200, payload)
             if url.path == "/api/state":
                 return self._json(200, {"plan": plan(), "links": load_links(paths.links_json), "status": status()})
+            if url.path == "/api/bgm-preview":
+                return self._bgm_preview(parse_qs(url.query).get("track", [""])[0])
             if url.path.startswith("/files/"):
                 target = (root / unquote(url.path[len("/files/"):])).resolve()
                 if root in target.parents and target.is_file():

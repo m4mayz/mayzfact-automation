@@ -1373,7 +1373,9 @@ body {
 }
 .bgm-picker { display: grid; gap: 8px; }
 .bgm-picker label { font-weight: 700; }
+.bgm-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .bgm-picker select {
+  flex: 1 1 12rem;
   width: 100%;
   min-width: 0;
   min-height: 44px;
@@ -1384,7 +1386,9 @@ body {
   color: #18181b;
   font: inherit;
 }
-.bgm-picker select:focus-visible { outline: 2px solid #18181b; outline-offset: 2px; }
+.bgm-controls button { min-height: 44px; white-space: nowrap; }
+.bgm-controls button:disabled { opacity: .6; cursor: not-allowed; }
+.bgm-controls :focus-visible { outline: 2px solid #18181b; outline-offset: 2px; }
 .bgm-picker p { margin: 0; color: #52525b; font-size: .875rem; }
 """
 
@@ -1408,8 +1412,14 @@ function setMsg(text, withToast = false) {
 }
 
 async function saveBgm(select) {
+  const audio = document.getElementById('bgm-audio');
+  const previewButton = document.getElementById('bgm-preview');
+  audio.removeAttribute('src');
+  audio.load();
+  bgmPreviewState('idle');
   const status = document.getElementById('bgm-status');
   const restoreFocus = document.activeElement === select;
+  previewButton.disabled = true;
   select.disabled = true;
   status.textContent = 'Menyimpan BGM…';
   try {
@@ -1427,7 +1437,34 @@ async function saveBgm(select) {
     status.textContent = 'BGM gagal disimpan. Refresh brief atau coba pilih lagi.';
   } finally {
     select.disabled = false;
+    previewButton.disabled = false;
     if (restoreFocus && document.activeElement === document.body) select.focus({preventScroll: true});
+  }
+}
+
+function bgmPreviewState(state) {
+  const button = document.getElementById('bgm-preview');
+  const playing = state === 'loading' || state === 'playing';
+  button.textContent = playing ? 'Jeda preview' : 'Preview BGM';
+  document.getElementById('bgm-preview-status').textContent = {
+    loading: 'Memuat cuplikan BGM…',
+    error: 'Preview BGM gagal. Coba putar lagi.',
+  }[state] || '';
+}
+
+async function toggleBgmPreview() {
+  const select = document.getElementById('brief-bgm');
+  const audio = document.getElementById('bgm-audio');
+  const track = select.value || select.dataset.default;
+  if (!track) return;
+  if (!audio.paused) return audio.pause();
+  const src = '/api/bgm-preview?' + new URLSearchParams({track});
+  if (audio.getAttribute('src') !== src || audio.error) audio.src = src;
+  bgmPreviewState('loading');
+  try {
+    await audio.play();
+  } catch (error) {
+    if (error.name !== 'AbortError' && audio.getAttribute('src') === src) bgmPreviewState('error');
   }
 }
 
@@ -2372,6 +2409,8 @@ def _bgm_picker(names: list[str], choice: str | None) -> str:
     available = choice in names
     saved = escape(choice, quote=True) if choice and available else ""
     default = f"Default ({label(names[0])})" if names else "Default"
+    default_track = escape(names[0], quote=True) if names else ""
+    disabled = " disabled" if not names else ""
     options = [f'<option value=""{" selected" if not available else ""}>{default}</option>']
     options.extend(f'<option value="{escape(name, quote=True)}"{" selected" if name == choice else ""}>{label(name)}</option>'
                    for name in names)
@@ -2383,10 +2422,15 @@ def _bgm_picker(names: list[str], choice: str | None) -> str:
     return f"""
     <section class="z-card bgm-picker">
       <label for="brief-bgm">Musik latar (BGM)</label>
-      <select id="brief-bgm" data-saved="{saved}" aria-describedby="bgm-status" onchange="saveBgm(this)"{" disabled" if not names else ""}>
-        {''.join(options)}
-      </select>
+      <div class="bgm-controls">
+        <select id="brief-bgm" data-saved="{saved}" data-default="{default_track}" aria-describedby="bgm-status" onchange="saveBgm(this)"{disabled}>
+          {''.join(options)}
+        </select>
+        <button id="bgm-preview" type="button" class="btn-well-ghost" onclick="toggleBgmPreview()"{disabled}>Preview BGM</button>
+      </div>
+      <audio id="bgm-audio" preload="none" hidden onplaying="bgmPreviewState('playing')" onpause="bgmPreviewState(this.error ? 'error' : 'idle')" onended="bgmPreviewState('idle')" onerror="bgmPreviewState('error')"></audio>
       <p id="bgm-status" role="status">{message}</p>
+      <p id="bgm-preview-status" role="status"></p>
     </section>"""
 
 
