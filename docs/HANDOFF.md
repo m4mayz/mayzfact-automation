@@ -1,6 +1,8 @@
 # Handoff — FaktaCuil (D-051, D-052, D-053)
 
-**2026-11-22 (D-062):** FaktaCuil satu-satunya channel produksi. VoiceStudio VoxCPM2 lokal pakai `id` dan WAV, satu dari enam profil diundi per video. Lihat `AGENTS.md` untuk workflow aktif. Video sourdough `0SAWDiCZ-gA` pakai Rafiq, [terjadwal 2026-11-23 08.00 WIB](https://youtube.com/shorts/pMYva4q-nZI). Eksperimen pitch kalimat tanya nggak ikut upload.
+**D-066:** FaktaCuil tetap satu-satunya channel produksi. Suara baru pakai ElevenLabs (Eric, `eleven_v3`), render default 1,1×. Audio VoiceStudio run lama tetap dipakai. Lihat `AGENTS.md` untuk alur produksi.
+
+**2026-11-22 (D-062):** Video sourdough `0SAWDiCZ-gA` pakai Rafiq, [terjadwal 2026-11-23 08.00 WIB](https://youtube.com/shorts/pMYva4q-nZI). Eksperimen pitch kalimat tanya nggak ikut upload.
 
 - **Updated:** 2026-11-11 malam, Claude Code (lead). **Branch:** `fase-faktacuil-revisi-1` (revisi dari preview pertama, D-053), di-merge ke master setelah review.
 - **Video pertama FaktaCuil:** run `gu2M14rfRlU` ("Rahasia Rumah Jepang Kokoh Tanpa Paku😱"), di-upload ke channel FaktaCuil `RNZ4iZy4iIU`, tayang 2026-11-12 12.00 WIB. Metadata-nya diganti lewat `videos.update` setelah upload (format FaktaBor).

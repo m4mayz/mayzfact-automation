@@ -1,6 +1,6 @@
 {
   "voicestudio_url": "http://127.0.0.1:3900",
-  "faktacuil_tts_provider": "voicestudio",
+  "faktacuil_tts_provider": "elevenlabs",
   "faktacuil_voicestudio_voice": "random",
   "voicestudio_timeout": 900
 }

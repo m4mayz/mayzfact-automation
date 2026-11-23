@@ -137,7 +137,7 @@ Top3 nggak ikut berubah.
 - `hook_queries` selalu `{}`: FaktaCuil nggak punya segmen hook dari source.
 - Beat pertama otomatis jadi video.
 
-**Panjang.** Kata CTA ikut dihitung. Rumusnya `kata = detik_final × video_speed × FAKTACUIL_RAW_WPS` (2.27, dari sampel Eric). Di ElevenLabs speed 1.1 targetnya **62 kata, rentang 50–74**. Kalau FaktaCuil dijalanin lewat VoiceStudio (speed 1.15) targetnya 65, rentang 53–78. Pakai angka yang diprint `check-script` ("target T") kalau beda.
+**Panjang.** Kata CTA ikut dihitung. Rumusnya `kata = detik_final × video_speed × FAKTACUIL_RAW_WPS` (2.27, dari sampel Eric). Default ElevenLabs dirender di **1,1×**, target **62 kata, rentang 50–74**. Pakai angka yang diprint `check-script` ("target T") kalau beda.
 
 Selesai nulis:
 
@@ -161,8 +161,8 @@ uv run mayzfact run <id> --mode faktacuil --no-render
 
 Bedanya:
 
-- TTS default VoiceStudio lokal, VoxCPM2, `language=id`, WAV. Pool profil: `Finn`, `vivian`, `tyo`, `rocky`, `rafiq`. Undi sekali sebelum TTS dan simpan di `tts-profile.json` supaya retry tetap pakai profil yang sama. `tts.json` menyimpan ID profil yang benar-benar dipakai.
-- Kalau Akmal minta suara tertentu, isi `faktacuil_voicestudio_voice` dengan nama atau ID profil di `settings.local.json`; nilai `random` mengaktifkan undian. Kalau backend atau profil nggak tersedia, laporkan error; jangan fallback ke ElevenLabs.
+- TTS baru pakai ElevenLabs dengan voice Eric (`cjVigY5qzO86Huf0OWal`), model `eleven_v3`, tanpa delivery tag. Butuh `ELEVENLABS_API_KEYS`. Kalau gagal, laporkan error; jangan fallback ke VoiceStudio.
+- VoiceStudio tetap didukung buat run lama. Kalau audio sudah ada, pakai ulang; jangan ganti provider atau buat suara baru tanpa izin.
 - Jangan generate ulang suara, dan jangan hapus `voice.mp3`/`script.json` tanpa izin Akmal.
 - Log `[tts] FaktaCuil estimasi final …` ngasih peringatan kalau estimasi di luar 20–30 detik. Audio tetap disimpan; jangan regenerate atau ubah speed otomatis.
 - Plan nggak bikin segmen hook. Shot maksimal 3 detik (`faktacuil_max_shot_seconds`, D-053), jadi biasanya 1 beat = 1 shot. Kalau beberapa shot pakai link yang sama, isi Mulai beda-beda biar dapet adegan lain dan SFX transisinya bunyi.

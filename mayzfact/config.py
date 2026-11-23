@@ -46,7 +46,7 @@ class Settings:
     # Format FaktaCuil: voice, TTS, hook, dan panjang shot sendiri; settings_for_mode nuker ke field biasa.
     faktacuil_elevenlabs_voice_id: str = "cjVigY5qzO86Huf0OWal"  # Eric (premade, bisa lewat API akun free)
     faktacuil_elevenlabs_delivery_tag: str = ""
-    faktacuil_tts_provider: str = "voicestudio"
+    faktacuil_tts_provider: str = "elevenlabs"
     faktacuil_voicestudio_voice: str = "random"
     faktacuil_voicestudio_instruct: str = ""
     faktacuil_max_shot_seconds: float = 3.0  # 1 beat = 1 shot; median ±1,9 detik kayak FaktaBor (D-053)

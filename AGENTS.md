@@ -6,7 +6,7 @@ Panduan buat AI agent (Claude Code, Codex, OpenCode, Antigravity, dan lainnya) y
 
 Pipeline YouTube Shorts. Input-nya video YouTube source, output-nya `runs/<id>/final.mp4`:
 
-source → naskah (ditulis agent, direview Akmal) → suara VoiceStudio → klip → edit FaktaCuil → render Remotion.
+source → naskah (ditulis agent, direview Akmal) → suara ElevenLabs → klip → edit FaktaCuil → render Remotion.
 
 Target kualitasnya setara source `i2xag_1OJfM`. Peta besarnya ada di `flow.svg`.
 
@@ -104,7 +104,7 @@ cd remotion && npx tsc --noEmit -p .
 
 ### Biaya
 
-- FaktaCuil pakai VoiceStudio lokal (VoxCPM2, `id`). Pilih acak sekali per video dari `Finn`, `vivian`, `tyo`, `rocky`, `rafiq`. Jangan fallback ke ElevenLabs atau undi ulang saat retry.
+- Suara baru FaktaCuil pakai ElevenLabs, voice Eric, model `eleven_v3`. Jangan beralih ke VoiceStudio kalau ElevenLabs gagal. Audio lama tetap dikunci dan boleh dilanjutkan dari cache yang cocok.
 - Kalau `voice.mp3` udah ada, jangan hapus `script.json`/`voice.mp3` atau jalanin `--from tts` tanpa izin Akmal.
 
 ### Review video

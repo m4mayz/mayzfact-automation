@@ -221,7 +221,7 @@ def test_missing_keys_fail_before_any_step(world):
 
 def test_voicestudio_pipeline_does_not_require_elevenlabs_keys(world):
     with pytest.raises(AwaitingInput):
-        run(world, settings=Settings(tts_provider="voicestudio"))
+        run(world, mode="faktacuil", settings=Settings(faktacuil_tts_provider="voicestudio"))
     assert (world.runs / VIDEO_ID / "source.json").exists()
 
 

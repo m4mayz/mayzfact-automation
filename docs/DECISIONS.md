@@ -698,3 +698,8 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 ## D-065: Dakocan keluar dari pool VoiceStudio FaktaCuil
 
 - Akmal memilih take Finn default untuk `IeeRKhqFYzI` dan minta profil Dakocan dihapus. Pool baru: `Finn`, `vivian`, `tyo`, `rocky`, `rafiq`. Audio run lain tetap.
+
+## D-066: FaktaCuil kembali ke ElevenLabs
+
+- Akmal minta ElevenLabs (Eric, `eleven_v3`) jadi default untuk suara baru FaktaCuil. Ini mengganti default TTS D-062, bukan pilihan channel atau rute upload.
+- Override speed 1× untuk semua Short berikutnya dibatalkan. Aturan render lama kembali, termasuk default ElevenLabs 1,1×. Render BMW yang sudah diunggah dan audio run lama tetap.

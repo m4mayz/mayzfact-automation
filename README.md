@@ -1,6 +1,6 @@
 # mayzfact-automation
 
-Pipeline YouTube Shorts FaktaCuil. Naskah direview dulu, suara dari VoiceStudio lokal, klip dari halaman brief, lalu render pakai Remotion. MayzFact Top 3 tetap bisa dibuka untuk run lama, tapi bukan channel aktif.
+Pipeline YouTube Shorts FaktaCuil. Naskah direview dulu, suara dari ElevenLabs, klip dari halaman brief, lalu render pakai Remotion. MayzFact Top 3 tetap bisa dibuka untuk run lama, tapi bukan channel aktif.
 
 - Spec Fase 1: [docs/superpowers/specs/2026-09-30-fase1-pipeline-design.md](docs/superpowers/specs/2026-09-30-fase1-pipeline-design.md)
 - Keputusan project: [docs/DECISIONS.md](docs/DECISIONS.md)
@@ -25,12 +25,10 @@ Terus di folder project:
 
 Model SigLIP + OWLv2 (±1,4 GB), emoji Lottie, dan SFX ke-download otomatis pas pertama kali dipakai.
 
-### VoiceStudio
+### Suara FaktaCuil
 
-- Jalankan backend VoiceStudio di `http://127.0.0.1:3900` dengan VoxCPM2 terpasang. GUI nggak perlu terbuka.
-- FaktaCuil mengundi satu dari `Finn`, `vivian`, `tyo`, `rocky`, `rafiq`. Lima profil ini perlu ada di VoiceStudio lokal. Pilihan disimpan di `runs/<id>/tts-profile.json` dan dipakai ulang saat retry. Untuk memilih profil tertentu, isi `faktacuil_voicestudio_voice` di `settings.local.json` (file ini di-gitignore).
-- Sintesis dan ASR pakai bahasa Indonesia. Audio di-cache sebelum alignment; kalau ASR gagal, retry pakai audio yang sama. Kalau kata/timing nggak cocok, proses berhenti tanpa mengarang timestamp atau fallback ke ElevenLabs.
-- `voice.wav` dipakai untuk render, `voice.mp3` untuk brief, dan `tts.json` menyimpan timing serta ID profil. Run yang sudah punya suara tetap dikunci.
+- Default untuk video baru: ElevenLabs, voice Eric, model `eleven_v3`, render 1,1×. Isi `ELEVENLABS_API_KEYS` di `.env`. Nggak perlu menjalankan VoiceStudio.
+- Audio dan timing yang sudah tersimpan tetap dipakai, termasuk run lama VoiceStudio. Jangan hapus `voice.mp3`, `voice.wav`, atau `tts.json` untuk ganti provider.
 
 ### Pindah komputer
 

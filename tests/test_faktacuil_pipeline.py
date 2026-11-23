@@ -9,6 +9,7 @@ from mayzfact import pipeline
 from mayzfact.config import Settings, load_settings, settings_for_mode
 from mayzfact.errors import AwaitingInput, PipelineError
 from mayzfact.pipeline import _require_script, check_voice, real_deps, run_pipeline
+from mayzfact.providers.elevenlabs import ElevenLabsTTS
 from mayzfact.providers.voicestudio import VoiceStudioTTS
 from mayzfact.store import RunPaths, read_json, write_json_atomic
 from mayzfact.text import script_text, text_hash
@@ -36,7 +37,7 @@ def test_faktacuil_defaults():
     s = Settings()
     assert (s.faktacuil_elevenlabs_voice_id, s.faktacuil_elevenlabs_delivery_tag, s.faktacuil_tts_provider,
             s.faktacuil_voicestudio_voice, s.faktacuil_voicestudio_instruct, s.faktacuil_max_shot_seconds) == (
-        ERIC, "", "voicestudio", "random", "", 3.0)
+        ERIC, "", "elevenlabs", "random", "", 3.0)
 
 
 def test_settings_for_faktacuil_swaps_voice_tag_hook_and_shot_length():
@@ -47,12 +48,15 @@ def test_settings_for_faktacuil_swaps_voice_tag_hook_and_shot_length():
     assert (base.elevenlabs_voice_id, base.max_shot_seconds, base.hook_seconds) == ("TX3LPaxmHKxFdv7VOQHJ", 4.0, 10.0)
 
 
-def test_faktacuil_uses_local_indonesian_tts_by_default():
-    deps = real_deps(settings_for_mode(Settings(voicestudio_engine="cosyvoice"), "faktacuil"))
+@pytest.mark.parametrize("base", [Settings(), Settings(tts_provider="voicestudio")])
+def test_faktacuil_defaults_to_eric_at_legacy_speed(base):
+    settings = settings_for_mode(base, "faktacuil")
+    deps = real_deps(settings)
     try:
         tts = deps.tts()
-        assert isinstance(tts, VoiceStudioTTS)
-        assert (tts.model_id, tts.audio_format, tts.cache_identity["language"]) == ("voxcpm2", "wav", "id")
+        assert isinstance(tts, ElevenLabsTTS)
+        assert (tts.voice_id, tts.model_id, tts.delivery_tag) == (ERIC, "eleven_v3", "")
+        assert settings.video_speed == 1.1
     finally:
         deps.close()
 
@@ -68,7 +72,7 @@ def test_empty_faktacuil_voice_stops_before_request(monkeypatch):
 def test_global_tts_override_does_not_leak_into_faktacuil():
     base = Settings(tts_provider="voicestudio", voicestudio_voice="Gen", voicestudio_instruct="ceria")
     s = settings_for_mode(base, "faktacuil")
-    assert (s.tts_provider, s.voicestudio_voice, s.voicestudio_instruct) == ("voicestudio", "random", "")
+    assert (s.tts_provider, s.voicestudio_voice, s.voicestudio_instruct) == ("elevenlabs", "random", "")
     assert settings_for_mode(base, "top3") is base
 
 
@@ -81,13 +85,13 @@ def test_faktacuil_voicestudio_uses_faktacuil_fields():
     try:
         tts = deps.tts()
         assert isinstance(tts, VoiceStudioTTS) and tts.voice_id == "Indo"
+        assert (tts.model_id, tts.audio_format, tts.cache_identity["language"]) == ("voxcpm2", "wav", "id")
     finally:
         deps.close()
 
 
 def test_video_speed_follows_faktacuil_provider():
     assert settings_for_mode(Settings(faktacuil_tts_provider="voicestudio"), "faktacuil").video_speed == 1.15
-    # 1.15 di MayzFact cuma hasil auto-bump voicestudio, jangan kebawa ke FaktaCuil ElevenLabs
     assert settings_for_mode(Settings(tts_provider="voicestudio", faktacuil_tts_provider="elevenlabs"), "faktacuil").video_speed == 1.1
     assert settings_for_mode(Settings(tts_provider="voicestudio", video_speed=1.2), "faktacuil").video_speed == 1.2
     assert settings_for_mode(Settings(video_speed=1.05), "faktacuil").video_speed == 1.05
@@ -185,7 +189,8 @@ def test_new_run_defaults_to_indonesian_source(world):
     world.deps.fetch_transcript = no_english
     world.deps.fetch_transcript_id = lambda _: [{"text": "Adonan roti", "start": 0.0, "duration": 4.0}]
     with pytest.raises(AwaitingInput):
-        run_pipeline(VIDEO_ID, settings=Settings(), deps=world.deps, runs_dir=world.runs, log=lambda _: None)
+        run_pipeline(VIDEO_ID, settings=Settings(elevenlabs_api_keys=("test-key",)),
+                     deps=world.deps, runs_dir=world.runs, log=lambda _: None)
     data = json.loads((world.runs / VIDEO_ID / "source.json").read_text(encoding="utf-8"))
     assert data["transcript"][0]["text"] == "Adonan roti"
 
@@ -225,7 +230,8 @@ def test_faktacuil_picks_from_active_pool_and_reuses_wav_after_asr_failure(tmp_p
     monkeypatch.setattr(pipeline, "CACHE_DIR", tmp_path / "cache")
     monkeypatch.setattr(pipeline, "real_deps", lambda settings: replace(real_deps(settings), plan=stop_after_tts))
     def run():
-        run_pipeline(VIDEO_ID, settings=Settings(), runs_dir=paths.root.parent, log=lambda _: None)
+        run_pipeline(VIDEO_ID, settings=Settings(faktacuil_tts_provider="voicestudio"),
+                     runs_dir=paths.root.parent, log=lambda _: None)
 
     with pytest.raises(PipelineError, match="503"):
         run()
