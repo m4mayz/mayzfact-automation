@@ -11,3 +11,7 @@
 settings.local.json
 /uv.lock
 /remotion/package-lock.json
+/docs/superpowers/
+/TASKS.md
+/flow.svg
+/remotion/src/assets/
