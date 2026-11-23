@@ -72,6 +72,46 @@ def test_save_links_validates(server):
     assert bad.status_code == 400 and "nautilus" in bad.json()["error"]
 
 
+def test_faktacuil_bgm_saves_per_run_and_is_used_by_audio(server, tmp_path, monkeypatch):
+    from mayzfact.audio import prepare_audio
+
+    paths, base = server
+    library = tmp_path / "bgm"
+    library.mkdir()
+    (library / "bully-main-theme.m4a").write_bytes(b"default music")
+    (library / "cornfield-chase.m4a").write_bytes(b"chosen music")
+    (library / "not-a-track.txt").write_text("ignored")
+    (library / "folder.m4a").mkdir()
+    monkeypatch.setattr("mayzfact.brief.server.FAKTACUIL_BGM_DIR", library, raising=False)
+    sfx_dir = tmp_path / "sfx"
+    write_json_atomic(sfx_dir / "sfx.json", {})
+    links = {"shots": {"0": {"url": "https://a.b/c", "start_s": 5}}}
+    write_json_atomic(paths.links_json, links)
+
+    assert httpx.post(base + "/api/bgm", json={"track": "cornfield-chase.m4a"}).status_code == 404
+    write_json_atomic(paths.shots_plan_json, {**PLAN, "narration_mode": "faktacuil"})
+    html = httpx.get(base + "/").text
+    assert 'value="cornfield-chase.m4a"' in html
+    assert 'value="folder.m4a"' not in html
+    assert httpx.post(base + "/api/bgm", json={"track": "cornfield-chase.m4a"}).status_code == 200
+    for invalid in ("../cornfield-chase.m4a", "missing.m4a", "folder.m4a", []):
+        assert httpx.post(base + "/api/bgm", json={"track": invalid}).status_code == 400
+    assert httpx.get(base + "/bgm/cornfield-chase.m4a").status_code == 404
+    assert 'value="cornfield-chase.m4a" selected' in httpx.get(base + "/").text
+    assert read_json(paths.links_json) == links
+
+    def prepare():
+        with httpx.Client() as client:
+            return prepare_audio(paths, {"narration_mode": "faktacuil"}, bgm_dir=tmp_path / "legacy",
+                                 sfx_dir=sfx_dir, client=client, log=lambda msg: None, faktacuil_bgm_dir=library)
+
+    used = prepare()["bgm_main"]
+    assert used == "audio/bgm/cornfield-chase.m4a"
+    assert (paths.root / used).read_bytes() == b"chosen music"
+    assert httpx.post(base + "/api/bgm", json={"track": None}).status_code == 200
+    assert prepare()["bgm_main"] == "audio/bgm/bully-main-theme.m4a"
+
+
 def test_save_links_per_shot(server):
     paths, base = server
     ok = httpx.post(base + "/api/links", json={"shots": {"0": "https://v.douyin.com/x/", "1": "https://a.b/c #2"}})

@@ -7,9 +7,15 @@ import mimetypes
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path, PurePosixPath
+from threading import Lock
 from urllib.parse import parse_qs, unquote, urlparse
 
-from mayzfact.audio import list_bgm
+from mayzfact.audio import (
+    FAKTACUIL_BGM_DIR,
+    faktacuil_bgm_names,
+    list_bgm,
+    load_faktacuil_bgm_choice,
+)
 from mayzfact.brief.page import render_page
 from mayzfact.brief.prefetch import Prefetcher
 from mayzfact.brief.voice_page import render_voice_page
@@ -31,7 +37,7 @@ from mayzfact.providers.manual import (
     UPLOAD_STEM,
     find_uploads,
 )
-from mayzfact.store import RunPaths, read_json
+from mayzfact.store import RunPaths, read_json, write_json_atomic
 
 MAX_UPLOAD = 500 * 1024 * 1024
 MAX_VOICE_UPLOAD = 50 * 1024 * 1024
@@ -65,6 +71,7 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 media_dir: Path | None = None) -> ThreadingHTTPServer:
     """sfx_dir: library SFX buat pill SFX kustom. media_dir: folder hasil download prefetch (buat preview klip)."""
     root = paths.root.resolve()
+    bgm_write_lock = Lock()
 
     def plan() -> dict:
         return read_json(paths.shots_plan_json)
@@ -192,9 +199,13 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 source = paths.source_mp4.name if paths.source_mp4.exists() else None
                 voice = paths.voice_mp3.name if paths.voice_mp3.exists() else None
                 links = load_links(paths.links_json)
-                html = render_page(paths.root.name, plan(), links, status(), source=source, voice=voice,
+                current = plan()
+                faktacuil = current.get("narration_mode") == "faktacuil"
+                html = render_page(paths.root.name, current, links, status(), source=source, voice=voice,
                                    prefetch=prefetcher.snapshot() if prefetcher else {}, sfx_names=sfx_names(),
-                                   previews=preview_starts(plan(), links))
+                                   previews=preview_starts(current, links),
+                                   bgm_names=faktacuil_bgm_names(FAKTACUIL_BGM_DIR) if faktacuil else None,
+                                   bgm_choice=load_faktacuil_bgm_choice(paths) if faktacuil else None)
                 return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
             if url.path == "/api/progress":
                 progress = paths.fetch_progress_json
@@ -254,6 +265,26 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 if not origin_ok:  # tolak POST dari web lain (CSRF)
                     return self._reject(403, "request dari luar halaman brief ditolak", length)
             url = urlparse(self.path)
+            if url.path == "/api/bgm":
+                if not paths.shots_plan_json.exists() or plan().get("narration_mode") != "faktacuil":
+                    return self._reject(404, "Pilihan BGM cuma buat brief FaktaCuil", length)
+                if length > 4096:
+                    return self._reject(413, "Pilihan BGM terlalu panjang", length)
+                try:
+                    body = json.loads(self.rfile.read(length))
+                except ValueError:
+                    return self._json(400, {"error": "Pilihan BGM nggak valid"})
+                if not isinstance(body, dict) or "track" not in body:
+                    return self._json(400, {"error": "Pilihan BGM nggak valid"})
+                track = body["track"]
+                if track is not None and (not isinstance(track, str) or track not in faktacuil_bgm_names(FAKTACUIL_BGM_DIR)):
+                    return self._json(400, {"error": "Lagu nggak ada di koleksi. Refresh brief dan pilih lagi."})
+                try:
+                    with bgm_write_lock:
+                        write_json_atomic(paths.bgm_choice_json, {"track": track})
+                except OSError:
+                    return self._json(500, {"error": "BGM gagal disimpan. Coba pilih lagi."})
+                return self._json(200, {"track": track})
             if url.path == "/api/voice":
                 suffix = PurePosixPath(unquote(self.headers.get("X-Filename", ""))).suffix.lower()
                 if suffix not in UPLOAD_EXTS:

@@ -63,6 +63,10 @@ class RunPaths:
         return self.root / "links.json"
 
     @property
+    def bgm_choice_json(self) -> Path:
+        return self.root / "bgm-choice.json"
+
+    @property
     def links_status_json(self) -> Path:
         return self.root / "links_status.json"
 

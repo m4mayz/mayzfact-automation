@@ -1371,6 +1371,21 @@ body {
     cursor: pointer;
   }
 }
+.bgm-picker { display: grid; gap: 8px; }
+.bgm-picker label { font-weight: 700; }
+.bgm-picker select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #71717a;
+  border-radius: 8px;
+  background: #fff;
+  color: #18181b;
+  font: inherit;
+}
+.bgm-picker select:focus-visible { outline: 2px solid #18181b; outline-offset: 2px; }
+.bgm-picker p { margin: 0; color: #52525b; font-size: .875rem; }
 """
 
 _JS = r"""
@@ -1390,6 +1405,30 @@ function setMsg(text, withToast = false) {
   const m2 = document.getElementById('mobile-msg');
   if (m2) m2.textContent = text || 'Tersimpan otomatis';
   if (withToast && text) showToast(text);
+}
+
+async function saveBgm(select) {
+  const status = document.getElementById('bgm-status');
+  const restoreFocus = document.activeElement === select;
+  select.disabled = true;
+  status.textContent = 'Menyimpan BGM…';
+  try {
+    const response = await fetch('/api/bgm', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({track: select.value || null}),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'BGM gagal disimpan. Coba pilih lagi.');
+    select.dataset.saved = result.track || '';
+    status.textContent = 'BGM tersimpan untuk Short ini.';
+  } catch (error) {
+    select.value = select.dataset.saved;
+    status.textContent = 'BGM gagal disimpan. Refresh brief atau coba pilih lagi.';
+  } finally {
+    select.disabled = false;
+    if (restoreFocus && document.activeElement === document.body) select.focus({preventScroll: true});
+  }
 }
 
 function detectSourceToken(rawUrl) {
@@ -2326,9 +2365,34 @@ def _source_frames_card(run_id: str, plan: dict) -> str:
     </details>"""
 
 
+def _bgm_picker(names: list[str], choice: str | None) -> str:
+    def label(name: str) -> str:
+        return escape(name.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").title())
+
+    available = choice in names
+    saved = escape(choice, quote=True) if choice and available else ""
+    default = f"Default ({label(names[0])})" if names else "Default"
+    options = [f'<option value=""{" selected" if not available else ""}>{default}</option>']
+    options.extend(f'<option value="{escape(name, quote=True)}"{" selected" if name == choice else ""}>{label(name)}</option>'
+                   for name in names)
+    message = "Pilihan tersimpan otomatis untuk Short ini."
+    if choice and not available:
+        message = f"BGM {label(choice)} nggak ada di koleksi. Short ini pakai default sampai lu pilih lagi."
+    elif not names:
+        message = "Belum ada lagu di koleksi. Short ini pakai BGM bawaan kalau tersedia."
+    return f"""
+    <section class="z-card bgm-picker">
+      <label for="brief-bgm">Musik latar (BGM)</label>
+      <select id="brief-bgm" data-saved="{saved}" aria-describedby="bgm-status" onchange="saveBgm(this)"{" disabled" if not names else ""}>
+        {''.join(options)}
+      </select>
+      <p id="bgm-status" role="status">{message}</p>
+    </section>"""
+
+
 def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str | None = None,
                 voice: str | None = None, prefetch: dict | None = None, sfx_names: list[str] | None = None,
-                previews: dict | None = None) -> str:
+                previews: dict | None = None, *, bgm_names: list[str] | None = None, bgm_choice: str | None = None) -> str:
     groups = plan["groups"]
     auto = {s['index'] for s in plan['shots'] if s.get('auto_cta')}
 
@@ -2496,6 +2560,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
     <main class="cards-stack">
       <section id="progress"></section>
       {_source_frames_card(run_id, plan)}
+      {_bgm_picker(bgm_names, bgm_choice) if bgm_names is not None else ''}
       {cards}
     </main>
   </div>

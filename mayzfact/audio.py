@@ -14,7 +14,7 @@ from mayzfact.config import PROJECT_ROOT
 from mayzfact.errors import PipelineError
 from mayzfact.ffmpeg import probe
 from mayzfact.net import download
-from mayzfact.store import RunPaths, write_json_atomic
+from mayzfact.store import RunPaths, read_json, write_json_atomic
 
 BGM_DIR = PROJECT_ROOT / "assets" / "bgm"
 SFX_DIR = PROJECT_ROOT / "assets" / "sfx"
@@ -71,6 +71,20 @@ def list_bgm(bgm_dir: Path) -> list[str]:
     return sorted(p.name for p in bgm_dir.iterdir() if p.suffix.lower() in AUDIO_EXTS)
 
 
+def faktacuil_bgm_names(bgm_dir: Path) -> list[str]:
+    return [name for name in list_bgm(bgm_dir)
+            if (bgm_dir / name).is_file() and not (bgm_dir / name).is_symlink()]
+
+
+def load_faktacuil_bgm_choice(paths: RunPaths) -> str | None:
+    try:
+        data = read_json(paths.bgm_choice_json)
+    except (OSError, ValueError):
+        return None
+    track = data.get("track") if isinstance(data, dict) else None
+    return track if isinstance(track, str) and track else None
+
+
 def audible_start(path: Path) -> float:
     """Detik sampai bunyi pertama kedengeran (hening di depan file). Dipakai buat nyejajarin SFX yang ditumpuk."""
     import re
@@ -118,7 +132,7 @@ def prepare_audio(
     choices = list_bgm(bgm_dir)
     out: dict[str, Any] = {"bgm": None, "bgm_main": None, "sfx": {}}
     if script.get("narration_mode") == "faktacuil":
-        song = _faktacuil_song(bgm_dir, faktacuil_bgm_dir, log)
+        song = _faktacuil_song(bgm_dir, faktacuil_bgm_dir, log, selected=load_faktacuil_bgm_choice(paths))
         if song:
             out["bgm_main"] = _copy(song, paths.root / "audio" / "bgm", paths)
         write_json_atomic(paths.root / "audio.json", {"bgm": None, "bgm_main": song.name if song else None})
@@ -162,9 +176,13 @@ def prepare_audio(
     return out
 
 
-def _faktacuil_song(bgm_dir: Path, local_dir: Path, log: Callable[[str], None]) -> Path | None:
-    """Lagu FaktaCuil: file audio pertama di folder lokal, atau main.mp3 sementara kalau folder kosong."""
-    songs = list_bgm(local_dir)
+def _faktacuil_song(bgm_dir: Path, local_dir: Path, log: Callable[[str], None], *, selected: str | None = None) -> Path | None:
+    songs = faktacuil_bgm_names(local_dir)
+    if selected:
+        if selected in songs:
+            log(f"[timeline] BGM FaktaCuil dari brief: {selected}")
+            return local_dir / selected
+        log(f"[timeline] BGM pilihan {selected!r} nggak ada, pakai default")
     if songs:
         extra = f" (ada {len(songs)} file: {', '.join(songs)})" if len(songs) > 1 else ""
         log(f"[timeline] BGM FaktaCuil: {songs[0]}{extra}")
