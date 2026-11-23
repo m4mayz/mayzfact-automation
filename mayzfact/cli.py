@@ -238,24 +238,33 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
     from mayzfact.manual.links import load_links
     from mayzfact.manual.obtain import Obtainer
     from mayzfact.manual.og import DESKTOP_UA
+    from mayzfact.providers.manual import REQUEST_FILE
     from mayzfact.steps.source import parse_video_id
     from mayzfact.store import RunPaths, read_json
 
     paths = RunPaths(RUNS_DIR / parse_video_id(args.video))
-    if not paths.shots_plan_json.exists():
+    # Mode suara: provider manual lagi nunggu upload, plan belum bisa dibikin.
+    voice_mode = (not paths.shots_plan_json.exists() and (paths.root / REQUEST_FILE).exists()
+                  and not paths.voice_mp3.exists())
+    if not paths.shots_plan_json.exists() and not voice_mode:
         raise PipelineError("brief", f"Plan belum ada. Jalanin dulu: mayzfact run {paths.root.name} --no-render")
-    plan = read_json(paths.shots_plan_json)
-    missing = missing_frames(paths, plan)
-    if missing:
-        raise PipelineError("brief", f"Shot {', '.join(str(i + 1) for i in missing)} belum punya frame referensi. "
-                            f"Jalanin: mayzfact run {paths.root.name} --from plan --no-render")
-    # Link yang disimpan langsung di-download di background (cache sama kayak fetch), biar fetch tinggal motong.
-    client = httpx.Client(headers={"User-Agent": DESKTOP_UA}, timeout=httpx.Timeout(120.0, connect=15.0), follow_redirects=True)
-    prefetcher = Prefetcher(paths, Obtainer(CACHE_DIR / "manual", client, log=print).obtain, log=print)
-    server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0", prefetcher=prefetcher,
-                         sfx_dir=SFX_DIR, media_dir=CACHE_DIR / "manual")  # port bentrok = berhenti di sini
-    prefetcher.start()
-    prefetcher.enqueue(link_urls(load_links(paths.links_json), plan), retry_failed=True)  # CTA otomatis nggak butuh download
+    client = prefetcher = None
+    if voice_mode:
+        server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0")
+    else:
+        plan = read_json(paths.shots_plan_json)
+        missing = missing_frames(paths, plan)
+        if missing:
+            raise PipelineError("brief", f"Shot {', '.join(str(i + 1) for i in missing)} belum punya frame referensi. "
+                                f"Jalanin: mayzfact run {paths.root.name} --from plan --no-render")
+        # Link yang disimpan langsung di-download di background (cache sama kayak fetch), biar fetch tinggal motong.
+        client = httpx.Client(headers={"User-Agent": DESKTOP_UA}, timeout=httpx.Timeout(120.0, connect=15.0),
+                              follow_redirects=True)
+        prefetcher = Prefetcher(paths, Obtainer(CACHE_DIR / "manual", client, log=print).obtain, log=print)
+        server = make_server(paths, args.port or settings.brief_port, host="0.0.0.0", prefetcher=prefetcher,
+                             sfx_dir=SFX_DIR, media_dir=CACHE_DIR / "manual")  # port bentrok = berhenti di sini
+        prefetcher.start()
+        prefetcher.enqueue(link_urls(load_links(paths.links_json), plan), retry_failed=True)  # CTA otomatis nggak butuh download
     port = server.server_address[1]
     lan_ip = _lan_ip()
     link = None
@@ -278,8 +287,10 @@ def _brief(args: argparse.Namespace, settings: Settings) -> int:
         server.server_close()
         if link:
             link.stop()
-        prefetcher.stop()
-        client.close()
+        if prefetcher:
+            prefetcher.stop()
+        if client:
+            client.close()
     return 0
 
 

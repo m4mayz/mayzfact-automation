@@ -20,6 +20,7 @@ CACHE_DIR = PROJECT_ROOT / "cache"
 MODELS_DIR = PROJECT_ROOT / "models"  # cache model ML (SigLIP, OWLv2), di-gitignore
 DEFAULT_CHANNEL = "faktacuil"
 FAKTACUIL_VOICES = ("Finn", "vivian", "tyo", "rocky", "rafiq")
+TTS_PROVIDERS = ("elevenlabs", "voicestudio", "manual")
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,8 @@ class Settings:
     voicestudio_instruct: str = ""  # arahan delivery, bukan tag di naskah/caption
     voicestudio_audio_format: str = "mp3"  # WAV opt-in lokal; default lama tetap
     voicestudio_timeout: float = 900.0  # model lokal cold-start bisa lama
+    manual_asr_model: str = "openai/whisper-small"  # timing kata suara upload manual
+    manual_language: str = "en"
     elevenlabs_voice_id: str = "TX3LPaxmHKxFdv7VOQHJ"
     elevenlabs_model: str = "eleven_v3"
     # D-047: sample 2 disetujui, Natural + tag delivery hanya di request provider.
@@ -112,7 +115,8 @@ def load_settings(env_file: Path = PROJECT_ROOT / ".env") -> Settings:
         allowed = {"tts_provider", "voicestudio_url", "voicestudio_voice", "voicestudio_engine",
                    "voicestudio_timeout", "voicestudio_instruct", "voicestudio_audio_format",
                    "elevenlabs_delivery_tag", "elevenlabs_stability", "video_speed",
-                   "faktacuil_tts_provider", "faktacuil_voicestudio_voice", "faktacuil_voicestudio_instruct"}
+                   "faktacuil_tts_provider", "faktacuil_voicestudio_voice", "faktacuil_voicestudio_instruct",
+                   "manual_asr_model"}
         if values.keys() - allowed:
             raise ValueError("ada field di luar setting TTS yang didukung")
         for name, value in values.items():
@@ -136,10 +140,10 @@ def load_settings(env_file: Path = PROJECT_ROOT / ".env") -> Settings:
             elif not isinstance(value, str) or not value.strip():
                 raise ValueError(f"{name} harus teks yang nggak kosong")
         settings = replace(settings, **values)
-        if settings.tts_provider not in {"elevenlabs", "voicestudio"}:
-            raise ValueError("tts_provider harus elevenlabs atau voicestudio")
-        if settings.faktacuil_tts_provider not in {"elevenlabs", "voicestudio"}:
-            raise ValueError("faktacuil_tts_provider harus elevenlabs atau voicestudio")
+        if settings.tts_provider not in TTS_PROVIDERS:
+            raise ValueError(f"tts_provider harus salah satu dari {', '.join(TTS_PROVIDERS)}")
+        if settings.faktacuil_tts_provider not in TTS_PROVIDERS:
+            raise ValueError(f"faktacuil_tts_provider harus salah satu dari {', '.join(TTS_PROVIDERS)}")
         if settings.voicestudio_audio_format not in {"mp3", "wav"}:
             raise ValueError("voicestudio_audio_format harus mp3 atau wav")
         url = urlsplit(settings.voicestudio_url)
@@ -172,6 +176,7 @@ def settings_for_mode(settings: Settings, mode: str) -> Settings:
         voicestudio_audio_format="wav",
         voicestudio_language="id",
         voicestudio_instruct=settings.faktacuil_voicestudio_instruct,
+        manual_language="id",
         elevenlabs_voice_id=settings.faktacuil_elevenlabs_voice_id,
         elevenlabs_delivery_tag=settings.faktacuil_elevenlabs_delivery_tag,
         hook_seconds=0.0,

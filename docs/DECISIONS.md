@@ -703,3 +703,9 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 
 - Akmal minta ElevenLabs (Eric, `eleven_v3`) jadi default untuk suara baru FaktaCuil. Ini mengganti default TTS D-062, bukan pilihan channel atau rute upload.
 - Override speed 1× untuk semua Short berikutnya dibatalkan. Aturan render lama kembali, termasuk default ElevenLabs 1,1×. Render BMW yang sudah diunggah dan audio run lama tetap.
+
+## D-067: Suara manual dari web ElevenLabs (opt-in)
+
+- Akmal mau generate suara sendiri di web ElevenLabs (voice dan model dia yang pilih), karena API akun free nggak bisa pakai Voice Library dan Default voice dilaporkan dihapus 31 Desember 2026. Otomasi browser ke web ElevenLabs ditolak (Prohibited Use Policy §12).
+- `faktacuil_tts_provider: "manual"` di `settings.local.json`. Step tts nulis `tts-request.txt`, berhenti exit 3, lalu nunggu `voice.upload.{mp3,wav,m4a}` dari brief mode suara atau ditaruh langsung. Whisper lokal (`openai/whisper-small`, `manual_asr_model`) bikin timing kata, dipasangin ke naskah pakai difflib; kurang dari 70% kata cocok = file ditolak.
+- Diukur di `gu2M14rfRlU` (suara ElevenLabs asli): 64/64 kata, selisih start median 0,03 detik, p90 0,07 detik, ±70 detik di CPU. Default provider tetap ElevenLabs API (D-066). Spec: `docs/superpowers/specs/2026-11-23-manual-voice-design.md`.

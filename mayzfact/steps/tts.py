@@ -35,6 +35,9 @@ def run_tts(
     max_gap_s: float = 0.0,
 ) -> dict:
     text = script_text(script["beats"])
+    bind_run = getattr(tts, "bind_run", None)  # provider manual baca file upload dari folder run
+    if bind_run is not None:
+        bind_run(paths)
     stability = getattr(tts, "stability", None)  # provider lama/fake di test boleh nggak punya
     delivery_tag = getattr(tts, "delivery_tag", "")
     provider = getattr(tts, "provider_name", "elevenlabs")
@@ -70,7 +73,10 @@ def run_tts(
         if incoming.exists() or incoming_meta.exists():
             raise PipelineError("tts", f"Audio/metadata {incoming.name} sudah tersimpan untuk naskah/provider/format lain. "
                                 "Jangan ditimpa; pulihkan setting lama atau pindahkan backup sebelum bikin suara baru.")
-        log(f"[tts] Kirim {len(text)} karakter ke {provider} (voice {tts.voice_id}, model {tts.model_id}, stability {stability})")
+        if provider == "manual":
+            log(f"[tts] Cek suara upload manual + timing kata pakai Whisper lokal ({len(text)} karakter)")
+        else:
+            log(f"[tts] Kirim {len(text)} karakter ke {provider} (voice {tts.voice_id}, model {tts.model_id}, stability {stability})")
         audio, alignment = tts.synthesize(text)
         write_bytes_atomic(incoming, audio)
         pending = {"text_sha256": text_hash(text), "alignment": alignment, "identity": identity,

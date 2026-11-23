@@ -42,6 +42,7 @@ File penting di `runs/<id>/`:
 
 - `script.json`: naskah per beat (ditulis agent), termasuk `queries`/`queries_zh`, tanda `point`/`emoji`/`emoji_word`, dan `hook_queries`. `narration_mode` `top3` atau `faktacuil` (D-050, D-051) dan `cta_scene` wajib; run format lama ditolak pipeline, file-nya dibiarin.
 - `voice.wav`, `voice.mp3` dan `tts.json`: suara dan timing. Jangan dihapus. `tts-profile.json` mengunci voice hasil undian untuk retry TTS.
+- `tts-request.txt` + `voice.upload.{mp3,wav,m4a}`: provider suara `manual` (D-067). Teks buat di-paste Akmal ke web ElevenLabs, dan file hasil upload-nya. Jangan dihapus.
 - `links.json`: link klip per shot dari halaman brief (plus start/end detik kalau diisi, dan SFX kustom `sfx: {file, at_s}`).
 - `clips.json`: klip per shot, termasuk sumbernya (`provider`, `page_url`, `author`).
 - `timeline.json`: props buat Remotion.
@@ -59,7 +60,7 @@ File penting di `runs/<id>/`:
 uv sync                                               # setup Python
 uv run mayzfact run <url|id> --no-render              # lanjut dari step yang belum ada; exit 3 = nunggu naskah / nunggu link
 uv run mayzfact check-script <id>                     # cek script.json yang ditulis agent
-uv run mayzfact brief <id>                            # halaman isi link, port 3100, kebuka ke LAN + ngrok ber-password; link di-download di background
+uv run mayzfact brief <id>                            # halaman isi link, port 3100, kebuka ke LAN + ngrok ber-password; link di-download di background. Provider manual sebelum plan: halaman upload suara
 uv run mayzfact tunnel 3000                           # tunnel ngrok ber-password ke Studio (atau port lain)
 uv run mayzfact run <id> --from fetch --no-render     # download + potong klip, terus timeline
 uv run mayzfact run <id> --from timeline --no-render  # bikin ulang timeline aja

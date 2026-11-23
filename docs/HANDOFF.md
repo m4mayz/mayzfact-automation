@@ -1,5 +1,7 @@
 # Handoff — FaktaCuil (D-051, D-052, D-053)
 
+**2026-11-23 (D-067):** Provider suara `manual` (opt-in): Akmal generate di web ElevenLabs, upload lewat `mayzfact brief <id>` (mode suara, kebuka walau plan belum ada), Whisper lokal bikin timing. Dites: unit + server brief, dan end-to-end Whisper asli di salinan `gu2M14rfRlU` (median 0,03 detik). Belum dites: run produksi penuh pakai upload dari HP, dan Whisper di server Akmal (CPU/RAM belum diketahui).
+
 **D-066:** FaktaCuil tetap satu-satunya channel produksi. Suara baru pakai ElevenLabs (Eric, `eleven_v3`), render default 1,1×. Audio VoiceStudio run lama tetap dipakai. Lihat `AGENTS.md` untuk alur produksi.
 
 **2026-11-22 (D-062):** Video sourdough `0SAWDiCZ-gA` pakai Rafiq, [terjadwal 2026-11-23 08.00 WIB](https://youtube.com/shorts/pMYva4q-nZI). Eksperimen pitch kalimat tanya nggak ikut upload.

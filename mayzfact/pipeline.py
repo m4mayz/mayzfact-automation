@@ -16,6 +16,7 @@ from mayzfact.config import (
     DEFAULT_CHANNEL,
     FAKTACUIL_VOICES,
     RUNS_DIR,
+    TTS_PROVIDERS,
     Settings,
     missing_env,
     settings_for_mode,
@@ -141,8 +142,14 @@ def real_deps(settings: Settings) -> Deps:
                                   timeout=settings.voicestudio_timeout, instruct=settings.voicestudio_instruct,
                                   audio_format=settings.voicestudio_audio_format,
                                   language=settings.voicestudio_language)
+        if settings.tts_provider == "manual":
+            from mayzfact.asr import transcribe_words
+            from mayzfact.providers.manual import ManualTTS
+
+            return ManualTTS(transcribe=lambda path: transcribe_words(
+                path, model=settings.manual_asr_model, language=settings.manual_language))
         if settings.tts_provider != "elevenlabs":
-            raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
+            raise PipelineError("config", f"tts_provider harus salah satu dari {', '.join(TTS_PROVIDERS)}")
         if not settings.elevenlabs_voice_id.strip():
             raise PipelineError("config", "Voice ElevenLabs kosong. Isi elevenlabs_voice_id "
                                           "(FaktaCuil: faktacuil_elevenlabs_voice_id) di Settings.")
@@ -273,6 +280,8 @@ def _faktacuil_pending_mp3(paths: RunPaths, settings: Settings) -> Settings | No
         return replace(settings, tts_provider="voicestudio", voicestudio_audio_format="mp3",
                        voicestudio_voice=identity["voice"], voicestudio_engine=identity["model"],
                        voicestudio_language=identity.get("language", "en"), voicestudio_instruct=identity["instruct"])
+    if identity.get("provider") == "manual":
+        return replace(settings, tts_provider="manual")
     return None
 
 
@@ -315,10 +324,10 @@ def run_pipeline(
     if not steps:
         log(f"Semua step {video_id} udah selesai: {paths.final_mp4}. Pakai --from plan/fetch/timeline/render buat bikin ulang.")
         return paths
-    if settings.tts_provider not in {"elevenlabs", "voicestudio"}:
-        raise PipelineError("config", "tts_provider harus elevenlabs atau voicestudio")
+    if settings.tts_provider not in TTS_PROVIDERS:
+        raise PipelineError("config", f"tts_provider harus salah satu dari {', '.join(TTS_PROVIDERS)}")
     required = [name for step in steps for name in STEP_ENV.get(step, [])]
-    if settings.tts_provider == "voicestudio" or resume_mp3 is not None:
+    if settings.tts_provider in ("voicestudio", "manual") or resume_mp3 is not None:
         required = [name for name in required if name != "ELEVENLABS_API_KEYS"]
     missing = missing_env(settings, required)
     if missing:

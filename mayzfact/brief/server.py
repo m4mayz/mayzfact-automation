@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 from mayzfact.audio import list_bgm
 from mayzfact.brief.page import render_page
 from mayzfact.brief.prefetch import Prefetcher
+from mayzfact.brief.voice_page import render_voice_page
 from mayzfact.manual.links import (
     IMAGE_EXTS,
     VIDEO_EXTS,
@@ -24,9 +25,16 @@ from mayzfact.manual.links import (
     preview_starts,
     save_links,
 )
+from mayzfact.providers.manual import (
+    REQUEST_FILE,
+    UPLOAD_EXTS,
+    UPLOAD_STEM,
+    find_uploads,
+)
 from mayzfact.store import RunPaths, read_json
 
 MAX_UPLOAD = 500 * 1024 * 1024
+MAX_VOICE_UPLOAD = 50 * 1024 * 1024
 PORT_TRIES = 10
 
 
@@ -172,6 +180,14 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             if not self._host_ok():
                 return self._json(403, {"error": "host nggak dikenal"})
             url = urlparse(self.path)
+            if url.path == "/" and not paths.shots_plan_json.exists():
+                request = paths.root / REQUEST_FILE
+                if not request.exists():
+                    return self._json(404, {"error": "plan belum ada dan pipeline belum minta suara"})
+                uploads = find_uploads(paths.root)
+                html = render_voice_page(paths.root.name, request.read_text(encoding="utf-8"),
+                                         uploads[0].name if uploads else None)
+                return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
             if url.path == "/":
                 source = paths.source_mp4.name if paths.source_mp4.exists() else None
                 voice = paths.voice_mp3.name if paths.voice_mp3.exists() else None
@@ -238,6 +254,31 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                 if not origin_ok:  # tolak POST dari web lain (CSRF)
                     return self._reject(403, "request dari luar halaman brief ditolak", length)
             url = urlparse(self.path)
+            if url.path == "/api/voice":
+                suffix = PurePosixPath(unquote(self.headers.get("X-Filename", ""))).suffix.lower()
+                if suffix not in UPLOAD_EXTS:
+                    return self._reject(400, f"ekstensi {suffix or '?'} nggak didukung (mp3/wav/m4a)", length)
+                if paths.voice_mp3.exists():
+                    return self._reject(409, "voice.mp3 udah ada, suara udah dikunci", length)
+                if (paths.root / "voice.incoming.mp3").exists():
+                    return self._reject(409, "suara upload sebelumnya udah diproses, tinggal lanjutin run-nya", length)
+                limit = min(max_upload, MAX_VOICE_UPLOAD)
+                if length > limit:
+                    return self._reject(413, f"file kegedean (maks {limit // (1024 * 1024)} MB)", length)
+                if length <= 0:
+                    return self._reject(400, "file kosong", length)
+                dest = paths.root / f"{UPLOAD_STEM}{suffix}"
+                part = dest.with_name(dest.name + ".part")
+                with part.open("wb") as fh:
+                    self._body(length, fh)
+                if part.stat().st_size != length:
+                    part.unlink()
+                    return self._json(400, {"error": "upload putus di tengah, coba lagi"})
+                for old in find_uploads(paths.root):  # pipeline nolak kalau ada lebih dari satu
+                    if old != dest:
+                        old.unlink()
+                part.replace(dest)
+                return self._json(200, {"file": dest.name})
             if url.path == "/api/links":
                 try:
                     body = json.loads(self.rfile.read(length) or b"{}")

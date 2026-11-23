@@ -162,6 +162,7 @@ uv run mayzfact run <id> --mode faktacuil --no-render
 Bedanya:
 
 - TTS baru pakai ElevenLabs dengan voice Eric (`cjVigY5qzO86Huf0OWal`), model `eleven_v3`, tanpa delivery tag. Butuh `ELEVENLABS_API_KEYS`. Kalau gagal, laporkan error; jangan fallback ke VoiceStudio.
+- Kalau `settings.local.json` berisi `"faktacuil_tts_provider": "manual"` (D-067): run berhenti exit 3 "Nunggu suara" dan nulis `runs/<id>/tts-request.txt`. Jalanin `uv run mayzfact brief <id>` (mode suara), kasih link-nya ke Akmal. Dia paste teks di web ElevenLabs, generate, terus upload di halaman itu. Setelah Akmal bilang udah, jalanin lagi `uv run mayzfact run <id> --no-render` dan matiin brief. Kalau error "nggak cocok sama naskah", minta Akmal cek file-nya; jangan ubah naskah buat nyocokin suara.
 - VoiceStudio tetap didukung buat run lama. Kalau audio sudah ada, pakai ulang; jangan ganti provider atau buat suara baru tanpa izin.
 - Jangan generate ulang suara, dan jangan hapus `voice.mp3`/`script.json` tanpa izin Akmal.
 - Log `[tts] FaktaCuil estimasi final …` ngasih peringatan kalau estimasi di luar 20–30 detik. Audio tetap disimpan; jangan regenerate atau ubah speed otomatis.
