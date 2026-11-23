@@ -15,7 +15,7 @@ Peran agent di sini:
 - **Operator:** jalanin CLI, berhenti di checkpoint yang butuh Akmal, ngecek hasilnya.
 - **Developer:** benerin bug dan nambah fitur.
 
-Naskah, keyword klip, dan tanda emoji/panah ditulis **agent** ke `runs/<id>/script.json`, dicek pakai `mayzfact check-script`, dan harus di-review Akmal sebelum suara dibikin. Nggak ada LLM eksternal di pipeline. Aturan nulis naskahnya ada di skill `bikin-short` langkah 2 (format FaktaCuil: skill `bikin-faktacuil`).
+Naskah, keyword klip, dan tanda emoji/panah ditulis **agent** ke `runs/<id>/script.json`. Untuk FaktaCuil, tulis ulang transkrip source tanpa fact-check eksternal atau disclaimer tambahan. Jalankan `mayzfact check-script` untuk cek format dan overlap. Kirim naskah final persis ke chat dan tunggu approval Akmal sebelum bikin suara atau buka brief upload audio. Approval angle bukan approval naskah. Nggak ada LLM eksternal di pipeline. Aturan lengkap ada di skill `bikin-faktacuil`.
 
 ## Bikin video
 

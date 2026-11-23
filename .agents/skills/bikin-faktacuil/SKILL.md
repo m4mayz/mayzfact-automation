@@ -42,6 +42,8 @@ Kalau source-nya Top N, boleh ambil **1 item** aja; semua fakta di naskah harus 
 
 Agent nulis `runs/<id>/script.json`. Kalau `transcript_id` nggak kosong, tulis dari teks Indonesia itu dan `check-script` ngebandingin overlap 4-gram ke teks itu (tulis ulang, jangan nyalin kalimat asli); kalau kosong, pakai `transcript` Inggris kayak biasa. Aturan **Isi** dari `bikin-short` langkah 2 tetap berlaku: tiap beat harus punya dasar kalimat di source, jangan nambah fakta, angka, atau perbandingan, jangan ngerasin klaim ("can/may/some" tetap "bisa/mungkin/sebagian"), dan pertahankan kata pembatas source. Terjemahan nggak boleh nambah apa pun.
 
+**Rewrite saja.** Pakai transkrip yang dipilih sebagai satu-satunya rujukan narasi. Jangan riset tambahan, fact-check klaim, ganti angle buat membantah source, atau sisipkan "katanya" dan "belum terverifikasi" kalau pembatas itu nggak ada di source. Ringkas dengan kata baru tanpa mengubah isi atau urutan.
+
 **Bahasa.** Indonesia santai: `nggak`, `udah`, `banget` boleh. Jangan maksa slang. Kata teknis yang biasa dipakai orang Indonesia tetap dipakai.
 
 **Struktur.** Ikut posisi CTA:
@@ -145,11 +147,11 @@ Selesai nulis:
 uv run mayzfact check-script <id>
 ```
 
-`OK` cuma berarti format dan jumlah kata lolos. Cek sendiri tiap beat terhadap aturan **Isi** sebelum nunjukin ke Akmal.
+`OK` berarti cek format, jumlah kata, dan overlap lolos. Cocokkan isi tiap beat dengan transkrip, bukan dengan sumber luar, sebelum kirim naskah ke Akmal.
 
 ## 3. Checkpoint: Akmal review naskah
 
-Tunjukin di chat, per beat: **teks Indonesia | kalimat source Inggris yang jadi dasarnya | keyword visual (`queries`)**. Tambahin kolom `keyword` caption. Beat CTA dasarnya "CTA gimmick" (kalau ada). Buat format `emoji`, cek karakternya cocok sama kalimat (misal "emoji madu" ↔ 🍯). Tunggu "oke" atau koreksi. **Jangan lanjut sebelum Akmal oke** (langkah 4 bikin suara, pakai kredit ElevenLabs).
+Kirim naskah final persis seperti yang bakal dibacain, per beat beserta dasar dari transkrip, `queries`, dan `keyword` caption. Beat CTA dasarnya "CTA gimmick" (kalau ada). Buat format `emoji`, cek karakternya cocok sama kalimat (misal "emoji madu" ↔ 🍯). **Tunggu Akmal okein versi naskah ini** sebelum bikin suara atau buka brief upload audio. Kalau naskah direvisi, kirim ulang dan tunggu approval baru. Approval angle atau konsep nggak cukup.
 
 ## 4. Suara dan plan
 
