@@ -1,0 +1,1192 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 1306,
+  "audio": "voice.wav",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 78
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 78,
+      "durationInFrames": 87
+    },
+    {
+      "src": "clips/shot_03.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 165,
+      "durationInFrames": 72,
+      "fgHeight": 1080
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 237,
+      "durationInFrames": 80
+    },
+    {
+      "src": "clips/shot_05.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 317,
+      "durationInFrames": 113
+    },
+    {
+      "src": "clips/shot_06.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 430,
+      "durationInFrames": 70,
+      "fgHeight": 1080
+    },
+    {
+      "src": "clips/shot_07.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 500,
+      "durationInFrames": 103
+    },
+    {
+      "src": "clips/shot_08.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 603,
+      "durationInFrames": 63
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 666,
+      "durationInFrames": 64
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 730,
+      "durationInFrames": 86,
+      "decorative": true,
+      "clipOffset": 80,
+      "loopFrames": 85
+    },
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 816,
+      "durationInFrames": 63,
+      "decorative": true,
+      "clipOffset": 31,
+      "loopFrames": 84
+    },
+    {
+      "src": "clips/shot_08.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 879,
+      "durationInFrames": 42,
+      "decorative": true,
+      "clipOffset": 5,
+      "loopFrames": 69
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 921,
+      "durationInFrames": 50,
+      "decorative": true,
+      "clipOffset": 166,
+      "loopFrames": 85
+    },
+    {
+      "src": "clips/shot_14.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 971,
+      "durationInFrames": 56,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_15.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1027,
+      "durationInFrames": 92
+    },
+    {
+      "src": "clips/shot_16.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1119,
+      "durationInFrames": 114
+    },
+    {
+      "src": "clips/shot_17.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1233,
+      "durationInFrames": 73
+    }
+  ],
+  "countdown": [
+    {
+      "number": 3,
+      "label": "SAND TIGER SHARKS",
+      "numberFrom": 165,
+      "numberAt": 0,
+      "numberDuration": 31,
+      "cardFrom": 196,
+      "cardDuration": 41,
+      "src": "clips/shot_03.jpg",
+      "kind": "photo",
+      "clipOffset": 31
+    },
+    {
+      "number": 2,
+      "label": "CHIMPANZEES",
+      "numberFrom": 430,
+      "numberAt": 0,
+      "numberDuration": 28,
+      "cardFrom": 458,
+      "cardDuration": 42,
+      "src": "clips/shot_06.jpg",
+      "kind": "photo",
+      "clipOffset": 28
+    },
+    {
+      "number": 1,
+      "label": "LIONS",
+      "numberFrom": 971,
+      "numberAt": 0,
+      "numberDuration": 24,
+      "cardFrom": 995,
+      "cardDuration": 32,
+      "src": "clips/shot_14.jpg",
+      "kind": "photo",
+      "clipOffset": 24
+    }
+  ],
+  "captions": [
+    {
+      "text": "THESE",
+      "from": 4,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THREE",
+      "from": 9,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ANIMALS",
+      "from": 15,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "SOMETIMES",
+      "from": 25,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "KILL",
+      "from": 39,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEIR",
+      "from": 45,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OWN",
+      "from": 50,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KIND",
+      "from": 56,
+      "durationInFrames": 22,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 78,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NUMBER",
+      "from": 81,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "ONE",
+      "from": 93,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DOES",
+      "from": 99,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SO",
+      "from": 106,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IN",
+      "from": 111,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 114,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BRUTAL",
+      "from": 117,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "SURVIVAL",
+      "from": 127,
+      "durationInFrames": 16,
+      "color": "#4ade80"
+    },
+    {
+      "text": "FIGHT",
+      "from": 143,
+      "durationInFrames": 19,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEFORE",
+      "from": 233,
+      "durationInFrames": 10,
+      "color": "#facc15"
+    },
+    {
+      "text": "BIRTH",
+      "from": 243,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IN",
+      "from": 251,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEIR",
+      "from": 254,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MOTHER'S",
+      "from": 258,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "WOMB",
+      "from": 268,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "STRONGEST",
+      "from": 288,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "EMBRYOS",
+      "from": 302,
+      "durationInFrames": 15,
+      "color": "#facc15"
+    },
+    {
+      "text": "MAY",
+      "from": 317,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EAT",
+      "from": 323,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DEVELOPING",
+      "from": 328,
+      "durationInFrames": 17,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "SIBLINGS",
+      "from": 345,
+      "durationInFrames": 23,
+      "color": "#4ade80"
+    },
+    {
+      "text": "LEAVING",
+      "from": 368,
+      "durationInFrames": 9,
+      "color": "#facc15"
+    },
+    {
+      "text": "ONLY",
+      "from": 377,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 384,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FEW",
+      "from": 387,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PUPS",
+      "from": 393,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ALIVE",
+      "from": 402,
+      "durationInFrames": 25,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THESE",
+      "from": 496,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CLEVER",
+      "from": 503,
+      "durationInFrames": 11,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "PRIMATES",
+      "from": 514,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SOMETIMES",
+      "from": 528,
+      "durationInFrames": 17,
+      "color": "#facc15"
+    },
+    {
+      "text": "ATTACK",
+      "from": 545,
+      "durationInFrames": 9,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "AND",
+      "from": 554,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KILL",
+      "from": 559,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RIVAL",
+      "from": 567,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GROUP",
+      "from": 576,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MEMBERS",
+      "from": 583,
+      "durationInFrames": 20,
+      "color": "#4ade80"
+    },
+    {
+      "text": "DURING",
+      "from": 603,
+      "durationInFrames": 8,
+      "color": "#facc15"
+    },
+    {
+      "text": "TERRITORIAL",
+      "from": 611,
+      "durationInFrames": 19,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "CLASHES",
+      "from": 630,
+      "durationInFrames": 25,
+      "color": "#4ade80"
+    },
+    {
+      "text": "ESPECIALLY",
+      "from": 655,
+      "durationInFrames": 19,
+      "color": "#facc15"
+    },
+    {
+      "text": "OVER",
+      "from": 674,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TERRITORY",
+      "from": 681,
+      "durationInFrames": 19,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "OR",
+      "from": 700,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RESOURCES",
+      "from": 705,
+      "durationInFrames": 25,
+      "color": "#4ade80"
+    },
+    {
+      "text": "BUT",
+      "from": 730,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEFORE",
+      "from": 734,
+      "durationInFrames": 10,
+      "color": "#facc15"
+    },
+    {
+      "text": "NUMBER",
+      "from": 744,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ONE",
+      "from": 756,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TRY",
+      "from": 770,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TAPPING",
+      "from": 778,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "LIKE",
+      "from": 792,
+      "durationInFrames": 18,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DID",
+      "from": 817,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 821,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BUTTON",
+      "from": 824,
+      "durationInFrames": 10,
+      "color": "#facc15"
+    },
+    {
+      "text": "TURN",
+      "from": 834,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "INTO",
+      "from": 842,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 850,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LION",
+      "from": 852,
+      "durationInFrames": 23,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SUBSCRIBE",
+      "from": 880,
+      "durationInFrames": 16,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "IF",
+      "from": 896,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 900,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WORKED",
+      "from": 903,
+      "durationInFrames": 18,
+      "color": "#4ade80"
+    },
+    {
+      "text": "AND",
+      "from": 921,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COMMENT",
+      "from": 926,
+      "durationInFrames": 19,
+      "color": "#facc15"
+    },
+    {
+      "text": "'ROAR'",
+      "from": 945,
+      "durationInFrames": 24,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "AFTER",
+      "from": 1025,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TAKING",
+      "from": 1031,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "OVER",
+      "from": 1042,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 1048,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PRIDE",
+      "from": 1052,
+      "durationInFrames": 19,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 1071,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NEW",
+      "from": 1074,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MALE",
+      "from": 1080,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MAY",
+      "from": 1090,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KILL",
+      "from": 1096,
+      "durationInFrames": 23,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 1119,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FORMER",
+      "from": 1124,
+      "durationInFrames": 10,
+      "color": "#facc15"
+    },
+    {
+      "text": "MALE'S",
+      "from": 1134,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "YOUNG",
+      "from": 1144,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CUBS",
+      "from": 1153,
+      "durationInFrames": 24,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 1179,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GRIM",
+      "from": 1182,
+      "durationInFrames": 16,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ACT",
+      "from": 1198,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THAT",
+      "from": 1205,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CAN",
+      "from": 1212,
+      "durationInFrames": 21,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RETURN",
+      "from": 1233,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "FEMALES",
+      "from": 1247,
+      "durationInFrames": 15,
+      "color": "#facc15"
+    },
+    {
+      "text": "TO",
+      "from": 1262,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BREEDING",
+      "from": 1267,
+      "durationInFrames": 11,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "CONDITION",
+      "from": 1278,
+      "durationInFrames": 16,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SOONER",
+      "from": 1294,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    }
+  ],
+  "overlays": [
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 243,
+      "durationInFrames": 59,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 258,
+          "y": 793,
+          "w": 484,
+          "h": 339
+        },
+        {
+          "frame": 39,
+          "x": 142,
+          "y": 709,
+          "w": 601,
+          "h": 394
+        },
+        {
+          "frame": 69,
+          "x": 693,
+          "y": 37,
+          "w": 387,
+          "h": 755
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 506,
+      "durationInFrames": 82,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 529,
+          "y": 1106,
+          "w": 342,
+          "h": 498
+        },
+        {
+          "frame": 39,
+          "x": 529,
+          "y": 1136,
+          "w": 355,
+          "h": 477
+        },
+        {
+          "frame": 69,
+          "x": 528,
+          "y": 1105,
+          "w": 360,
+          "h": 485
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 1033,
+      "durationInFrames": 71,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 195,
+          "y": 549,
+          "w": 591,
+          "h": 915
+        },
+        {
+          "frame": 39,
+          "x": 207,
+          "y": 574,
+          "w": 584,
+          "h": 869
+        },
+        {
+          "frame": 69,
+          "x": 216,
+          "y": 498,
+          "w": 578,
+          "h": 926
+        }
+      ]
+    }
+  ],
+  "emojis": [
+    {
+      "src": "emoji/1f631.json",
+      "from": 117,
+      "durationInFrames": 48
+    },
+    {
+      "src": "emoji/1f92f.json",
+      "from": 302,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f628.json",
+      "from": 545,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f480.json",
+      "from": 1096,
+      "durationInFrames": 75
+    }
+  ],
+  "cta": [],
+  "bgm": [
+    {
+      "src": "audio/bgm/mystery.mp3",
+      "from": 0,
+      "durationInFrames": 165,
+      "volume": 0.12,
+      "fadeOutFrames": 8
+    },
+    {
+      "src": "audio/bgm/main.mp3",
+      "from": 165,
+      "durationInFrames": 1141,
+      "volume": 0.12,
+      "fadeOutFrames": 30
+    }
+  ],
+  "sfx": [
+    {
+      "src": "audio/sfx/awkward-moment.mp3",
+      "from": 0,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/riser-reveal-sound-effect_aOQs8d9.mp3",
+      "from": 6,
+      "volume": 1.0
+    },
+    {
+      "src": "audio/sfx/fahhh_KcgAXfs.mp3",
+      "from": 74,
+      "volume": 1.0
+    },
+    {
+      "src": "audio/sfx/camera-flash-sound-effect.mp3",
+      "from": 75,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 117,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 156,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 193,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 234,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 243,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 302,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 309,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 314,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 421,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 455,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 497,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 506,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 545,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 590,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 600,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 648,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 663,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 717,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 727,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 793,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 798,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 813,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 876,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 877,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 891,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 908,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 918,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 962,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 992,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 1024,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1033,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1096,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1116,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1230,
+      "volume": 0.4
+    }
+  ],
+  "intro": {
+    "durationInFrames": 7
+  },
+  "transitions": [
+    {
+      "from": 237,
+      "durationInFrames": 7
+    },
+    {
+      "from": 500,
+      "durationInFrames": 7
+    },
+    {
+      "from": 1027,
+      "durationInFrames": 7
+    }
+  ],
+  "flashes": [
+    {
+      "from": 78,
+      "durationInFrames": 3
+    }
+  ],
+  "ctaScene": {
+    "theme": "lion",
+    "label": "",
+    "commentText": "ROAR",
+    "durationInFrames": 241,
+    "stages": [
+      {
+        "kind": "like",
+        "durationInFrames": 64,
+        "timing": "word",
+        "from": 770,
+        "triggerAt": 22
+      },
+      {
+        "kind": "transform",
+        "durationInFrames": 46,
+        "timing": "word",
+        "from": 834,
+        "triggerAt": 0
+      },
+      {
+        "kind": "subscribe",
+        "durationInFrames": 46,
+        "timing": "word",
+        "from": 880,
+        "triggerAt": 0
+      },
+      {
+        "kind": "comment",
+        "durationInFrames": 45,
+        "timing": "word",
+        "from": 926,
+        "triggerAt": 0
+      }
+    ],
+    "cues": [
+      {
+        "kind": "like",
+        "word": "like.",
+        "from": 792
+      },
+      {
+        "kind": "transform",
+        "word": "turn",
+        "from": 834
+      },
+      {
+        "kind": "subscribe",
+        "word": "Subscribe",
+        "from": 880
+      },
+      {
+        "kind": "comment",
+        "word": "comment",
+        "from": 926
+      }
+    ],
+    "from": 730
+  }
+}

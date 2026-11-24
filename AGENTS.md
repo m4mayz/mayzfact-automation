@@ -29,7 +29,7 @@ Codex, OpenCode, dan Antigravity nemu skill-skill ini otomatis. Agent lain baca 
 | --- | --- |
 | `mayzfact/` | package Python: CLI `mayzfact`, step pipeline di `steps/`, aturan naskah di `steps/script.py` |
 | `remotion/` | komponen video (React + Remotion 4) |
-| `runs/<id>/` | hasil per video (di-gitignore) |
+| `runs/<id>/` | hasil per video; Git cuma simpan `youtube.json` dan `timeline.json`, termasuk timeline di `revisions/` |
 | `assets/bgm/` | 2 BGM dari Akmal: `mystery.mp3` di hook, `main.mp3` mulai "Number" pertama (D-038) |
 | `assets/channels/faktacuil/` | branding FaktaCuil (avatar, banner, watermark, deskripsi) ikut di-commit. `bgm/` isinya lagu FaktaCuil dari Akmal, lokal dan di-gitignore (berhak cipta, D-051) |
 | `assets/sfx/sfx.json` | momen → nama file SFX myinstants. File mp3-nya ke-download otomatis |
@@ -101,7 +101,7 @@ cd remotion && npx tsc --noEmit -p .
 - Challenge yang diselesaiin browser biasa tanpa manusia (WAF proof-of-work Douyin) boleh (D-018).
 - Jangan ubah atau hapus `flow.svg` dan `sources/`.
 - Halaman brief selalu kebuka ke LAN dan ke internet lewat ngrok (biar bisa diisi dari HP). Brief sendiri nggak punya login; yang ngunci cuma basic-auth ngrok dari `NGROK_BASIC_AUTH`. Jangan pernah buka ngrok tanpa basic-auth, jangan print isi `NGROK_BASIC_AUTH`, dan matiin brief + tunnel kalau udah selesai. Siapa aja di WiFi yang sama tetap bisa buka alamat LAN, jadi jangan jalanin brief di WiFi publik.
-- `assets/bgm/`, `assets/sfx/`, `assets/emoji/`, dan `runs/*/youtube.json` ikut di-commit biar project bisa dipindah pakai `git clone` (Akmal, 2026-10-17). `models/`, `cache/`, dan isi `runs/` lainnya tetap di-gitignore. Lagu FaktaCuil di `assets/channels/faktacuil/bgm/` juga di-gitignore (berhak cipta, repo public); jangan commit, jangan download atau copy lagu sendiri.
+- `assets/bgm/`, `assets/sfx/`, `assets/emoji/`, `runs/*/youtube.json`, `runs/*/timeline.json`, dan `runs/*/revisions/**/timeline.json` ikut di-commit biar project bisa dipindah pakai `git clone`. `models/`, `cache/`, `out/`, dan isi `runs/` lainnya tetap di-gitignore. Lagu FaktaCuil di `assets/channels/faktacuil/bgm/` juga di-gitignore (berhak cipta, repo public); jangan commit, jangan download atau copy lagu sendiri.
 
 ### Biaya
 

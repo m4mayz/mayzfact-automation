@@ -1,0 +1,1362 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 1586,
+  "audio": "voice.wav",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 61,
+      "blurs": [
+        {
+          "x": 179,
+          "y": 1444,
+          "w": 776,
+          "h": 109
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 61,
+      "durationInFrames": 61,
+      "blurs": [
+        {
+          "x": 179,
+          "y": 1444,
+          "w": 776,
+          "h": 109
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_03.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 122,
+      "durationInFrames": 82
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 204,
+      "durationInFrames": 62
+    },
+    {
+      "src": "clips/shot_05.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 266,
+      "durationInFrames": 61
+    },
+    {
+      "src": "clips/shot_06.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 327,
+      "durationInFrames": 80,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_07.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 407,
+      "durationInFrames": 101
+    },
+    {
+      "src": "clips/shot_08.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 508,
+      "durationInFrames": 80,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_09.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 588,
+      "durationInFrames": 72,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_10.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 660,
+      "durationInFrames": 67
+    },
+    {
+      "src": "clips/shot_11.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 727,
+      "durationInFrames": 52
+    },
+    {
+      "src": "clips/shot_12.mp4",
+      "kind": "video",
+      "layout": "blur",
+      "from": 779,
+      "durationInFrames": 53,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_13.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 832,
+      "durationInFrames": 70,
+      "fgHeight": 1063
+    },
+    {
+      "src": "clips/shot_14.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 902,
+      "durationInFrames": 86
+    },
+    {
+      "src": "clips/shot_15.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 988,
+      "durationInFrames": 49
+    },
+    {
+      "src": "clips/shot_16.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1037,
+      "durationInFrames": 78
+    },
+    {
+      "src": "clips/shot_17.jpg",
+      "kind": "photo",
+      "layout": "full",
+      "from": 1115,
+      "durationInFrames": 73
+    },
+    {
+      "src": "clips/shot_18.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1188,
+      "durationInFrames": 55
+    },
+    {
+      "src": "clips/shot_19.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1243,
+      "durationInFrames": 73
+    },
+    {
+      "src": "clips/shot_20.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 1316,
+      "durationInFrames": 81,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_21.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1397,
+      "durationInFrames": 109
+    },
+    {
+      "src": "clips/shot_22.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1506,
+      "durationInFrames": 80
+    }
+  ],
+  "countdown": [
+    {
+      "number": 5,
+      "label": "MANX CATS",
+      "numberFrom": 327,
+      "numberAt": 0,
+      "numberDuration": 38,
+      "cardFrom": 365,
+      "cardDuration": 42,
+      "src": "clips/shot_06.jpg",
+      "kind": "photo",
+      "clipOffset": 38
+    },
+    {
+      "number": 4,
+      "label": "BELGIAN BLUE CATTLE",
+      "numberFrom": 588,
+      "numberAt": 0,
+      "numberDuration": 31,
+      "cardFrom": 619,
+      "cardDuration": 41,
+      "src": "clips/shot_09.jpg",
+      "kind": "photo",
+      "clipOffset": 31
+    },
+    {
+      "number": 3,
+      "label": "SCALELESS SNAKES",
+      "numberFrom": 832,
+      "numberAt": 0,
+      "numberDuration": 31,
+      "cardFrom": 863,
+      "cardDuration": 39,
+      "src": "clips/shot_13.jpg",
+      "kind": "photo",
+      "clipOffset": 31
+    },
+    {
+      "number": 2,
+      "label": "FOUR-HORNED GOATS",
+      "numberFrom": 1115,
+      "numberAt": 0,
+      "numberDuration": 31,
+      "cardFrom": 1146,
+      "cardDuration": 42,
+      "src": "clips/shot_17.jpg",
+      "kind": "photo",
+      "clipOffset": 31
+    },
+    {
+      "number": 1,
+      "label": "WHITE TIGERS",
+      "numberFrom": 1316,
+      "numberAt": 0,
+      "numberDuration": 39,
+      "cardFrom": 1355,
+      "cardDuration": 42,
+      "src": "clips/shot_20.jpg",
+      "kind": "photo",
+      "clipOffset": 39
+    }
+  ],
+  "captions": [
+    {
+      "text": "THESE",
+      "from": 2,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FIVE",
+      "from": 11,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ANIMALS",
+      "from": 24,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "CARRY",
+      "from": 36,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SOME",
+      "from": 49,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WILD",
+      "from": 57,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GENETIC",
+      "from": 71,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "MUTATIONS",
+      "from": 85,
+      "durationInFrames": 33,
+      "color": "#facc15"
+    },
+    {
+      "text": "AND",
+      "from": 122,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NUMBER",
+      "from": 126,
+      "durationInFrames": 14,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ONE",
+      "from": 140,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOOKS",
+      "from": 148,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE",
+      "from": 156,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 162,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "REDESIGN",
+      "from": 165,
+      "durationInFrames": 32,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SO",
+      "from": 206,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COMMENT",
+      "from": 211,
+      "durationInFrames": 13,
+      "color": "#facc15"
+    },
+    {
+      "text": "WHICH",
+      "from": 224,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ONE",
+      "from": 233,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SURPRISED",
+      "from": 239,
+      "durationInFrames": 16,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "YOU",
+      "from": 255,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 266,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE",
+      "from": 272,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 286,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SUBSCRIBE",
+      "from": 291,
+      "durationInFrames": 31,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SOME",
+      "from": 410,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ARE",
+      "from": 415,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BORN",
+      "from": 419,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TAILLESS",
+      "from": 430,
+      "durationInFrames": 20,
+      "color": "#facc15"
+    },
+    {
+      "text": "FROM",
+      "from": 450,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 454,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GENETIC",
+      "from": 457,
+      "durationInFrames": 15,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "MUTATION",
+      "from": 472,
+      "durationInFrames": 31,
+      "color": "#4ade80"
+    },
+    {
+      "text": "BRO",
+      "from": 508,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 522,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FORGOT",
+      "from": 527,
+      "durationInFrames": 11,
+      "color": "#facc15"
+    },
+    {
+      "text": "ITS",
+      "from": 538,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TAIL",
+      "from": 545,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AT",
+      "from": 554,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HOME",
+      "from": 557,
+      "durationInFrames": 22,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THESE",
+      "from": 660,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COWS",
+      "from": 667,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CARRY",
+      "from": 678,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 687,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GENETIC",
+      "from": 689,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "MUTATION",
+      "from": 701,
+      "durationInFrames": 26,
+      "color": "#4ade80"
+    },
+    {
+      "text": "CAUSING",
+      "from": 727,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "EXTREME",
+      "from": 739,
+      "durationInFrames": 14,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "MUSCLE",
+      "from": 753,
+      "durationInFrames": 10,
+      "color": "#4ade80"
+    },
+    {
+      "text": "GROWTH",
+      "from": 763,
+      "durationInFrames": 16,
+      "color": "#facc15"
+    },
+    {
+      "text": "LIKE",
+      "from": 779,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEY",
+      "from": 784,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIVE",
+      "from": 788,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AT",
+      "from": 793,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 796,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GYM",
+      "from": 799,
+      "durationInFrames": 21,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THESE",
+      "from": 902,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SNAKES",
+      "from": 911,
+      "durationInFrames": 9,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ARE",
+      "from": 920,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BORN",
+      "from": 925,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WITH",
+      "from": 933,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FEW",
+      "from": 941,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SCALES",
+      "from": 950,
+      "durationInFrames": 12,
+      "color": "#4ade80"
+    },
+    {
+      "text": "OR",
+      "from": 962,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NONE",
+      "from": 965,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SO",
+      "from": 990,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEY",
+      "from": 992,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOOK",
+      "from": 996,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TOTALLY",
+      "from": 1003,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "DIFFERENT",
+      "from": 1015,
+      "durationInFrames": 23,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "BRO",
+      "from": 1038,
+      "durationInFrames": 16,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THAT",
+      "from": 1054,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SNAKE",
+      "from": 1061,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IS",
+      "from": 1068,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FROM",
+      "from": 1072,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ANOTHER",
+      "from": 1077,
+      "durationInFrames": 9,
+      "color": "#4ade80"
+    },
+    {
+      "text": "UNIVERSE",
+      "from": 1086,
+      "durationInFrames": 24,
+      "color": "#facc15"
+    },
+    {
+      "text": "SOME",
+      "from": 1188,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GROW",
+      "from": 1194,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 1200,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SECOND",
+      "from": 1204,
+      "durationInFrames": 8,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "PAIR",
+      "from": 1212,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OF",
+      "from": 1218,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HORNS",
+      "from": 1221,
+      "durationInFrames": 21,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BRO",
+      "from": 1243,
+      "durationInFrames": 21,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NATURE",
+      "from": 1265,
+      "durationInFrames": 9,
+      "color": "#4ade80"
+    },
+    {
+      "text": "GAVE",
+      "from": 1274,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 1280,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DELUXE",
+      "from": 1284,
+      "durationInFrames": 11,
+      "color": "#facc15"
+    },
+    {
+      "text": "HORNS",
+      "from": 1295,
+      "durationInFrames": 21,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 1403,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RARE",
+      "from": 1407,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GENETIC",
+      "from": 1417,
+      "durationInFrames": 14,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "VARIANT",
+      "from": 1431,
+      "durationInFrames": 16,
+      "color": "#4ade80"
+    },
+    {
+      "text": "GIVES",
+      "from": 1447,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEM",
+      "from": 1456,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THAT",
+      "from": 1463,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WHITE",
+      "from": 1472,
+      "durationInFrames": 10,
+      "color": "#facc15"
+    },
+    {
+      "text": "COAT",
+      "from": 1482,
+      "durationInFrames": 21,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEY",
+      "from": 1506,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOOK",
+      "from": 1511,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "UNREAL",
+      "from": 1523,
+      "durationInFrames": 26,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "LIKE",
+      "from": 1549,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EDITED",
+      "from": 1559,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "COLORS",
+      "from": 1570,
+      "durationInFrames": 16,
+      "color": "#facc15"
+    }
+  ],
+  "overlays": [
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 415,
+      "durationInFrames": 78,
+      "keyframes": [
+        {
+          "frame": 7,
+          "x": 296,
+          "y": 613,
+          "w": 589,
+          "h": 867
+        },
+        {
+          "frame": 37,
+          "x": 197,
+          "y": 592,
+          "w": 727,
+          "h": 857
+        },
+        {
+          "frame": 67,
+          "x": 220,
+          "y": 592,
+          "w": 733,
+          "h": 881
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 733,
+      "durationInFrames": 31,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 84,
+          "y": 217,
+          "w": 996,
+          "h": 1447
+        },
+        {
+          "frame": 39,
+          "x": 59,
+          "y": 231,
+          "w": 956,
+          "h": 1388
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 908,
+      "durationInFrames": 65,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 254,
+          "y": 605,
+          "w": 768,
+          "h": 639
+        },
+        {
+          "frame": 39,
+          "x": 237,
+          "y": 392,
+          "w": 840,
+          "h": 962
+        },
+        {
+          "frame": 69,
+          "x": 210,
+          "y": 407,
+          "w": 868,
+          "h": 944
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 1194,
+      "durationInFrames": 34,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 0,
+          "y": 278,
+          "w": 728,
+          "h": 1543
+        },
+        {
+          "frame": 39,
+          "x": 4,
+          "y": 511,
+          "w": 739,
+          "h": 1502
+        }
+      ]
+    },
+    {
+      "type": "circle",
+      "color": "#ff2a2a",
+      "from": 1512,
+      "durationInFrames": 59,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 4,
+          "y": 771,
+          "w": 681,
+          "h": 739
+        },
+        {
+          "frame": 39,
+          "x": 1,
+          "y": 804,
+          "w": 767,
+          "h": 764
+        },
+        {
+          "frame": 69,
+          "x": 1,
+          "y": 804,
+          "w": 1003,
+          "h": 667
+        }
+      ]
+    }
+  ],
+  "emojis": [
+    {
+      "src": "emoji/1f632.json",
+      "from": 165,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f602.json",
+      "from": 527,
+      "durationInFrames": 61
+    },
+    {
+      "src": "emoji/1f525.json",
+      "from": 753,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f9d0.json",
+      "from": 950,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f92f.json",
+      "from": 1077,
+      "durationInFrames": 38
+    },
+    {
+      "src": "emoji/1f60e.json",
+      "from": 1284,
+      "durationInFrames": 32
+    },
+    {
+      "src": "emoji/1f929.json",
+      "from": 1523,
+      "durationInFrames": 63
+    }
+  ],
+  "cta": [
+    {
+      "kind": "like",
+      "from": 272,
+      "durationInFrames": 16,
+      "clickAt": 4
+    },
+    {
+      "kind": "subscribe",
+      "from": 291,
+      "durationInFrames": 27,
+      "clickAt": 14
+    }
+  ],
+  "bgm": [
+    {
+      "src": "audio/bgm/mystery.mp3",
+      "from": 0,
+      "durationInFrames": 327,
+      "volume": 0.12,
+      "fadeOutFrames": 8
+    },
+    {
+      "src": "audio/bgm/main.mp3",
+      "from": 327,
+      "durationInFrames": 1259,
+      "volume": 0.12,
+      "fadeOutFrames": 30
+    }
+  ],
+  "sfx": [
+    {
+      "src": "audio/sfx/awkward-moment.mp3",
+      "from": 0,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/minions-cry.mp3",
+      "from": 117,
+      "volume": 0.5
+    },
+    {
+      "src": "audio/sfx/camera-flash-sound-effect.mp3",
+      "from": 119,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/wow-crowd-sound-effect.mp3",
+      "from": 153,
+      "volume": 0.5
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 165,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/riser-reveal-sound-effect_aOQs8d9.mp3",
+      "from": 168,
+      "volume": 1.0
+    },
+    {
+      "src": "audio/sfx/camera-flash-sound-effect.mp3",
+      "from": 201,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 263,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 264,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 273,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 302,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 318,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 362,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 404,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 415,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 490,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 505,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 527,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 579,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 616,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 657,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 724,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 733,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 753,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 771,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 776,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 823,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 860,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 899,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 908,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 950,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 975,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 985,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1034,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 1035,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1077,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 1106,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 1143,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 1185,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1194,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1240,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1284,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 1307,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 1352,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 1394,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 1488,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1503,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1512,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1523,
+      "volume": 0.6
+    }
+  ],
+  "intro": {
+    "durationInFrames": 7
+  },
+  "transitions": [
+    {
+      "from": 407,
+      "durationInFrames": 7
+    },
+    {
+      "from": 660,
+      "durationInFrames": 7
+    },
+    {
+      "from": 902,
+      "durationInFrames": 7
+    },
+    {
+      "from": 1188,
+      "durationInFrames": 7
+    },
+    {
+      "from": 1397,
+      "durationInFrames": 7
+    }
+  ],
+  "flashes": [
+    {
+      "from": 122,
+      "durationInFrames": 3
+    },
+    {
+      "from": 204,
+      "durationInFrames": 3
+    }
+  ]
+}

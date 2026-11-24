@@ -1,0 +1,632 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 706,
+  "audio": "voice.mp3",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 90
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 90,
+      "durationInFrames": 49
+    },
+    {
+      "src": "clips/shot_03.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 139,
+      "durationInFrames": 50
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 189,
+      "durationInFrames": 51
+    },
+    {
+      "src": "clips/shot_05.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 240,
+      "durationInFrames": 57
+    },
+    {
+      "src": "clips/shot_06.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 297,
+      "durationInFrames": 50
+    },
+    {
+      "src": "clips/shot_07.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 347,
+      "durationInFrames": 50
+    },
+    {
+      "src": "clips/shot_08.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 397,
+      "durationInFrames": 82
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 479,
+      "durationInFrames": 46
+    },
+    {
+      "src": "clips/shot_10.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 525,
+      "durationInFrames": 46
+    },
+    {
+      "src": "clips/shot_11.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 571,
+      "durationInFrames": 62
+    },
+    {
+      "src": "clips/shot_12.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 633,
+      "durationInFrames": 73
+    }
+  ],
+  "countdown": [],
+  "captions": [
+    {
+      "text": "KENAPA",
+      "from": 3,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KUCING",
+      "from": 13,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NGGAK",
+      "from": 26,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BISA",
+      "from": 33,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MERASAKAN",
+      "from": 40,
+      "durationInFrames": 16,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RASA",
+      "from": 56,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MANIS?",
+      "from": 64,
+      "durationInFrames": 22,
+      "color": "#FFC53D"
+    },
+    {
+      "text": "PADAHAL",
+      "from": 90,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KAMU",
+      "from": 104,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MUNGKIN",
+      "from": 114,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NGIRA",
+      "from": 124,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KUCING",
+      "from": 134,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TAKUT",
+      "from": 146,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GIGINYA",
+      "from": 156,
+      "durationInFrames": 17,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SAKIT",
+      "from": 173,
+      "durationInFrames": 16,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TAPI",
+      "from": 189,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COBA",
+      "from": 206,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TEKAN",
+      "from": 212,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE",
+      "from": 219,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DULU",
+      "from": 224,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "APAKAH",
+      "from": 240,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE-MU",
+      "from": 251,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BERUBAH",
+      "from": 262,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "JADI",
+      "from": 273,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MADU?",
+      "from": 280,
+      "durationInFrames": 17,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TERNYATA",
+      "from": 297,
+      "durationInFrames": 16,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIDAH",
+      "from": 313,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KUCING",
+      "from": 322,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PUNYA",
+      "from": 335,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SESUATU",
+      "from": 344,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "YANG",
+      "from": 358,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEDA",
+      "from": 363,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DARI",
+      "from": 373,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KITA",
+      "from": 380,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RESEPTOR",
+      "from": 398,
+      "durationInFrames": 11,
+      "color": "#FFC53D"
+    },
+    {
+      "text": "MANISNYA",
+      "from": 409,
+      "durationInFrames": 16,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NGGAK",
+      "from": 425,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEKERJA",
+      "from": 433,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KAYAK",
+      "from": 447,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PUNYA",
+      "from": 452,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KITA",
+      "from": 461,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "JADI",
+      "from": 479,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RASA",
+      "from": 490,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MANIS",
+      "from": 500,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HAMPIR",
+      "from": 513,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NGGAK",
+      "from": 522,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BISA",
+      "from": 529,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MEREKA",
+      "from": 537,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RASAKAN",
+      "from": 546,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MAKANAN",
+      "from": 571,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MANIS",
+      "from": 582,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "YANG",
+      "from": 594,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BIKIN",
+      "from": 598,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KITA",
+      "from": 606,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NGILER",
+      "from": 612,
+      "durationInFrames": 16,
+      "color": "#FFC53D"
+    },
+    {
+      "text": "BUAT",
+      "from": 633,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KUCING",
+      "from": 637,
+      "durationInFrames": 15,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RASANYA",
+      "from": 652,
+      "durationInFrames": 17,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CUMA",
+      "from": 669,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BIASA",
+      "from": 676,
+      "durationInFrames": 12,
+      "color": "#FFC53D"
+    },
+    {
+      "text": "AJA",
+      "from": 688,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    }
+  ],
+  "overlays": [],
+  "emojis": [],
+  "bgm": [
+    {
+      "src": "audio/bgm/bully-main-theme.m4a",
+      "from": 0,
+      "durationInFrames": 706,
+      "volume": 0.06,
+      "fadeOutFrames": 30
+    }
+  ],
+  "sfx": [
+    {
+      "src": "audio/sfx/awkward-moment.mp3",
+      "from": 0,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 77,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 87,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 121,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 136,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 176,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 186,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 220,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 237,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 238,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 289,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 294,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 344,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 379,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 394,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 471,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 476,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 507,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 522,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 563,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 568,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 630,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 631,
+      "volume": 0.45
+    }
+  ],
+  "intro": {
+    "durationInFrames": 7
+  },
+  "transitions": [],
+  "flashes": [],
+  "ctaScene": {
+    "theme": "honey",
+    "commentText": "MADU",
+    "durationInFrames": 108,
+    "stages": [
+      {
+        "kind": "like",
+        "durationInFrames": 56,
+        "timing": "word",
+        "from": 206,
+        "triggerAt": 13
+      },
+      {
+        "kind": "transform",
+        "durationInFrames": 35,
+        "timing": "word",
+        "from": 262,
+        "triggerAt": 0
+      }
+    ],
+    "cues": [
+      {
+        "kind": "like",
+        "word": "like",
+        "from": 219
+      },
+      {
+        "kind": "transform",
+        "word": "berubah",
+        "from": 262
+      }
+    ],
+    "from": 189,
+    "style": "faktacuil"
+  },
+  "captionStyle": "faktacuil"
+}

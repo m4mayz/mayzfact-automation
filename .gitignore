@@ -5,9 +5,14 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .superpowers/
-# runs/: cuma youtube.json yang ikut (jadwal tayang buat next-slot di komputer lain)
+# Jadwal upload dan props render perlu ikut saat repo di-clone.
 runs/*/*
 !runs/*/youtube.json
+!runs/*/timeline.json
+!runs/*/revisions/
+runs/*/revisions/**
+!runs/*/revisions/**/
+!runs/*/revisions/**/timeline.json
 cache/
 sources/
 remotion/node_modules/

@@ -32,7 +32,7 @@ Model SigLIP + OWLv2 (±1,4 GB), emoji Lottie, dan SFX ke-download otomatis pas 
 
 ### Pindah komputer
 
-`git clone` repo ini, terus ikutin Setup di atas. BGM, SFX, emoji, dan `runs/*/youtube.json` (jadwal tayang buat `next-slot`) udah ikut di git.
+`git clone` repo ini, terus ikutin Setup di atas. BGM, SFX, emoji, jadwal `runs/*/youtube.json`, dan props `timeline.json` di run utama serta folder `revisions/` ikut di Git. Timeline nggak membawa file audio dan klip yang dirujuk; aset lokal itu tetap dibutuhkan buat render ulang.
 
 Yang nggak ada di git, jadi dibawa manual: `.env` (4 rahasia). Pindahin lewat flashdisk atau password manager, jangan lewat chat/email.
 

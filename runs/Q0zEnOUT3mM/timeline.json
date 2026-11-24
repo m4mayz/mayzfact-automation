@@ -1,0 +1,1064 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 1273,
+  "audio": "voice.wav",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 80
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 80,
+      "durationInFrames": 116
+    },
+    {
+      "src": "clips/shot_03.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 196,
+      "durationInFrames": 69,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 265,
+      "durationInFrames": 108
+    },
+    {
+      "src": "clips/shot_05.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 373,
+      "durationInFrames": 51
+    },
+    {
+      "src": "clips/shot_06.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 424,
+      "durationInFrames": 71,
+      "fgHeight": 1080
+    },
+    {
+      "src": "clips/shot_07.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 495,
+      "durationInFrames": 76
+    },
+    {
+      "src": "clips/shot_08.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 571,
+      "durationInFrames": 61
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 632,
+      "durationInFrames": 96
+    },
+    {
+      "src": "clips/shot_05.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 728,
+      "durationInFrames": 84,
+      "decorative": true,
+      "clipOffset": 30,
+      "loopFrames": 56
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 812,
+      "durationInFrames": 68,
+      "decorative": true,
+      "clipOffset": 35,
+      "loopFrames": 102
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 880,
+      "durationInFrames": 34,
+      "decorative": true,
+      "clipOffset": 38,
+      "loopFrames": 114
+    },
+    {
+      "src": "clips/shot_08.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 914,
+      "durationInFrames": 42,
+      "decorative": true,
+      "clipOffset": 11,
+      "loopFrames": 66
+    },
+    {
+      "src": "clips/shot_14.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 956,
+      "durationInFrames": 74,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_15.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1030,
+      "durationInFrames": 61
+    },
+    {
+      "src": "clips/shot_16.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1091,
+      "durationInFrames": 65
+    },
+    {
+      "src": "clips/shot_17.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1156,
+      "durationInFrames": 117
+    }
+  ],
+  "countdown": [
+    {
+      "number": 3,
+      "label": "HABOO DUST STORMS",
+      "numberFrom": 196,
+      "numberAt": 0,
+      "numberDuration": 28,
+      "cardFrom": 224,
+      "cardDuration": 41,
+      "src": "clips/shot_03.jpg",
+      "kind": "photo",
+      "clipOffset": 28
+    },
+    {
+      "number": 2,
+      "label": "VOLCANIC LIGHTNING",
+      "numberFrom": 424,
+      "numberAt": 0,
+      "numberDuration": 29,
+      "cardFrom": 453,
+      "cardDuration": 42,
+      "src": "clips/shot_06.jpg",
+      "kind": "photo",
+      "clipOffset": 29
+    },
+    {
+      "number": 1,
+      "label": "PYROLASTIC FLOWS",
+      "numberFrom": 956,
+      "numberAt": 0,
+      "numberDuration": 27,
+      "cardFrom": 983,
+      "cardDuration": 47,
+      "src": "clips/shot_14.jpg",
+      "kind": "photo",
+      "clipOffset": 27
+    }
+  ],
+  "captions": [
+    {
+      "text": "THESE",
+      "from": 2,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THREE",
+      "from": 10,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NATURAL",
+      "from": 16,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "EVENTS",
+      "from": 28,
+      "durationInFrames": 10,
+      "color": "#4ade80"
+    },
+    {
+      "text": "LOOK",
+      "from": 38,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "APOCALYPTIC",
+      "from": 50,
+      "durationInFrames": 30,
+      "color": "#facc15"
+    },
+    {
+      "text": "AND",
+      "from": 80,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NUMBER",
+      "from": 84,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ONE",
+      "from": 96,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CAN",
+      "from": 102,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "UNLEASH",
+      "from": 110,
+      "durationInFrames": 13,
+      "color": "#4ade80"
+    },
+    {
+      "text": "DEADLY",
+      "from": 123,
+      "durationInFrames": 13,
+      "color": "#facc15"
+    },
+    {
+      "text": "SUPERHEATED",
+      "from": 136,
+      "durationInFrames": 18,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "GAS",
+      "from": 154,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 167,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ASH",
+      "from": 178,
+      "durationInFrames": 17,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DUST",
+      "from": 266,
+      "durationInFrames": 7,
+      "color": "#4ade80"
+    },
+    {
+      "text": "WALLS",
+      "from": 273,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CAN",
+      "from": 282,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SPAN",
+      "from": 289,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HORIZONS",
+      "from": 296,
+      "durationInFrames": 25,
+      "color": "#facc15"
+    },
+    {
+      "text": "ENGULFING",
+      "from": 321,
+      "durationInFrames": 13,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ENTIRE",
+      "from": 334,
+      "durationInFrames": 13,
+      "color": "#4ade80"
+    },
+    {
+      "text": "LANDSCAPES",
+      "from": 347,
+      "durationInFrames": 26,
+      "color": "#facc15"
+    },
+    {
+      "text": "DARKENING",
+      "from": 373,
+      "durationInFrames": 13,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "DAYTIME",
+      "from": 386,
+      "durationInFrames": 13,
+      "color": "#4ade80"
+    },
+    {
+      "text": "WITHIN",
+      "from": 399,
+      "durationInFrames": 9,
+      "color": "#facc15"
+    },
+    {
+      "text": "MINUTES",
+      "from": 408,
+      "durationInFrames": 16,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "NUMBER",
+      "from": 424,
+      "durationInFrames": 9,
+      "color": "#4ade80"
+    },
+    {
+      "text": "DURING",
+      "from": 496,
+      "durationInFrames": 11,
+      "color": "#facc15"
+    },
+    {
+      "text": "POWERFUL",
+      "from": 507,
+      "durationInFrames": 19,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ERUPTIONS",
+      "from": 526,
+      "durationInFrames": 27,
+      "color": "#4ade80"
+    },
+    {
+      "text": "COLLIDING",
+      "from": 553,
+      "durationInFrames": 18,
+      "color": "#facc15"
+    },
+    {
+      "text": "ASH",
+      "from": 571,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GENERATES",
+      "from": 578,
+      "durationInFrames": 15,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ELECTRICAL",
+      "from": 593,
+      "durationInFrames": 15,
+      "color": "#4ade80"
+    },
+    {
+      "text": "CHARGES",
+      "from": 608,
+      "durationInFrames": 24,
+      "color": "#facc15"
+    },
+    {
+      "text": "SPARKING",
+      "from": 635,
+      "durationInFrames": 14,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "LIGHTNING",
+      "from": 649,
+      "durationInFrames": 13,
+      "color": "#4ade80"
+    },
+    {
+      "text": "INSIDE",
+      "from": 662,
+      "durationInFrames": 14,
+      "color": "#facc15"
+    },
+    {
+      "text": "ENORMOUS",
+      "from": 676,
+      "durationInFrames": 20,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ERUPTION",
+      "from": 696,
+      "durationInFrames": 15,
+      "color": "#4ade80"
+    },
+    {
+      "text": "CLOUDS",
+      "from": 711,
+      "durationInFrames": 18,
+      "color": "#facc15"
+    },
+    {
+      "text": "BUT",
+      "from": 729,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEFORE",
+      "from": 733,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "NUMBER",
+      "from": 745,
+      "durationInFrames": 13,
+      "color": "#4ade80"
+    },
+    {
+      "text": "ONE",
+      "from": 758,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TRY",
+      "from": 771,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TAPPING",
+      "from": 780,
+      "durationInFrames": 13,
+      "color": "#facc15"
+    },
+    {
+      "text": "LIKE",
+      "from": 793,
+      "durationInFrames": 19,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DID",
+      "from": 812,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 816,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BUTTON",
+      "from": 820,
+      "durationInFrames": 9,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "TURN",
+      "from": 829,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "INTO",
+      "from": 836,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 843,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "VOLCANO",
+      "from": 845,
+      "durationInFrames": 31,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SUBSCRIBE",
+      "from": 881,
+      "durationInFrames": 16,
+      "color": "#facc15"
+    },
+    {
+      "text": "IF",
+      "from": 897,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 901,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WORKED",
+      "from": 905,
+      "durationInFrames": 9,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "AND",
+      "from": 914,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COMMENT",
+      "from": 919,
+      "durationInFrames": 15,
+      "color": "#4ade80"
+    },
+    {
+      "text": "'ERUPTED'",
+      "from": 934,
+      "durationInFrames": 22,
+      "color": "#facc15"
+    },
+    {
+      "text": "DEADLY",
+      "from": 1030,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "SCORCHING",
+      "from": 1042,
+      "durationInFrames": 12,
+      "color": "#4ade80"
+    },
+    {
+      "text": "GAS",
+      "from": 1054,
+      "durationInFrames": 21,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ASH",
+      "from": 1075,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 1086,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "VOLCANIC",
+      "from": 1091,
+      "durationInFrames": 15,
+      "color": "#facc15"
+    },
+    {
+      "text": "DEBRIS",
+      "from": 1106,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "RUSH",
+      "from": 1118,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DOWNHILL",
+      "from": 1127,
+      "durationInFrames": 27,
+      "color": "#4ade80"
+    },
+    {
+      "text": "AT",
+      "from": 1156,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "INCREDIBLE",
+      "from": 1159,
+      "durationInFrames": 20,
+      "color": "#facc15"
+    },
+    {
+      "text": "SPEEDS",
+      "from": 1179,
+      "durationInFrames": 23,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "DESTROYING",
+      "from": 1204,
+      "durationInFrames": 15,
+      "color": "#4ade80"
+    },
+    {
+      "text": "NEARLY",
+      "from": 1219,
+      "durationInFrames": 17,
+      "color": "#facc15"
+    },
+    {
+      "text": "EVERYTHING",
+      "from": 1236,
+      "durationInFrames": 14,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ALONG",
+      "from": 1250,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 1258,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WAY",
+      "from": 1261,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    }
+  ],
+  "overlays": [
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 501,
+      "durationInFrames": 55,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 7,
+          "y": 8,
+          "w": 1066,
+          "h": 1304
+        },
+        {
+          "frame": 39,
+          "x": 17,
+          "y": 143,
+          "w": 1045,
+          "h": 1286
+        },
+        {
+          "frame": 69,
+          "x": 11,
+          "y": 42,
+          "w": 1064,
+          "h": 1292
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 577,
+      "durationInFrames": 40,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 452,
+          "y": 815,
+          "w": 207,
+          "h": 216
+        },
+        {
+          "frame": 39,
+          "x": 0,
+          "y": 588,
+          "w": 528,
+          "h": 273
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 1036,
+      "durationInFrames": 40,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 418,
+          "y": 513,
+          "w": 390,
+          "h": 418
+        },
+        {
+          "frame": 39,
+          "x": 417,
+          "y": 492,
+          "w": 396,
+          "h": 432
+        }
+      ]
+    }
+  ],
+  "emojis": [
+    {
+      "src": "emoji/1f525.json",
+      "from": 136,
+      "durationInFrames": 60
+    },
+    {
+      "src": "emoji/1f628.json",
+      "from": 373,
+      "durationInFrames": 51
+    },
+    {
+      "src": "emoji/26a1.json",
+      "from": 649,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f480.json",
+      "from": 1204,
+      "durationInFrames": 69
+    }
+  ],
+  "cta": [],
+  "bgm": [
+    {
+      "src": "audio/bgm/mystery.mp3",
+      "from": 0,
+      "durationInFrames": 196,
+      "volume": 0.12,
+      "fadeOutFrames": 8
+    },
+    {
+      "src": "audio/bgm/main.mp3",
+      "from": 196,
+      "durationInFrames": 1077,
+      "volume": 0.12,
+      "fadeOutFrames": 30
+    }
+  ],
+  "sfx": [
+    {
+      "src": "audio/sfx/awkward-moment.mp3",
+      "from": 0,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/riser-reveal-sound-effect_aOQs8d9.mp3",
+      "from": 37,
+      "volume": 1.0
+    },
+    {
+      "src": "audio/sfx/fahhh_KcgAXfs.mp3",
+      "from": 76,
+      "volume": 1.0
+    },
+    {
+      "src": "audio/sfx/camera-flash-sound-effect.mp3",
+      "from": 77,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 136,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 187,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 221,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 262,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 365,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 370,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 373,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 415,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 450,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 492,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 501,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 558,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 568,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 577,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 614,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 629,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 649,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 715,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 725,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 794,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 794,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 809,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 877,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 878,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 892,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 901,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 911,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 947,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 980,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 1027,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1036,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1088,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1153,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1204,
+      "volume": 0.6
+    }
+  ],
+  "intro": {
+    "durationInFrames": 7
+  },
+  "transitions": [
+    {
+      "from": 265,
+      "durationInFrames": 7
+    },
+    {
+      "from": 495,
+      "durationInFrames": 7
+    },
+    {
+      "from": 1030,
+      "durationInFrames": 7
+    }
+  ],
+  "flashes": [
+    {
+      "from": 80,
+      "durationInFrames": 3
+    }
+  ],
+  "ctaScene": {
+    "theme": "volcano",
+    "label": "",
+    "commentText": "ERUPTED",
+    "durationInFrames": 228,
+    "stages": [
+      {
+        "kind": "like",
+        "durationInFrames": 58,
+        "timing": "word",
+        "from": 771,
+        "triggerAt": 22
+      },
+      {
+        "kind": "transform",
+        "durationInFrames": 52,
+        "timing": "word",
+        "from": 829,
+        "triggerAt": 0
+      },
+      {
+        "kind": "subscribe",
+        "durationInFrames": 38,
+        "timing": "word",
+        "from": 881,
+        "triggerAt": 0
+      },
+      {
+        "kind": "comment",
+        "durationInFrames": 37,
+        "timing": "word",
+        "from": 919,
+        "triggerAt": 0
+      }
+    ],
+    "cues": [
+      {
+        "kind": "like",
+        "word": "like.",
+        "from": 793
+      },
+      {
+        "kind": "transform",
+        "word": "turn",
+        "from": 829
+      },
+      {
+        "kind": "subscribe",
+        "word": "Subscribe",
+        "from": 881
+      },
+      {
+        "kind": "comment",
+        "word": "comment",
+        "from": 919
+      }
+    ],
+    "from": 728
+  }
+}

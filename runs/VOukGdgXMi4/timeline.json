@@ -1,0 +1,1373 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 1379,
+  "audio": "voice.wav",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 83
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 83,
+      "durationInFrames": 77,
+      "blurs": [
+        {
+          "x": 748,
+          "y": 158,
+          "w": 273,
+          "h": 111
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_03.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 160,
+      "durationInFrames": 60,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 220,
+      "durationInFrames": 88
+    },
+    {
+      "src": "clips/shot_05.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 308,
+      "durationInFrames": 120,
+      "blurs": [
+        {
+          "x": 821,
+          "y": 4,
+          "w": 259,
+          "h": 298
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_06.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 428,
+      "durationInFrames": 84
+    },
+    {
+      "src": "clips/shot_07.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 512,
+      "durationInFrames": 69,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_08.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 581,
+      "durationInFrames": 118
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 699,
+      "durationInFrames": 43,
+      "blurs": [
+        {
+          "x": 422,
+          "y": 1121,
+          "w": 102,
+          "h": 124
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_10.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 742,
+      "durationInFrames": 100
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 842,
+      "durationInFrames": 71,
+      "decorative": true,
+      "clipOffset": 32,
+      "loopFrames": 83,
+      "blurs": [
+        {
+          "x": 748,
+          "y": 158,
+          "w": 273,
+          "h": 111
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 913,
+      "durationInFrames": 51,
+      "decorative": true,
+      "clipOffset": 25,
+      "loopFrames": 48,
+      "blurs": [
+        {
+          "x": 422,
+          "y": 1121,
+          "w": 102,
+          "h": 124
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_08.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 964,
+      "durationInFrames": 34,
+      "decorative": true,
+      "clipOffset": 28,
+      "loopFrames": 123
+    },
+    {
+      "src": "clips/shot_10.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 998,
+      "durationInFrames": 44,
+      "decorative": true,
+      "clipOffset": 35,
+      "loopFrames": 105
+    },
+    {
+      "src": "clips/shot_15.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 1042,
+      "durationInFrames": 66,
+      "fgHeight": 960,
+      "blurs": [
+        {
+          "x": -117,
+          "y": 1356,
+          "w": 313,
+          "h": 72
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_16.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1108,
+      "durationInFrames": 83
+    },
+    {
+      "src": "clips/shot_17.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1191,
+      "durationInFrames": 84
+    },
+    {
+      "src": "clips/shot_18.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1275,
+      "durationInFrames": 36,
+      "blurs": [
+        {
+          "x": 964,
+          "y": 1168,
+          "w": 116,
+          "h": 123
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_19.mp4",
+      "kind": "video",
+      "layout": "blur",
+      "from": 1311,
+      "durationInFrames": 68,
+      "fgHeight": 1413
+    }
+  ],
+  "countdown": [
+    {
+      "number": 3,
+      "label": "RABBITS",
+      "numberFrom": 160,
+      "numberAt": 0,
+      "numberDuration": 29,
+      "cardFrom": 189,
+      "cardDuration": 31,
+      "src": "clips/shot_03.jpg",
+      "kind": "photo",
+      "clipOffset": 29
+    },
+    {
+      "number": 2,
+      "label": "DOMESTIC DOGS",
+      "numberFrom": 512,
+      "numberAt": 0,
+      "numberDuration": 28,
+      "cardFrom": 540,
+      "cardDuration": 41,
+      "src": "clips/shot_07.jpg",
+      "kind": "photo",
+      "clipOffset": 28
+    },
+    {
+      "number": 1,
+      "label": "DOMESTIC CATS",
+      "numberFrom": 1042,
+      "numberAt": 0,
+      "numberDuration": 24,
+      "cardFrom": 1066,
+      "cardDuration": 42,
+      "src": "clips/shot_15.jpg",
+      "kind": "photo",
+      "clipOffset": 24,
+      "blurs": [
+        {
+          "x": -151,
+          "y": 748,
+          "w": 267,
+          "h": 62
+        }
+      ]
+    }
+  ],
+  "captions": [
+    {
+      "text": "THESE",
+      "from": 2,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THREE",
+      "from": 11,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DANGEROUS",
+      "from": 20,
+      "durationInFrames": 13,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "PET",
+      "from": 33,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MISTAKES",
+      "from": 39,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "NEED",
+      "from": 53,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TO",
+      "from": 59,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "STOP",
+      "from": 66,
+      "durationInFrames": 17,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 83,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NUMBER",
+      "from": 86,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "ONE",
+      "from": 98,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MIGHT",
+      "from": 103,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BE",
+      "from": 108,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SOMETHING",
+      "from": 113,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "YOU",
+      "from": 123,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DO",
+      "from": 127,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DAILY",
+      "from": 132,
+      "durationInFrames": 23,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MANY",
+      "from": 215,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OWNERS",
+      "from": 227,
+      "durationInFrames": 10,
+      "color": "#4ade80"
+    },
+    {
+      "text": "ASSUME",
+      "from": 237,
+      "durationInFrames": 13,
+      "color": "#facc15"
+    },
+    {
+      "text": "RABBITS",
+      "from": 250,
+      "durationInFrames": 13,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ARE",
+      "from": 263,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOW-MAINTENANCE",
+      "from": 267,
+      "durationInFrames": 20,
+      "color": "#4ade80"
+    },
+    {
+      "text": "PETS",
+      "from": 287,
+      "durationInFrames": 21,
+      "color": "#ffffff"
+    },
+    {
+      "text": "YET",
+      "from": 308,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEY",
+      "from": 315,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "REQUIRE",
+      "from": 320,
+      "durationInFrames": 17,
+      "color": "#facc15"
+    },
+    {
+      "text": "PROPER",
+      "from": 337,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "DIET",
+      "from": 347,
+      "durationInFrames": 15,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EXERCISE",
+      "from": 362,
+      "durationInFrames": 21,
+      "color": "#4ade80"
+    },
+    {
+      "text": "AND",
+      "from": 383,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SAFE",
+      "from": 390,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SURROUNDINGS",
+      "from": 397,
+      "durationInFrames": 29,
+      "color": "#facc15"
+    },
+    {
+      "text": "BECAUSE",
+      "from": 428,
+      "durationInFrames": 8,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "THEIR",
+      "from": 436,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FRAGILE",
+      "from": 443,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "BODIES",
+      "from": 454,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "CAN",
+      "from": 466,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GET",
+      "from": 470,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "INJURED",
+      "from": 477,
+      "durationInFrames": 13,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "EASILY",
+      "from": 490,
+      "durationInFrames": 22,
+      "color": "#4ade80"
+    },
+    {
+      "text": "ALLOWING",
+      "from": 581,
+      "durationInFrames": 17,
+      "color": "#facc15"
+    },
+    {
+      "text": "UNSAFE",
+      "from": 598,
+      "durationInFrames": 15,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "FOOD",
+      "from": 613,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SKIPPED",
+      "from": 634,
+      "durationInFrames": 9,
+      "color": "#4ade80"
+    },
+    {
+      "text": "EXERCISE",
+      "from": 643,
+      "durationInFrames": 21,
+      "color": "#facc15"
+    },
+    {
+      "text": "OR",
+      "from": 664,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IGNORED",
+      "from": 668,
+      "durationInFrames": 11,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "WARNING",
+      "from": 679,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SIGNS",
+      "from": 690,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CAN",
+      "from": 699,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ENDANGER",
+      "from": 705,
+      "durationInFrames": 13,
+      "color": "#facc15"
+    },
+    {
+      "text": "THEIR",
+      "from": 718,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HEALTH",
+      "from": 724,
+      "durationInFrames": 19,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "SINCE",
+      "from": 743,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEING",
+      "from": 749,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FAMILY",
+      "from": 759,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "DOESN'T",
+      "from": 773,
+      "durationInFrames": 9,
+      "color": "#facc15"
+    },
+    {
+      "text": "MAKE",
+      "from": 782,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EVERY",
+      "from": 792,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HUMAN",
+      "from": 800,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HABIT",
+      "from": 809,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SAFE",
+      "from": 821,
+      "durationInFrames": 19,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BUT",
+      "from": 843,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEFORE",
+      "from": 847,
+      "durationInFrames": 9,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "NUMBER",
+      "from": 856,
+      "durationInFrames": 10,
+      "color": "#4ade80"
+    },
+    {
+      "text": "ONE",
+      "from": 866,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TRY",
+      "from": 872,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TAPPING",
+      "from": 882,
+      "durationInFrames": 11,
+      "color": "#facc15"
+    },
+    {
+      "text": "LIKE",
+      "from": 893,
+      "durationInFrames": 19,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DID",
+      "from": 914,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 918,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BUTTON",
+      "from": 921,
+      "durationInFrames": 8,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "TURN",
+      "from": 929,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "INTO",
+      "from": 935,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 943,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PUPPY",
+      "from": 945,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SUBSCRIBE",
+      "from": 965,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "IF",
+      "from": 979,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 983,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WORKED",
+      "from": 986,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "AND",
+      "from": 998,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COMMENT",
+      "from": 1003,
+      "durationInFrames": 19,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "'WOOF'",
+      "from": 1022,
+      "durationInFrames": 20,
+      "color": "#4ade80"
+    },
+    {
+      "text": "ONE",
+      "from": 1103,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MAJOR",
+      "from": 1109,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MISTAKE",
+      "from": 1120,
+      "durationInFrames": 15,
+      "color": "#facc15"
+    },
+    {
+      "text": "IS",
+      "from": 1135,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THINKING",
+      "from": 1140,
+      "durationInFrames": 14,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "CATS",
+      "from": 1154,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "CAN",
+      "from": 1165,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SAFELY",
+      "from": 1172,
+      "durationInFrames": 13,
+      "color": "#facc15"
+    },
+    {
+      "text": "EAT",
+      "from": 1185,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WHATEVER",
+      "from": 1191,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "YOU",
+      "from": 1201,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EAT",
+      "from": 1206,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SINCE",
+      "from": 1220,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SOME",
+      "from": 1226,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EVERYDAY",
+      "from": 1233,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "FOODS",
+      "from": 1247,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 1255,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SUBSTANCES",
+      "from": 1259,
+      "durationInFrames": 16,
+      "color": "#facc15"
+    },
+    {
+      "text": "CAN",
+      "from": 1275,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "POISON",
+      "from": 1282,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "THEM",
+      "from": 1294,
+      "durationInFrames": 16,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BRO",
+      "from": 1311,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ALWAYS",
+      "from": 1322,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "CHECK",
+      "from": 1333,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEFORE",
+      "from": 1341,
+      "durationInFrames": 10,
+      "color": "#facc15"
+    },
+    {
+      "text": "SHARING",
+      "from": 1351,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "SNACKS",
+      "from": 1363,
+      "durationInFrames": 16,
+      "color": "#4ade80"
+    }
+  ],
+  "overlays": [
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 226,
+      "durationInFrames": 67,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 313,
+          "y": 433,
+          "w": 523,
+          "h": 710
+        },
+        {
+          "frame": 39,
+          "x": 281,
+          "y": 282,
+          "w": 510,
+          "h": 829
+        },
+        {
+          "frame": 69,
+          "x": 273,
+          "y": 372,
+          "w": 516,
+          "h": 733
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 587,
+      "durationInFrames": 97,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 71,
+          "y": 19,
+          "w": 882,
+          "h": 1161
+        },
+        {
+          "frame": 39,
+          "x": 40,
+          "y": 9,
+          "w": 912,
+          "h": 1162
+        },
+        {
+          "frame": 69,
+          "x": 39,
+          "y": 8,
+          "w": 912,
+          "h": 1160
+        },
+        {
+          "frame": 99,
+          "x": 38,
+          "y": 8,
+          "w": 914,
+          "h": 1161
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 1114,
+      "durationInFrames": 62,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 0,
+          "y": 81,
+          "w": 1020,
+          "h": 996
+        },
+        {
+          "frame": 39,
+          "x": 0,
+          "y": 117,
+          "w": 999,
+          "h": 972
+        },
+        {
+          "frame": 69,
+          "x": 0,
+          "y": 111,
+          "w": 927,
+          "h": 990
+        }
+      ]
+    }
+  ],
+  "emojis": [
+    {
+      "src": "emoji/1f440.json",
+      "from": 127,
+      "durationInFrames": 33
+    },
+    {
+      "src": "emoji/1f914.json",
+      "from": 237,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f97a.json",
+      "from": 443,
+      "durationInFrames": 69
+    },
+    {
+      "src": "emoji/1f62c.json",
+      "from": 598,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f628.json",
+      "from": 1172,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f60e.json",
+      "from": 1341,
+      "durationInFrames": 38
+    }
+  ],
+  "cta": [],
+  "bgm": [
+    {
+      "src": "audio/bgm/mystery.mp3",
+      "from": 0,
+      "durationInFrames": 160,
+      "volume": 0.12,
+      "fadeOutFrames": 8
+    },
+    {
+      "src": "audio/bgm/main.mp3",
+      "from": 160,
+      "durationInFrames": 1219,
+      "volume": 0.12,
+      "fadeOutFrames": 30
+    }
+  ],
+  "sfx": [
+    {
+      "src": "audio/sfx/awkward-moment.mp3",
+      "from": 0,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/riser-reveal-sound-effect_aOQs8d9.mp3",
+      "from": 1,
+      "volume": 1.0
+    },
+    {
+      "src": "audio/sfx/fahhh_KcgAXfs.mp3",
+      "from": 79,
+      "volume": 1.0
+    },
+    {
+      "src": "audio/sfx/camera-flash-sound-effect.mp3",
+      "from": 80,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 127,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 151,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 186,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 217,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 226,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 237,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 305,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 420,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 425,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 443,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 503,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 537,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 578,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 587,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 598,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 696,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 734,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 739,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 839,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 840,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 894,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 905,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 910,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 946,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 961,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 976,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 985,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 995,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 1033,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 1063,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 1105,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1114,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1172,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1188,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 1189,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 1262,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1272,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1308,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1341,
+      "volume": 0.6
+    }
+  ],
+  "intro": {
+    "durationInFrames": 7
+  },
+  "transitions": [
+    {
+      "from": 220,
+      "durationInFrames": 7
+    },
+    {
+      "from": 581,
+      "durationInFrames": 7
+    },
+    {
+      "from": 1108,
+      "durationInFrames": 7
+    }
+  ],
+  "flashes": [
+    {
+      "from": 83,
+      "durationInFrames": 3
+    }
+  ],
+  "ctaScene": {
+    "theme": "puppy",
+    "label": "",
+    "commentText": "WOOF",
+    "durationInFrames": 200,
+    "stages": [
+      {
+        "kind": "like",
+        "durationInFrames": 57,
+        "timing": "word",
+        "from": 872,
+        "triggerAt": 21
+      },
+      {
+        "kind": "transform",
+        "durationInFrames": 36,
+        "timing": "word",
+        "from": 929,
+        "triggerAt": 0
+      },
+      {
+        "kind": "subscribe",
+        "durationInFrames": 38,
+        "timing": "word",
+        "from": 965,
+        "triggerAt": 0
+      },
+      {
+        "kind": "comment",
+        "durationInFrames": 39,
+        "timing": "word",
+        "from": 1003,
+        "triggerAt": 0
+      }
+    ],
+    "cues": [
+      {
+        "kind": "like",
+        "word": "like.",
+        "from": 893
+      },
+      {
+        "kind": "transform",
+        "word": "turn",
+        "from": 929
+      },
+      {
+        "kind": "subscribe",
+        "word": "Subscribe",
+        "from": 965
+      },
+      {
+        "kind": "comment",
+        "word": "comment",
+        "from": 1003
+      }
+    ],
+    "from": 842
+  }
+}

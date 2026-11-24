@@ -1,0 +1,1293 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 1340,
+  "audio": "voice.mp3",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 68
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 68,
+      "durationInFrames": 65
+    },
+    {
+      "src": "clips/shot_03.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 133,
+      "durationInFrames": 51
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 184,
+      "durationInFrames": 55
+    },
+    {
+      "src": "clips/shot_05.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 239,
+      "durationInFrames": 69,
+      "fgHeight": 1055
+    },
+    {
+      "src": "clips/shot_06.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 308,
+      "durationInFrames": 63
+    },
+    {
+      "src": "clips/shot_07.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 371,
+      "durationInFrames": 84
+    },
+    {
+      "src": "clips/shot_08.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 455,
+      "durationInFrames": 67,
+      "fgHeight": 960,
+      "blurs": [
+        {
+          "x": 1174,
+          "y": 1372,
+          "w": 190,
+          "h": 62
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 522,
+      "durationInFrames": 79
+    },
+    {
+      "src": "clips/shot_10.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 601,
+      "durationInFrames": 105
+    },
+    {
+      "src": "clips/shot_11.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 706,
+      "durationInFrames": 69,
+      "fgHeight": 1440
+    },
+    {
+      "src": "clips/shot_12.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 775,
+      "durationInFrames": 59
+    },
+    {
+      "src": "clips/shot_13.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 834,
+      "durationInFrames": 65
+    },
+    {
+      "src": "clips/shot_14.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 899,
+      "durationInFrames": 65,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_15.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 964,
+      "durationInFrames": 62
+    },
+    {
+      "src": "clips/shot_16.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1026,
+      "durationInFrames": 60
+    },
+    {
+      "src": "clips/shot_17.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 1086,
+      "durationInFrames": 66,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_18.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1152,
+      "durationInFrames": 54,
+      "blurs": [
+        {
+          "x": 187,
+          "y": 241,
+          "w": 596,
+          "h": 99
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_19.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1206,
+      "durationInFrames": 82
+    },
+    {
+      "src": "clips/shot_20.mp4",
+      "kind": "video",
+      "layout": "blur",
+      "from": 1288,
+      "durationInFrames": 52,
+      "fgHeight": 960
+    }
+  ],
+  "countdown": [
+    {
+      "number": 5,
+      "label": "ROSY MAPLE MOTH",
+      "numberFrom": 239,
+      "numberAt": 0,
+      "numberDuration": 27,
+      "cardFrom": 266,
+      "cardDuration": 42,
+      "src": "clips/shot_05.jpg",
+      "kind": "photo",
+      "clipOffset": 27
+    },
+    {
+      "number": 4,
+      "label": "GREATER FLAMINGO",
+      "numberFrom": 455,
+      "numberAt": 0,
+      "numberDuration": 25,
+      "cardFrom": 480,
+      "cardDuration": 42,
+      "src": "clips/shot_08.jpg",
+      "kind": "photo",
+      "clipOffset": 25,
+      "blurs": [
+        {
+          "x": 952,
+          "y": 762,
+          "w": 162,
+          "h": 53
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "label": "PINK FAIRY ARMADILLO",
+      "numberFrom": 706,
+      "numberAt": 0,
+      "numberDuration": 27,
+      "cardFrom": 733,
+      "cardDuration": 42,
+      "src": "clips/shot_11.jpg",
+      "kind": "photo",
+      "clipOffset": 27
+    },
+    {
+      "number": 2,
+      "label": "AMAZON RIVER DOLPHIN",
+      "numberFrom": 899,
+      "numberAt": 0,
+      "numberDuration": 24,
+      "cardFrom": 923,
+      "cardDuration": 41,
+      "src": "clips/shot_14.jpg",
+      "kind": "photo",
+      "clipOffset": 24
+    },
+    {
+      "number": 1,
+      "label": "PINK LAND IGUANA",
+      "numberFrom": 1086,
+      "numberAt": 0,
+      "numberDuration": 25,
+      "cardFrom": 1111,
+      "cardDuration": 41,
+      "src": "clips/shot_17.jpg",
+      "kind": "photo",
+      "clipOffset": 25
+    }
+  ],
+  "captions": [
+    {
+      "text": "THESE",
+      "from": 4,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FIVE",
+      "from": 13,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PINK",
+      "from": 20,
+      "durationInFrames": 9,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ANIMALS",
+      "from": 29,
+      "durationInFrames": 10,
+      "color": "#4ade80"
+    },
+    {
+      "text": "LOOK",
+      "from": 39,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "UNREAL",
+      "from": 48,
+      "durationInFrames": 20,
+      "color": "#facc15"
+    },
+    {
+      "text": "AND",
+      "from": 68,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NUMBER",
+      "from": 72,
+      "durationInFrames": 11,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ONE",
+      "from": 83,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IS",
+      "from": 90,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "UNBELIEVABLY",
+      "from": 96,
+      "durationInFrames": 20,
+      "color": "#4ade80"
+    },
+    {
+      "text": "RARE",
+      "from": 116,
+      "durationInFrames": 18,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SO",
+      "from": 134,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COMMENT",
+      "from": 138,
+      "durationInFrames": 11,
+      "color": "#facc15"
+    },
+    {
+      "text": "WHICH",
+      "from": 149,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ONE",
+      "from": 156,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOOKS",
+      "from": 160,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEST",
+      "from": 167,
+      "durationInFrames": 17,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 184,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HIT",
+      "from": 188,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE",
+      "from": 194,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 208,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SUBSCRIBE",
+      "from": 212,
+      "durationInFrames": 27,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "SOFT",
+      "from": 305,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PINK",
+      "from": 315,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "AND",
+      "from": 326,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "YELLOW",
+      "from": 330,
+      "durationInFrames": 10,
+      "color": "#facc15"
+    },
+    {
+      "text": "COLORING",
+      "from": 340,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "COVERS",
+      "from": 352,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "IT",
+      "from": 363,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THIS",
+      "from": 372,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TINY",
+      "from": 378,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MOTH",
+      "from": 388,
+      "durationInFrames": 9,
+      "color": "#facc15"
+    },
+    {
+      "text": "LOOKS",
+      "from": 397,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HAND",
+      "from": 405,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PAINTED",
+      "from": 412,
+      "durationInFrames": 15,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "AND",
+      "from": 427,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SUPER",
+      "from": 432,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CUTE",
+      "from": 442,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CAROTENOIDS",
+      "from": 515,
+      "durationInFrames": 20,
+      "color": "#4ade80"
+    },
+    {
+      "text": "IN",
+      "from": 535,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ITS",
+      "from": 538,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DIET",
+      "from": 543,
+      "durationInFrames": 18,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TURN",
+      "from": 561,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ITS",
+      "from": 567,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FEATHERS",
+      "from": 572,
+      "durationInFrames": 11,
+      "color": "#facc15"
+    },
+    {
+      "text": "PINK",
+      "from": 583,
+      "durationInFrames": 18,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "AND",
+      "from": 601,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 605,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WHOLE",
+      "from": 608,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FLOCK",
+      "from": 615,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PAINTS",
+      "from": 624,
+      "durationInFrames": 9,
+      "color": "#4ade80"
+    },
+    {
+      "text": "THE",
+      "from": 633,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LAND",
+      "from": 636,
+      "durationInFrames": 8,
+      "color": "#facc15"
+    },
+    {
+      "text": "PINK",
+      "from": 644,
+      "durationInFrames": 17,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ABSOLUTELY",
+      "from": 662,
+      "durationInFrames": 17,
+      "color": "#4ade80"
+    },
+    {
+      "text": "BREATHTAKING",
+      "from": 679,
+      "durationInFrames": 27,
+      "color": "#facc15"
+    },
+    {
+      "text": "THIS",
+      "from": 779,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BURROWER",
+      "from": 787,
+      "durationInFrames": 13,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "HAS",
+      "from": 800,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 805,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PALE",
+      "from": 807,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PINK",
+      "from": 815,
+      "durationInFrames": 7,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SHELL",
+      "from": 822,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 834,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT'S",
+      "from": 838,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 842,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WORLD'S",
+      "from": 845,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "SMALLEST",
+      "from": 857,
+      "durationInFrames": 12,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ARMADILLO",
+      "from": 869,
+      "durationInFrames": 27,
+      "color": "#4ade80"
+    },
+    {
+      "text": "ALSO",
+      "from": 964,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CALLED",
+      "from": 974,
+      "durationInFrames": 14,
+      "color": "#facc15"
+    },
+    {
+      "text": "THE",
+      "from": 988,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PINK",
+      "from": 992,
+      "durationInFrames": 8,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "RIVER",
+      "from": 1000,
+      "durationInFrames": 8,
+      "color": "#4ade80"
+    },
+    {
+      "text": "DOLPHIN",
+      "from": 1008,
+      "durationInFrames": 18,
+      "color": "#facc15"
+    },
+    {
+      "text": "AND",
+      "from": 1026,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SOME",
+      "from": 1031,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ADULTS",
+      "from": 1038,
+      "durationInFrames": 9,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "TURN",
+      "from": 1047,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PINK",
+      "from": 1054,
+      "durationInFrames": 7,
+      "color": "#4ade80"
+    },
+    {
+      "text": "WITH",
+      "from": 1061,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AGE",
+      "from": 1068,
+      "durationInFrames": 18,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT'S",
+      "from": 1152,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FOUND",
+      "from": 1156,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ONLY",
+      "from": 1169,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IN",
+      "from": 1176,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 1178,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GALAPAGOS",
+      "from": 1181,
+      "durationInFrames": 25,
+      "color": "#facc15"
+    },
+    {
+      "text": "AND",
+      "from": 1206,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THIS",
+      "from": 1210,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "VERY",
+      "from": 1217,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RARE",
+      "from": 1226,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IGUANA",
+      "from": 1233,
+      "durationInFrames": 16,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "IS",
+      "from": 1249,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NATURALLY",
+      "from": 1254,
+      "durationInFrames": 17,
+      "color": "#4ade80"
+    },
+    {
+      "text": "PINK",
+      "from": 1271,
+      "durationInFrames": 17,
+      "color": "#facc15"
+    },
+    {
+      "text": "BRO",
+      "from": 1288,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WHAT",
+      "from": 1301,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AN",
+      "from": 1307,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "INCREDIBLE",
+      "from": 1309,
+      "durationInFrames": 20,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ANIMAL",
+      "from": 1329,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    }
+  ],
+  "overlays": [
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 314,
+      "durationInFrames": 42,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 146,
+          "y": 511,
+          "w": 781,
+          "h": 1084
+        },
+        {
+          "frame": 39,
+          "x": 118,
+          "y": 528,
+          "w": 886,
+          "h": 1064
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 528,
+      "durationInFrames": 58,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 464,
+          "y": 596,
+          "w": 299,
+          "h": 791
+        },
+        {
+          "frame": 39,
+          "x": 395,
+          "y": 577,
+          "w": 486,
+          "h": 816
+        },
+        {
+          "frame": 69,
+          "x": 298,
+          "y": 605,
+          "w": 550,
+          "h": 852
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 785,
+      "durationInFrames": 34,
+      "keyframes": [
+        {
+          "frame": 5,
+          "x": 110,
+          "y": 154,
+          "w": 970,
+          "h": 981
+        },
+        {
+          "frame": 35,
+          "x": 17,
+          "y": 509,
+          "w": 1063,
+          "h": 814
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 970,
+      "durationInFrames": 41,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 67,
+          "y": 157,
+          "w": 716,
+          "h": 1036
+        },
+        {
+          "frame": 39,
+          "x": 24,
+          "y": 325,
+          "w": 1030,
+          "h": 957
+        }
+      ]
+    },
+    {
+      "type": "circle",
+      "color": "#ff2a2a",
+      "from": 1158,
+      "durationInFrames": 33,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 62,
+          "y": 119,
+          "w": 430,
+          "h": 199
+        },
+        {
+          "frame": 39,
+          "x": 76,
+          "y": 283,
+          "w": 750,
+          "h": 778
+        }
+      ]
+    }
+  ],
+  "emojis": [
+    {
+      "src": "emoji/1f632.json",
+      "from": 96,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f9d0.json",
+      "from": 412,
+      "durationInFrames": 43
+    },
+    {
+      "src": "emoji/1f92f.json",
+      "from": 857,
+      "durationInFrames": 42
+    },
+    {
+      "src": "emoji/1f62e.json",
+      "from": 1054,
+      "durationInFrames": 32
+    },
+    {
+      "src": "emoji/1f60e.json",
+      "from": 1309,
+      "durationInFrames": 31
+    }
+  ],
+  "cta": [
+    {
+      "kind": "like",
+      "from": 194,
+      "durationInFrames": 16,
+      "clickAt": 4
+    },
+    {
+      "kind": "subscribe",
+      "from": 212,
+      "durationInFrames": 27,
+      "clickAt": 14
+    }
+  ],
+  "bgm": [
+    {
+      "src": "audio/bgm/mystery.mp3",
+      "from": 0,
+      "durationInFrames": 239,
+      "volume": 0.12,
+      "fadeOutFrames": 8
+    },
+    {
+      "src": "audio/bgm/main.mp3",
+      "from": 239,
+      "durationInFrames": 1101,
+      "volume": 0.12,
+      "fadeOutFrames": 30
+    }
+  ],
+  "sfx": [
+    {
+      "src": "audio/sfx/awkward-moment.mp3",
+      "from": 0,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/fahhh_KcgAXfs.mp3",
+      "from": 64,
+      "volume": 1.0
+    },
+    {
+      "src": "audio/sfx/camera-flash-sound-effect.mp3",
+      "from": 65,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/riser-reveal-sound-effect_aOQs8d9.mp3",
+      "from": 80,
+      "volume": 1.0
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 96,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/minions-cry.mp3",
+      "from": 128,
+      "volume": 0.5
+    },
+    {
+      "src": "audio/sfx/camera-flash-sound-effect.mp3",
+      "from": 130,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/uy.mp3",
+      "from": 180,
+      "volume": 0.5
+    },
+    {
+      "src": "audio/sfx/camera-flash-sound-effect.mp3",
+      "from": 181,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 195,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 223,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 230,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 263,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 305,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 314,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 368,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 369,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 412,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 446,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 477,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 519,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 528,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 588,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 598,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 697,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 730,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 772,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 785,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 857,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 890,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 920,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 961,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 970,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1023,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1054,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/fire-whoosh-transition-sound-effect-yleggs.mp3",
+      "from": 1077,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/check-mark_oPG7Xo5.mp3",
+      "from": 1108,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/magic-reveal-audio.mp3",
+      "from": 1149,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1158,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 1188,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1203,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 1285,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 1286,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1309,
+      "volume": 0.6
+    }
+  ],
+  "intro": {
+    "durationInFrames": 7
+  },
+  "transitions": [
+    {
+      "from": 308,
+      "durationInFrames": 7
+    },
+    {
+      "from": 522,
+      "durationInFrames": 7
+    },
+    {
+      "from": 775,
+      "durationInFrames": 7
+    },
+    {
+      "from": 964,
+      "durationInFrames": 7
+    },
+    {
+      "from": 1152,
+      "durationInFrames": 7
+    }
+  ],
+  "flashes": [
+    {
+      "from": 68,
+      "durationInFrames": 3
+    },
+    {
+      "from": 133,
+      "durationInFrames": 3
+    },
+    {
+      "from": 184,
+      "durationInFrames": 3
+    }
+  ]
+}

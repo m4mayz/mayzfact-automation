@@ -1,0 +1,710 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 623,
+  "audio": "voice.mp3",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 83,
+      "blurs": [
+        {
+          "x": 521,
+          "y": 135,
+          "w": 328,
+          "h": 347
+        },
+        {
+          "x": 18,
+          "y": 491,
+          "w": 164,
+          "h": 132
+        },
+        {
+          "x": 625,
+          "y": 784,
+          "w": 235,
+          "h": 145
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 83,
+      "durationInFrames": 82,
+      "blurs": [
+        {
+          "x": 402,
+          "y": 407,
+          "w": 304,
+          "h": 285
+        },
+        {
+          "x": 0,
+          "y": 688,
+          "w": 73,
+          "h": 90
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_03.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 165,
+      "durationInFrames": 45
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 210,
+      "durationInFrames": 45,
+      "blurs": [
+        {
+          "x": 14,
+          "y": 185,
+          "w": 315,
+          "h": 291
+        },
+        {
+          "x": 146,
+          "y": 719,
+          "w": 218,
+          "h": 141
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_05.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 255,
+      "durationInFrames": 45,
+      "blurs": [
+        {
+          "x": 722,
+          "y": 63,
+          "w": 346,
+          "h": 363
+        },
+        {
+          "x": 0,
+          "y": 157,
+          "w": 517,
+          "h": 359
+        },
+        {
+          "x": 800,
+          "y": 626,
+          "w": 247,
+          "h": 172
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_06.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 300,
+      "durationInFrames": 60
+    },
+    {
+      "src": "clips/shot_07.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 360,
+      "durationInFrames": 84,
+      "blurs": [
+        {
+          "x": 88,
+          "y": 1475,
+          "w": 486,
+          "h": 381
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_08.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 444,
+      "durationInFrames": 85,
+      "blurs": [
+        {
+          "x": 411,
+          "y": 153,
+          "w": 373,
+          "h": 377
+        },
+        {
+          "x": 0,
+          "y": 470,
+          "w": 145,
+          "h": 136
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 529,
+      "durationInFrames": 46,
+      "blurs": [
+        {
+          "x": 520,
+          "y": 258,
+          "w": 317,
+          "h": 315
+        },
+        {
+          "x": 0,
+          "y": 332,
+          "w": 262,
+          "h": 350
+        },
+        {
+          "x": 617,
+          "y": 823,
+          "w": 233,
+          "h": 136
+        }
+      ]
+    },
+    {
+      "src": "clips/shot_10.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 575,
+      "durationInFrames": 48,
+      "blurs": [
+        {
+          "x": 59,
+          "y": 1469,
+          "w": 534,
+          "h": 397
+        }
+      ]
+    }
+  ],
+  "countdown": [],
+  "captions": [
+    {
+      "text": "KENAPA",
+      "from": 0,
+      "durationInFrames": 17,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ADA",
+      "from": 17,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOMBA",
+      "from": 25,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PELUK",
+      "from": 35,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IKAN",
+      "from": 47,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RAKSASA?",
+      "from": 56,
+      "durationInFrames": 23,
+      "color": "#FFC53D"
+    },
+    {
+      "text": "PESERTANYA",
+      "from": 83,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HARUS",
+      "from": 95,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NANGKAP",
+      "from": 102,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DAN",
+      "from": 114,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MEMELUK",
+      "from": 119,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IKAN",
+      "from": 131,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BESAR",
+      "from": 139,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ITU",
+      "from": 149,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KELIHATANNYA",
+      "from": 165,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GAMPANG",
+      "from": 177,
+      "durationInFrames": 19,
+      "color": "#FFC53D"
+    },
+    {
+      "text": "PADAHAL",
+      "from": 201,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TANTANGANNYA",
+      "from": 208,
+      "durationInFrames": 17,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BUKAN",
+      "from": 225,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DI",
+      "from": 232,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SITU",
+      "from": 236,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TAPI",
+      "from": 255,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COBA",
+      "from": 260,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TEKAN",
+      "from": 267,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE",
+      "from": 274,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DULU",
+      "from": 281,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "APAKAH",
+      "from": 301,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE-MU",
+      "from": 311,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BERUBAH",
+      "from": 322,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "JADI",
+      "from": 334,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HIU?",
+      "from": 342,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IKAN",
+      "from": 360,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LICIN",
+      "from": 365,
+      "durationInFrames": 9,
+      "color": "#FFC53D"
+    },
+    {
+      "text": "DAN",
+      "from": 374,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BERAT",
+      "from": 379,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BANGET",
+      "from": 389,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ITU",
+      "from": 398,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TANTANGAN",
+      "from": 404,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SEBENARNYA",
+      "from": 418,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SIAPA",
+      "from": 446,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "YANG",
+      "from": 451,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BISA",
+      "from": 456,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MEMELUK",
+      "from": 463,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PALING",
+      "from": 473,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LAMA",
+      "from": 480,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DIA",
+      "from": 500,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "YANG",
+      "from": 504,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MENANG",
+      "from": 509,
+      "durationInFrames": 16,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HADIAHNYA",
+      "from": 529,
+      "durationInFrames": 23,
+      "color": "#FFC53D"
+    },
+    {
+      "text": "IKAN",
+      "from": 557,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RAKSASA",
+      "from": 563,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ITU",
+      "from": 576,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BOLEH",
+      "from": 583,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DIBAWA",
+      "from": 593,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PULANG",
+      "from": 603,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    }
+  ],
+  "overlays": [
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 6,
+      "durationInFrames": 48,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 4,
+          "y": 729,
+          "w": 1067,
+          "h": 531
+        },
+        {
+          "frame": 39,
+          "x": 11,
+          "y": 759,
+          "w": 1065,
+          "h": 512
+        },
+        {
+          "frame": 69,
+          "x": 11,
+          "y": 789,
+          "w": 1062,
+          "h": 501
+        }
+      ]
+    }
+  ],
+  "emojis": [],
+  "bgm": [
+    {
+      "src": "audio/bgm/bully-main-theme.m4a",
+      "from": 0,
+      "durationInFrames": 623,
+      "volume": 0.06,
+      "fadeOutFrames": 30
+    }
+  ],
+  "sfx": [
+    {
+      "src": "audio/sfx/awkward-moment.mp3",
+      "from": 0,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 6,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 75,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 80,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 162,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 197,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 207,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 247,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 252,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 275,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 297,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 357,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/metal-gear-alert-sound-effect_XKoHReZ.mp3",
+      "from": 358,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/rizz-sound-effect.mp3",
+      "from": 436,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 441,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/punch-gaming-sound-effect-hd_RzlG1GE.mp3",
+      "from": 516,
+      "volume": 0.15
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 526,
+      "volume": 0.4
+    },
+    {
+      "src": "audio/sfx/roblox-death-sound_1.mp3",
+      "from": 557,
+      "volume": 0.45
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 572,
+      "volume": 0.4
+    }
+  ],
+  "intro": {
+    "durationInFrames": 7
+  },
+  "transitions": [],
+  "flashes": [],
+  "ctaScene": {
+    "theme": "shark",
+    "commentText": "HIU",
+    "durationInFrames": 105,
+    "stages": [
+      {
+        "kind": "like",
+        "durationInFrames": 62,
+        "timing": "word",
+        "from": 260,
+        "triggerAt": 14
+      },
+      {
+        "kind": "transform",
+        "durationInFrames": 38,
+        "timing": "word",
+        "from": 322,
+        "triggerAt": 0
+      }
+    ],
+    "cues": [
+      {
+        "kind": "like",
+        "word": "like",
+        "from": 274
+      },
+      {
+        "kind": "transform",
+        "word": "berubah",
+        "from": 322
+      }
+    ],
+    "from": 255,
+    "style": "faktacuil"
+  },
+  "captionStyle": "faktacuil"
+}

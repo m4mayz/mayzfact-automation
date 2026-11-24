@@ -1,0 +1,1383 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 2091,
+  "audio": "voice.mp3",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 72
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 72,
+      "durationInFrames": 72
+    },
+    {
+      "src": "clips/shot_03.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 144,
+      "durationInFrames": 101
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 245,
+      "durationInFrames": 64
+    },
+    {
+      "src": "clips/shot_05.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 309,
+      "durationInFrames": 57
+    },
+    {
+      "src": "clips/shot_06.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 366,
+      "durationInFrames": 87,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_07.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 453,
+      "durationInFrames": 95
+    },
+    {
+      "src": "clips/shot_08.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 548,
+      "durationInFrames": 93
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 641,
+      "durationInFrames": 77
+    },
+    {
+      "src": "clips/shot_10.jpg",
+      "kind": "photo",
+      "layout": "full",
+      "from": 718,
+      "durationInFrames": 72
+    },
+    {
+      "src": "clips/shot_11.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 790,
+      "durationInFrames": 115
+    },
+    {
+      "src": "clips/shot_12.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 905,
+      "durationInFrames": 77
+    },
+    {
+      "src": "clips/shot_13.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 982,
+      "durationInFrames": 92
+    },
+    {
+      "src": "clips/shot_14.jpg",
+      "kind": "photo",
+      "layout": "full",
+      "from": 1074,
+      "durationInFrames": 83
+    },
+    {
+      "src": "clips/shot_15.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1157,
+      "durationInFrames": 115
+    },
+    {
+      "src": "clips/shot_16.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1272,
+      "durationInFrames": 109
+    },
+    {
+      "src": "clips/shot_17.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 1381,
+      "durationInFrames": 74,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_18.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1455,
+      "durationInFrames": 80
+    },
+    {
+      "src": "clips/shot_19.jpg",
+      "kind": "photo",
+      "layout": "full",
+      "from": 1535,
+      "durationInFrames": 75
+    },
+    {
+      "src": "clips/shot_20.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1610,
+      "durationInFrames": 90
+    },
+    {
+      "src": "clips/shot_21.jpg",
+      "kind": "photo",
+      "layout": "full",
+      "from": 1700,
+      "durationInFrames": 98
+    },
+    {
+      "src": "clips/shot_22.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1798,
+      "durationInFrames": 98
+    },
+    {
+      "src": "clips/shot_23.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1896,
+      "durationInFrames": 120
+    },
+    {
+      "src": "clips/shot_24.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 2016,
+      "durationInFrames": 75
+    }
+  ],
+  "countdown": [
+    {
+      "number": 5,
+      "label": "WHITE BUFFALO",
+      "numberFrom": 366,
+      "numberAt": 19,
+      "numberDuration": 49,
+      "cardFrom": 415,
+      "cardDuration": 38,
+      "src": "clips/shot_06.jpg",
+      "kind": "photo",
+      "clipOffset": 49
+    },
+    {
+      "number": 4,
+      "label": "WHITE DEER",
+      "numberFrom": 718,
+      "numberAt": 15,
+      "numberDuration": 41,
+      "cardFrom": 759,
+      "cardDuration": 31,
+      "src": "clips/shot_10.jpg",
+      "kind": "photo",
+      "clipOffset": 41
+    },
+    {
+      "number": 3,
+      "label": "WHITE LION",
+      "numberFrom": 1074,
+      "numberAt": 19,
+      "numberDuration": 45,
+      "cardFrom": 1119,
+      "cardDuration": 38,
+      "src": "clips/shot_14.jpg",
+      "kind": "photo",
+      "clipOffset": 45
+    },
+    {
+      "number": 2,
+      "label": "WHITE GIRAFFE",
+      "numberFrom": 1381,
+      "numberAt": 18,
+      "numberDuration": 45,
+      "cardFrom": 1426,
+      "cardDuration": 29,
+      "src": "clips/shot_17.jpg",
+      "kind": "photo",
+      "clipOffset": 45
+    },
+    {
+      "number": 1,
+      "label": "ALBINO HUMPBACK WHALE",
+      "numberFrom": 1700,
+      "numberAt": 14,
+      "numberDuration": 44,
+      "cardFrom": 1744,
+      "cardDuration": 54,
+      "src": "clips/shot_21.jpg",
+      "kind": "photo",
+      "clipOffset": 44
+    }
+  ],
+  "captions": [
+    {
+      "text": "FIVE",
+      "from": 3,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MOST",
+      "from": 12,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEAUTIFUL",
+      "from": 21,
+      "durationInFrames": 15,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "WHITE",
+      "from": 36,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "ANIMALS",
+      "from": 50,
+      "durationInFrames": 29,
+      "color": "#facc15"
+    },
+    {
+      "text": "CHANCES",
+      "from": 81,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ARE",
+      "from": 91,
+      "durationInFrames": 15,
+      "color": "#ffffff"
+    },
+    {
+      "text": "YOU",
+      "from": 106,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NEVER",
+      "from": 109,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KNEW",
+      "from": 114,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEY",
+      "from": 121,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EXISTED",
+      "from": 127,
+      "durationInFrames": 27,
+      "color": "#4ade80"
+    },
+    {
+      "text": "TRUST",
+      "from": 155,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ME",
+      "from": 162,
+      "durationInFrames": 15,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NUMBER",
+      "from": 177,
+      "durationInFrames": 8,
+      "color": "#facc15"
+    },
+    {
+      "text": "ONE",
+      "from": 185,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOOKS",
+      "from": 196,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE",
+      "from": 209,
+      "durationInFrames": 1,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 210,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FANTASY",
+      "from": 213,
+      "durationInFrames": 17,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "MOVIE",
+      "from": 230,
+      "durationInFrames": 24,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COMMENT",
+      "from": 257,
+      "durationInFrames": 8,
+      "color": "#4ade80"
+    },
+    {
+      "text": "WHICH",
+      "from": 265,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ONE'S",
+      "from": 271,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MOST",
+      "from": 280,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BEAUTIFUL",
+      "from": 289,
+      "durationInFrames": 25,
+      "color": "#facc15"
+    },
+    {
+      "text": "HIT",
+      "from": 314,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE",
+      "from": 318,
+      "durationInFrames": 19,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 337,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SUBSCRIBE",
+      "from": 340,
+      "durationInFrames": 34,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "RARE-LOOKING",
+      "from": 465,
+      "durationInFrames": 17,
+      "color": "#4ade80"
+    },
+    {
+      "text": "BUFFALO",
+      "from": 482,
+      "durationInFrames": 14,
+      "color": "#facc15"
+    },
+    {
+      "text": "CAN",
+      "from": 496,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BE",
+      "from": 500,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ALMOST",
+      "from": 503,
+      "durationInFrames": 15,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "COMPLETELY",
+      "from": 518,
+      "durationInFrames": 16,
+      "color": "#4ade80"
+    },
+    {
+      "text": "WHITE",
+      "from": 534,
+      "durationInFrames": 23,
+      "color": "#facc15"
+    },
+    {
+      "text": "AGAINST",
+      "from": 559,
+      "durationInFrames": 8,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "THE",
+      "from": 567,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HERD",
+      "from": 571,
+      "durationInFrames": 15,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEY",
+      "from": 586,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "STAND",
+      "from": 590,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OUT",
+      "from": 599,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DRAMATICALLY",
+      "from": 604,
+      "durationInFrames": 37,
+      "color": "#4ade80"
+    },
+    {
+      "text": "BRO",
+      "from": 641,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEY",
+      "from": 654,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOOK",
+      "from": 659,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE",
+      "from": 664,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NATURE",
+      "from": 671,
+      "durationInFrames": 13,
+      "color": "#facc15"
+    },
+    {
+      "text": "PAINTED",
+      "from": 684,
+      "durationInFrames": 16,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "THEM",
+      "from": 700,
+      "durationInFrames": 27,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LEUCISM",
+      "from": 804,
+      "durationInFrames": 24,
+      "color": "#4ade80"
+    },
+    {
+      "text": "A",
+      "from": 828,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RARE",
+      "from": 830,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GENETIC",
+      "from": 839,
+      "durationInFrames": 10,
+      "color": "#facc15"
+    },
+    {
+      "text": "CONDITION",
+      "from": 849,
+      "durationInFrames": 21,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "AFFECTS",
+      "from": 870,
+      "durationInFrames": 13,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SOME",
+      "from": 883,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DEER",
+      "from": 888,
+      "durationInFrames": 17,
+      "color": "#facc15"
+    },
+    {
+      "text": "IT",
+      "from": 905,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CAN",
+      "from": 910,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MAKE",
+      "from": 913,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEM",
+      "from": 923,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "UNUSUALLY",
+      "from": 926,
+      "durationInFrames": 22,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "PALE",
+      "from": 948,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OR",
+      "from": 962,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WHITE",
+      "from": 967,
+      "durationInFrames": 24,
+      "color": "#4ade80"
+    },
+    {
+      "text": "IMAGINE",
+      "from": 993,
+      "durationInFrames": 11,
+      "color": "#facc15"
+    },
+    {
+      "text": "ONE",
+      "from": 1004,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "QUIETLY",
+      "from": 1010,
+      "durationInFrames": 16,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "WALKING",
+      "from": 1026,
+      "durationInFrames": 12,
+      "color": "#4ade80"
+    },
+    {
+      "text": "THROUGH",
+      "from": 1038,
+      "durationInFrames": 7,
+      "color": "#facc15"
+    },
+    {
+      "text": "A",
+      "from": 1045,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FOREST",
+      "from": 1052,
+      "durationInFrames": 30,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "A",
+      "from": 1161,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "RARE",
+      "from": 1164,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GENETIC",
+      "from": 1173,
+      "durationInFrames": 12,
+      "color": "#4ade80"
+    },
+    {
+      "text": "TRAIT",
+      "from": 1185,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GIVES",
+      "from": 1196,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THESE",
+      "from": 1204,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "STUNNING",
+      "from": 1217,
+      "durationInFrames": 7,
+      "color": "#facc15"
+    },
+    {
+      "text": "LIONS",
+      "from": 1224,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PALE",
+      "from": 1238,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COLORATION",
+      "from": 1248,
+      "durationInFrames": 24,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "THEY",
+      "from": 1272,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOOK",
+      "from": 1285,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ALMOST",
+      "from": 1291,
+      "durationInFrames": 13,
+      "color": "#4ade80"
+    },
+    {
+      "text": "UNREAL",
+      "from": 1304,
+      "durationInFrames": 21,
+      "color": "#facc15"
+    },
+    {
+      "text": "LIKE",
+      "from": 1325,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FANTASY",
+      "from": 1330,
+      "durationInFrames": 16,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "MOVIE",
+      "from": 1346,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIONS",
+      "from": 1356,
+      "durationInFrames": 34,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EXTREMELY",
+      "from": 1466,
+      "durationInFrames": 22,
+      "color": "#4ade80"
+    },
+    {
+      "text": "RARE",
+      "from": 1488,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DOCUMENTED",
+      "from": 1499,
+      "durationInFrames": 16,
+      "color": "#facc15"
+    },
+    {
+      "text": "IN",
+      "from": 1515,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 1517,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WILD",
+      "from": 1522,
+      "durationInFrames": 21,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEIR",
+      "from": 1543,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PALE",
+      "from": 1545,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOOK",
+      "from": 1554,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IS",
+      "from": 1563,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "INCREDIBLY",
+      "from": 1567,
+      "durationInFrames": 21,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "STRIKING",
+      "from": 1588,
+      "durationInFrames": 30,
+      "color": "#4ade80"
+    },
+    {
+      "text": "IT",
+      "from": 1620,
+      "durationInFrames": 1,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOOKS",
+      "from": 1621,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COMPLETELY",
+      "from": 1628,
+      "durationInFrames": 17,
+      "color": "#facc15"
+    },
+    {
+      "text": "DIFFERENT",
+      "from": 1645,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "FROM",
+      "from": 1655,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "USUAL",
+      "from": 1660,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SPOTS",
+      "from": 1674,
+      "durationInFrames": 35,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 1798,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NEARLY",
+      "from": 1804,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "ALL-WHITE",
+      "from": 1815,
+      "durationInFrames": 19,
+      "color": "#facc15"
+    },
+    {
+      "text": "HUMPBACK",
+      "from": 1834,
+      "durationInFrames": 13,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "IS",
+      "from": 1847,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "INCREDIBLY",
+      "from": 1852,
+      "durationInFrames": 20,
+      "color": "#4ade80"
+    },
+    {
+      "text": "RARE",
+      "from": 1872,
+      "durationInFrames": 25,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IMAGINE",
+      "from": 1897,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "A",
+      "from": 1909,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GIANT",
+      "from": 1913,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WHITE",
+      "from": 1926,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "WHALE",
+      "from": 1936,
+      "durationInFrames": 10,
+      "color": "#4ade80"
+    },
+    {
+      "text": "SUDDENLY",
+      "from": 1946,
+      "durationInFrames": 14,
+      "color": "#facc15"
+    },
+    {
+      "text": "EMERGING",
+      "from": 1960,
+      "durationInFrames": 16,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "FROM",
+      "from": 1976,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 1981,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WAVES",
+      "from": 1985,
+      "durationInFrames": 31,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BRO",
+      "from": 2016,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THAT",
+      "from": 2036,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LOOKS",
+      "from": 2039,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "STRAIGHT",
+      "from": 2049,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "OUT",
+      "from": 2060,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OF",
+      "from": 2065,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 2068,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FILM",
+      "from": 2072,
+      "durationInFrames": 18,
+      "color": "#ffffff"
+    }
+  ],
+  "overlays": [
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 459,
+      "durationInFrames": 74,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 173,
+          "y": 500,
+          "w": 750,
+          "h": 830
+        },
+        {
+          "frame": 39,
+          "x": 170,
+          "y": 510,
+          "w": 758,
+          "h": 824
+        },
+        {
+          "frame": 69,
+          "x": 159,
+          "y": 488,
+          "w": 759,
+          "h": 836
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 1163,
+      "durationInFrames": 94,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 9,
+          "y": 395,
+          "w": 1016,
+          "h": 1373
+        },
+        {
+          "frame": 39,
+          "x": 4,
+          "y": 375,
+          "w": 1007,
+          "h": 1369
+        },
+        {
+          "frame": 69,
+          "x": 69,
+          "y": 363,
+          "w": 902,
+          "h": 1375
+        },
+        {
+          "frame": 99,
+          "x": 152,
+          "y": 385,
+          "w": 867,
+          "h": 1356
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 1616,
+      "durationInFrames": 69,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 150,
+          "y": 546,
+          "w": 795,
+          "h": 632
+        },
+        {
+          "frame": 39,
+          "x": 182,
+          "y": 431,
+          "w": 739,
+          "h": 734
+        },
+        {
+          "frame": 69,
+          "x": 210,
+          "y": 485,
+          "w": 712,
+          "h": 731
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 1902,
+      "durationInFrames": 99,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 319,
+          "y": 903,
+          "w": 609,
+          "h": 553
+        },
+        {
+          "frame": 39,
+          "x": 283,
+          "y": 676,
+          "w": 674,
+          "h": 523
+        },
+        {
+          "frame": 69,
+          "x": 14,
+          "y": 670,
+          "w": 1024,
+          "h": 450
+        },
+        {
+          "frame": 99,
+          "x": 267,
+          "y": 748,
+          "w": 72,
+          "h": 139
+        }
+      ]
+    }
+  ],
+  "emojis": [
+    {
+      "src": "emoji/1f929.json",
+      "from": 213,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f632.json",
+      "from": 604,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f9d0.json",
+      "from": 804,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f440.json",
+      "from": 1010,
+      "durationInFrames": 64
+    },
+    {
+      "src": "emoji/1f62e.json",
+      "from": 1304,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f929.json",
+      "from": 1588,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f633.json",
+      "from": 1872,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f631.json",
+      "from": 2060,
+      "durationInFrames": 31
+    }
+  ],
+  "cta": [
+    {
+      "kind": "like",
+      "from": 318,
+      "durationInFrames": 16,
+      "clickAt": 4
+    },
+    {
+      "kind": "subscribe",
+      "from": 340,
+      "durationInFrames": 27,
+      "clickAt": 14
+    }
+  ],
+  "bgm": {
+    "src": "audio/bgm/mystery.mp3",
+    "volume": 0.12,
+    "fadeOutFrames": 30
+  },
+  "sfx": [
+    {
+      "src": "audio/sfx/awkward-moment.mp3",
+      "from": 0,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 213,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 319,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 351,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 382,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 412,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 459,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 604,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 730,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 756,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 804,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1010,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 1090,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1116,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1163,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1304,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 1396,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1423,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1588,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1616,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 1711,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1741,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1872,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1902,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 2060,
+      "volume": 0.6
+    }
+  ],
+  "intro": {
+    "durationInFrames": 7
+  }
+}
