@@ -122,9 +122,7 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             self.end_headers()
             self.wfile.write(body)
 
-        def _file(self, target: Path) -> None:
-            """Kirim file per 1 MB. Header Range didukung, soalnya Chrome cuma bisa seek video kalau server ngerti Range."""
-            size = target.stat().st_size
+        def _send_range_headers(self, size: int, content_type: str) -> tuple[int, int] | None:
             start, end, code = 0, size - 1, 200
             match = re.fullmatch(r"bytes=(\d*)-(\d*)", self.headers.get("Range", "").strip())
             if match and (match[1] or match[2]):
@@ -134,14 +132,25 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                     self.send_response(416)
                     self.send_header("Content-Range", f"bytes */{size}")
                     self.send_header("Content-Length", "0")
-                    return self.end_headers()
+                    self.end_headers()
+                    return None
             self.send_response(code)
-            self.send_header("Content-Type", mimetypes.guess_type(target.name)[0] or "application/octet-stream")
+            self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(end - start + 1))
             self.send_header("Accept-Ranges", "bytes")
             if code == 206:
                 self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
             self.end_headers()
+            return start, end
+
+        def _file(self, target: Path) -> None:
+            """Kirim file per 1 MB. Header Range didukung, soalnya Chrome cuma bisa seek video kalau server ngerti Range."""
+            bounds = self._send_range_headers(
+                target.stat().st_size, mimetypes.guess_type(target.name)[0] or "application/octet-stream",
+            )
+            if bounds is None:
+                return
+            start, end = bounds
             remaining = end - start + 1
             try:
                 with target.open("rb") as fh:
@@ -171,7 +180,10 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
             finally:
                 bgm_preview_slots.release()
             try:
-                self._send(200, clip.stdout, "audio/mpeg")
+                bounds = self._send_range_headers(len(clip.stdout), "audio/mpeg")
+                if bounds is not None:
+                    start, end = bounds
+                    self.wfile.write(clip.stdout[start:end + 1])
             except ConnectionError:
                 pass
 

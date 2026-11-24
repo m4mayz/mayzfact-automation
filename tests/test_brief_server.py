@@ -134,6 +134,18 @@ def test_faktacuil_bgm_preview_plays_excerpt_without_saving(server, tmp_path, mo
 
     preview = httpx.get(endpoint, params={"track": track})
     assert preview.status_code == 200 and preview.headers["content-type"] == "audio/mpeg"
+    assert preview.headers.get("accept-ranges") == "bytes"
+    size = len(preview.content)
+    partial = httpx.get(endpoint, params={"track": track}, headers={"Range": "bytes=0-1"})
+    assert partial.status_code == 206 and partial.headers["content-type"] == "audio/mpeg"
+    assert partial.headers["content-range"] == f"bytes 0-1/{size}"
+    assert partial.headers["content-length"] == "2" and partial.content == preview.content[:2]
+    suffix = httpx.get(endpoint, params={"track": track}, headers={"Range": "bytes=-2"})
+    assert suffix.status_code == 206 and suffix.content == preview.content[-2:]
+    assert suffix.headers["content-range"] == f"bytes {size - 2}-{size - 1}/{size}"
+    outside = httpx.get(endpoint, params={"track": track}, headers={"Range": f"bytes={size}-"})
+    assert outside.status_code == 416 and outside.headers["content-range"] == f"bytes */{size}"
+    assert outside.content == b""
     output = tmp_path / "preview.mp3"
     output.write_bytes(preview.content)
     actual = subprocess.check_output([
