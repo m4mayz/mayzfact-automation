@@ -7,6 +7,7 @@ import random
 import re
 from typing import Any, Callable
 
+from mayzfact.audio import FAKTACUIL_BGM_VOLUME
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import _EDGE_PUNCT, SUBSCRIBE, is_like_cta
 from mayzfact.cta import clean as _clean
@@ -73,9 +74,6 @@ FAKTACUIL_SUBSCRIBE_CLICK = 12  # harus sama kayak SUB_CLICK di FaktaCuilCta.tsx
 CLICK_LEAD_FRAMES = 3  # puncak bunyi mouse-click di ±0.1 detik
 NUMBER_SFX_LEAD_FRAMES = 9  # fire whoosh baru kedengeran ±0.28 detik, puncaknya pas api di kartu lagi gede
 BGM_VOLUME = 0.12
-# BGM FaktaCuil lebih pelan: lagu yang dipakai Akmal -8,2 LUFS, voice Eric -18,4 LUFS.
-# 0,12 bikin BGM cuma ~8 dB di bawah suara; 0,06 = ~14 dB (music bed, suara tetap dominan).
-FAKTACUIL_BGM_VOLUME = 0.06
 BGM_FADE_FRAMES = 30
 TAIL_FRAMES = 6  # klip dipotong durasi shot + 0.2 detik (normalize_local)
 
@@ -565,8 +563,9 @@ def build_timeline(
         (e["from"] + e["durationInFrames"] for e, s in zip(entries, shots) if s.get("hook_segment") is not None), default=0)
     # shot yang ngelanjutin link/klip yang sama kayak shot sebelumnya nggak dapat bunyi/efek transisi
     same_clip = {e["from"] for i, (e, s) in enumerate(zip(entries, shots)) if i and _continues(shots[i - 1], s)}
+    bgm_volume = (audio or {}).get("bgm_volume", FAKTACUIL_BGM_VOLUME) if faktacuil else BGM_VOLUME
     bgm, sfx, reveals, flashes = _sound(audio, entries, countdown, shown, emojis, cta, hook_end, total, same_clip,
-                                        bgm_volume=FAKTACUIL_BGM_VOLUME if faktacuil else BGM_VOLUME)
+                                        bgm_volume=bgm_volume)
     data = {
         "fps": FPS,
         "width": FRAME_W,

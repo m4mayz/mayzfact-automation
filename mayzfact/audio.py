@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import math
+import re
 import shutil
+import subprocess
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -19,6 +22,11 @@ from mayzfact.store import RunPaths, read_json, write_json_atomic
 BGM_DIR = PROJECT_ROOT / "assets" / "bgm"
 SFX_DIR = PROJECT_ROOT / "assets" / "sfx"
 FAKTACUIL_BGM_DIR = PROJECT_ROOT / "assets" / "channels" / "faktacuil" / "bgm"  # lagu lokal, di-gitignore
+FAKTACUIL_BGM_REFERENCE = "bully-main-theme.m4a"
+FAKTACUIL_BGM_VOLUME = 0.06
+FAKTACUIL_BGM_MAX_BOOST_DB = 12
+FAKTACUIL_BGM_PEAK_CEILING_DB = -12
+FAKTACUIL_BGM_TRACK_BOOST_DB = {"rude-boy-white-cherry-late-night-melancholy.m4a": 8}
 MYINSTANTS = "https://www.myinstants.com/media/sounds/"
 SFX_DEFAULTS = {
     "hook": "cinematicboom.mp3",
@@ -85,6 +93,42 @@ def load_faktacuil_bgm_choice(paths: RunPaths) -> str | None:
     return track if isinstance(track, str) and track else None
 
 
+def _bgm_levels(song: Path, duration_s: float) -> tuple[float, float]:
+    result = subprocess.run([
+        "ffmpeg", "-hide_banner", "-nostdin", "-stream_loop", "-1", "-t", str(duration_s), "-i", str(song),
+        "-vn", "-map", "0:a:0", "-af", "ebur128=peak=true:framelog=verbose", "-f", "null", "-",
+    ], capture_output=True, text=True, encoding="utf-8", errors="replace", check=True, timeout=15,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    summary = result.stderr.rsplit("Summary:", 1)[-1]
+    loudness = re.search(r"^\s*I:\s*(-?[\d.]+) LUFS", summary, re.M)
+    peak = re.search(r"^\s*Peak:\s*(-?[\d.]+) dBFS", summary, re.M)
+    if not loudness or not peak or float(loudness[1]) <= -70:
+        raise ValueError("loudness tidak terbaca atau track hening")
+    return float(loudness[1]), float(peak[1])
+
+
+def faktacuil_bgm_volume(song: Path, reference: Path, duration_s: float, log: Callable[[str], None] = print) -> float:
+    if song == reference:
+        return FAKTACUIL_BGM_VOLUME
+    base_db = 20 * math.log10(FAKTACUIL_BGM_VOLUME) + FAKTACUIL_BGM_TRACK_BOOST_DB.get(song.name, 0)
+    fallback = round(10 ** (base_db / 20), 5)
+    if not math.isfinite(duration_s) or duration_s < .4:
+        return fallback
+    if not reference.is_file():
+        log(f"[timeline] Referensi BGM Bully nggak ada, pakai volume {fallback:.1%}")
+        return fallback
+    try:
+        ref_loudness, _ = _bgm_levels(reference, duration_s)
+        loudness, peak = _bgm_levels(song, duration_s)
+    except (OSError, ValueError, subprocess.SubprocessError):
+        log(f"[timeline] Loudness BGM {song.name} nggak kebaca, pakai volume {fallback:.1%}")
+        return fallback
+    gain_db = base_db + min(ref_loudness - loudness, FAKTACUIL_BGM_MAX_BOOST_DB)
+    volume = round(10 ** (min(gain_db, FAKTACUIL_BGM_PEAK_CEILING_DB - peak) / 20), 5)
+    log(f"[timeline] BGM {song.name}: {loudness:.1f} LUFS vs Bully {ref_loudness:.1f} LUFS, volume {volume:.1%}")
+    return volume
+
+
 def audible_start(path: Path) -> float:
     """Detik sampai bunyi pertama kedengeran (hening di depan file). Dipakai buat nyejajarin SFX yang ditumpuk."""
     import re
@@ -124,6 +168,7 @@ MAIN_BGM = "main.mp3"  # ...terus ini mulai "Number" pertama sampai akhir
 def prepare_audio(
     paths: RunPaths, script: dict, *, bgm_dir: Path, sfx_dir: Path, client: httpx.Client,
     log: Callable[[str], None], custom: list[dict] | None = None, faktacuil_bgm_dir: Path = FAKTACUIL_BGM_DIR,
+    duration_s: float | None = None,
 ) -> dict:
     """BGM hook + utama, siapin SFX, copy ke runs/<id>/audio/ buat Remotion. Field bgm di naskah nggak dipakai lagi.
 
@@ -135,6 +180,9 @@ def prepare_audio(
         song = _faktacuil_song(bgm_dir, faktacuil_bgm_dir, log, selected=load_faktacuil_bgm_choice(paths))
         if song:
             out["bgm_main"] = _copy(song, paths.root / "audio" / "bgm", paths)
+            if duration_s is not None:
+                out["bgm_volume"] = faktacuil_bgm_volume(song, faktacuil_bgm_dir / FAKTACUIL_BGM_REFERENCE,
+                                                         duration_s, log)
         write_json_atomic(paths.root / "audio.json", {"bgm": None, "bgm_main": song.name if song else None})
     else:
         for key, name in (("bgm", HOOK_BGM), ("bgm_main", MAIN_BGM)):

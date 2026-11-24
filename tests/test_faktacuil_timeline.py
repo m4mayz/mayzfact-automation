@@ -125,6 +125,8 @@ def test_faktacuil_single_bgm_whole_video():
     tl = timeline({"bgm": None, "bgm_main": "audio/bgm/main.mp3", "sfx": {}})
     assert tl["bgm"] == [{"src": "audio/bgm/main.mp3", "from": 0, "durationInFrames": tl["durationInFrames"],
                           "volume": 0.06, "fadeOutFrames": 30}]  # FAKTACUIL_BGM_VOLUME: BGM ~14 dB di bawah voice
+    adjusted = timeline({"bgm_main": "audio/bgm/song.m4a", "sfx": {}, "bgm_volume": 0.192})
+    assert adjusted["bgm"][0]["volume"] == 0.192
 
 
 def test_faktacuil_ignores_marks_but_uses_first_shot_detection_for_arrow():

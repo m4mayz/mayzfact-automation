@@ -204,8 +204,10 @@ def real_deps(settings: Settings) -> Deps:
             custom = custom_sfx_events(read_json(paths.shots_plan_json), load_links(paths.links_json))
         except Exception as exc:
             log(f"[timeline] SFX kustom dilewat: {type(exc).__name__}: {exc}")
-        return prepare_audio(paths, read_json(paths.script_json), bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=client, log=log,
-                             custom=custom)
+        script = read_json(paths.script_json)
+        duration = read_json(paths.tts_json).get("duration_s") if script.get("narration_mode") == "faktacuil" else None
+        return prepare_audio(paths, script, bgm_dir=BGM_DIR, sfx_dir=SFX_DIR, client=client, log=log,
+                             custom=custom, duration_s=duration)
 
     detectors: dict[str, object] = {}
 

@@ -1,10 +1,15 @@
 import json
+import math
+import struct
+import wave
 
 import httpx
+import pytest
 
 from mayzfact.audio import (
     SFX_DEFAULTS,
     ensure_sfx,
+    faktacuil_bgm_volume,
     list_bgm,
     load_sfx_map,
     prepare_audio,
@@ -192,7 +197,7 @@ def test_custom_sfx_copy_failure_skips_only_that_sfx(tmp_path, sine_mp3, monkeyp
     assert [c["src"] for c in out["custom"]] == ["audio/sfx/gasp.mp3"] and any("uy.mp3" in m for m in logs)
 
 
-def fk_audio(tmp_path, local_files=None, bgm_files=None, script=None):
+def fk_audio(tmp_path, local_files=None, bgm_files=None, script=None, *, duration_s=None):
     """prepare_audio buat naskah FaktaCuil; local_files None = folder BGM lokal nggak ada."""
     bgm_dir, sfx_dir, local = tmp_path / "bgm", tmp_path / "sfx", tmp_path / "fc"
     bgm_dir.mkdir()
@@ -207,7 +212,7 @@ def fk_audio(tmp_path, local_files=None, bgm_files=None, script=None):
     paths, logs = RunPaths(tmp_path / "run"), []
     script = script or {"narration_mode": "faktacuil", "beats": []}
     out = prepare_audio(paths, script, bgm_dir=bgm_dir, sfx_dir=sfx_dir, client=client, log=logs.append,
-                        faktacuil_bgm_dir=local)
+                        faktacuil_bgm_dir=local, duration_s=duration_s)
     return out, paths, logs
 
 
@@ -224,6 +229,35 @@ def test_faktacuil_bgm_falls_back_to_main(tmp_path):
     assert out["bgm"] is None and out["bgm_main"] == "audio/bgm/main.mp3"
     assert read_json(paths.root / "audio.json") == {"bgm": None, "bgm_main": "main.mp3"}
     assert any("sementara pakai main.mp3" in line for line in logs)
+
+
+def test_faktacuil_bgm_gain_matches_bully_in_used_segment(tmp_path):
+    import io
+
+    def track(first, rest):
+        wav = io.BytesIO()
+        with wave.open(wav, "wb") as output:
+            output.setparams((1, 2, 8000, 0, "NONE", "not compressed"))
+            output.writeframes(b"".join(struct.pack("<h", round((first if i < 16000 else rest)
+                                                               * math.sin(i * math.tau / 8))) for i in range(32000)))
+        return wav.getvalue()
+
+    out, _, _ = fk_audio(tmp_path, {"a-quiet.wav": track(3000, 12000),
+                                  "bully-main-theme.m4a": track(12000, 12000)}, duration_s=2)
+    assert out["bgm_volume"] == pytest.approx(0.24, abs=0.005)
+
+
+def test_faktacuil_late_night_gets_extra_gain_without_affecting_other_tracks(tmp_path, monkeypatch):
+    reference = tmp_path / "bully-main-theme.m4a"
+    reference.touch()
+    late_night = tmp_path / "rude-boy-white-cherry-late-night-melancholy.m4a"
+    other = tmp_path / "other.m4a"
+    log = lambda _: None
+    monkeypatch.setattr("mayzfact.audio._bgm_levels", lambda *_: (-10.0, 0.0))
+    assert faktacuil_bgm_volume(late_night, reference, 25, log) == pytest.approx(0.15071)
+    assert faktacuil_bgm_volume(other, reference, 25, log) == 0.06
+    assert faktacuil_bgm_volume(reference, reference, 25, log) == 0.06
+    assert faktacuil_bgm_volume(late_night, tmp_path / "missing.m4a", 25, log) == pytest.approx(0.15071)
 
 
 def test_faktacuil_bgm_ignores_non_audio_files(tmp_path):
