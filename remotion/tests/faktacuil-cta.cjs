@@ -41,6 +41,12 @@ assert.match(lucky, /data-cta-sticker="true" data-cta-format="lucky"/);
 assert.match(lucky, /top:\s?1030px/);
 assert.doesNotMatch(lucky, /data-cta-emoji/);
 
+const chili = {format: 'lucky', theme: 'chili'};
+assert.doesNotMatch(markup(chili, 9), /data-sticker="chili"/);
+assert.match(markup(chili, 40), /<svg[^>]*data-sticker="chili"/);
+assert.match(markup(chili, 40), /<path[^>]*data-chili-body="true"/);
+assert.match(markup(chili, 40), /<path[^>]*data-chili-stem="true"/);
+
 // subscribe: cue subscribe di 50 → pill SUBSCRIBE di 55, SUBSCRIBED di 62 (50 + 12 = klik Python), stiker tetap ada.
 const sub = {format: 'subscribe', theme: 'shark', cues: [...base.cues, {kind: 'subscribe', from: 50, word: 'subscribe'}]};
 assert.match(markup(sub, 55), /data-cta-pill="subscribe"[^>]*>[\s\S]*SUBSCRIBE/);

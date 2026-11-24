@@ -30,6 +30,16 @@ def test_wheel_subscribe_with_quiz():
     assert check_script(Script(**raw), SOURCE_TEXT_EN)[0] == []
 
 
+def test_lucky_chili_accepts_cabai_but_not_an_unrelated_object():
+    raw = faktacuil_script(cta="lucky").model_dump()
+    raw["cta_scene"]["theme"] = "chili"
+    raw["beats"][5]["text"] = "Siapa tahu muncul cabai."
+    assert check_script(Script(**raw), SOURCE_TEXT_EN)[0] == []
+
+    raw["beats"][5]["text"] = "Siapa tahu muncul madu."
+    assert any("name the sticker object" in p for p in check_script(Script(**raw), SOURCE_TEXT_EN)[0])
+
+
 def test_schema_shapes():
     FaktaCuilCtaScene(format="emoji", emoji="📦")
     FaktaCuilCtaScene(format="lucky", theme="honey")

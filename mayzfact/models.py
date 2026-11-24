@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # Stiker FaktaCuil dipisah dari tema top3 biar stiker baru FaktaCuil nggak ikut ke top3 (D-061).
-FaktaCuilTheme = Literal["volcano", "unicorn", "honey", "puppy", "lion", "shark", "toilet", "cat", "zebra", "wheel"]
+FaktaCuilTheme = Literal["volcano", "unicorn", "honey", "puppy", "lion", "shark", "toilet", "cat", "zebra", "wheel", "chili"]
 
 
 def _is_emoji(value: str) -> bool:

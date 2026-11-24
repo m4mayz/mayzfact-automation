@@ -119,6 +119,7 @@ Urutannya tetap: beat yang nyebut `muncul` **selalu setelah** ajakan like, dan l
 | `cat` | `kucing`, `anak kucing` |
 | `zebra` | `zebra`, `zebra cross` |
 | `wheel` | `roda mobil`, `ban mobil` |
+| `chili` | `cabai`, `cabe` |
 
 **Stiker baru.** Kalau objek nggak cocok sama tema yang ada, STOP sebelum render dan kerjain dulu:
 

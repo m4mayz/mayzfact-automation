@@ -213,6 +213,17 @@ const Wheel: React.FC<{frame: number}> = ({frame}) => (
   </g>
 );
 
+const Chili: React.FC = () => (
+  <g strokeLinejoin="round">
+    <path data-chili-body="true" d="M146 49 C165 55 177 74 172 95 C166 129 140 154 109 166 C83 176 56 175 26 165 C50 159 71 145 85 127 C100 108 104 87 112 68 C120 51 133 45 146 49 Z"
+      fill="#ef3b30" stroke="#8f2027" strokeWidth={5}/>
+    <path d="M34 166 C87 166 128 139 147 112 C161 93 164 78 158 65 C172 74 173 91 163 112 C143 155 90 183 34 166 Z" fill="#bd2b2b"/>
+    <path d="M107 105 C116 92 115 76 126 65" fill="none" stroke="#ff9280" strokeWidth={7} strokeLinecap="round"/>
+    <path data-chili-stem="true" d="M123 53 C131 47 143 46 151 51 C151 38 158 27 168 22 L177 32 C168 39 166 47 166 61 L161 67 L150 61 L142 64 L134 56 L125 59 Z"
+      fill="#60b54d" stroke="#29683d" strokeWidth={5}/>
+  </g>
+);
+
 export const Sticker: React.FC<{theme: StickerTheme; frame: number; size: number}> = ({theme, frame, size}) => {
   let body: React.ReactNode;
   switch (theme) {
@@ -226,6 +237,7 @@ export const Sticker: React.FC<{theme: StickerTheme; frame: number; size: number
     case 'cat': body = <SmallCat frame={frame}/>; break;
     case 'zebra': body = <SmallZebra frame={frame}/>; break;
     case 'wheel': body = <Wheel frame={frame}/>; break;
+    case 'chili': body = <Chili/>; break;
     default: {
       const unsupported: never = theme;
       throw new Error(`Unsupported FaktaCuil sticker: ${String(unsupported)}`);
