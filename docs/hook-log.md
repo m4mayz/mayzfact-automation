@@ -69,3 +69,22 @@ Temuan:
 3. Demografi (umur, gender, negara) sama di semua video, views dari subscriber < 0,5%. Yang nentuin cuma reaksi di batch tes awal.
 
 Belum terbukti: format v2 `lucky`/`subscribe` ("siapa tahu muncul cabai ini") polanya mirip v1. Cek ulang 2026-11-27 pas data BMW (`IeeRKhqFYzI`, subscribe) dan Pedas (`gv6ZaNv9CH4`, lucky) masuk. Kalau drop-nya juga >= -11 sesudah ajakan like, pertimbangkan CTA `emoji` di akhir atau tanpa CTA.
+
+### Cek ulang 2026-11-27
+
+CTA tengah v2 kena pola yang sama kayak v1, lebih parah:
+
+| run | video | CTA | "LIKE" mulai | drop terbesar | rel. retensi 3 dtk | avg view | views |
+|---|---|---|---|---|---|---|---|
+| IeeRKhqFYzI | Logo BMW | subscribe | 6,2 | 6-7 dtk, -24 | 0,43 | 77% | 8,5k |
+| gv6ZaNv9CH4 | Pedas | lucky | 6,8 | 7-8 dtk, -14 | 0,46 | 74% | 2,6k |
+
+Video tanpa CTA di periode yang sama: Geta 36,5k (109%), Anjing julurin lidah 31,7k (±10 jam), Madu 31,3k (92%), Atap resin 28,2k (93%), Pagar ayam 20,2k (111%), Sourdough 3,9k (106%).
+
+Catatan:
+1. Hook BMW dan Pedas juga lemah (rel. 3 dtk < 0,5, diukur sebelum CTA), jadi efek hook dan CTA belum kepisah.
+2. Drop tajam bisa muncul tanpa CTA (Madu -11 di 6-7 dtk), tapi di BMW/Pedas jatuh tepat 1 dtk setelah "LIKE".
+3. Sourdough: retensi bagus, engaged ±50%, "Viewed vs swiped away" di Studio 77,7%, tapi berhenti di batch tes (1.992 → 770 → 423 views/hari). Nggak ada metrik yang jelasin; dugaan topik niche atau faktor acak.
+4. Video lambat bisa meledak telat: Geta dan Madu masih 2k / 0,6k di hari pertama, 3 hari kemudian di atas 30k. Jangan nilai video sebelum umur 3 hari.
+
+Saran: stop CTA tengah (`lucky`/`subscribe`) dulu. Pakai tanpa CTA atau CTA di akhir (`emoji_question`, mulai `gjan1G-i2sI`), terus bandingin retensinya.
