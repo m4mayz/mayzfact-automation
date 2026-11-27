@@ -232,3 +232,8 @@ def test_preview_starts_follow_fetch_rules():
     hook = {"shots": {"0": {"url": "https://a.b/hook"}, "1": {"url": "https://a.b/hook"}}}
     assert preview_starts(SFX_PLAN, hook) == {0: 0.0, 1: 2.0}
     assert preview_starts(SFX_PLAN, {"shots": {"1": {"file": "manual/shot_2.mp4"}}}) == {1: 0.0}
+
+
+def test_same_clip_ignores_volume():
+    from mayzfact.manual.links import same_clip
+    assert same_clip({"url": "https://a.b/v", "volume": 1.5}, {"url": "https://a.b/v"})

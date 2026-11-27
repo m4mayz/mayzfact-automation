@@ -50,7 +50,7 @@ def _message(exc: Exception) -> str:
 
 def normalize_local(
     index: int, start_s: float, end_s: float, raw: Path, kind: str, offset_s: float, paths: RunPaths, fg_min_ratio: float,
-    speed: float = 1.0
+    speed: float = 1.0, audio: bool = False
 ) -> dict:
     """File lokal → clips/shot_XX. Video dipotong di sekitar offset_s (tengah window source), dibatasi biar nggak lewat ujung file."""
     duration_s = end_s - start_s
@@ -64,7 +64,8 @@ def normalize_local(
             start = min(max(0.0, offset_s - src_s / 2), total - src_s - 0.2)
             dest = paths.clips_dir / f"shot_{index + 1:02d}.mp4"
             normalize_video(raw, dest, start_s=start, duration_s=src_s + 0.2,
-                            scale=downscale_factor(info["width"], info["height"], fg_min_ratio), speed=speed)
+                            scale=downscale_factor(info["width"], info["height"], fg_min_ratio), speed=speed,
+                            audio=audio)
             out = probe(dest, "clips")
             width, height = out["width"], out["height"]
         else:
@@ -206,7 +207,9 @@ def _continuous(group: dict, shots: list[dict], source: Source, paths: RunPaths,
                                for shot in shots]))
     source.used.append((start, start + span + TAIL_S))
     head = shots[0]
-    out = normalize_local(head["index"], first, last, source.path, "video", start + span / 2, paths, fg_min_ratio)
+    volume = source.entry.get("volume")  # semua shot hook entry-nya sama, jadi volumenya juga sama
+    out = normalize_local(head["index"], first, last, source.path, "video", start + span / 2, paths, fg_min_ratio,
+                          audio=volume is not None)
     url = source.entry.get("url")
     progress.data["shots_done"] += len(shots)
     progress.log(f"[fetch] shot {head['index'] + 1}-{shots[-1]['index'] + 1} ({group['label']}): 1 video nyambung, skor {score:.3f} dari detik {start:.1f}")
@@ -216,6 +219,7 @@ def _continuous(group: dict, shots: list[dict], source: Source, paths: RunPaths,
         "provider_id": cache_key(url) if url else Path(source.entry["file"]).name,
         "page_url": url or source.entry["file"], "author": "", "query": "manual",
         "match": round(score, 4), "hook_segment": head["hook_segment"], "source_s": round(start, 2),
+        **({"volume": volume} if volume is not None else {}),
     }
 
 
@@ -413,12 +417,15 @@ def run_fetch(
                         if entry.get("start_s") is None and score < low:
                             warn.append(f"skor rendah ({score:.2f})")
 
+                        # Shot di-unmute di brief: audio klip ikut dipotong, volumenya dipakai Remotion.
+                        volume = entry.get("volume") if source.kind == "video" else None
                         out = normalize_local(s["index"], s["start_s"], s["end_s"], source.path, source.kind,
-                                              start + duration / 2, paths, fg_min_ratio, speed=speed)
+                                              start + duration / 2, paths, fg_min_ratio, speed=speed,
+                                              audio=volume is not None)
                         url = source.entry.get("url")
                         clips.append({
                             "index": s["index"], "beat": s["beat"], "start_s": s["start_s"], "end_s": s["end_s"],
-                            "speed": speed, **out,
+                            "speed": speed, **out, **({"volume": volume} if volume is not None else {}),
                             "provider": link_kind(url) if url else "upload",
                             "provider_id": cache_key(url) if url else Path(source.entry["file"]).name,
                             "page_url": url or source.entry["file"], "author": "", "query": "manual",

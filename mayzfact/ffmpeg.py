@@ -41,9 +41,16 @@ def audio_duration(path: Path) -> float:
     return duration
 
 
+def _has_audio(path: Path) -> bool:
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
+                          "-of", "csv=p=0", str(path)], capture_output=True, text=True)
+    return bool(out.stdout.strip())
+
+
 def normalize_video(src: Path, dest: Path, *, start_s: float, duration_s: float, scale: float,
-                    speed: float = 1.0) -> None:
-    """Potong, ubah ke 30fps H.264 yuv420p tanpa audio, resize pakai faktor `scale` (dimensi dibikin genap).
+                    speed: float = 1.0, audio: bool = False) -> None:
+    """Potong, ubah ke 30fps H.264 yuv420p, resize pakai faktor `scale` (dimensi dibikin genap). Audio dibuang
+    kecuali `audio` (shot di-unmute di brief).
 
     `duration_s` = detik source yang dibaca; `speed` ≠ 1 bikin output jadi `duration_s / speed` detik (setpts).
     """
@@ -52,12 +59,17 @@ def normalize_video(src: Path, dest: Path, *, start_s: float, duration_s: float,
     if speed != 1:
         vf = f"setpts=(PTS-STARTPTS)/{speed:.6f}," + vf
         out_s = duration_s / speed
+    audio_args = ["-an"]
+    if audio and _has_audio(src):
+        audio_args = ["-map", "0:v:0", "-map", "0:a:0", "-c:a", "aac", "-b:a", "128k", "-ac", "2", "-ar", "48000"]
+        if speed != 1:
+            audio_args += ["-af", f"atempo={speed:.6f}"]  # nada tetap, durasi ikut padat kayak setpts
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = tmp_path_for(dest)
     _run(
         [
             "ffmpeg", "-y", "-v", "error", "-ss", f"{start_s:.3f}", "-i", str(src), "-t", f"{out_s:.3f}",
-            "-an", "-vf", vf, "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-movflags", "+faststart", str(tmp),
+            *audio_args, "-vf", vf, "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-movflags", "+faststart", str(tmp),
         ],
         "clips",
     )

@@ -186,6 +186,32 @@ def attach_sfx(data: dict, raw_sfx: dict | None, names: set[str], plan: dict) ->
         entry["sfx"] = {"file": file, "at_s": round(at_s, 2)}
 
 
+TRANSITION_SFX = ("click_random", "click", "none")  # klik + SFX random (default), klik aja, tanpa SFX
+
+
+def attach_audio(data: dict, raw: dict | None) -> None:
+    """Volume klip per shot dari brief {idx: persen | None} → entry["volume"] (fraksi 0-2). None = mute."""
+    for key, value in (raw or {}).items():
+        entry = data.get("shots", {}).get(str(key))
+        if entry is None:
+            continue
+        entry.pop("volume", None)
+        if value is None:
+            continue
+        pct = float(value)
+        if not 0 <= pct <= 200:
+            raise ValueError(f"shot {int(key) + 1}: volume harus 0-200%")
+        entry["volume"] = round(pct / 100, 3)
+
+
+def attach_transition_sfx(data: dict, value: object) -> None:
+    """Mode SFX transisi per video; default nggak ditulis biar links.json lama tetap sama."""
+    if value not in TRANSITION_SFX:
+        raise ValueError(f"SFX transisi {value!r} nggak dikenal (pilih {', '.join(TRANSITION_SFX)})")
+    if value != "click_random":
+        data["transition_sfx"] = value
+
+
 def attach_speed(data: dict, raw_speed: dict | None) -> None:
     """Speed per shot dari brief {idx: speed} → entry["speed"]. Speed 1 nggak ditulis, shot tanpa link dilewat."""
     for key, value in (raw_speed or {}).items():
@@ -211,9 +237,9 @@ def custom_sfx_events(plan: dict, links: dict) -> list[dict]:
 
 
 def same_clip(a: dict, b: dict) -> bool:
-    """Link + pilihan item sama; detik mulai/selesai, SFX, dan speed nggak dihitung."""
+    """Link + pilihan item sama; detik mulai/selesai, SFX, speed, dan volume nggak dihitung."""
     def strip(e: dict) -> dict:
-        return {k: v for k, v in e.items() if k not in ("start_s", "end_s", "sfx", "speed")}
+        return {k: v for k, v in e.items() if k not in ("start_s", "end_s", "sfx", "speed", "volume")}
     return strip(a) == strip(b)
 
 

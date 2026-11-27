@@ -6,7 +6,7 @@ import json
 from html import escape
 from pathlib import Path
 
-from mayzfact.manual.links import IMAGE_EXTS, SPEEDS
+from mayzfact.manual.links import IMAGE_EXTS, SPEEDS, TRANSITION_SFX
 
 _CSS = """
 :root {
@@ -1041,6 +1041,51 @@ body {
 .speed-pick select:disabled {
   opacity: 0.5;
 }
+.audio-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.mute-pick, .vol-pick, .vol-pick label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mute-pick { min-height: 32px; }
+.mute-pick:has(input:disabled) { opacity: 0.5; }
+.vol-pick[hidden] { display: none; }
+.vol-pick input {
+  width: 64px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.bgm-ref {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f4f4f5;
+  color: #52525b;
+}
+.transition-picker { display: grid; gap: 8px; }
+.transition-title { margin: 0; font-size: 1rem; }
+.transition-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.transition-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.transition-opt:has(input:checked) { border-color: #18181b; background: #f4f4f5; font-weight: 600; }
+.transition-opt:has(input:focus-visible) { outline: 2px solid #18181b; outline-offset: 2px; }
+.transition-picker p { margin: 0; color: #52525b; font-size: .875rem; }
 .preview-stage {
   display: grid;
   gap: 6px;
@@ -1432,6 +1477,7 @@ async function saveBgm(select) {
     if (!response.ok) throw new Error(result.error || 'BGM gagal disimpan. Coba pilih lagi.');
     select.dataset.saved = result.track || '';
     status.textContent = 'BGM tersimpan untuk Short ini.';
+    loadBgmVolume();
   } catch (error) {
     select.value = select.dataset.saved;
     status.textContent = 'BGM gagal disimpan. Refresh brief atau coba pilih lagi.';
@@ -1685,7 +1731,7 @@ function scheduleAutoSave() {
       const res = await fetch('/api/links', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({shots, sfx: collectSfx(), speed: collectSpeed()})
+        body: JSON.stringify({shots, sfx: collectSfx(), speed: collectSpeed(), audio: collectAudio(), transition_sfx: collectTransition()})
       });
       if (res.ok) {
         setMsg('Tersimpan otomatis ✓');
@@ -1733,7 +1779,61 @@ document.addEventListener('input', (e) => {
 
 document.addEventListener('change', (e) => {
   if (e.target.matches('select[data-speed]')) scheduleAutoSave();
+  if (e.target.matches('input[data-mute]')) {
+    syncAudioRow(e.target.dataset.mute);
+    scheduleAutoSave();
+  }
+  if (e.target.matches('input[name="transition-sfx"]')) scheduleAutoSave();
 });
+document.addEventListener('input', (e) => {
+  if (e.target.matches('input[data-volume]')) {
+    applyPreviewAudio(e.target.dataset.volume);
+    scheduleAutoSave();
+  }
+});
+
+// Audio klip per shot: mute default; kalau dibuka, volume 0-200% dibandingin sama volume BGM video ini.
+function collectAudio() {
+  const out = {};
+  document.querySelectorAll('input[data-mute]').forEach(box => {
+    if (box.disabled) return;  // foto: audio diabaikan
+    const vol = document.querySelector(`input[data-volume="${box.dataset.mute}"]`);
+    out[box.dataset.mute] = box.checked ? null : Math.min(200, Math.max(0, Math.round(parseFloat(vol.value) || 0)));
+  });
+  return out;
+}
+function collectTransition() {
+  const picked = document.querySelector('input[name="transition-sfx"]:checked');
+  return picked ? picked.value : 'click_random';
+}
+function previewAudioState(idx) {
+  const box = document.querySelector(`input[data-mute="${idx}"]`);
+  const vol = document.querySelector(`input[data-volume="${idx}"]`);
+  const pct = parseFloat(vol && vol.value) || 0;
+  return {muted: !box || box.checked || box.disabled, volume: Math.min(1, pct / 100)};  // elemen video browser maksimal 100%
+}
+function applyPreviewAudio(idx) {
+  const video = document.querySelector(`[data-preview-stage="${idx}"] video`);
+  if (!video) return;
+  const st = previewAudioState(idx);
+  video.muted = st.muted;
+  video.volume = st.volume;
+}
+function syncAudioRow(idx) {
+  const box = document.querySelector(`input[data-mute="${idx}"]`);
+  const row = document.querySelector(`[data-vol-row="${idx}"]`);
+  if (box && row) row.hidden = box.checked || box.disabled;
+  applyPreviewAudio(idx);
+}
+async function loadBgmVolume() {
+  let text = 'BGM: ?';
+  try {
+    const res = await fetch('/api/bgm-volume');
+    if (res.ok) text = `BGM: ${(await res.json()).percent}%`;
+  } catch (err) {}
+  document.querySelectorAll('[data-bgm-ref]').forEach(el => { el.textContent = text; });
+}
+loadBgmVolume();
 
 // Preview klip + SFX kustom per shot. Bagian yang dipakai = [mulai, mulai + durasi shot]; mulai dari kolom Mulai,
 // kalau kosong dari server (lanjutan link sama, atau detik 0 / bagian pertama link itu yang belum tampil, D-042).
@@ -1766,6 +1866,11 @@ function syncSpeedSelect(idx, value) {
   if (!sel) return;
   const clean = value.trim().replace(/\s+(@\S+|#\S+)\s*$/, '').replace(/^file:/i, '');  // buang @detik / #pick
   sel.disabled = IMAGE_LINK.test(clean);
+  const box = document.querySelector(`input[data-mute="${idx}"]`);
+  if (box) {
+    box.disabled = sel.disabled;
+    syncAudioRow(idx);
+  }
 }
 function syncPreviewButtons() {
   document.querySelectorAll('[data-preview-btn]').forEach(btn => {
@@ -1896,6 +2001,8 @@ async function togglePreview(idx) {
   if (type.startsWith('image/')) {
     const sel = document.querySelector(`select[data-speed="${idx}"]`);
     if (sel) sel.disabled = true;  // foto: speed diabaikan
+    const box = document.querySelector(`input[data-mute="${idx}"]`);
+    if (box) { box.disabled = true; syncAudioRow(idx); }
     const img = document.createElement('img');
     img.src = src;
     img.alt = `Foto shot ${+idx + 1}`;
@@ -1906,7 +2013,9 @@ async function togglePreview(idx) {
   const video = document.createElement('video');
   video.className = 'preview-media';
   video.src = src;
-  video.muted = true;
+  const audio = previewAudioState(idx);
+  video.muted = audio.muted;
+  video.volume = audio.volume;
   video.playsInline = true;
   video.controls = true;
   const pos = document.createElement('span');
@@ -1971,7 +2080,7 @@ async function save() {
     const res = await fetch('/api/links', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({shots, sfx: collectSfx(), speed: collectSpeed(), retry: true})  // klik Simpan = link yang gagal dicoba lagi
+      body: JSON.stringify({shots, sfx: collectSfx(), speed: collectSpeed(), audio: collectAudio(), transition_sfx: collectTransition(), retry: true})  // klik Simpan = link yang gagal dicoba lagi
     });
     if (res.ok) {
       const data = await res.json();
@@ -1995,7 +2104,7 @@ async function uploadShot(shotIndex, input) {
     const saved = await fetch('/api/links', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({shots, sfx: collectSfx(), speed: collectSpeed()})
+      body: JSON.stringify({shots, sfx: collectSfx(), speed: collectSpeed(), audio: collectAudio(), transition_sfx: collectTransition()})
     });
     if (saved.ok) {
       const res = await fetch(`/api/upload?shot=${encodeURIComponent(shotIndex)}`, {
@@ -2184,6 +2293,16 @@ def _clip_tools(s_idx: int, dur: float, entry: dict | str | None, sfx_names: lis
         <label class="speed-pick">Speed
           <select data-speed="{s_idx}"{" disabled" if is_photo else ""}>{options}</select>
         </label>"""
+    volume = entry.get("volume") if isinstance(entry, dict) else None
+    muted = volume is None or is_photo
+    audio_pick = f"""
+        <div class="audio-pick" data-audio-pick="{s_idx}">
+          <label class="mute-pick"><input type="checkbox" data-mute="{s_idx}"{" checked" if muted else ""}{" disabled" if is_photo else ""}> Mute</label>
+          <span class="vol-pick" data-vol-row="{s_idx}"{" hidden" if muted else ""}>
+            <label>Volume <input type="number" min="0" max="200" step="5" data-volume="{s_idx}" value="{round((volume if volume is not None else 1.0) * 100)}">%</label>
+            <span class="bgm-ref" data-bgm-ref>BGM: …</span>
+          </span>
+        </div>"""
     pills = "".join(
         f'<label class="sfx-pill" title="{escape(name, quote=True)}"><input type="radio" name="sfx-{s_idx}" '
         f'value="{escape(name, quote=True)}"{" checked" if name == picked else ""}><span>{escape(sfx_label(name))}</span></label>'
@@ -2192,7 +2311,7 @@ def _clip_tools(s_idx: int, dur: float, entry: dict | str | None, sfx_names: lis
     none_checked = "" if picked in sfx_names else " checked"
     auto = "" if start is None else f"{start:g}"
     return f"""
-      <div class="clip-tools" data-clip-tools="{s_idx}" data-shot-dur="{dur:.2f}" data-auto-start="{auto}">{preview}{speed_pick}
+      <div class="clip-tools" data-clip-tools="{s_idx}" data-shot-dur="{dur:.2f}" data-auto-start="{auto}">{preview}{speed_pick}{audio_pick}
         <div class="sfx-row" role="radiogroup" aria-label="SFX kustom shot {s_idx + 1}">
           <span class="kw-row-label">SFX:</span>
           <label class="sfx-pill"><input type="radio" name="sfx-{s_idx}" value=""{none_checked}><span>Tanpa</span></label>
@@ -2434,6 +2553,23 @@ def _bgm_picker(names: list[str], choice: str | None) -> str:
     </section>"""
 
 
+TRANSITION_LABELS = {"click_random": "Klik + SFX random", "click": "Klik aja", "none": "Tanpa SFX"}
+
+
+def _transition_picker(choice: str) -> str:
+    radios = "".join(
+        f'<label class="transition-opt"><input type="radio" name="transition-sfx" value="{value}"'
+        f'{" checked" if value == choice else ""}><span>{TRANSITION_LABELS[value]}</span></label>'
+        for value in TRANSITION_SFX
+    )
+    return f"""
+    <section class="z-card transition-picker" role="radiogroup" aria-labelledby="transition-title">
+      <h2 id="transition-title" class="transition-title">SFX transisi</h2>
+      <div class="transition-options">{radios}</div>
+      <p>Berlaku buat semua pergantian shot di video ini. Klik CTA dan SFX kustom per shot nggak ikut.</p>
+    </section>"""
+
+
 def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str | None = None,
                 voice: str | None = None, prefetch: dict | None = None, sfx_names: list[str] | None = None,
                 previews: dict | None = None, *, bgm_names: list[str] | None = None, bgm_choice: str | None = None) -> str:
@@ -2605,6 +2741,7 @@ def render_page(run_id: str, plan: dict, links: dict, status: dict, source: str 
       <section id="progress"></section>
       {_source_frames_card(run_id, plan)}
       {_bgm_picker(bgm_names, bgm_choice) if bgm_names is not None else ''}
+      {_transition_picker(links.get("transition_sfx") if links.get("transition_sfx") in TRANSITION_SFX else "click_random")}
       {cards}
     </main>
   </div>

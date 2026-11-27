@@ -103,6 +103,8 @@ def _shot_entries(shots: list[dict], total: int, fg_min_ratio: float) -> list[di
         }
         if layout == "blur":
             entry["fgHeight"] = fg_height(shot["width"], shot["height"], fg_min_ratio)
+        if shot["kind"] == "video" and shot.get("volume") is not None:  # shot di-unmute di brief
+            entry["volume"] = shot["volume"]
         if shot.get('auto_cta'):
             entry['decorative'] = True
             for key in ('clipOffset', 'loopFrames', 'generated'):
@@ -264,6 +266,8 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
 
     # Pergantian klip setelah hook (D-038): klip pertama habis card = magic reveal + efek pembuka (box subjek di card
     # bunyi "subject" = check mark), sisanya klik + 1 SFX tambahan acak (atau nggak ada). Seed tetap biar render ulang sama.
+    # Mode SFX transisi dari brief: klik + random (default), klik aja, atau tanpa bunyi sama sekali.
+    mode = (audio or {}).get("transition_sfx", "click_random")
     extras = sorted(event for event in files if event.startswith(EXTRA_PREFIX))
     hook_extras = sorted(event for event in files if event.startswith(HOOK_EXTRA_PREFIX))
     rng = random.Random(len(entries))
@@ -286,18 +290,21 @@ def _sound(audio: dict | None, entries: list[dict], countdown: list[dict], overl
             continue
         if entry["from"] < hook_end:  # di dalam hook: camera flash + 1 SFX hook acak + flash putih
             if "hook_cut" in files:
-                add("hook_cut", entry["from"] - SFX_LEAD_FRAMES)
-                if hook_extras:
+                if mode != "none":
+                    add("hook_cut", entry["from"] - SFX_LEAD_FRAMES)
+                if hook_extras and mode == "click_random":
                     add(pick_extra(hook_extras, "hook", hook_rng), entry["from"] - SFX_LEAD_FRAMES, align_to="hook_cut")
                 flashes.append({"from": entry["from"], "durationInFrames": FLASH_FRAMES})
             continue
         frame = entry["from"] - SFX_LEAD_FRAMES
         if since_card == 1 and "item_reveal" in files:
-            add("item_reveal", frame)
+            if mode != "none":
+                add("item_reveal", frame)
             reveals.append({"from": entry["from"], "durationInFrames": INTRO_FRAMES})
         else:
-            add("cut", frame)
-            pick = pick_extra([None, *extras], "main", rng) if extras else None
+            if mode != "none":
+                add("cut", frame)
+            pick = pick_extra([None, *extras], "main", rng) if extras and mode == "click_random" else None
             if pick:
                 add(pick, frame, align_to="cut")
     for overlay in overlays:

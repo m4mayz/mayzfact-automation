@@ -10,6 +10,7 @@ export type Shot = {
   clipOffset?: number; // frame yang sudah dipakai dari background ini; boleh lebih dari satu loop
   loopFrames?: number;
   generated?: boolean; // fallback warna bergerak kalau belum ada video sebelumnya
+  volume?: number; // shot di-unmute di brief: volume audio klip (0-2)
 };
 
 export type Caption = {
