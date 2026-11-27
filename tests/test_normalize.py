@@ -41,3 +41,29 @@ def test_normalize_photo_only_downscales(tmp_path):
     small = tmp_path / "small.jpg"
     Image.new("RGB", (640, 480), "green").save(small)
     assert normalize_photo(small, tmp_path / "b.jpg", fg_min_ratio=0.5) == (640, 480)
+
+
+def _audio_duration(path):
+    import subprocess
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=duration",
+                          "-of", "csv=p=0", str(path)], capture_output=True, text=True, check=True).stdout
+    return float(out.strip())
+
+
+def test_normalize_video_keeps_audio_with_atempo(tmp_path, make_video):
+    dest = tmp_path / "shot_01.mp4"
+    normalize_video(make_video(1080, 1920, 3.0), dest, start_s=0.5, duration_s=2.0, scale=1.0, speed=2.0, audio=True)
+    assert sorted(stream_types(dest)) == ["audio", "video"]
+    assert abs(_audio_duration(dest) - 1.0) < 0.1  # atempo: audio ikut dipadatkan kayak videonya
+
+
+def test_normalize_video_audio_on_silent_source(tmp_path, cut_video):
+    dest = tmp_path / "shot_01.mp4"
+    normalize_video(cut_video, dest, start_s=0.0, duration_s=1.5, scale=1.0, audio=True)
+    assert stream_types(dest) == ["video"]
+
+
+def test_normalize_video_audio_on_silent_source_with_speed(tmp_path, cut_video):
+    dest = tmp_path / "shot_01.mp4"
+    normalize_video(cut_video, dest, start_s=0.0, duration_s=1.5, scale=1.0, speed=1.5, audio=True)
+    assert stream_types(dest) == ["video"]

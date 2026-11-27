@@ -536,3 +536,23 @@ def test_video_without_start_time_starts_at_zero(tmp_path, cut_video):
     assert by_index[0]["source_s"] == 0.0
     # link sama tapi nggak berurutan: lanjut dari bagian yang belum tampil (shot 1 kepake 0-0.3 + ekor 0.2)
     assert abs(by_index[2]["source_s"] - 0.5) < 1e-3
+
+
+def test_unmuted_shot_keeps_audio_and_volume(tmp_path, make_video):
+    from tests.factories import stream_types
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["groups"] = [{"id": "content", "label": "content", "shots": [2, 3]}]
+    plan["shots"] = [
+        {**plan["shots"][2], "start_s": 0.0, "end_s": 0.4, "media": "video", "group": "content"},
+        {**plan["shots"][3], "start_s": 0.4, "end_s": 0.8, "media": "video", "group": "content"},
+    ]
+    save_links(paths.links_json, {"shots": {
+        "2": {"url": "https://a.b/video", "volume": 1.5},
+        "3": {"url": "https://a.b/video"},
+    }})
+    data = run_fetch(paths, plan, obtain=lambda e, r: [make_video(320, 240, 3.0)], encoder=FakeEncoder(), **QUIET)
+    s2, s3 = data["shots"]
+    assert s2["volume"] == 1.5 and "volume" not in s3
+    assert sorted(stream_types(paths.root / s2["file"])) == ["audio", "video"]
+    assert stream_types(paths.root / s3["file"]) == ["video"]
