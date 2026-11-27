@@ -41,13 +41,18 @@ assert.match(lucky, /data-cta-sticker="true" data-cta-format="lucky"/);
 assert.match(lucky, /top:\s?1030px/);
 assert.doesNotMatch(lucky, /data-cta-emoji/);
 
-// Shorts sekarang pakai hati, bukan jempol (YouTube, Juni 2026): LIKE = hati outline, LIKED = hati penuh.
+// Like ala HP (D-070): tombol hati bulat kayak rail kanan Shorts + titik sentuh, bukan pill + kursor mouse.
 const beforeClick = markup({format: 'lucky', theme: 'shark'}, 5);
 const afterClick = markup({format: 'lucky', theme: 'shark'}, 15);
-assert.match(beforeClick, /data-cta-pill="like"[\s\S]*data-cta-heart="outline"[\s\S]*LIKE/);
-assert.match(afterClick, /data-cta-pill="like"[\s\S]*data-cta-heart="filled"[\s\S]*LIKED/);
-assert.match(beforeClick, /data-cta-heart="outline"[^>]*scale:1[;"]/, 'hati outline jangan ikut skala pop klik');
-assert.doesNotMatch(beforeClick + afterClick, /M1 21h4V9H1v12z/, 'ikon jempol nggak boleh muncul lagi di CTA FaktaCuil');
+assert.match(beforeClick, /data-cta-like="mobile"[\s\S]*data-cta-heart="outline"/);
+assert.match(beforeClick, /data-cta-touch="true"/);
+assert.match(afterClick, /data-cta-like="mobile"[\s\S]*data-cta-heart="filled"/);
+assert.match(afterClick, /data-cta-burst="true"/);
+assert.match(afterClick, /data-cta-plus-one="true"/);
+assert.doesNotMatch(beforeClick + afterClick, /data-cta-pill="like"/, 'pill LIKE desktop udah diganti');
+assert.doesNotMatch(beforeClick + afterClick, /M0 0 L0 34 L9 26/, 'kursor panah mouse nggak dipakai buat like');
+assert.doesNotMatch(beforeClick + afterClick, /M1 21h4V9H1v12z/, 'ikon jempol nggak boleh muncul lagi');
+assert.doesNotMatch(markup({format: 'lucky', theme: 'shark'}, 31), /data-cta-like="mobile"/, 'tombol like hilang setelah LIKED_HOLD');
 
 const chili = {format: 'lucky', theme: 'chili'};
 assert.doesNotMatch(markup(chili, 9), /data-sticker="chili"/);

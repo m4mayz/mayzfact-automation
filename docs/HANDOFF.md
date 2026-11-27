@@ -1,6 +1,6 @@
 # Handoff — FaktaCuil (D-051, D-052, D-053)
 
-**2026-11-27 (D-070):** Pill like CTA FaktaCuil pakai hati (outline → penuh), caption 1 kata pakai Arimo Bold. Dites: `node tests/faktacuil-cta.cjs`, `node tests/cta-scene.cjs`, `tsc`, still di `gu2M14rfRlU` (frame 175/380/392). Belum dites: render video penuh.
+**2026-11-27 (D-070):** Like CTA FaktaCuil jadi ilustrasi HP (tombol hati bulat + tap + burst, `FaktaCuilLike.tsx`), caption 1 kata pakai Arimo Bold. Dites: `node tests/faktacuil-cta.cjs`, `node tests/cta-scene.cjs`, `tsc`, contact sheet frame 371–410 `gu2M14rfRlU` + still format emoji. Belum dites: render video penuh, dan pill SUBSCRIBE masih gaya lama.
 
 **2026-11-27 (D-069):** Caption style `box` (opt-in lewat `caption_style: "box"` di `script.json`): kotak per kata, 1 tampilan per beat, kata aktif lime miring. Dites: unit test grouping + model, `tsc`, render test watermark, still di salinan props `gu2M14rfRlU`. Belum dites: render video penuh + preview ke Akmal, dan gerakan kata aktif belum dicocokin ke video sumber (baru screenshot).
 
@@ -14,7 +14,7 @@
 - **Video pertama FaktaCuil:** run `gu2M14rfRlU` ("Rahasia Rumah Jepang Kokoh Tanpa Paku😱"), di-upload ke channel FaktaCuil `RNZ4iZy4iIU`, tayang 2026-11-12 12.00 WIB. Metadata-nya diganti lewat `videos.update` setelah upload (format FaktaBor).
 - **Sekarang FaktaCuil begini (D-053 menggantikan sebagian D-051):**
   - Shot maks 3,0 detik (`faktacuil_max_shot_seconds`), biasanya 1 beat = 1 shot, median ±1,9 detik kayak FaktaBor.
-  - Shot CTA minta link di brief (grup "CTA"), bukan AUTO CTA. CTA gaya FaktaBor `pJe_Qok8qDA`: pill "LIKE" gelap → kursor klik → "LIKED" biru → stiker flat objek tema (`remotion/src/FaktaCuilCta.tsx`, `FaktaCuilStickers.tsx`), klip CTA nggak di-blur.
+  - Shot CTA minta link di brief (grup "CTA"), bukan AUTO CTA. CTA gaya FaktaBor `pJe_Qok8qDA` (like-nya sekarang versi HP, D-070) → stiker flat objek tema (`remotion/src/FaktaCuilCta.tsx`, `FaktaCuilStickers.tsx`), klip CTA nggak di-blur.
   - Intro + SFX `hook` di detik 0 sama kayak MayzFact. Nggak ada riser.
   - Caption: "?" di kalimat tanya, ngilang pas jeda ≥0,25 detik (`voice_end_s` dari alignment), shadow lebih tebel, lebar maks 648 px (60%), font minimal 44 px.
   - SFX transisi bunyi juga di link yang sama kalau Mulai-nya lompat (`_continues` pakai `source_s`). Berlaku buat top3 juga.

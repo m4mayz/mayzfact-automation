@@ -3,15 +3,17 @@ import {interpolate, Sequence, useCurrentFrame} from 'remotion';
 import {Lottie} from '@remotion/lottie';
 import {Cursor} from './Cta';
 import {useLottieJson} from './Emojis';
+import {MobileLike} from './FaktaCuilLike';
 import {Sticker} from './FaktaCuilStickers';
 import {MONTSERRAT} from './fonts';
 import type {FaktaCuilSceneData} from './types';
 
-// Ditiru dari CTA tengah FaktaBor pJe_Qok8qDA (dicek 10 fps): pill gelap "LIKE" muncul di awal ajakan,
-// kursor panah masuk, jadi tangan, klik di kata pemicu → pill biru "LIKED" ±0,7 detik, lalu stiker membesar.
+// Alur dari CTA tengah FaktaBor pJe_Qok8qDA: tombol like muncul di awal ajakan, di-tap di kata pemicu,
+// tahan ±0,7 detik (LIKED_HOLD), lalu stiker membesar. Visual like-nya versi HP (FaktaCuilLike.tsx, D-070).
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 const PILL_X = 540;
 const PILL_Y = 750; // ±39% tinggi frame
+const LIKE_Y_EMOJI = 560; // format emoji: emoji muncul barengan di STICKER_Y, tombol like naik biar nggak nutup
 const LIKED_HOLD = 20;
 const STICKER_GAP = 2;
 const STICKER_SIZE = 440;
@@ -19,31 +21,15 @@ const STICKER_Y = 1030;
 // Harus sama kayak FAKTACUIL_SUBSCRIBE_CLICK di mayzfact/steps/timeline.py.
 const SUB_CLICK = 12;
 
-const Arrow: React.FC<{x: number; y: number}> = ({x, y}) => (
-  <svg width={62} height={86} viewBox="-3 -3 34 46" style={{position: 'absolute', left: x - 3, top: y - 3}}>
-    <path d="M0 0 L0 34 L9 26 L15 40 L21 37 L15 24 L27 24 Z" fill="white" stroke="black" strokeWidth={2.4} strokeLinejoin="round"/>
-  </svg>
-);
-
-// Tombol like Shorts sekarang hati, bukan jempol (blog YouTube, 25 Juni 2026): outline sebelum klik, penuh sesudahnya.
-const HEART = 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
-
-const Heart: React.FC<{size: number; filled: boolean; scale: number}> = ({size, filled, scale}) => (
-  <svg data-cta-heart={filled ? 'filled' : 'outline'} width={size} height={size} viewBox="0 0 24 24"
-    style={{overflow: 'visible', scale}}>
-    <path d={HEART} fill={filled ? 'white' : 'none'} stroke="white" strokeWidth={filled ? 0 : 2.2} strokeLinejoin="round"/>
-  </svg>
-);
-
-const Pill: React.FC<{kind: 'like' | 'subscribe'; label: string; bg: string; scale: number; opacity: number;
-  liked?: boolean; heartScale?: number}> = ({kind, label, bg, scale, opacity, liked = false, heartScale = 1}) => (
+const Pill: React.FC<{kind: 'subscribe'; label: string; bg: string; scale: number; opacity: number}> = ({
+  kind, label, bg, scale, opacity,
+}) => (
   <div data-cta-pill={kind} style={{
     position: 'absolute', left: PILL_X, top: PILL_Y, translate: '-50% -50%', rotate: '-4deg', scale, opacity,
     display: 'flex', alignItems: 'center', gap: 26, height: 196, padding: '0 50px', borderRadius: 30,
     background: bg, boxShadow: '0 12px 32px rgba(0,0,0,.35)',
     fontFamily: MONTSERRAT, fontWeight: 800, fontSize: 92, color: 'white', whiteSpace: 'nowrap',
   }}>
-    {kind === 'like' ? <Heart size={92} filled={liked} scale={heartScale}/> : null}
     {label}
   </div>
 );
@@ -93,9 +79,6 @@ export const FaktaCuilCtaVisual: React.FC<{scene: FaktaCuilSceneData; frame: num
   const subFrom = subCue ? subCue.from - scene.from
     : subStage ? subStage.from - scene.from : null;
   const pillEnd = Math.min(clickAt + LIKED_HOLD, subFrom ?? scene.durationInFrames, scene.durationInFrames);
-  const liked = frame >= clickAt;
-  const pop = interpolate(frame, [0, 2, 4], [0.8, 1.05, 1], clamp) * interpolate(frame - clickAt, [0, 3, 6], [1, 1.1, 1], clamp);
-  const arrowT = interpolate(frame, [clickAt - 10, clickAt - 3], [0, 1], clamp);
   const tipX = PILL_X + 90;
   const tipY = PILL_Y + 40;
 
@@ -144,14 +127,7 @@ export const FaktaCuilCtaVisual: React.FC<{scene: FaktaCuilSceneData; frame: num
           </div>
         );
       })() : null}
-      {frame < pillEnd ? <>
-        <Pill kind="like" label={liked ? 'LIKED' : 'LIKE'} bg={liked ? '#1468f0' : 'rgba(28,28,30,0.94)'}
-          scale={pop} opacity={interpolate(frame, [0, 2], [0, 1], clamp)} liked={liked}
-          heartScale={liked ? interpolate(frame - clickAt, [0, 3, 6], [0.6, 1.25, 1], clamp) : 1}/>
-        {frame >= clickAt - 10 && frame < clickAt - 3 ?
-          <Arrow x={interpolate(arrowT, [0, 1], [tipX + 200, tipX])} y={interpolate(arrowT, [0, 1], [tipY + 220, tipY])}/> : null}
-        {frame >= clickAt - 3 ? <Cursor x={tipX} y={tipY} pressed={frame >= clickAt && frame < clickAt + 3}/> : null}
-      </> : null}
+      {frame < pillEnd ? <MobileLike frame={frame} clickAt={clickAt} end={pillEnd} x={PILL_X} y={hasEmoji ? LIKE_Y_EMOJI : PILL_Y}/> : null}
       {subFrom !== null && frame >= subFrom && frame < subEnd ? <>
         <Pill kind="subscribe" label={subClicked ? 'SUBSCRIBED' : 'SUBSCRIBE'}
           bg={subClicked ? 'rgba(28,28,30,0.94)' : '#ff0000'}
