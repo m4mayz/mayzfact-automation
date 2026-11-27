@@ -13,16 +13,16 @@ import {ARIMO, arimoReady} from './fonts';
 import type {Caption} from './types';
 
 // FaktaCuil "box" (D-069): kata muncul satu per satu dari tengah, kata sebelumnya geser halus ke posisi layout final.
-const FONT_SIZE = 64;
-const FIT_SIZES = [64, 58, 52, 46]; // turun kalau 1 tampilan butuh lebih dari 2 baris
-const PAD_X = 18;
-const PAD_Y = 6;
-const BORDER = 3;
+const FONT_SIZE = 45; // 70% ukuran awal (Akmal: kiri-kanan jangan terlalu lebar)
+const FIT_SIZES = [45, 41, 37, 33]; // turun kalau 1 tampilan butuh lebih dari 2 baris
+const PAD_X = 13;
+const PAD_Y = 4;
+const BORDER = 2;
 const LINE_HEIGHT = 1.2;
 const boxHeight = (size: number) => Math.round(size * LINE_HEIGHT) + 2 * (PAD_Y + BORDER);
-const GAP_X = 16;
-const GAP_Y = 18;
-const MAX_LINE = 900;
+const GAP_X = 11;
+const GAP_Y = 13;
+const MAX_LINE = 630;
 const SHIFT_FRAMES = 8;
 const HIGHLIGHT_OUT_FRAMES = 4;
 const DARK = '#1f1f23';
@@ -105,16 +105,16 @@ const BoxGroup: React.FC<{words: Caption[]; textWidths: number[]; start: number}
               opacity: interpolate(f, [0, 2], [0, 1], {extrapolateRight: 'clamp'}),
               background: interpolateColors(active, [0, 1], [DARK, LIME]),
               border: `${BORDER}px solid ${interpolateColors(active, [0, 1], ['#a1a1aa', '#ecfccb'])}`,
-              borderRadius: 12,
+              borderRadius: 8,
               padding: `${PAD_Y}px ${PAD_X}px`,
-              boxShadow: `5px 6px 0 rgba(0,0,0,0.9), 0 0 ${30 * active}px rgba(163,230,53,${0.8 * active})`,
+              boxShadow: `4px 4px 0 rgba(0,0,0,0.9), 0 0 ${21 * active}px rgba(163,230,53,${0.8 * active})`,
               fontFamily: ARIMO,
               fontWeight: 700,
               fontSize: size,
               lineHeight: LINE_HEIGHT,
               textAlign: 'center',
               color: interpolateColors(active, [0, 1], [words[i].color, '#14290a']),
-              WebkitTextStroke: `${6 * (1 - active)}px black`,
+              WebkitTextStroke: `${4 * (1 - active)}px black`,
               paintOrder: 'stroke fill',
               whiteSpace: 'nowrap',
             }}

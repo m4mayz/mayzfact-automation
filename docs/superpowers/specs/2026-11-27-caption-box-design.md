@@ -18,8 +18,8 @@ Referensi: screenshot TikTok dari Akmal. Tiap kata punya kotak gelap sendiri den
 
 ## Visual (revisi 1 dari Akmal, 2026-11-27)
 
-- Font Arimo Bold (padanan Google Fonts buat Arial Bold, mirip referensi), 64 px. Kalau 1 tampilan butuh lebih dari 2 baris, font turun ke 58/52/46 px. Lebar kotak diukur pakai canvas setelah font ke-load.
-- Kotak kata: background `#1f1f23`, border 3 px `#a1a1aa`, radius 12, bayangan keras `5px 6px 0`. Teks putih, stroke hitam 6 px.
+- Font Arimo Bold (padanan Google Fonts buat Arial Bold, mirip referensi), 45 px, lebar baris maks 630 px (revisi 2: semua ukuran 70% dari versi awal biar kiri-kanan nggak terlalu lebar). Kalau 1 tampilan butuh lebih dari 2 baris, font turun ke 41/37/33 px. Lebar kotak diukur pakai canvas setelah font ke-load.
+- Kotak kata: background `#1f1f23`, border 2 px `#a1a1aa`, radius 8, bayangan keras `4px 4px 0`. Teks putih, stroke hitam 4 px.
 - Kata aktif (kata terbaru yang diucapin): background lime `#a3e635`, border `#ecfccb`, teks `#14290a` tanpa stroke, miring −4°, scale 1,06, glow lime. Pas kata berikutnya muncul, warnanya balik gelap dalam 4 frame.
 - Muncul bertahap: kata nongol pas diucapin, pop pakai spring cepat. Kata pertama tiap baris muncul di tengah. Kata berikutnya nempel di kanan, lalu satu baris geser halus ke kiri (8 frame) biar tetap di tengah. Baris kedua muncul di bawah, lalu blok naik halus. Posisi akhirnya sama kayak layout 2 baris yang rata tengah.
 
