@@ -727,3 +727,10 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - YouTube ngganti tombol like Shorts dari jempol ke hati dan ngapus dislike (blog YouTube, 25 Juni 2026: "How we're updating the YouTube Shorts experience"). Revisi Akmal: pill + kursor mouse itu gaya desktop, padahal audiens rata-rata nonton di HP. Like FaktaCuil sekarang ilustrasi versi HP (`FaktaCuilLike.tsx`): tombol hati bulat kayak rail kanan Shorts + label "Suka", titik sentuh jari nge-tap, lalu hati ketekan dan mantul jadi merah, ring burst, partikel hati/titik, hati kecil melayang, "+1", dan ripple di titik tap. Alur dan timing (klik di kata pemicu, tahan 20 frame) tetap. Subscribe ikut versi HP (`FaktaCuilSubscribe.tsx`): baris avatar + @FaktaCuil + pill putih "Subscribe", di-tap jadi pill abu "Disubscribe" (label YouTube bahasa Indonesia, sama kayak "Suka") + lonceng goyang, ring, confetti. Titik sentuhnya sama kayak like (`TouchTap`). CTA MayzFact top3 (`CtaScene.tsx`) nggak diubah.
 - Caption 1 kata FaktaCuil ganti font dari Fredoka ke Arimo Bold, biar sama kayak caption box (D-069). Watermark tetap Fredoka.
 
+## D-071: Audio klip per shot + mode SFX transisi
+
+- Akmal mau beberapa shot ngeluarin suara asli klipnya. Brief sekarang punya checkbox Mute per shot video (default mute). Kalau di-uncheck, muncul Volume 0–200 % dan label volume BGM video ini (read-only, dihitung pakai rumus timeline `faktacuil_bgm_volume`).
+- `links.json` nyimpen `volume` (fraksi) per shot. Fetch motong audio cuma buat shot itu (AAC, `atempo` buat speed ≠ 1, source tanpa audio tetap jalan). `clips.json` → timeline `Shot.volume` → `<Video volume>` di Remotion. Remotion 4.0.538 dukung volume > 1, dicek `volumedetect`: 150 % = +3,5 dB, 50 % = −6 dB.
+- Radio "SFX transisi" per video (`transition_sfx`): `click_random` (default, perilaku lama), `click`, `none`. Yang diatur: `cut`/`extra_*`, `hook_cut`/`hook_extra_*`, `item_reveal`. Klik CTA dan SFX kustom per shot nggak ikut.
+- Narasi nggak otomatis dikecilin (ducking) dan loudness audio klip nggak dinormalisasi. Spec: `docs/superpowers/specs/2026-11-28-shot-audio-design.md`.
+

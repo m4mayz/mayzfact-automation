@@ -1,5 +1,7 @@
 # Handoff — FaktaCuil (D-051, D-052, D-053)
 
+**2026-11-28 (D-071):** Brief: Mute/Volume per shot + label volume BGM, radio SFX transisi per video. Fetch motong audio buat shot yang di-unmute, Remotion muter pakai `volume`. Dites: unit + server brief, Playwright 390 px (autosave nyimpen `volume` + `transition_sfx`), ffmpeg audio + `atempo`, render 3 varian volume diukur `volumedetect`. Belum dites: run produksi penuh dengan klip ber-audio dari link asli.
+
 **2026-11-27 (D-070):** Like CTA FaktaCuil jadi ilustrasi HP (tombol hati bulat + tap + burst, `FaktaCuilLike.tsx`), caption 1 kata pakai Arimo Bold. Dites: `node tests/faktacuil-cta.cjs`, `node tests/cta-scene.cjs`, `tsc`, contact sheet frame 371–410 `gu2M14rfRlU` + still format emoji. Subscribe juga versi HP (avatar + pill "Subscribe" → "Disubscribe"), dicek pakai contact sheet frame 428–465 dari props subscribe buatan. Belum dites: render video penuh.
 
 **2026-11-27 (D-069):** Caption style `box` (opt-in lewat `caption_style: "box"` di `script.json`): kotak per kata, 1 tampilan per beat, kata aktif lime miring. Dites: unit test grouping + model, `tsc`, render test watermark, still di salinan props `gu2M14rfRlU`. Belum dites: render video penuh + preview ke Akmal, dan gerakan kata aktif belum dicocokin ke video sumber (baru screenshot).

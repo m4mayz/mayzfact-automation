@@ -43,7 +43,7 @@ File penting di `runs/<id>/`:
 - `script.json`: naskah per beat (ditulis agent), termasuk `queries`/`queries_zh`, tanda `point`/`emoji`/`emoji_word`, dan `hook_queries`. `narration_mode` `top3` atau `faktacuil` (D-050, D-051) dan `cta_scene` wajib; run format lama ditolak pipeline, file-nya dibiarin.
 - `voice.wav`, `voice.mp3` dan `tts.json`: suara dan timing. Jangan dihapus. `tts-profile.json` mengunci voice hasil undian untuk retry TTS.
 - `tts-request.txt` + `voice.upload.{mp3,wav,m4a}`: provider suara `manual` (D-067). Teks buat di-paste Akmal ke web ElevenLabs, dan file hasil upload-nya. Jangan dihapus.
-- `links.json`: link klip per shot dari halaman brief (plus start/end detik kalau diisi, dan SFX kustom `sfx: {file, at_s}`).
+- `links.json`: link klip per shot dari halaman brief (plus start/end detik kalau diisi, SFX kustom `sfx: {file, at_s}`, `speed`, dan `volume` 0–2 kalau shot di-unmute), plus `transition_sfx` (`click`/`none`; nggak ada = klik + random).
 - `clips.json`: klip per shot, termasuk sumbernya (`provider`, `page_url`, `author`).
 - `timeline.json`: props buat Remotion.
 - `overlays.json`: cache deteksi subjek.
