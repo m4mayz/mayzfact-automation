@@ -1,6 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, interpolate, Sequence, useCurrentFrame} from 'remotion';
-import {ANTON, FREDOKA} from './fonts';
+import {ANTON, ARIMO} from './fonts';
 import {BoxCaptions} from './BoxCaptions';
 import type {Caption, CaptionStyle} from './types';
 
@@ -50,11 +50,11 @@ const Word: React.FC<{caption: Caption; id: string}> = ({caption, id}) => {
   );
 };
 
-// FaktaCuil: Fredoka 700, pop tanpa blur (scale 0.6 → 1.12 → 1 dalam 5 frame, opacity 0 → 1 dalam 2 frame).
+// FaktaCuil: Arimo Bold (sama kayak caption box), pop tanpa blur (scale 0.6 → 1.12 → 1 dalam 5 frame, opacity 0 → 1 dalam 2 frame).
 const FC_MAX_WIDTH = 648; // 60% lebar frame: sisa kiri-kanan ±20% (Akmal)
 const FC_MAX_SIZE = 120;
 const FC_MIN_SIZE = 44; // 648 px muat ±20 huruf di 44 px; di bawah ini kata panjang tetap bisa lewat 60%
-const FC_CHAR_EM = 0.72; // perkiraan lebar rata-rata huruf kapital Fredoka 700 + stroke, dalam em
+const FC_CHAR_EM = 0.72; // perkiraan lebar rata-rata huruf kapital Arimo Bold + stroke, dalam em
 
 const fcFontSize = (text: string): number =>
   Math.max(FC_MIN_SIZE, Math.min(FC_MAX_SIZE, Math.floor(FC_MAX_WIDTH / (Math.max(1, text.length) * FC_CHAR_EM))));
@@ -71,7 +71,7 @@ const FaktaCuilWord: React.FC<{caption: Caption}> = ({caption}) => {
           top: '75%',
           transform: `translateY(-50%) scale(${scale})`,
           opacity,
-          fontFamily: FREDOKA,
+          fontFamily: ARIMO,
           fontWeight: 700,
           fontSize: fcFontSize(caption.text),
           color: caption.color,

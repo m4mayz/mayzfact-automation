@@ -1,7 +1,7 @@
 import React from 'react';
 import {interpolate, Sequence, useCurrentFrame} from 'remotion';
 import {Lottie} from '@remotion/lottie';
-import {Cursor, Thumb} from './Cta';
+import {Cursor} from './Cta';
 import {useLottieJson} from './Emojis';
 import {Sticker} from './FaktaCuilStickers';
 import {MONTSERRAT} from './fonts';
@@ -25,16 +25,25 @@ const Arrow: React.FC<{x: number; y: number}> = ({x, y}) => (
   </svg>
 );
 
-const Pill: React.FC<{kind: 'like' | 'subscribe'; label: string; bg: string; scale: number; opacity: number}> = ({
-  kind, label, bg, scale, opacity,
-}) => (
+// Tombol like Shorts sekarang hati, bukan jempol (blog YouTube, 25 Juni 2026): outline sebelum klik, penuh sesudahnya.
+const HEART = 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
+
+const Heart: React.FC<{size: number; filled: boolean; scale: number}> = ({size, filled, scale}) => (
+  <svg data-cta-heart={filled ? 'filled' : 'outline'} width={size} height={size} viewBox="0 0 24 24"
+    style={{overflow: 'visible', scale}}>
+    <path d={HEART} fill={filled ? 'white' : 'none'} stroke="white" strokeWidth={filled ? 0 : 2.2} strokeLinejoin="round"/>
+  </svg>
+);
+
+const Pill: React.FC<{kind: 'like' | 'subscribe'; label: string; bg: string; scale: number; opacity: number;
+  liked?: boolean; heartScale?: number}> = ({kind, label, bg, scale, opacity, liked = false, heartScale = 1}) => (
   <div data-cta-pill={kind} style={{
     position: 'absolute', left: PILL_X, top: PILL_Y, translate: '-50% -50%', rotate: '-4deg', scale, opacity,
     display: 'flex', alignItems: 'center', gap: 26, height: 196, padding: '0 50px', borderRadius: 30,
     background: bg, boxShadow: '0 12px 32px rgba(0,0,0,.35)',
     fontFamily: MONTSERRAT, fontWeight: 800, fontSize: 92, color: 'white', whiteSpace: 'nowrap',
   }}>
-    {kind === 'like' ? <Thumb size={92} color="white"/> : null}
+    {kind === 'like' ? <Heart size={92} filled={liked} scale={heartScale}/> : null}
     {label}
   </div>
 );
@@ -137,7 +146,8 @@ export const FaktaCuilCtaVisual: React.FC<{scene: FaktaCuilSceneData; frame: num
       })() : null}
       {frame < pillEnd ? <>
         <Pill kind="like" label={liked ? 'LIKED' : 'LIKE'} bg={liked ? '#1468f0' : 'rgba(28,28,30,0.94)'}
-          scale={pop} opacity={interpolate(frame, [0, 2], [0, 1], clamp)}/>
+          scale={pop} opacity={interpolate(frame, [0, 2], [0, 1], clamp)} liked={liked}
+          heartScale={liked ? interpolate(frame - clickAt, [0, 3, 6], [0.6, 1.25, 1], clamp) : 1}/>
         {frame >= clickAt - 10 && frame < clickAt - 3 ?
           <Arrow x={interpolate(arrowT, [0, 1], [tipX + 200, tipX])} y={interpolate(arrowT, [0, 1], [tipY + 220, tipY])}/> : null}
         {frame >= clickAt - 3 ? <Cursor x={tipX} y={tipY} pressed={frame >= clickAt && frame < clickAt + 3}/> : null}

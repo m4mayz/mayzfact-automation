@@ -41,6 +41,14 @@ assert.match(lucky, /data-cta-sticker="true" data-cta-format="lucky"/);
 assert.match(lucky, /top:\s?1030px/);
 assert.doesNotMatch(lucky, /data-cta-emoji/);
 
+// Shorts sekarang pakai hati, bukan jempol (YouTube, Juni 2026): LIKE = hati outline, LIKED = hati penuh.
+const beforeClick = markup({format: 'lucky', theme: 'shark'}, 5);
+const afterClick = markup({format: 'lucky', theme: 'shark'}, 15);
+assert.match(beforeClick, /data-cta-pill="like"[\s\S]*data-cta-heart="outline"[\s\S]*LIKE/);
+assert.match(afterClick, /data-cta-pill="like"[\s\S]*data-cta-heart="filled"[\s\S]*LIKED/);
+assert.match(beforeClick, /data-cta-heart="outline"[^>]*scale:1[;"]/, 'hati outline jangan ikut skala pop klik');
+assert.doesNotMatch(beforeClick + afterClick, /M1 21h4V9H1v12z/, 'ikon jempol nggak boleh muncul lagi di CTA FaktaCuil');
+
 const chili = {format: 'lucky', theme: 'chili'};
 assert.doesNotMatch(markup(chili, 9), /data-sticker="chili"/);
 assert.match(markup(chili, 40), /<svg[^>]*data-sticker="chili"/);

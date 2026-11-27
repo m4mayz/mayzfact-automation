@@ -722,3 +722,8 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 - 1 tampilan = 1 beat; beat panjang dibagi rata, maks 8 kata / 36 huruf. Timeline: `captionStyle: "faktacuil-box"` + `group` per caption.
 - Revisi Akmal: font Arimo Bold (mirip Arial Bold di referensi), kata muncul satu per satu pas diucapin dengan pop cepat, kata pertama di tengah, baris geser halus ke kiri tiap ada kata baru, baris kedua bikin blok naik. Ukuran box 70% dari versi awal (font 45 px, lebar baris maks 630 px); font turun otomatis sampai 33 px kalau 1 tampilan lebih dari 2 baris. Spec: `docs/superpowers/specs/2026-11-27-caption-box-design.md`.
 
+## D-070: Ikon like FaktaCuil jadi hati, caption 1 kata pakai Arimo
+
+- YouTube ngganti tombol like Shorts dari jempol ke hati dan ngapus dislike (blog YouTube, 25 Juni 2026: "How we're updating the YouTube Shorts experience"). Pill CTA FaktaCuil ikut: LIKE pakai hati outline, LIKED pakai hati penuh dengan pop kecil pas diklik. Warna pill (gelap → biru) tetap dari referensi FaktaBor. CTA MayzFact top3 (`CtaScene.tsx`) nggak diubah.
+- Caption 1 kata FaktaCuil ganti font dari Fredoka ke Arimo Bold, biar sama kayak caption box (D-069). Watermark tetap Fredoka.
+

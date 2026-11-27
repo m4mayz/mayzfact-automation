@@ -18,7 +18,7 @@ Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal per
 - Naskah wajib `"narration_mode": "faktacuil"`. Tanpa itu pipeline nolak.
 - Source tetap video Inggris. Agent nerjemahin + nulis ulang ke bahasa Indonesia santai.
 - Nggak ada card countdown, panah/lingkaran, emoji, intro, flash, dan SFX hook. Yang tetap: SFX transisi dan blur teks klip.
-- Caption 1 kata, font Fredoka, kata `keyword` kuning (`#FFC53D`). Opsi tes: `"caption_style": "box"` (D-069), lihat di bawah `cta_quiz`.
+- Caption 1 kata, font Arimo Bold (D-070), kata `keyword` kuning (`#FFC53D`). Opsi tes: `"caption_style": "box"` (D-069), lihat di bawah `cta_quiz`.
 - Watermark bawaan render: logo + nama FaktaCuil di tengah atas, opacity 64%, tanpa pill. Tidak tampil di MayzFact.
 - CTA opsional (D-061): `lucky`/`subscribe` di tengah, `emoji`/`emoji_question` di akhir, atau kuis hitung kata di akhir. Kuis bisa digabung dengan CTA tengah, bukan CTA emoji.
 - BGM 1 lagu sepanjang video, dari folder lokal.
@@ -75,7 +75,7 @@ Kata pembuka "Padahal…"/"Ternyata…" cuma pola; kode nggak ngecek, jadi boleh
 
 | format | posisi | contoh kalimat | kata kunci wajib | visual |
 | --- | --- | --- | --- | --- |
-| `lucky` | tengah | "tapi sebelum lanjut coba tekan like, jika beruntung bisa muncul madu" | ajakan like + `muncul` + nama objek tema | pill LIKE → klik → LIKED → stiker objek |
+| `lucky` | tengah | "tapi sebelum lanjut coba tekan like, jika beruntung bisa muncul madu" | ajakan like + `muncul` + nama objek tema | pill LIKE (ikon hati, D-070) → klik → LIKED → stiker objek |
 | `subscribe` | tengah | "tapi sebelum lanjut coba tekan like, nanti muncul madu, subscribe jika berhasil" | ajakan like + `muncul` + nama objek + `subscribe` **setelah** ajakan like | pill LIKE → LIKED → stiker → pill SUBSCRIBE → SUBSCRIBED |
 | `emoji` | akhir, satu-satunya CTA | "tapi mengapa ada emoji madu saat tekan like?" | `emoji` + `tekan like` + diakhiri `?` | pill LIKE → klik → LIKED → emoji besar |
 | `emoji_question` | akhir, satu-satunya CTA | "Lalu mengapa kucing hitam muncul saat kamu menekan like?" | `Lalu mengapa … saat kamu menekan [tombol] like?` | klik di kata `like`, emoji sesuai topik muncul bersamaan |
