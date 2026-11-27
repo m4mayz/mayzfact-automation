@@ -3,7 +3,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-
 import pytest
 from PIL import Image, ImageChops
 
@@ -121,13 +120,14 @@ def test_render_fixture_timeline(tmp_path, make_video, make_photo, sine_mp3):
 
 
 @pytest.mark.render
-@pytest.mark.parametrize("faktacuil", [True, False], ids=["faktacuil", "mayzfact"])
-def test_still_watermark_only_for_faktacuil(tmp_path, faktacuil):
+@pytest.mark.parametrize("style", ["faktacuil", "faktacuil-box", None], ids=["faktacuil", "faktacuil-box", "mayzfact"])
+def test_still_watermark_only_for_faktacuil(tmp_path, style):
+    faktacuil = style is not None
     remotion = Path(__file__).resolve().parents[1] / "remotion"
     npx = shutil.which("npx")
     assert npx, "Aktifkan Node 22"
     props = tmp_path / "props.json"
-    write_json_atomic(props, {"captionStyle": "faktacuil"} if faktacuil else {})
+    write_json_atomic(props, {"captionStyle": style} if faktacuil else {})
     still = tmp_path / "still.png"
     result = subprocess.run([
         npx, "remotion", "still", "src/index.ts", "ShortVideo", str(still),

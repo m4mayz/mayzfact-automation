@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 import random
 import re
+from itertools import groupby
 from typing import Any, Callable
 
 from mayzfact.audio import FAKTACUIL_BGM_VOLUME
@@ -35,6 +36,8 @@ CAPTION_PAUSE_HOLD_S = 0.15
 CAPTION_WHITE = "#ffffff"
 CAPTION_COLORS = ("#22d3ee", "#4ade80", "#facc15")
 CAPTION_KEYWORD = "#FFC53D"  # kuning brand FaktaCuil buat kata keyword
+BOX_MAX_WORDS = 8  # caption "box": kotak ±31 px/huruf + 50 px, jadi 36 huruf (8 kata) ±1.500 px, muat 2 baris 900 px
+BOX_MAX_CHARS = 36
 LONG_WORD = 6
 SFX_VOLUME = {"hook": 0.8, "number": 0.9, "subject": 0.7, "cut": 0.4, "overlay": 0.35, "emoji": 0.6, "click": 0.8,
               "item_reveal": 0.7, "riser": 1.0, "hook_cut": 0.4}
@@ -162,9 +165,22 @@ def _countdown(beats: list[dict], alignment: dict, words: list[dict], audio_dura
     return cards, spans, subject_words
 
 
+def _box_chunks(words: list[str]) -> list[list[str]]:
+    """Bagi rata kata satu beat jadi tampilan caption box yang muat 2 baris; kata kepanjangan tampil sendiri."""
+    for parts in range(1, len(words) + 1):
+        size, extra = divmod(len(words), parts)
+        bounds = [k * size + min(k, extra) for k in range(parts + 1)]
+        chunks = [words[a:b] for a, b in zip(bounds, bounds[1:])]
+        if all(len(c) == 1 or (len(c) <= BOX_MAX_WORDS and sum(map(len, c)) <= BOX_MAX_CHARS) for c in chunks):
+            return chunks
+    return []
+
+
 def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[float, float]], subject_words: set[str],
-              total: int, keywords: dict[int, str] | None = None, beat_of: list[int] | None = None) -> list[dict]:
+              total: int, keywords: dict[int, str] | None = None, beat_of: list[int] | None = None,
+              box: bool = False) -> list[dict]:
     captions = []
+    cap_beats: list[int] = []
     colored = 0
     for index, word in enumerate(words):
         if any(start <= word["start_s"] < end for start, end in spans):
@@ -175,7 +191,7 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
         next_start = words[index + 1]["start_s"] if index + 1 < len(words) else audio_duration_s
         start = to_frame(word["start_s"])
         end_s = min(next_start, word["end_s"] + CAPTION_HOLD_S)
-        shown = text.upper()
+        shown = text if box else text.upper()
         color = CAPTION_WHITE
         if keywords is not None:  # FaktaCuil: cuma kata keyword beat itu yang berwarna
             if beat_of and _clean(keywords.get(beat_of[index], "")) == text.lower():
@@ -190,6 +206,16 @@ def _captions(words: list[dict], audio_duration_s: float, spans: list[tuple[floa
             colored += 1
         end = min(to_frame(end_s), total)
         captions.append({"text": shown, "from": start, "durationInFrames": max(1, end - start), "color": color})
+        cap_beats.append(beat_of[index] if beat_of else 0)
+    if box:
+        group = 0
+        for _, run in groupby(range(len(captions)), key=cap_beats.__getitem__):
+            idx = list(run)
+            for chunk in _box_chunks([captions[i]["text"] for i in idx]):
+                for i in idx[:len(chunk)]:
+                    captions[i]["group"] = group
+                idx = idx[len(chunk):]
+                group += 1
     return captions
 
 
@@ -510,6 +536,7 @@ def build_timeline(
     if not shots:
         raise PipelineError("timeline", "clips.json kosong.")
     faktacuil = bool(script) and script.get("narration_mode") == "faktacuil"
+    box_captions = faktacuil and script.get("caption_style") == "box"
     if faktacuil:  # tanpa emoji/tanda beat; panah cuma 1 di shot pertama (nunjuk konteks hook)
         marks = None
     total = math.ceil(audio_duration_s * FPS - 1e-6)
@@ -533,7 +560,7 @@ def build_timeline(
                                                          beat_starts)
             beat_of = _beat_of(words, script["beats"])
             keywords = {i: b.get("keyword", "") for i, b in enumerate(script["beats"])} if faktacuil else None
-            captions = _captions(words, audio_duration_s, spans, subject_words, total, keywords, beat_of)
+            captions = _captions(words, audio_duration_s, spans, subject_words, total, keywords, beat_of, box_captions)
             timings = beat_timings(beat_texts(script["beats"]), alignment, audio_duration_s)
             cta = [] if faktacuil else _top3_cta(words, beat_of, script["beats"], countdown, total)
             emojis = _emojis(words, beat_of, marks, cta, countdown, total)
@@ -590,7 +617,7 @@ def build_timeline(
     if scene:
         data['ctaScene'] = scene
     if faktacuil:
-        data["captionStyle"] = "faktacuil"
+        data["captionStyle"] = "faktacuil-box" if box_captions else "faktacuil"
     return data
 
 

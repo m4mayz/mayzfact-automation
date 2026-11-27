@@ -18,7 +18,7 @@ Jangan lompatin checkpoint. Di tiap checkpoint, berhenti dan bilang ke Akmal per
 - Naskah wajib `"narration_mode": "faktacuil"`. Tanpa itu pipeline nolak.
 - Source tetap video Inggris. Agent nerjemahin + nulis ulang ke bahasa Indonesia santai.
 - Nggak ada card countdown, panah/lingkaran, emoji, intro, flash, dan SFX hook. Yang tetap: SFX transisi dan blur teks klip.
-- Caption 1 kata, font Fredoka, kata `keyword` kuning (`#FFC53D`).
+- Caption 1 kata, font Fredoka, kata `keyword` kuning (`#FFC53D`). Opsi tes: `"caption_style": "box"` (D-069), lihat di bawah `cta_quiz`.
 - Watermark bawaan render: logo + nama FaktaCuil di tengah atas, opacity 64%, tanpa pill. Tidak tampil di MayzFact.
 - CTA opsional (D-061): `lucky`/`subscribe` di tengah, `emoji`/`emoji_question` di akhir, atau kuis hitung kata di akhir. Kuis bisa digabung dengan CTA tengah, bukan CTA emoji.
 - BGM 1 lagu sepanjang video, dari folder lokal.
@@ -108,6 +108,15 @@ Untuk CTA tengah, beat yang nyebut `muncul` ada setelah ajakan like. Untuk `emoj
 - `answer` = jumlah kata `cta_quiz.word` sebelum beat kuis. Hitung manual, `check-script` yang mastiin (case-insensitive, kata utuh; "kardusnya" atau "kardus-kardus" nggak ikut, kalimat kuis sendiri nggak dihitung).
 - `emoji` = karakter emoji apa aja, nggak dibatasi daftar `EMOJI`. Kecocokan "emoji madu" ↔ 🍯 dicek Akmal waktu review naskah, bukan code.
 - Format `question`/`reveal`/`escape`/`escalate` udah dihapus. `emoji_question` format baru yang terpisah, bukan nama baru untuk `question` atau `emoji`.
+
+`caption_style` opsional (cuma FaktaCuil, D-069). Pakai cuma kalau Akmal minta tes style ini:
+
+```json
+"caption_style": "box"
+```
+
+- `"word"` (default): caption 1 kata kayak biasa. `"box"`: 1 tampilan per beat (beat panjang dibagi rata, maks 8 kata/36 huruf), tiap kata kotak gelap, kata yang lagi diucapin jadi kotak lime miring. Huruf ikut naskah, bukan kapital.
+- Nggak ngaruh ke suara. Ganti style run yang udah ada cukup ubah field ini terus `mayzfact run <id> --from timeline --no-render`, lalu render.
 - Objek stiker harus salah satu dari tema di bawah. Nggak ada yang cocok = **STOP**, bikin stiker baru dulu (lihat **Stiker baru**).
 
 | theme | nama objek di kalimat CTA |
