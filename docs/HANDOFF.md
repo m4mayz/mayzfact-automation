@@ -1,5 +1,7 @@
 # Handoff — FaktaCuil (D-051, D-052, D-053)
 
+**2026-11-27 (D-069):** Caption style `box` (opt-in lewat `caption_style: "box"` di `script.json`): kotak per kata, 1 tampilan per beat, kata aktif lime miring. Dites: unit test grouping + model, `tsc`, render test watermark, still di salinan props `gu2M14rfRlU`. Belum dites: render video penuh + preview ke Akmal, dan gerakan kata aktif belum dicocokin ke video sumber (baru screenshot).
+
 **2026-11-23 (D-067):** Provider suara `manual` (opt-in): Akmal generate di web ElevenLabs, upload lewat `mayzfact brief <id>` (mode suara, kebuka walau plan belum ada), Whisper lokal bikin timing. Dites: unit + server brief, dan end-to-end Whisper asli di salinan `gu2M14rfRlU` (median 0,03 detik). Belum dites: run produksi penuh pakai upload dari HP, dan Whisper di server Akmal (CPU/RAM belum diketahui).
 
 **D-066:** FaktaCuil tetap satu-satunya channel produksi. Suara baru pakai ElevenLabs (Eric, `eleven_v3`), render default 1,1×. Audio VoiceStudio run lama tetap dipakai. Lihat `AGENTS.md` untuk alur produksi.

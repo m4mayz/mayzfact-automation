@@ -78,6 +78,7 @@ class Script(BaseModel):
     approved_word_count: int | None = Field(default=None, strict=True, ge=1, le=500)
     cta_scene: CtaScene | FaktaCuilCtaScene | None = None
     cta_quiz: CtaQuiz | None = None
+    caption_style: Literal["word", "box"] = "word"  # "box": kotak per kata, 1 tampilan per beat (FaktaCuil, D-069)
     beats: list[Beat]
     bgm: str = ""  # sisa lama, nggak dipakai: BGM selalu mystery.mp3 (hook) + main.mp3 (D-038)
     hook_queries: dict[str, HookQuery] = {}  # per index segmen hook (plan/seg_XX), ditulis agent
@@ -98,6 +99,8 @@ class Script(BaseModel):
                 raise ValueError("Top 3 scripts need their own cta_scene (theme, transform_word, comment_text) (D-050).")
             if self.cta_quiz is not None:
                 raise ValueError("Top 3 scripts must not set cta_quiz.")
+            if self.caption_style != "word":
+                raise ValueError('caption_style "box" is FaktaCuil only.')
         elif isinstance(self.cta_scene, CtaScene):
             raise ValueError("FaktaCuil cta_scene must not use transform_word/comment_text or a removed format; "
                              "use format lucky, subscribe, emoji, or emoji_question (D-061).")

@@ -17,7 +17,10 @@ export type Caption = {
   from: number;
   durationInFrames: number;
   color: string;
+  group?: number; // caption "faktacuil-box": nomor tampilan (1 beat atau potongannya)
 };
+
+export type CaptionStyle = 'faktacuil' | 'faktacuil-box';
 
 export type CountdownCard = {
   number: number;
@@ -140,5 +143,5 @@ export type TimelineProps = {
   overlays?: Overlay[];
   emojis?: EmojiOverlay[];
   ctaScene?: CtaSceneData | FaktaCuilSceneData;
-  captionStyle?: 'faktacuil';
+  captionStyle?: CaptionStyle;
 };
