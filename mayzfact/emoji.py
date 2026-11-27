@@ -13,6 +13,7 @@ import httpx
 
 from mayzfact.config import PROJECT_ROOT
 from mayzfact.errors import PipelineError
+from mayzfact.models import FAKTACUIL_EMOJI_FORMATS
 from mayzfact.net import download
 
 EMOJI_DIR = PROJECT_ROOT / "assets" / "emoji"
@@ -90,7 +91,7 @@ def emoji_codepoint(char: str) -> str:
 def prepare_cta_emoji(run_root: Path, cta_scene: dict | None, *, client: httpx.Client, emoji_dir: Path,
                       log: Callable[[str], None], sleep: Callable[[float], None] = time.sleep) -> str | None:
     """Siapin Lottie Noto buat emoji CTA FaktaCuil. None = format lain atau Lottie nggak ada (pakai emoji statis)."""
-    if not cta_scene or cta_scene.get("format") != "emoji" or not cta_scene.get("emoji"):
+    if not cta_scene or cta_scene.get("format") not in FAKTACUIL_EMOJI_FORMATS or not cta_scene.get("emoji"):
         return None
     emoji = cta_scene["emoji"]
     codepoints = [emoji_codepoint(emoji)]

@@ -9,18 +9,48 @@ from mayzfact.config import Settings
 from mayzfact.errors import PipelineError
 from mayzfact.faktacuil import LEGACY_CTA_FORMATS, THEME_NOUNS_ID
 from mayzfact.models import CtaQuiz, FaktaCuilCtaScene, FaktaCuilTheme, Script
+from mayzfact.narration import cta_indices
 from mayzfact.pipeline import Deps, run_pipeline
 from mayzfact.steps.script import check_script, load_script
 from mayzfact.store import RunPaths, write_json_atomic
 from mayzfact.text import script_text, text_hash
 from tests.factories import fake_alignment
-from tests.faktacuil_fixtures import SOURCE_TEXT_EN, faktacuil_script
+from tests.faktacuil_fixtures import SOURCE_TEXT_EN, emoji_question_script, faktacuil_script
 from tests.top3_fixtures import top3_script
 
 
 @pytest.mark.parametrize("cta", ["none", "lucky", "subscribe", "emoji", "quiz", "lucky+quiz", "subscribe+quiz"])
 def test_every_valid_combo_passes(cta):
     assert check_script(faktacuil_script(cta=cta), SOURCE_TEXT_EN)[0] == []
+
+
+@pytest.mark.parametrize("split", [False, True])
+def test_emoji_question_does_not_need_spoken_emoji_or_muncul(split):
+    raw = emoji_question_script()
+    if not split:
+        raw["beats"][-2]["text"] = "Lalu mengapa ada kucing saat kamu menekan like?"
+        raw["beats"].pop()
+    script = Script(**raw)
+    assert check_script(script, SOURCE_TEXT_EN)[0] == []
+    assert cta_indices(raw) == cta_indices(script) == ([7, 8] if split else [7])
+
+
+@pytest.mark.parametrize("change", ["middle", "punctuation", "old_wording", "quiz", "subject"])
+def test_emoji_question_rejects_invalid_closing(change):
+    raw = emoji_question_script()
+    if change == "middle":
+        raw["beats"].append(raw["beats"].pop(3))
+    elif change == "punctuation":
+        raw["beats"][-1]["text"] = "saat kamu menekan tombol like."
+    elif change == "old_wording":
+        raw["beats"][-2]["text"] = "Tapi mengapa ada emoji kucing?"
+        raw["beats"][-1]["text"] = "Coba tekan like."
+    elif change == "quiz":
+        raw["cta_quiz"] = {"word": "kardus", "answer": 2}
+        raw["beats"].append({**raw["beats"][-1], "text": "Nah coba tebak berapa kali aku bilang kardus?"})
+    else:
+        raw["beats"][-2]["subject"] = "cat"
+    assert check_script(Script(**raw), SOURCE_TEXT_EN)[0]
 
 
 def test_wheel_subscribe_with_quiz():

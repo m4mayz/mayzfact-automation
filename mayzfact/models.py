@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 # Stiker FaktaCuil dipisah dari tema top3 biar stiker baru FaktaCuil nggak ikut ke top3 (D-061).
 FaktaCuilTheme = Literal["volcano", "unicorn", "honey", "puppy", "lion", "shark", "toilet", "cat", "zebra", "wheel", "chili"]
+FAKTACUIL_EMOJI_FORMATS = frozenset({"emoji", "emoji_question"})
 
 
 def _is_emoji(value: str) -> bool:
@@ -25,16 +26,16 @@ class CtaScene(BaseModel):
 
 
 class FaktaCuilCtaScene(BaseModel):
-    """CTA FaktaCuil v2: tengah (lucky/subscribe) atau akhir (emoji), opsional."""
+    """CTA FaktaCuil opsional: stiker di tengah atau emoji di akhir."""
 
     model_config = ConfigDict(extra="forbid")
-    format: Literal["lucky", "subscribe", "emoji"]
+    format: Literal["lucky", "subscribe", "emoji", "emoji_question"]
     theme: FaktaCuilTheme | None = None
     emoji: str = ""
 
     @model_validator(mode="after")
     def _fields_match_format(self):
-        if self.format == "emoji":
+        if self.format in FAKTACUIL_EMOJI_FORMATS:
             if self.theme is not None:
                 raise ValueError("emoji CTA must not set theme.")
             if not _is_emoji(self.emoji):
@@ -99,5 +100,5 @@ class Script(BaseModel):
                 raise ValueError("Top 3 scripts must not set cta_quiz.")
         elif isinstance(self.cta_scene, CtaScene):
             raise ValueError("FaktaCuil cta_scene must not use transform_word/comment_text or a removed format; "
-                             "use format lucky, subscribe, or emoji (D-061).")
+                             "use format lucky, subscribe, emoji, or emoji_question (D-061).")
         return self

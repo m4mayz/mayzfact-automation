@@ -22,6 +22,7 @@ from mayzfact.media import (
     layout_for,
     screen_box,
 )
+from mayzfact.models import FAKTACUIL_EMOJI_FORMATS
 from mayzfact.store import RunPaths, write_json_atomic
 from mayzfact.text import beat_texts
 from mayzfact.timing import beat_offsets, beat_timings, word_timings
@@ -436,6 +437,8 @@ def _faktacuil_clicks(scene: dict) -> list[dict]:
         end = min(scene_end, start + CTA_FRAMES[kind])
         if start < scene_end and end > start:
             click = CTA_CLICK["like"] if kind == "like" else FAKTACUIL_SUBSCRIBE_CLICK
+            if kind == "like" and scene.get("format") == "emoji_question":
+                click = 0
             out.append({"kind": kind, "from": start, "durationInFrames": end - start,
                         "clickAt": min(click, end - start - 1)})
     return out
@@ -548,7 +551,7 @@ def build_timeline(
         emojis = [e for e in emojis if e['from'] + e['durationInFrames'] <= begin or e['from'] >= end]
         if faktacuil:  # gaya FaktaBor: pill like di atas klip CTA dari brief, klipnya tampil normal
             cta = _faktacuil_clicks(scene)
-            if scene.get('format') == 'emoji' and cta_emoji_src:
+            if scene.get('format') in FAKTACUIL_EMOJI_FORMATS and cta_emoji_src:
                 scene['emojiSrc'] = cta_emoji_src
         else:
             for e in entries:

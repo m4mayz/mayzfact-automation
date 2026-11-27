@@ -70,6 +70,16 @@ def faktacuil_script(total_words: int = 69, cta: str = "lucky") -> Script:
     )
 
 
+def emoji_question_script() -> dict:
+    script = faktacuil_script(total_words=57, cta="none").model_dump()
+    script["cta_scene"] = {"format": "emoji_question", "emoji": "🐈‍⬛"}
+    script["beats"].extend([
+        Beat(text=text, media="video", queries=list(QUERIES)).model_dump()
+        for text in ("Lalu mengapa ada kucing hitam", "saat kamu menekan tombol like?")
+    ])
+    return script
+
+
 def faktacuil_timeline_fixture(duration: float = 25, script: dict | None = None):
     """(script, alignment, clips) dengan 1 shot per beat, pola timeline_fixture di test_cta_scene."""
     from mayzfact.text import script_text

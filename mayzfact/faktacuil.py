@@ -5,7 +5,7 @@ import re
 
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import SUBSCRIBE, clean
-from mayzfact.models import FaktaCuilCtaScene, Script
+from mayzfact.models import FAKTACUIL_EMOJI_FORMATS, FaktaCuilCtaScene, Script
 
 VOICE_SAMPLE_TEXT_ID: str = (
     "Kenapa kucing suka banget masuk ke kardus? Padahal kardus itu sempit dan nggak empuk. "
@@ -19,22 +19,26 @@ FAKTACUIL_RAW_WPS: float = 2.27
 
 ID_LIKE_VERBS = {"tekan", "pencet", "klik", "kasih", "tekanlah"}
 ID_COMMENT = {"komen", "komentar", "comment"}
+EMOJI_QUESTION_START = re.compile(r"^lalu\s+mengapa\b", re.IGNORECASE)
+EMOJI_QUESTION = re.compile(r"lalu\s+mengapa\s+.+\s+saat\s+kamu\s+menekan\s+(?:tombol\s+)?like\?", re.IGNORECASE)
 
 
-def _like_verb_index(tokens: list[str], j: int) -> int | None:
+def _like_verb_index(tokens: list[str], j: int, *, question: bool = False) -> int | None:
     """Index kata kerja ajakan sebelum `like` ("tekan like", "tekan tombol like"), atau None."""
     for k in (j - 1, j - 2):
         if k < 0:
             break
-        if clean(tokens[k]) in ID_LIKE_VERBS:
+        verb = clean(tokens[k])
+        if verb in ID_LIKE_VERBS or (question and verb == "menekan"):
             return k
         if k == j - 1 and clean(tokens[k]) != "tombol":
             break
     return None
 
 
-def id_like_positions(tokens: list[str]) -> list[int]:
-    return [j for j, t in enumerate(tokens) if clean(t) == "like" and _like_verb_index(tokens, j) is not None]
+def id_like_positions(tokens: list[str], *, question: bool = False) -> list[int]:
+    return [j for j, t in enumerate(tokens)
+            if clean(t) == "like" and _like_verb_index(tokens, j, question=question) is not None]
 
 
 def id_like_begin(tokens: list[str], j: int) -> int:
@@ -44,7 +48,7 @@ def id_like_begin(tokens: list[str], j: int) -> int:
     return verb - 1 if verb and clean(tokens[verb - 1]) == "coba" else verb
 
 
-def faktacuil_cta_indices(beats: list) -> list[int]:
+def faktacuil_cta_indices(beats: list, fmt: str | None = None) -> list[int]:
     tokens = [[clean(t) for t in _beat_text(b).split()] for b in beats]
     quiz = quiz_index(beats)
     # beat kuis nggak pernah jadi anchor walau kalimatnya nyebut "like"
@@ -53,6 +57,12 @@ def faktacuil_cta_indices(beats: list) -> list[int]:
     if not anchors:
         return []
     lo, hi = anchors[0], anchors[-1]
+    if fmt == "emoji_question":
+        if lo > 0 and not EMOJI_QUESTION_START.match(_beat_text(beats[lo]).lstrip()) and (
+            EMOJI_QUESTION_START.match(_beat_text(beats[lo - 1]).lstrip())
+        ):
+            lo -= 1
+        return list(range(lo, hi + 1))
     for word in LINK_WORDS:  # beat objek/emoji tanpa "like" tetap kehitung bagian blok CTA
         if any(t.startswith(word) for i in range(lo, hi + 1) for t in tokens[i]):
             continue
@@ -138,17 +148,17 @@ def faktacuil_problems(script: Script) -> list[str]:
             problems.append(f"Beat {n} needs at least 2 search queries.")
         if any(not q.isascii() for q in b.queries):
             problems.append(f"Beat {n} search query must be English (ASCII only).")
-    cta = faktacuil_cta_indices(beats)
     quiz = quiz_index(beats)
     scene = script.cta_scene
     fmt = scene.format if isinstance(scene, FaktaCuilCtaScene) else None
+    cta = faktacuil_cta_indices(beats, fmt)
     if scene is None and cta:
         problems.append("FaktaCuil has CTA beats but no cta_scene. Set cta_scene or rewrite the beats.")
     elif scene is not None and not cta:
         problems.append("FaktaCuil cta_scene is set but no CTA beat was found. Write the CTA sentences from the skill.")
     if (quiz is None) != (script.cta_quiz is None):
         problems.append('FaktaCuil needs cta_quiz and the quiz beat ("berapa kali aku bilang") together, or neither.')
-    if fmt == "emoji" and (quiz is not None or script.cta_quiz is not None):
+    if fmt in FAKTACUIL_EMOJI_FORMATS and (quiz is not None or script.cta_quiz is not None):
         problems.append("FaktaCuil emoji CTA cannot be combined with the quiz.")
     if scene is not None and cta:
         problems.extend(_cta_problems(script, cta, fmt))
@@ -165,7 +175,8 @@ def _cta_problems(script: Script, cta: list[int], fmt: str | None) -> list[str]:
     beats = script.beats
     problems: list[str] = []
     quiz = quiz_index(beats)
-    if fmt == "emoji":
+    question = fmt == "emoji_question"
+    if fmt in FAKTACUIL_EMOJI_FORMATS:
         if len(cta) > 2 or cta[-1] != len(beats) - 1:
             problems.append("FaktaCuil emoji CTA must be the last 1-2 beats.")
     else:
@@ -178,7 +189,7 @@ def _cta_problems(script: Script, cta: list[int], fmt: str | None) -> list[str]:
             problems.append("FaktaCuil needs at least two answer beats after the CTA.")
     tokens = [beats[i].text.split() for i in cta]
     cleaned = {clean(t) for ts in tokens for t in ts}
-    invites = sum(len(id_like_positions(ts)) for ts in tokens)
+    invites = sum(len(id_like_positions(ts, question=question)) for ts in tokens)
     if invites != 1 or cleaned & ID_COMMENT or (fmt != "subscribe" and cleaned & SUBSCRIBE):
         tail = "must not ask to comment." if fmt == "subscribe" else "must not ask to subscribe or comment."
         problems.append(f'FaktaCuil CTA must invite exactly one like ("tekan like") and {tail}')
@@ -201,10 +212,12 @@ def _cta_problems(script: Script, cta: list[int], fmt: str | None) -> list[str]:
     if fmt == "emoji":
         if "emoji" not in cleaned or not beats[cta[-1]].text.rstrip().endswith("?"):
             problems.append("FaktaCuil emoji CTA must say 'emoji' and its last beat must end with '?'.")
+    if question and not EMOJI_QUESTION.fullmatch(" ".join(beats[i].text.strip() for i in cta)):
+        problems.append('FaktaCuil emoji_question CTA must follow "Lalu mengapa ... saat kamu menekan like?".')
     for i in cta:
         tokens_i = [clean(t) for t in beats[i].text.split()]
         linked = any(t.startswith("muncul") or t.startswith("emoji") or t in SUBSCRIBE for t in tokens_i)
-        if any(t.startswith("like") for t in tokens_i) and not (id_like_positions(beats[i].text.split()) or linked):
+        if any(t.startswith("like") for t in tokens_i) and not (id_like_positions(tokens_i, question=question) or linked):
             problems.append(f"Beat {i + 1} uses 'like' outside the CTA; rephrase it so it is not part of the CTA block.")
             continue
         if beats[i].subject:

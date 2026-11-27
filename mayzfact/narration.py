@@ -77,7 +77,11 @@ def cta_indices(script) -> list[int]:
 
     mode = script.get("narration_mode") if isinstance(script, dict) else script.narration_mode
     beats = script["beats"] if isinstance(script, dict) else script.beats
-    return faktacuil_cta_indices(beats) if mode == "faktacuil" else cta_beat_indices(beats)
+    if mode != "faktacuil":
+        return cta_beat_indices(beats)
+    scene = script.get("cta_scene") if isinstance(script, dict) else script.cta_scene
+    fmt = scene.get("format") if isinstance(scene, dict) else getattr(scene, "format", None)
+    return faktacuil_cta_indices(beats, fmt)
 
 
 def cta_beat_indices(beats: list) -> list[int]:

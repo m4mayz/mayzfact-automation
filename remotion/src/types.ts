@@ -107,7 +107,7 @@ export type CtaSceneData = {
 // Scene CTA FaktaCuil v2: tengah (lucky/subscribe) atau akhir (emoji). Lihat D-061.
 export type FaktaCuilSceneData = {
   style: 'faktacuil';
-  format: 'lucky' | 'subscribe' | 'emoji';
+  format: 'lucky' | 'subscribe' | 'emoji' | 'emoji_question';
   theme?: StickerTheme;
   emoji?: string;
   emojiSrc?: string; // Lottie Noto dari step timeline; tanpa ini CTA pakai emoji statis

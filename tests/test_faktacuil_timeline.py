@@ -12,6 +12,7 @@ from mayzfact.steps.timeline import (
 from mayzfact.store import RunPaths, read_json
 from mayzfact.timing import word_timings
 from tests.faktacuil_fixtures import (
+    emoji_question_script,
     faktacuil_script,
     faktacuil_timeline_fixture,
 )
@@ -74,6 +75,21 @@ def test_subscribe_format_adds_second_click():
 def test_emoji_scene_gets_lottie_src_only_when_given():
     assert timeline(script=v2("emoji"), cta_emoji_src="emoji/1f36f.json")["ctaScene"]["emojiSrc"] == "emoji/1f36f.json"
     assert "emojiSrc" not in timeline(script=v2("emoji"))["ctaScene"]
+
+
+def test_emoji_question_scene_keeps_emoji_and_clicks_on_like():
+    raw = emoji_question_script()
+    _, alignment, _ = faktacuil_timeline_fixture(25, raw)
+    like = next(w for w in word_timings(alignment) if clean(w["text"]) == "like")
+    tl = timeline(script=raw, cta_emoji_src="emoji/1f408_200d_2b1b.json")
+    scene = tl["ctaScene"]
+    assert scene["format"] == "emoji_question" and scene["emoji"] == "🐈‍⬛"
+    assert scene["emojiSrc"] == "emoji/1f408_200d_2b1b.json"
+    assert scene["from"] == tl["shots"][-2]["from"]
+    assert scene["from"] + scene["durationInFrames"] == tl["durationInFrames"]
+    click = next(s for s in tl["sfx"] if s["src"] == "audio/sfx/click.mp3")
+    assert scene["cues"] == [{"kind": "like", "word": "like?", "from": to_frame(like["start_s"])}]
+    assert click["from"] + 3 == scene["cues"][0]["from"]
 
 
 def test_emoji_click_lands_on_emoji_word():

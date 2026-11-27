@@ -74,6 +74,13 @@ assert.match(markup(emo, 40), /data-cta-emoji="static"[\s\S]*🍯/);
 assert.doesNotMatch(markup(emo, 40), /data-cta-sticker/);
 assert.match(markup(emo, 149), /data-cta-emoji="static"[^>]*opacity:\s?1[;"]/);
 
+const question = {format: 'emoji_question', emoji: '🐈‍⬛'};
+assert.doesNotMatch(markup(question, 9), /data-cta-emoji/);
+assert.match(markup(question, 10), /data-cta-emoji="static"[\s\S]*🐈‍⬛/);
+assert.match(markup(question, 149), /data-cta-emoji="static"[^>]*opacity:\s?1[;"]/);
+assert.doesNotMatch(markup(question, 149), /data-cta-sticker/);
+assert.match(markup(question, 12), /data-cta-emoji="static"[\s\S]*<svg[^>]*aria-label="🐈‍⬛"/);
+
 // format lama udah nggak ada di source
 assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../src/FaktaCuilCta.tsx'), 'utf8'), /escalate|escape|reveal/);
 console.log('faktacuil cta: OK');

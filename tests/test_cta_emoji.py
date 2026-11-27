@@ -1,4 +1,5 @@
 import httpx
+import pytest
 
 from mayzfact.emoji import emoji_codepoint, ensure_emoji, prepare_cta_emoji
 
@@ -33,10 +34,11 @@ def test_emoji_codepoint():
     assert emoji_codepoint("🇮🇩") == "1f1ee_1f1e9"
 
 
-def test_prepare_cta_emoji_copies_lottie_into_run(tmp_path):
+@pytest.mark.parametrize("fmt", ["emoji", "emoji_question"])
+def test_prepare_cta_emoji_copies_lottie_into_run(tmp_path, fmt):
     client, hits = lottie_client("1f4e6")
     logs = []
-    src = prepare_cta_emoji(tmp_path / "run", {"format": "emoji", "emoji": "📦"}, client=client,
+    src = prepare_cta_emoji(tmp_path / "run", {"format": fmt, "emoji": "📦"}, client=client,
                             emoji_dir=tmp_path / "cache", log=logs.append, sleep=lambda s: None)
     assert src == "emoji/1f4e6.json"
     assert (tmp_path / "run" / "emoji" / "1f4e6.json").is_file()

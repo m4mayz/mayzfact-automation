@@ -7,6 +7,7 @@ import re
 from mayzfact.countdown import parse_countdown
 from mayzfact.cta import COMMENT, SUBSCRIBE, clean, cta_kinds, is_like_cta
 from mayzfact.faktacuil import faktacuil_cta_indices, id_like_begin, id_like_positions
+from mayzfact.models import FAKTACUIL_EMOJI_FORMATS
 from mayzfact.narration import cta_beat_indices
 
 
@@ -87,14 +88,15 @@ def build_faktacuil_scene(script: dict, shots: list[dict], entries: list[dict], 
     if not config:
         return None
     beats = script['beats']
-    allowed = faktacuil_cta_indices(beats)
+    fmt = config.get('format')
+    fmt = fmt if fmt in FAKTACUIL_EMOJI_FORMATS or fmt in ('lucky', 'subscribe') else 'lucky'
+    question = fmt == 'emoji_question'
+    allowed = faktacuil_cta_indices(beats, fmt)
     spans = [(s, e) for s, e in zip(shots, entries) if s.get('beat') in set(allowed)]
     if not spans:
         return None
-    # format lama (question dkk) diperlakukan kayak lucky sampai schema-nya diganti
-    fmt = config.get('format') if config.get('format') in ('lucky', 'subscribe', 'emoji') else 'lucky'
     start = min(e['from'] for _, e in spans)
-    stop = total if fmt == 'emoji' else faktacuil_cta_stop(shots, entries, allowed, total)
+    stop = total if fmt in FAKTACUIL_EMOJI_FORMATS else faktacuil_cta_stop(shots, entries, allowed, total)
     if stop <= start:
         return None
     cues: dict[str, dict] = {}
@@ -103,7 +105,7 @@ def build_faktacuil_scene(script: dict, shots: list[dict], entries: list[dict], 
     for beat in allowed:
         local = [w for w, b in zip(words, beat_of) if b == beat]
         texts = [x['text'] for x in local]
-        likes = set(id_like_positions(texts))
+        likes = set(id_like_positions(texts, question=question))
         if sub_beat is None and fmt == 'subscribe' and any(clean(t) in SUBSCRIBE for t in beats[beat]['text'].split()):
             sub_beat = beat
         for i, w in enumerate(local):
@@ -116,12 +118,12 @@ def build_faktacuil_scene(script: dict, shots: list[dict], entries: list[dict], 
                     like_begin = start  # pill udah tampil dari awal blok CTA
             elif 'like' not in cues and i in likes:
                 cues['like'] = dict(kind='like', word=w['text'], **{'from': frame})
-                begin = id_like_begin(texts, i)  # mundur ke "coba" biar pill muncul sebelum kata like
-                like_begin = max(start, int(math.floor(local[begin]['start_s'] * 30 + .5)))
+                begin = id_like_begin(texts, i)
+                like_begin = start if question else max(start, int(math.floor(local[begin]['start_s'] * 30 + .5)))
             if fmt == 'subscribe' and 'subscribe' not in cues and clean(w['text']) in SUBSCRIBE:
                 cues['subscribe'] = dict(kind='subscribe', word=w['text'], **{'from': frame})
     if like_begin is None:  # alignment kosong: mulai dari shot pertama beat yang nyebut ajakan like
-        like_beat = next((b for b in allowed if id_like_positions(beats[b]['text'].split())), None)
+        like_beat = next((b for b in allowed if id_like_positions(beats[b]['text'].split(), question=question)), None)
         if like_beat is not None:
             like_begin = min((e['from'] for s, e in spans if s.get('beat') == like_beat), default=None)
     if like_begin is None:
@@ -153,7 +155,7 @@ def build_faktacuil_scene(script: dict, shots: list[dict], entries: list[dict], 
                  cues=sorted(cues.values(), key=lambda c: c['from']), **{'from': start})
     if config.get('theme'):
         scene['theme'] = config['theme']
-    if fmt == 'emoji' and config.get('emoji'):
+    if fmt in FAKTACUIL_EMOJI_FORMATS and config.get('emoji'):
         scene['emoji'] = config['emoji']
     return scene
 
