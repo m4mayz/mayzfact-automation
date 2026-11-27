@@ -15,7 +15,7 @@ const PARTICLE_COLORS = ['#ff2d55', '#ff8fab', '#ffd166'];
 const PARTICLES = Array.from({length: 10}, (_, i) => ({angle: (i * 36 + 18) * (Math.PI / 180), dist: i % 2 ? 200 : 260}));
 const FLOATERS = [{dx: -70, delay: 2}, {dx: 40, delay: 4}, {dx: -10, delay: 7}, {dx: 85, delay: 9}];
 
-const HeartSvg: React.FC<{size: number; fill: string; stroke?: string; strokeWidth?: number; id?: string}> = ({
+export const HeartSvg: React.FC<{size: number; fill: string; stroke?: string; strokeWidth?: number; id?: string}> = ({
   size, fill, stroke = 'none', strokeWidth = 0, id,
 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" style={{overflow: 'visible', display: 'block'}}>
@@ -31,7 +31,32 @@ const HeartSvg: React.FC<{size: number; fill: string; stroke?: string; strokeWid
   </svg>
 );
 
-const at = (x: number, y: number): React.CSSProperties => ({position: 'absolute', left: x, top: y, translate: '-50% -50%'});
+export const at = (x: number, y: number): React.CSSProperties => ({position: 'absolute', left: x, top: y, translate: '-50% -50%'});
+
+// Titik sentuh jari ala rekaman layar HP: masuk dari kanan bawah, ketekan di frame tap, lalu ripple.
+export const TouchTap: React.FC<{frame: number; clickAt: number; x: number; y: number}> = ({frame, clickAt, x, y}) => {
+  const t = frame - clickAt;
+  if (frame < clickAt - 12 || t >= 8) return null;
+  const move = interpolate(frame, [clickAt - 12, clickAt - 1], [0, 1], {...clamp, easing: out});
+  const ripple = interpolate(t, [0, 8], [45, 120], {...clamp, easing: out});
+  return (
+    <div data-cta-touch="true" style={{
+      ...at(x + interpolate(move, [0, 1], [222, 0]), y + interpolate(move, [0, 1], [306, 0])),
+      opacity: interpolate(frame, [clickAt - 12, clickAt - 9, clickAt + 4, clickAt + 8], [0, 1, 1, 0], clamp),
+    }}>
+      {t >= 0 ? (
+        <div style={{
+          ...at(0, 0), width: 2 * ripple, height: 2 * ripple, borderRadius: '50%',
+          border: '5px solid rgba(255,255,255,0.9)', opacity: interpolate(t, [0, 8], [0.9, 0], clamp),
+        }}/>
+      ) : null}
+      <div style={{
+        ...at(0, 0), width: 96, height: 96, borderRadius: '50%', scale: interpolate(t, [-1, 0, 2, 4], [1, 0.72, 0.72, 1], clamp),
+        background: 'rgba(255,255,255,0.55)', border: '5px solid white', boxShadow: '0 6px 20px rgba(0,0,0,.35)',
+      }}/>
+    </div>
+  );
+};
 
 export const MobileLike: React.FC<{frame: number; clickAt: number; end: number; x: number; y: number}> = ({
   frame, clickAt, end, x, y,
@@ -46,12 +71,6 @@ export const MobileLike: React.FC<{frame: number; clickAt: number; end: number; 
     ? interpolate(t, [0, 1, 4, 7, 10], [0.8, 0.8, 1.32, 0.94, 1], clamp)
     : interpolate(t, [-2, 0], [1, 0.86], clamp);
   const glow = liked ? interpolate(t, [0, 4, 16], [0, 1, 0.45], clamp) : 0;
-
-  const touchT = interpolate(frame, [clickAt - 12, clickAt - 1], [0, 1], {...clamp, easing: out});
-  const touchX = x + interpolate(touchT, [0, 1], [290, 68]);
-  const touchY = y + interpolate(touchT, [0, 1], [380, 74]);
-  const touchOpacity = interpolate(frame, [clickAt - 12, clickAt - 9, clickAt + 4, clickAt + 8], [0, 1, 1, 0], clamp);
-  const touchScale = interpolate(t, [-1, 0, 2, 4], [1, 0.72, 0.72, 1], clamp);
 
   return (
     <div data-cta-like="mobile" style={{position: 'absolute', inset: 0, opacity: exit}}>
@@ -116,21 +135,7 @@ export const MobileLike: React.FC<{frame: number; clickAt: number; end: number; 
           textShadow: '0 6px 16px rgba(0,0,0,.35)',
         }}>+1</div>
       ) : null}
-      {frame >= clickAt - 12 && t < 8 ? (
-        <div data-cta-touch="true" style={{...at(touchX, touchY), opacity: touchOpacity}}>
-          {liked ? (
-            <div style={{
-              ...at(0, 0), width: 2 * interpolate(t, [0, 8], [45, 120], {...clamp, easing: out}),
-              height: 2 * interpolate(t, [0, 8], [45, 120], {...clamp, easing: out}), borderRadius: '50%',
-              border: '5px solid rgba(255,255,255,0.9)', opacity: interpolate(t, [0, 8], [0.9, 0], clamp),
-            }}/>
-          ) : null}
-          <div style={{
-            ...at(0, 0), width: 96, height: 96, borderRadius: '50%', scale: touchScale,
-            background: 'rgba(255,255,255,0.55)', border: '5px solid white', boxShadow: '0 6px 20px rgba(0,0,0,.35)',
-          }}/>
-        </div>
-      ) : null}
+      <TouchTap frame={frame} clickAt={clickAt} x={x + 68} y={y + 74}/>
     </div>
   );
 };

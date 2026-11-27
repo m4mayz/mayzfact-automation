@@ -20,6 +20,10 @@ for (const ext of ['.ts', '.tsx']) {
       mod.exports = {MONTSERRAT: 'Montserrat', ANTON: 'Anton'};
       return;
     }
+    if (file.endsWith(`${path.sep}faktacuilAvatar.tsx`)) {
+      mod.exports = {FaktaCuilAvatar: () => require('react').createElement('img', {src: 'avatar.png'})};
+      return;
+    }
     mod._compile(transformSync(fs.readFileSync(file, 'utf8'), {loader: ext === '.tsx' ? 'tsx' : 'ts', format: 'cjs'}).code, file);
   };
 }
@@ -60,23 +64,27 @@ assert.match(markup(chili, 40), /<svg[^>]*data-sticker="chili"/);
 assert.match(markup(chili, 40), /<path[^>]*data-chili-body="true"/);
 assert.match(markup(chili, 40), /<path[^>]*data-chili-stem="true"/);
 
-// subscribe: cue subscribe di 50 → pill SUBSCRIBE di 55, SUBSCRIBED di 62 (50 + 12 = klik Python), stiker tetap ada.
+// subscribe ala HP (D-070): avatar + @FaktaCuil + pill putih "Subscribe", cue di 50, tap di 62 (50 + 12 = klik Python).
 const sub = {format: 'subscribe', theme: 'shark', cues: [...base.cues, {kind: 'subscribe', from: 50, word: 'subscribe'}]};
-assert.match(markup(sub, 55), /data-cta-pill="subscribe"[^>]*>[\s\S]*SUBSCRIBE/);
-assert.match(markup(sub, 61), /data-cta-pill="subscribe"[^>]*>[\s\S]*SUBSCRIBE/);
-assert.doesNotMatch(markup(sub, 61), /SUBSCRIBED/);
-assert.match(markup(sub, 62), /SUBSCRIBED/);
+const sub55 = markup(sub, 55);
+assert.match(sub55, /data-cta-subscribe="mobile"[\s\S]*@FaktaCuil[\s\S]*>Subscribe</);
+assert.match(sub55, /data-cta-touch="true"/);
+assert.match(sub55, /src="avatar.png"/);
+assert.doesNotMatch(markup(sub, 61), /Disubscribe/);
+assert.match(markup(sub, 62), /Disubscribe/);
+assert.match(markup(sub, 64), /data-cta-sub-burst="true"/);
 assert.match(markup(sub, 64), /data-cta-sticker="true"/);
-// Pill + kursor harus di atas stiker: di markup, pill muncul setelah elemen stiker.
+assert.doesNotMatch(sub55 + markup(sub, 64), /data-cta-pill=|SUBSCRIBED|viewBox="-8 -4 52 64"/, 'pill + kursor desktop udah diganti');
+// Tombol subscribe + titik sentuh harus di atas stiker: di markup, muncul setelah elemen stiker.
 const sub64 = markup(sub, 64);
-assert.ok(sub64.indexOf('data-cta-pill="subscribe"') > sub64.indexOf('data-cta-sticker="true"'),
-  'pill SUBSCRIBE harus dirender setelah stiker');
+assert.ok(sub64.indexOf('data-cta-subscribe="mobile"') > sub64.indexOf('data-cta-sticker="true"'),
+  'tombol subscribe harus dirender setelah stiker');
 
 const wheel = markup({...sub, theme: 'wheel'}, 64);
 assert.match(wheel, /data-sticker="wheel"/);
 assert.match(wheel, /<circle[^>]*data-wheel-tire="true"/);
 assert.match(wheel, /<g[^>]*data-wheel-rim="true"/);
-assert.match(wheel, /SUBSCRIBED/);
+assert.match(wheel, /Disubscribe/);
 
 // emoji: tanpa emojiSrc → statis, pop-in tepat pas klik (cue like = kata "emoji"), ada karakternya,
 // nggak ada stiker, dan masih tampil penuh di frame terakhir.

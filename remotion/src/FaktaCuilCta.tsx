@@ -1,11 +1,10 @@
 import React from 'react';
 import {interpolate, Sequence, useCurrentFrame} from 'remotion';
 import {Lottie} from '@remotion/lottie';
-import {Cursor} from './Cta';
 import {useLottieJson} from './Emojis';
 import {MobileLike} from './FaktaCuilLike';
+import {MobileSubscribe} from './FaktaCuilSubscribe';
 import {Sticker} from './FaktaCuilStickers';
-import {MONTSERRAT} from './fonts';
 import type {FaktaCuilSceneData} from './types';
 
 // Alur dari CTA tengah FaktaBor pJe_Qok8qDA: tombol like muncul di awal ajakan, di-tap di kata pemicu,
@@ -20,19 +19,6 @@ const STICKER_SIZE = 440;
 const STICKER_Y = 1030;
 // Harus sama kayak FAKTACUIL_SUBSCRIBE_CLICK di mayzfact/steps/timeline.py.
 const SUB_CLICK = 12;
-
-const Pill: React.FC<{kind: 'subscribe'; label: string; bg: string; scale: number; opacity: number}> = ({
-  kind, label, bg, scale, opacity,
-}) => (
-  <div data-cta-pill={kind} style={{
-    position: 'absolute', left: PILL_X, top: PILL_Y, translate: '-50% -50%', rotate: '-4deg', scale, opacity,
-    display: 'flex', alignItems: 'center', gap: 26, height: 196, padding: '0 50px', borderRadius: 30,
-    background: bg, boxShadow: '0 12px 32px rgba(0,0,0,.35)',
-    fontFamily: MONTSERRAT, fontWeight: 800, fontSize: 92, color: 'white', whiteSpace: 'nowrap',
-  }}>
-    {label}
-  </div>
-);
 
 type StickerMotion = {dx: number; dy: number; rotate: number; scale: number; opacity: number};
 
@@ -75,12 +61,10 @@ export const FaktaCuilCtaVisual: React.FC<{scene: FaktaCuilSceneData; frame: num
     : likeStage ? likeStage.from - scene.from + (likeStage.triggerAt ?? 12) : 12;
   const subCue = scene.cues.find((cue) => cue.kind === 'subscribe');
   const subStage = scene.stages.find((stage) => stage.kind === 'subscribe');
-  // Ikut cue Python apa adanya; pill LIKED yang dipotong biar nggak nabrak pill SUBSCRIBE.
+  // Ikut cue Python apa adanya; tombol like dipotong biar nggak nabrak tombol subscribe.
   const subFrom = subCue ? subCue.from - scene.from
     : subStage ? subStage.from - scene.from : null;
   const pillEnd = Math.min(clickAt + LIKED_HOLD, subFrom ?? scene.durationInFrames, scene.durationInFrames);
-  const tipX = PILL_X + 90;
-  const tipY = PILL_Y + 40;
 
   const subDur = subStage ? subStage.durationInFrames : Math.max(0, scene.durationInFrames - (subFrom ?? 0));
   // Clamp sama kayak clickAt di _faktacuil_clicks supaya bunyi klik pas sama kursor.
@@ -94,7 +78,7 @@ export const FaktaCuilCtaVisual: React.FC<{scene: FaktaCuilSceneData; frame: num
   const stickerLen = scene.durationInFrames - stickerFrom;
   return (
     <div style={{position: 'absolute', inset: 0, pointerEvents: 'none'}}>
-      {/* Stiker/emoji digambar duluan; pill + kursor di atasnya biar asap stiker nggak nutup pill. */}
+      {/* Stiker/emoji digambar duluan; tombol like/subscribe di atasnya biar asap stiker nggak nutup. */}
       {hasEmoji ? (
         stickerFrame >= 0 && stickerLen > 0 ? (() => {
           const m = emojiMotion(stickerFrame);
@@ -128,14 +112,9 @@ export const FaktaCuilCtaVisual: React.FC<{scene: FaktaCuilSceneData; frame: num
         );
       })() : null}
       {frame < pillEnd ? <MobileLike frame={frame} clickAt={clickAt} end={pillEnd} x={PILL_X} y={hasEmoji ? LIKE_Y_EMOJI : PILL_Y}/> : null}
-      {subFrom !== null && frame >= subFrom && frame < subEnd ? <>
-        <Pill kind="subscribe" label={subClicked ? 'SUBSCRIBED' : 'SUBSCRIBE'}
-          bg={subClicked ? 'rgba(28,28,30,0.94)' : '#ff0000'}
-          scale={interpolate(frame - subFrom, [0, 2, 4], [0.8, 1.05, 1], clamp)}
-          opacity={interpolate(frame - subFrom, [0, 2], [0, 1], clamp)}/>
-        {frame >= subFrom + subClickAt - 3 ?
-          <Cursor x={tipX} y={tipY} pressed={subClicked && frame < subFrom + subClickAt + 3}/> : null}
-      </> : null}
+      {subFrom !== null && frame >= subFrom && frame < subEnd ? (
+        <MobileSubscribe frame={frame - subFrom} clickAt={subClickAt} end={subEnd - subFrom} x={PILL_X} y={PILL_Y}/>
+      ) : null}
     </div>
   );
 };
