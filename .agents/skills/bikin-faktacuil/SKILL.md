@@ -115,7 +115,7 @@ Untuk CTA tengah, beat yang nyebut `muncul` ada setelah ajakan like. Untuk `emoj
 "caption_style": "box"
 ```
 
-- `"word"` (default): caption 1 kata kayak biasa. `"box"`: 1 tampilan per beat (beat panjang dibagi rata, maks 8 kata/36 huruf), tiap kata kotak gelap, kata yang lagi diucapin jadi kotak lime miring. Huruf ikut naskah, bukan kapital.
+- `"word"` (default): caption 1 kata kayak biasa. `"box"`: 1 tampilan per beat (beat panjang dibagi rata, maks 8 kata/36 huruf), kata muncul satu per satu (font Arimo Bold) di kotak gelap, kata yang lagi diucapin jadi kotak lime miring. Huruf ikut naskah, bukan kapital.
 - Nggak ngaruh ke suara. Ganti style run yang udah ada cukup ubah field ini terus `mayzfact run <id> --from timeline --no-render`, lalu render.
 - Objek stiker harus salah satu dari tema di bawah. Nggak ada yang cocok = **STOP**, bikin stiker baru dulu (lihat **Stiker baru**).
 

@@ -719,5 +719,6 @@ Keputusan penting project mayzfact-automation. Detail teknis Fase 1 ada di [`doc
 
 - Akmal mau tes style caption neobrutalism dari referensi TikTok: satu potong kalimat tampil sekaligus (maks 2 baris), tiap kata kotak gelap, kata yang lagi diucapin jadi kotak lime miring + glow. Style 1 kata tetap default.
 - Dipilih per video lewat `caption_style: "box"` di `script.json` (cuma FaktaCuil), biar bisa dibandingin retensinya sama video style lama. Field ini nggak ikut hash suara.
-- 1 tampilan = 1 beat; beat panjang dibagi rata, maks 8 kata / 36 huruf (diukur dari still: ±31 px per huruf + 50 px per kotak, lebar 900 px). Timeline: `captionStyle: "faktacuil-box"` + `group` per caption. Gerakan kata aktif didesain dari screenshot, belum ditiru dari video sumber. Spec: `docs/superpowers/specs/2026-11-27-caption-box-design.md`.
+- 1 tampilan = 1 beat; beat panjang dibagi rata, maks 8 kata / 36 huruf. Timeline: `captionStyle: "faktacuil-box"` + `group` per caption.
+- Revisi Akmal: font Arimo Bold (mirip Arial Bold di referensi), kata muncul satu per satu pas diucapin dengan pop cepat, kata pertama di tengah, baris geser halus ke kiri tiap ada kata baru, baris kedua bikin blok naik. Font turun otomatis (64 → 46 px) kalau 1 tampilan lebih dari 2 baris. Spec: `docs/superpowers/specs/2026-11-27-caption-box-design.md`.
 

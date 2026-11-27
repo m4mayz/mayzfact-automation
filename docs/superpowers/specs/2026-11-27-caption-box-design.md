@@ -16,16 +16,17 @@ Referensi: screenshot TikTok dari Akmal. Tiap kata punya kotak gelap sendiri den
 - **Timeline:** `captionStyle: "faktacuil-box"`. Tiap item `captions` dapet field `group` (nomor tampilan). Timing per kata nggak berubah.
 - **Render:** satu tampilan muncul dari kata pertama sampai kata terakhir group-nya selesai. Kata aktif adalah kata terakhir di group yang udah mulai diucapin, jadi highlight-nya nggak kedip pas ada jeda kecil.
 
-## Visual (call gue, bisa direvisi Akmal setelah lihat still)
+## Visual (revisi 1 dari Akmal, 2026-11-27)
 
-- Kotak kata: background `#27272a`, border 3 px `#d4d4d8`, radius 12, padding 4×16 px. Teks Fredoka 700, 64 px, putih, stroke hitam 6 px. Bayangan keras `5px 6px 0 #000` (ciri neobrutalism).
-- Kata aktif: background lime `#a3e635`, border `#ecfccb`, teks `#14290a` tanpa stroke, miring −4°, scale 1,12, ditambah glow lime. Masuknya 3 frame.
-- Tampilan: tengah horizontal, titik tengahnya di 75% tinggi frame (sama kayak style sekarang), lebar maks 900 px, flex-wrap. Masuk: opacity 0→1 dan scale 0,9→1 dalam 3 frame.
+- Font Arimo Bold (padanan Google Fonts buat Arial Bold, mirip referensi), 64 px. Kalau 1 tampilan butuh lebih dari 2 baris, font turun ke 58/52/46 px. Lebar kotak diukur pakai canvas setelah font ke-load.
+- Kotak kata: background `#1f1f23`, border 3 px `#a1a1aa`, radius 12, bayangan keras `5px 6px 0`. Teks putih, stroke hitam 6 px.
+- Kata aktif (kata terbaru yang diucapin): background lime `#a3e635`, border `#ecfccb`, teks `#14290a` tanpa stroke, miring −4°, scale 1,06, glow lime. Pas kata berikutnya muncul, warnanya balik gelap dalam 4 frame.
+- Muncul bertahap: kata nongol pas diucapin, pop pakai spring cepat. Kata pertama tiap baris muncul di tengah. Kata berikutnya nempel di kanan, lalu satu baris geser halus ke kiri (8 frame) biar tetap di tengah. Baris kedua muncul di bawah, lalu blok naik halus. Posisi akhirnya sama kayak layout 2 baris yang rata tengah.
 
 ## Di luar scope
 
 - Pilihan style lewat halaman brief.
-- Animasi yang ditiru frame per frame. Belum ada video sumbernya, baru screenshot.
+- Animasi yang ditiru frame per frame dari video sumber. Gerakannya ngikutin deskripsi Akmal, bukan video.
 - MayzFact Top 3.
 
 ## Langkah
