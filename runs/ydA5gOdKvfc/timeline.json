@@ -1,0 +1,824 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 989,
+  "audio": "voice.mp3",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 82
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 82,
+      "durationInFrames": 66
+    },
+    {
+      "src": "clips/shot_03.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 148,
+      "durationInFrames": 72
+    },
+    {
+      "src": "clips/shot_04.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 220,
+      "durationInFrames": 70
+    },
+    {
+      "src": "clips/shot_05.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 290,
+      "durationInFrames": 75
+    },
+    {
+      "src": "clips/shot_06.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 365,
+      "durationInFrames": 61
+    },
+    {
+      "src": "clips/shot_07.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 426,
+      "durationInFrames": 92
+    },
+    {
+      "src": "clips/shot_08.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 518,
+      "durationInFrames": 75
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 593,
+      "durationInFrames": 68
+    },
+    {
+      "src": "clips/shot_10.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 661,
+      "durationInFrames": 65
+    },
+    {
+      "src": "clips/shot_11.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 726,
+      "durationInFrames": 72
+    },
+    {
+      "src": "clips/shot_12.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 798,
+      "durationInFrames": 70
+    },
+    {
+      "src": "clips/shot_13.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 868,
+      "durationInFrames": 72
+    },
+    {
+      "src": "clips/shot_14.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 940,
+      "durationInFrames": 49
+    }
+  ],
+  "countdown": [
+    {
+      "number": 1,
+      "label": "ANTELOPE",
+      "numberFrom": 82,
+      "numberAt": 11,
+      "numberDuration": 38,
+      "cardFrom": 120,
+      "cardDuration": 28,
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "clipOffset": 38
+    },
+    {
+      "number": 2,
+      "label": "LION",
+      "numberFrom": 365,
+      "numberAt": 15,
+      "numberDuration": 42,
+      "cardFrom": 407,
+      "cardDuration": 19,
+      "src": "clips/shot_06.mp4",
+      "kind": "video",
+      "clipOffset": 42
+    },
+    {
+      "number": 3,
+      "label": "CROCODILE",
+      "numberFrom": 661,
+      "numberAt": 15,
+      "numberDuration": 43,
+      "cardFrom": 704,
+      "cardDuration": 22,
+      "src": "clips/shot_10.mp4",
+      "kind": "video",
+      "clipOffset": 43
+    }
+  ],
+  "captions": [
+    {
+      "text": "UNEXPECTED",
+      "from": 3,
+      "durationInFrames": 18,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ANIMAL",
+      "from": 21,
+      "durationInFrames": 12,
+      "color": "#4ade80"
+    },
+    {
+      "text": "MOMENTS",
+      "from": 33,
+      "durationInFrames": 17,
+      "color": "#facc15"
+    },
+    {
+      "text": "CAUGHT",
+      "from": 50,
+      "durationInFrames": 8,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "ON",
+      "from": 58,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CAMERA",
+      "from": 64,
+      "durationInFrames": 27,
+      "color": "#4ade80"
+    },
+    {
+      "text": "A",
+      "from": 148,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SAFARI",
+      "from": 158,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "GUIDE",
+      "from": 170,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FOUND",
+      "from": 179,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 186,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "STUCK",
+      "from": 195,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IN",
+      "from": 198,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MUD",
+      "from": 205,
+      "durationInFrames": 22,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 227,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COULDN'T",
+      "from": 230,
+      "durationInFrames": 6,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "GET",
+      "from": 236,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FREE",
+      "from": 240,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SO",
+      "from": 254,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HE",
+      "from": 259,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PULLED",
+      "from": 269,
+      "durationInFrames": 3,
+      "color": "#4ade80"
+    },
+    {
+      "text": "IT",
+      "from": 272,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OUT",
+      "from": 276,
+      "durationInFrames": 22,
+      "color": "#ffffff"
+    },
+    {
+      "text": "STUCK",
+      "from": 303,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THERE",
+      "from": 307,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 320,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WAS",
+      "from": 323,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AN",
+      "from": 330,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EASY",
+      "from": 334,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TARGET",
+      "from": 343,
+      "durationInFrames": 31,
+      "color": "#facc15"
+    },
+    {
+      "text": "THIS",
+      "from": 438,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LION",
+      "from": 445,
+      "durationInFrames": 8,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "PEED",
+      "from": 453,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IN",
+      "from": 462,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HIS",
+      "from": 464,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SLEEP",
+      "from": 476,
+      "durationInFrames": 15,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LYING",
+      "from": 491,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DOWN",
+      "from": 502,
+      "durationInFrames": 24,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IF",
+      "from": 527,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HE",
+      "from": 529,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DREAMED",
+      "from": 531,
+      "durationInFrames": 7,
+      "color": "#4ade80"
+    },
+    {
+      "text": "OF",
+      "from": 538,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 541,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BATHROOM",
+      "from": 545,
+      "durationInFrames": 25,
+      "color": "#facc15"
+    },
+    {
+      "text": "HE",
+      "from": 570,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BELIEVED",
+      "from": 573,
+      "durationInFrames": 14,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "IT",
+      "from": 587,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NOT",
+      "from": 599,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "EVEN",
+      "from": 604,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THAT",
+      "from": 611,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "URGE",
+      "from": 619,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BROKE",
+      "from": 631,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HIS",
+      "from": 638,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NAP",
+      "from": 643,
+      "durationInFrames": 27,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THIS",
+      "from": 736,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CROC",
+      "from": 743,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HAD",
+      "from": 752,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 758,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TURTLE",
+      "from": 763,
+      "durationInFrames": 8,
+      "color": "#4ade80"
+    },
+    {
+      "text": "IN",
+      "from": 771,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ITS",
+      "from": 774,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MOUTH",
+      "from": 780,
+      "durationInFrames": 22,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 802,
+      "durationInFrames": 1,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TRIED",
+      "from": 803,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TO",
+      "from": 812,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "REGRIP",
+      "from": 815,
+      "durationInFrames": 18,
+      "color": "#facc15"
+    },
+    {
+      "text": "BUT",
+      "from": 833,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 836,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TURTLE",
+      "from": 841,
+      "durationInFrames": 11,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "FELL",
+      "from": 852,
+      "durationInFrames": 16,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 868,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TURTLE",
+      "from": 880,
+      "durationInFrames": 9,
+      "color": "#4ade80"
+    },
+    {
+      "text": "HIT",
+      "from": 889,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 894,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WATER",
+      "from": 899,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 908,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ESCAPED",
+      "from": 914,
+      "durationInFrames": 31,
+      "color": "#facc15"
+    },
+    {
+      "text": "SO",
+      "from": 945,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MUCH",
+      "from": 947,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FOR",
+      "from": 954,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 959,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SURE",
+      "from": 962,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MEAL",
+      "from": 972,
+      "durationInFrames": 17,
+      "color": "#ffffff"
+    }
+  ],
+  "overlays": [
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 154,
+      "durationInFrames": 51,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 225,
+          "y": 1092,
+          "w": 281,
+          "h": 103
+        },
+        {
+          "frame": 39,
+          "x": 221,
+          "y": 1125,
+          "w": 291,
+          "h": 91
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 432,
+      "durationInFrames": 71,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 3,
+          "y": 520,
+          "w": 1014,
+          "h": 1217
+        },
+        {
+          "frame": 39,
+          "x": 1,
+          "y": 540,
+          "w": 1028,
+          "h": 1212
+        },
+        {
+          "frame": 69,
+          "x": 0,
+          "y": 537,
+          "w": 1009,
+          "h": 1220
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 732,
+      "durationInFrames": 51,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 146,
+          "y": 322,
+          "w": 688,
+          "h": 895
+        },
+        {
+          "frame": 39,
+          "x": 0,
+          "y": 550,
+          "w": 1069,
+          "h": 938
+        }
+      ]
+    }
+  ],
+  "emojis": [
+    {
+      "src": "emoji/1f62c.json",
+      "from": 334,
+      "durationInFrames": 31
+    },
+    {
+      "src": "emoji/1f602.json",
+      "from": 545,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1fae2.json",
+      "from": 852,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f480.json",
+      "from": 959,
+      "durationInFrames": 30
+    }
+  ],
+  "cta": [],
+  "bgm": {
+    "src": "audio/bgm/mystery.mp3",
+    "volume": 0.12,
+    "fadeOutFrames": 30
+  },
+  "sfx": [
+    {
+      "src": "audio/sfx/awkward-moment.mp3",
+      "from": 0,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 90,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 117,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 154,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 334,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 377,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 404,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 432,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 545,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 673,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 701,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 732,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 852,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 959,
+      "volume": 0.6
+    }
+  ],
+  "intro": {
+    "durationInFrames": 7
+  }
+}

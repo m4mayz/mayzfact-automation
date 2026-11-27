@@ -1,0 +1,1355 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 1762,
+  "audio": "voice.mp3",
+  "photoZoom": 1.08,
+  "shots": [
+    {
+      "src": "clips/shot_01.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 0,
+      "durationInFrames": 82
+    },
+    {
+      "src": "clips/shot_02.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 82,
+      "durationInFrames": 86
+    },
+    {
+      "src": "clips/shot_03.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 168,
+      "durationInFrames": 96
+    },
+    {
+      "src": "clips/shot_04.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 264,
+      "durationInFrames": 72,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_05.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 336,
+      "durationInFrames": 115
+    },
+    {
+      "src": "clips/shot_06.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 451,
+      "durationInFrames": 92
+    },
+    {
+      "src": "clips/shot_07.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 543,
+      "durationInFrames": 90
+    },
+    {
+      "src": "clips/shot_08.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 633,
+      "durationInFrames": 62,
+      "fgHeight": 1080
+    },
+    {
+      "src": "clips/shot_09.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 695,
+      "durationInFrames": 97
+    },
+    {
+      "src": "clips/shot_10.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 792,
+      "durationInFrames": 85
+    },
+    {
+      "src": "clips/shot_11.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 877,
+      "durationInFrames": 75
+    },
+    {
+      "src": "clips/shot_12.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 952,
+      "durationInFrames": 78,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_13.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1030,
+      "durationInFrames": 97
+    },
+    {
+      "src": "clips/shot_14.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1127,
+      "durationInFrames": 63
+    },
+    {
+      "src": "clips/shot_15.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 1190,
+      "durationInFrames": 88,
+      "fgHeight": 1080
+    },
+    {
+      "src": "clips/shot_16.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1278,
+      "durationInFrames": 115
+    },
+    {
+      "src": "clips/shot_17.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1393,
+      "durationInFrames": 69
+    },
+    {
+      "src": "clips/shot_18.jpg",
+      "kind": "photo",
+      "layout": "blur",
+      "from": 1462,
+      "durationInFrames": 76,
+      "fgHeight": 960
+    },
+    {
+      "src": "clips/shot_19.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1538,
+      "durationInFrames": 91
+    },
+    {
+      "src": "clips/shot_20.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1629,
+      "durationInFrames": 77
+    },
+    {
+      "src": "clips/shot_21.mp4",
+      "kind": "video",
+      "layout": "full",
+      "from": 1706,
+      "durationInFrames": 56
+    }
+  ],
+  "countdown": [
+    {
+      "number": 5,
+      "label": "MANTIS SHRIMP",
+      "numberFrom": 264,
+      "numberAt": 8,
+      "numberDuration": 37,
+      "cardFrom": 301,
+      "cardDuration": 35,
+      "src": "clips/shot_04.jpg",
+      "kind": "photo",
+      "clipOffset": 37
+    },
+    {
+      "number": 4,
+      "label": "RED PANDA",
+      "numberFrom": 633,
+      "numberAt": 8,
+      "numberDuration": 35,
+      "cardFrom": 668,
+      "cardDuration": 27,
+      "src": "clips/shot_08.jpg",
+      "kind": "photo",
+      "clipOffset": 35
+    },
+    {
+      "number": 3,
+      "label": "FUNNEL-WEB SPIDER",
+      "numberFrom": 952,
+      "numberAt": 9,
+      "numberDuration": 37,
+      "cardFrom": 989,
+      "cardDuration": 41,
+      "src": "clips/shot_12.jpg",
+      "kind": "photo",
+      "clipOffset": 37
+    },
+    {
+      "number": 2,
+      "label": "DRAGON MORAY EEL",
+      "numberFrom": 1190,
+      "numberAt": 12,
+      "numberDuration": 35,
+      "cardFrom": 1225,
+      "cardDuration": 53,
+      "src": "clips/shot_15.jpg",
+      "kind": "photo",
+      "clipOffset": 35
+    },
+    {
+      "number": 1,
+      "label": "YELLOW BOXFISH",
+      "numberFrom": 1462,
+      "numberAt": 12,
+      "numberDuration": 38,
+      "cardFrom": 1500,
+      "cardDuration": 38,
+      "src": "clips/shot_18.jpg",
+      "kind": "photo",
+      "clipOffset": 38
+    }
+  ],
+  "captions": [
+    {
+      "text": "FIVE",
+      "from": 4,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ANIMAL",
+      "from": 9,
+      "durationInFrames": 10,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "FACTS",
+      "from": 19,
+      "durationInFrames": 13,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ALMOST",
+      "from": 32,
+      "durationInFrames": 12,
+      "color": "#4ade80"
+    },
+    {
+      "text": "NOBODY",
+      "from": 44,
+      "durationInFrames": 12,
+      "color": "#facc15"
+    },
+    {
+      "text": "KNOWS",
+      "from": 56,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ABOUT",
+      "from": 65,
+      "durationInFrames": 24,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TRUST",
+      "from": 89,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ME",
+      "from": 98,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 107,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LAST",
+      "from": 109,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ONE",
+      "from": 120,
+      "durationInFrames": 15,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IS",
+      "from": 135,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WILD",
+      "from": 145,
+      "durationInFrames": 33,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COMMENT",
+      "from": 180,
+      "durationInFrames": 6,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "WHICH",
+      "from": 186,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ONE",
+      "from": 191,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GOT",
+      "from": 196,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "YOU",
+      "from": 203,
+      "durationInFrames": 15,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THEN",
+      "from": 218,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE",
+      "from": 223,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 235,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SUBSCRIBE",
+      "from": 237,
+      "durationInFrames": 35,
+      "color": "#4ade80"
+    },
+    {
+      "text": "THIS",
+      "from": 345,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TINY",
+      "from": 353,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THING",
+      "from": 359,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THROWS",
+      "from": 366,
+      "durationInFrames": 10,
+      "color": "#facc15"
+    },
+    {
+      "text": "ONE",
+      "from": 376,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OF",
+      "from": 380,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 383,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FASTEST",
+      "from": 392,
+      "durationInFrames": 18,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "PUNCHES",
+      "from": 410,
+      "durationInFrames": 14,
+      "color": "#4ade80"
+    },
+    {
+      "text": "ALIVE",
+      "from": 424,
+      "durationInFrames": 27,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 451,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SHOCKWAVE",
+      "from": 458,
+      "durationInFrames": 18,
+      "color": "#facc15"
+    },
+    {
+      "text": "ALONE",
+      "from": 476,
+      "durationInFrames": 15,
+      "color": "#ffffff"
+    },
+    {
+      "text": "CAN",
+      "from": 491,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "KNOCK",
+      "from": 496,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ITS",
+      "from": 504,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PREY",
+      "from": 511,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OUT",
+      "from": 515,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COLD",
+      "from": 524,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BRO",
+      "from": 544,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT'S",
+      "from": 555,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BASICALLY",
+      "from": 561,
+      "durationInFrames": 13,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "AN",
+      "from": 574,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "UNDERWATER",
+      "from": 578,
+      "durationInFrames": 19,
+      "color": "#4ade80"
+    },
+    {
+      "text": "BOXING",
+      "from": 597,
+      "durationInFrames": 14,
+      "color": "#facc15"
+    },
+    {
+      "text": "MACHINE",
+      "from": 611,
+      "durationInFrames": 30,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "LOOK",
+      "from": 707,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AT",
+      "from": 709,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THAT",
+      "from": 711,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WRIST",
+      "from": 718,
+      "durationInFrames": 23,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 741,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HIDES",
+      "from": 743,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 754,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FAKE",
+      "from": 761,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THUMB",
+      "from": 771,
+      "durationInFrames": 26,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 797,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SPARE",
+      "from": 799,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WRIST",
+      "from": 810,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BONE",
+      "from": 822,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "GRIPS",
+      "from": 827,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BAMBOO",
+      "from": 838,
+      "durationInFrames": 11,
+      "color": "#4ade80"
+    },
+    {
+      "text": "LIKE",
+      "from": 849,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 856,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HAND",
+      "from": 860,
+      "durationInFrames": 26,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NATURE",
+      "from": 886,
+      "durationInFrames": 11,
+      "color": "#facc15"
+    },
+    {
+      "text": "BASICALLY",
+      "from": 897,
+      "durationInFrames": 18,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "GAVE",
+      "from": 915,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IT",
+      "from": 920,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 923,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FREE",
+      "from": 925,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TOOL",
+      "from": 934,
+      "durationInFrames": 27,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SOME",
+      "from": 1041,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SPECIES",
+      "from": 1043,
+      "durationInFrames": 15,
+      "color": "#4ade80"
+    },
+    {
+      "text": "CARRY",
+      "from": 1058,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "VENOM",
+      "from": 1067,
+      "durationInFrames": 9,
+      "color": "#ffffff"
+    },
+    {
+      "text": "YOU",
+      "from": 1076,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "REALLY",
+      "from": 1082,
+      "durationInFrames": 11,
+      "color": "#facc15"
+    },
+    {
+      "text": "DON'T",
+      "from": 1093,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WANT",
+      "from": 1100,
+      "durationInFrames": 6,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TO",
+      "from": 1106,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "MEET",
+      "from": 1110,
+      "durationInFrames": 24,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TINY",
+      "from": 1134,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BODY",
+      "from": 1142,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BIG",
+      "from": 1162,
+      "durationInFrames": 14,
+      "color": "#ffffff"
+    },
+    {
+      "text": "PROBLEM",
+      "from": 1176,
+      "durationInFrames": 24,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "WILD",
+      "from": 1283,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "COLORS",
+      "from": 1294,
+      "durationInFrames": 20,
+      "color": "#4ade80"
+    },
+    {
+      "text": "WEIRD",
+      "from": 1314,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "HORNS",
+      "from": 1324,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "STRAIGHT",
+      "from": 1344,
+      "durationInFrames": 8,
+      "color": "#facc15"
+    },
+    {
+      "text": "OUT",
+      "from": 1352,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OF",
+      "from": 1356,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 1358,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FANTASY",
+      "from": 1360,
+      "durationInFrames": 14,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "MOVIE",
+      "from": 1374,
+      "durationInFrames": 25,
+      "color": "#ffffff"
+    },
+    {
+      "text": "AND",
+      "from": 1399,
+      "durationInFrames": 1,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THOSE",
+      "from": 1400,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TEETH",
+      "from": 1410,
+      "durationInFrames": 18,
+      "color": "#ffffff"
+    },
+    {
+      "text": "NOT",
+      "from": 1428,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DECORATION",
+      "from": 1432,
+      "durationInFrames": 19,
+      "color": "#4ade80"
+    },
+    {
+      "text": "BRO",
+      "from": 1451,
+      "durationInFrames": 20,
+      "color": "#ffffff"
+    },
+    {
+      "text": "ITS",
+      "from": 1549,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BODY",
+      "from": 1552,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IS",
+      "from": 1562,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "A",
+      "from": 1567,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "STIFF",
+      "from": 1577,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LITTLE",
+      "from": 1582,
+      "durationInFrames": 5,
+      "color": "#facc15"
+    },
+    {
+      "text": "CUBE",
+      "from": 1587,
+      "durationInFrames": 12,
+      "color": "#ffffff"
+    },
+    {
+      "text": "WITH",
+      "from": 1599,
+      "durationInFrames": 11,
+      "color": "#ffffff"
+    },
+    {
+      "text": "FINS",
+      "from": 1610,
+      "durationInFrames": 26,
+      "color": "#ffffff"
+    },
+    {
+      "text": "LIKE",
+      "from": 1636,
+      "durationInFrames": 2,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SOMEONE",
+      "from": 1638,
+      "durationInFrames": 9,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "DROPPED",
+      "from": 1647,
+      "durationInFrames": 10,
+      "color": "#4ade80"
+    },
+    {
+      "text": "A",
+      "from": 1657,
+      "durationInFrames": 4,
+      "color": "#ffffff"
+    },
+    {
+      "text": "TINY",
+      "from": 1661,
+      "durationInFrames": 7,
+      "color": "#ffffff"
+    },
+    {
+      "text": "BOX",
+      "from": 1668,
+      "durationInFrames": 8,
+      "color": "#ffffff"
+    },
+    {
+      "text": "IN",
+      "from": 1676,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "THE",
+      "from": 1679,
+      "durationInFrames": 5,
+      "color": "#ffffff"
+    },
+    {
+      "text": "OCEAN",
+      "from": 1684,
+      "durationInFrames": 24,
+      "color": "#ffffff"
+    },
+    {
+      "text": "SERIOUSLY",
+      "from": 1708,
+      "durationInFrames": 14,
+      "color": "#facc15"
+    },
+    {
+      "text": "WHO",
+      "from": 1722,
+      "durationInFrames": 3,
+      "color": "#ffffff"
+    },
+    {
+      "text": "APPROVED",
+      "from": 1725,
+      "durationInFrames": 11,
+      "color": "#22d3ee"
+    },
+    {
+      "text": "THIS",
+      "from": 1736,
+      "durationInFrames": 10,
+      "color": "#ffffff"
+    },
+    {
+      "text": "DESIGN",
+      "from": 1746,
+      "durationInFrames": 16,
+      "color": "#4ade80"
+    }
+  ],
+  "overlays": [
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 342,
+      "durationInFrames": 94,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 0,
+          "y": 983,
+          "w": 647,
+          "h": 599
+        },
+        {
+          "frame": 39,
+          "x": 2,
+          "y": 989,
+          "w": 734,
+          "h": 444
+        },
+        {
+          "frame": 69,
+          "x": 229,
+          "y": 999,
+          "w": 558,
+          "h": 449
+        },
+        {
+          "frame": 99,
+          "x": 271,
+          "y": 744,
+          "w": 425,
+          "h": 613
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 701,
+      "durationInFrames": 76,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 356,
+          "y": 548,
+          "w": 647,
+          "h": 852
+        },
+        {
+          "frame": 39,
+          "x": 327,
+          "y": 527,
+          "w": 578,
+          "h": 832
+        },
+        {
+          "frame": 69,
+          "x": 327,
+          "y": 406,
+          "w": 649,
+          "h": 926
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ff2a2a",
+      "from": 1036,
+      "durationInFrames": 76,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 124,
+          "y": 606,
+          "w": 719,
+          "h": 560
+        },
+        {
+          "frame": 39,
+          "x": 101,
+          "y": 545,
+          "w": 711,
+          "h": 570
+        },
+        {
+          "frame": 69,
+          "x": 43,
+          "y": 512,
+          "w": 755,
+          "h": 613
+        }
+      ]
+    },
+    {
+      "type": "arrow",
+      "color": "#ffd400",
+      "from": 1284,
+      "durationInFrames": 94,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 332,
+          "y": 707,
+          "w": 453,
+          "h": 606
+        },
+        {
+          "frame": 39,
+          "x": 382,
+          "y": 650,
+          "w": 506,
+          "h": 692
+        },
+        {
+          "frame": 69,
+          "x": 397,
+          "y": 608,
+          "w": 479,
+          "h": 797
+        },
+        {
+          "frame": 99,
+          "x": 361,
+          "y": 308,
+          "w": 608,
+          "h": 1124
+        }
+      ]
+    },
+    {
+      "type": "circle",
+      "color": "#ff2a2a",
+      "from": 1544,
+      "durationInFrames": 70,
+      "keyframes": [
+        {
+          "frame": 9,
+          "x": 261,
+          "y": 770,
+          "w": 503,
+          "h": 364
+        },
+        {
+          "frame": 39,
+          "x": 286,
+          "y": 786,
+          "w": 494,
+          "h": 356
+        },
+        {
+          "frame": 69,
+          "x": 325,
+          "y": 785,
+          "w": 479,
+          "h": 372
+        }
+      ]
+    }
+  ],
+  "emojis": [
+    {
+      "src": "emoji/1f92f.json",
+      "from": 145,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/26a1.json",
+      "from": 410,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f602.json",
+      "from": 597,
+      "durationInFrames": 36
+    },
+    {
+      "src": "emoji/1f440.json",
+      "from": 718,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f929.json",
+      "from": 920,
+      "durationInFrames": 32
+    },
+    {
+      "src": "emoji/1f628.json",
+      "from": 1067,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f525.json",
+      "from": 1294,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1fae2.json",
+      "from": 1587,
+      "durationInFrames": 75
+    },
+    {
+      "src": "emoji/1f602.json",
+      "from": 1708,
+      "durationInFrames": 54
+    }
+  ],
+  "cta": [
+    {
+      "kind": "like",
+      "from": 223,
+      "durationInFrames": 16,
+      "clickAt": 4
+    },
+    {
+      "kind": "subscribe",
+      "from": 239,
+      "durationInFrames": 27,
+      "clickAt": 14
+    }
+  ],
+  "bgm": {
+    "src": "audio/bgm/mystery.mp3",
+    "volume": 0.12,
+    "fadeOutFrames": 30
+  },
+  "sfx": [
+    {
+      "src": "audio/sfx/awkward-moment.mp3",
+      "from": 0,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 145,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 224,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/mouse-click-by-ek6_VR0O6PL.mp3",
+      "from": 250,
+      "volume": 0.8
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 269,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 298,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 342,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 410,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 597,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 638,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 665,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 701,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 718,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 920,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 958,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 986,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1036,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1067,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 1199,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1222,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1284,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1294,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/whoosh-clean.mp3",
+      "from": 1471,
+      "volume": 0.9
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1497,
+      "volume": 0.7
+    },
+    {
+      "src": "audio/sfx/quick-ting.mp3",
+      "from": 1544,
+      "volume": 0.35
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1587,
+      "volume": 0.6
+    },
+    {
+      "src": "audio/sfx/pop_7e9Is8L.mp3",
+      "from": 1708,
+      "volume": 0.6
+    }
+  ],
+  "intro": {
+    "durationInFrames": 7
+  }
+}
