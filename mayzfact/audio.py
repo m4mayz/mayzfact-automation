@@ -161,6 +161,16 @@ def audible_length(path: Path) -> float:
     return total
 
 
+def faktacuil_bgm_preview_volume(paths: RunPaths, *, bgm_dir: Path = BGM_DIR,
+                                 faktacuil_bgm_dir: Path = FAKTACUIL_BGM_DIR) -> float:
+    """Volume BGM yang bakal dipakai timeline FaktaCuil (lagu pilihan + durasi suara), buat label di brief."""
+    song = _faktacuil_song(bgm_dir, faktacuil_bgm_dir, lambda _: None, selected=load_faktacuil_bgm_choice(paths))
+    if song is None:
+        return 0.0
+    duration = read_json(paths.tts_json).get("duration_s", 30.0) if paths.tts_json.exists() else 30.0
+    return faktacuil_bgm_volume(song, faktacuil_bgm_dir / FAKTACUIL_BGM_REFERENCE, float(duration), lambda _: None)
+
+
 HOOK_BGM = "mystery.mp3"  # D-038: BGM cuma 2, mystery di hook...
 MAIN_BGM = "main.mp3"  # ...terus ini mulai "Number" pertama sampai akhir
 
