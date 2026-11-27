@@ -238,3 +238,35 @@ def test_faktacuil_ignores_hook_segments_in_clips():
     tl = build_timeline(clips, 25, 0.5, script=script, alignment=alignment, audio=AUDIO_ALL_SFX, log=lambda m: None)
     srcs = [s["src"] for s in tl["sfx"]]
     assert tl["flashes"] == [] and "audio/sfx/hook_cut.mp3" not in srcs and "audio/sfx/gasp.mp3" not in srcs
+
+
+def test_shot_entry_carries_clip_volume():
+    script, alignment, clips = faktacuil_timeline_fixture(25)
+    clips["shots"][0]["volume"] = 1.5
+    clips["shots"][1]["kind"] = "photo"
+    clips["shots"][1]["volume"] = 2.0  # foto: volume diabaikan
+    tl = build_timeline(clips, 25, 0.5, script=script, alignment=alignment, audio=AUDIO_ALL_SFX, log=lambda m: None)
+    assert tl["shots"][0]["volume"] == 1.5
+    assert "volume" not in tl["shots"][1] and "volume" not in tl["shots"][2]
+
+
+@pytest.mark.parametrize("mode, cut, extra", [("click_random", True, True), ("click", True, False), ("none", False, False)])
+def test_transition_sfx_modes(mode, cut, extra):
+    audio = {**AUDIO_ALL_SFX, "transition_sfx": mode, "custom": [{"src": "audio/sfx/custom.mp3", "at_s": 1.0}]}
+    srcs = [s["src"] for s in timeline(audio=audio)["sfx"]]
+    assert ("audio/sfx/cut.mp3" in srcs) is cut
+    assert ("audio/sfx/oof.mp3" in srcs) is extra
+    assert "audio/sfx/click.mp3" in srcs and "audio/sfx/custom.mp3" in srcs  # klik CTA + SFX kustom nggak ikut diatur
+
+
+def test_pipeline_reads_transition_sfx_from_links(world):
+    run = RunPaths(world.runs / VIDEO_ID)
+    write_faktacuil_run(run, script=faktacuil_script(cta="lucky").model_dump())
+    from mayzfact.store import write_json_atomic
+    links = read_json(run.links_json) if run.links_json.exists() else {"shots": {}}
+    write_json_atomic(run.links_json, {**links, "transition_sfx": "none"})
+    world.deps.audio = lambda paths, log: dict(AUDIO_ALL_SFX)
+    paths = run_pipeline(VIDEO_ID, settings=Settings(elevenlabs_api_keys=("k",)), deps=world.deps,
+                         runs_dir=world.runs, no_render=True, **QUIET)
+    srcs = [s["src"] for s in read_json(paths.timeline_json)["sfx"]]
+    assert "audio/sfx/cut.mp3" not in srcs and "audio/sfx/click.mp3" in srcs

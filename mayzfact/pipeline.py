@@ -408,6 +408,12 @@ def _run_step(step: str, paths: RunPaths, settings: Settings, deps: Deps, log: C
                 audio = deps.audio(paths, log)
             except Exception as exc:  # BGM/SFX cuma hiasan: timeline tetap jadi tanpa audio
                 log(f"[timeline] BGM/SFX dilewat: {type(exc).__name__}: {exc}")
+        if audio is not None:
+            try:  # mode SFX transisi dari brief (links.json); default klik + random
+                from mayzfact.manual.links import load_links
+                audio["transition_sfx"] = load_links(paths.links_json).get("transition_sfx", "click_random")
+            except Exception as exc:
+                log(f"[timeline] mode SFX transisi dilewat: {type(exc).__name__}: {exc}")
         marks = None
         if deps.marks and not faktacuil:  # FaktaCuil nggak pakai panah/emoji
             try:

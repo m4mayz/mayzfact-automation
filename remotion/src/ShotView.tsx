@@ -6,11 +6,14 @@ import type {Shot} from './types';
 
 const cover: React.CSSProperties = {width: '100%', height: '100%', objectFit: 'cover'};
 
-const Media: React.FC<{shot: Shot; style?: React.CSSProperties}> = ({shot, style}) => {
+// audible: cuma satu salinan klip per shot yang bunyi (layout blur punya 2), sisanya selalu mute.
+const Media: React.FC<{shot: Shot; style?: React.CSSProperties; audible?: boolean}> = ({shot, style, audible = false}) => {
   const src = staticFile(shot.src);
+  const volume = audible ? shot.volume ?? 0 : 0;
   return shot.kind === 'video' ? (
     // Video dari @remotion/media (rekomendasi Remotion, lebih ringan dari OffthreadVideo); object-fit lewat prop, bukan CSS
-    <Video src={src} muted objectFit="cover" style={{width: '100%', height: '100%', ...style}} />
+    <Video src={src} muted={volume <= 0} volume={volume > 0 ? volume : undefined} objectFit="cover"
+      style={{width: '100%', height: '100%', ...style}} />
   ) : (
     <Img src={src} style={{...cover, ...style}} />
   );
@@ -44,7 +47,7 @@ export const ShotView: React.FC<{shot: Shot; photoZoom: number}> = ({shot, photo
   if (shot.layout === 'full') {
     return (
       <AbsoluteFill style={{overflow: 'hidden'}}>
-        <Media shot={shot} style={zoomStyle} />
+        <Media shot={shot} style={zoomStyle} audible />
         <TextBlurs boxes={shot.blurs} style={zoomStyle} />
       </AbsoluteFill>
     );
@@ -58,7 +61,7 @@ export const ShotView: React.FC<{shot: Shot; photoZoom: number}> = ({shot, photo
       </AbsoluteFill>
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center'}}>
         <div style={{width: '100%', height: shot.fgHeight ?? 960, overflow: 'hidden'}}>
-          <Media shot={shot} style={zoomStyle} />
+          <Media shot={shot} style={zoomStyle} audible />
         </div>
       </AbsoluteFill>
       {/* kotak blur pakai koordinat layar penuh; zoom foto di tengah layar, jadi skalanya sama */}
