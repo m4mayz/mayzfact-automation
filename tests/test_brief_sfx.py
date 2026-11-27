@@ -178,3 +178,45 @@ def test_save_without_sfx_key_keeps_saved_sfx(brief):
     assert read_json(paths.links_json)["shots"]["0"]["sfx"] == {"file": "uy.mp3", "at_s": 0.8}
     httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "sfx": {"0": None}})  # pilih "Tanpa"
     assert "sfx" not in read_json(paths.links_json)["shots"]["0"]
+
+
+def test_saving_audio_volume(brief):
+    paths, base, _ = brief
+    ok = httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v", "1": "https://a.b/w"},
+                                               "audio": {"0": 150, "1": None}})
+    assert ok.status_code == 200
+    shots = read_json(paths.links_json)["shots"]
+    assert shots["0"]["volume"] == 1.5 and "volume" not in shots["1"]
+    bad = httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "audio": {"0": 250}})
+    assert bad.status_code == 400 and "volume" in bad.json()["error"]
+
+
+def test_save_without_audio_key_keeps_volume(brief):
+    paths, base, _ = brief
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "audio": {"0": 80}})
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}})
+    assert read_json(paths.links_json)["shots"]["0"]["volume"] == 0.8
+
+
+def test_upload_keeps_volume(brief):
+    paths, base, _ = brief
+    httpx.post(base + "/api/links", json={"shots": {"1": "https://a.b/v"}, "audio": {"1": 200}})
+    httpx.post(base + "/api/upload?shot=1", content=b"mp4", headers={"X-Filename": "a.mp4"})
+    assert read_json(paths.links_json)["shots"]["1"] == {"file": "manual/shot_2.mp4", "volume": 2.0}
+
+
+def test_saving_transition_sfx(brief):
+    paths, base, _ = brief
+    assert httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "transition_sfx": "click"}).status_code == 200
+    assert read_json(paths.links_json)["transition_sfx"] == "click"
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "transition_sfx": "click_random"})
+    assert "transition_sfx" not in read_json(paths.links_json)  # default nggak ditulis
+    bad = httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "transition_sfx": "bogus"})
+    assert bad.status_code == 400 and "SFX transisi" in bad.json()["error"]
+
+
+def test_save_without_transition_key_keeps_it(brief):
+    paths, base, _ = brief
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}, "transition_sfx": "none"})
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v"}})
+    assert read_json(paths.links_json)["transition_sfx"] == "none"

@@ -23,8 +23,10 @@ from mayzfact.brief.voice_page import render_voice_page
 from mayzfact.manual.links import (
     IMAGE_EXTS,
     VIDEO_EXTS,
+    attach_audio,
     attach_sfx,
     attach_speed,
+    attach_transition_sfx,
     load_links,
     missing_groups,
     missing_shots,
@@ -363,15 +365,21 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                         attach_sfx(data, body["sfx"], set(sfx_names()), plan())
                     if "shots" in data and "speed" in body:
                         attach_speed(data, body["speed"])
+                    if "shots" in data and "audio" in body:
+                        attach_audio(data, body["audio"])
+                    saved = load_links(paths.links_json)
+                    if "transition_sfx" in body:
+                        attach_transition_sfx(data, body["transition_sfx"])
+                    elif saved.get("transition_sfx"):
+                        data["transition_sfx"] = saved["transition_sfx"]
                     if "shots" in data:  # key yang nggak dikirim (tab brief lama / upload): nilai lama dibawa
-                        old = load_links(paths.links_json).get("shots", {})
+                        old = saved.get("shots", {})
                         for key, entry in data["shots"].items():
                             if not isinstance(old.get(key), dict):
                                 continue
-                            if "sfx" not in body and old[key].get("sfx"):
-                                entry["sfx"] = old[key]["sfx"]
-                            if "speed" not in body and old[key].get("speed"):
-                                entry["speed"] = old[key]["speed"]
+                            for field, body_key in (("sfx", "sfx"), ("speed", "speed"), ("volume", "audio")):
+                                if body_key not in body and old[key].get(field) is not None:
+                                    entry[field] = old[key][field]
                 except (ValueError, TypeError, AttributeError) as exc:
                     return self._json(400, {"error": str(exc)})
                 save_links(paths.links_json, data)
@@ -427,6 +435,8 @@ def make_server(paths: RunPaths, port: int, *, host: str = "127.0.0.1", max_uplo
                             entry["sfx"] = old_entry["sfx"]
                         if old_entry.get("speed"):
                             entry["speed"] = old_entry["speed"]
+                        if old_entry.get("volume") is not None:
+                            entry["volume"] = old_entry["volume"]
                     links.setdefault("shots", {})[str(shot_idx)] = entry
                     save_links(paths.links_json, links)
                     return self._json(200, {"file": rel})
