@@ -565,3 +565,16 @@ def test_hook_extra_never_repeats_back_to_back():
     picks = picks_per_cut(build_timeline(clips, 13.0, 0.5, audio=audio)["sfx"], "audio/sfx/flash.mp3", set(extras.values()))
     assert len(picks) == 11 and all(picks)
     assert all(a != b for a, b in zip(picks, picks[1:]))
+
+
+def test_transition_sfx_none_keeps_flashes_and_reveals():
+    clips = {"shots": [{**shot("clips/h1.mp4", "video", 0.0, 1080, 1920), "hook_segment": 0},
+                       {**shot("clips/h2.mp4", "video", 1.0, 1080, 1920), "hook_segment": 1},
+                       shot("clips/a.mp4", "video", 2.0, 1080, 1920)]}
+    audio = {"bgm": None, "sfx": {"cut": "audio/sfx/click.mp3", "hook_cut": "audio/sfx/flash.mp3"}}
+    loud = build_timeline(clips, 3.0, 0.5, audio=audio)
+    quiet = build_timeline(clips, 3.0, 0.5, audio={**audio, "transition_sfx": "none"})
+    assert quiet["sfx"] == [] and quiet["flashes"] == loud["flashes"] != []
+    loud_item, quiet_item = item_timeline(), item_timeline({**ITEM_AUDIO, "transition_sfx": "none"})
+    assert quiet_item["transitions"] == loud_item["transitions"] != []
+    assert not any(x["src"].endswith(("click.mp3", "reveal.mp3", "oof.mp3", "punch.mp3")) for x in quiet_item["sfx"])

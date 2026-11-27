@@ -259,3 +259,13 @@ def test_faktacuil_bgm_preview_volume_uses_default_song(tmp_path):
     (songs / FAKTACUIL_BGM_REFERENCE).write_bytes(b"x")  # lagu = referensi: volume dasar tanpa analisis loudness
     assert faktacuil_bgm_preview_volume(paths, bgm_dir=tmp_path / "none", faktacuil_bgm_dir=songs) == 0.06
     assert faktacuil_bgm_preview_volume(paths, bgm_dir=tmp_path / "none", faktacuil_bgm_dir=tmp_path / "kosong") == 0.0
+
+
+def test_zero_volume_stays_unmuted_and_unsent_shot_is_muted(brief):
+    paths, base, _ = brief
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v", "1": "https://a.b/w"},
+                                          "audio": {"0": 150, "1": 150}})
+    httpx.post(base + "/api/links", json={"shots": {"0": "https://a.b/v", "1": "https://a.b/w"}, "audio": {"0": 0}})
+    shots = read_json(paths.links_json)["shots"]
+    assert shots["0"]["volume"] == 0.0  # 0% tetap di-unmute (hening), bukan dibuang
+    assert "volume" not in shots["1"]  # body bawa key audio tapi shot ini nggak ada (foto/disabled): volume lama hilang

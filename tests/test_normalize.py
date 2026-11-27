@@ -67,3 +67,13 @@ def test_normalize_video_audio_on_silent_source_with_speed(tmp_path, cut_video):
     dest = tmp_path / "shot_01.mp4"
     normalize_video(cut_video, dest, start_s=0.0, duration_s=1.5, scale=1.0, speed=1.5, audio=True)
     assert stream_types(dest) == ["video"]
+
+
+def test_normalize_video_passes_atempo_for_speed(tmp_path, make_video, monkeypatch):
+    import mayzfact.ffmpeg as ff
+    seen = []
+    monkeypatch.setattr(ff, "_run", lambda args, step: seen.append(args))
+    monkeypatch.setattr(ff.os, "replace", lambda a, b: None)
+    ff.normalize_video(make_video(1080, 1920, 3.0), tmp_path / "s.mp4", start_s=0.0, duration_s=2.0, scale=1.0,
+                       speed=2.0, audio=True)
+    assert "atempo=2.000000" in seen[0] and "-an" not in seen[0]

@@ -207,7 +207,9 @@ def _continuous(group: dict, shots: list[dict], source: Source, paths: RunPaths,
                                for shot in shots]))
     source.used.append((start, start + span + TAIL_S))
     head = shots[0]
-    out = normalize_local(head["index"], first, last, source.path, "video", start + span / 2, paths, fg_min_ratio)
+    volume = source.entry.get("volume")  # semua shot hook entry-nya sama, jadi volumenya juga sama
+    out = normalize_local(head["index"], first, last, source.path, "video", start + span / 2, paths, fg_min_ratio,
+                          audio=volume is not None)
     url = source.entry.get("url")
     progress.data["shots_done"] += len(shots)
     progress.log(f"[fetch] shot {head['index'] + 1}-{shots[-1]['index'] + 1} ({group['label']}): 1 video nyambung, skor {score:.3f} dari detik {start:.1f}")
@@ -217,6 +219,7 @@ def _continuous(group: dict, shots: list[dict], source: Source, paths: RunPaths,
         "provider_id": cache_key(url) if url else Path(source.entry["file"]).name,
         "page_url": url or source.entry["file"], "author": "", "query": "manual",
         "match": round(score, 4), "hook_segment": head["hook_segment"], "source_s": round(start, 2),
+        **({"volume": volume} if volume is not None else {}),
     }
 
 

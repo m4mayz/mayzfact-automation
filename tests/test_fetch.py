@@ -556,3 +556,19 @@ def test_unmuted_shot_keeps_audio_and_volume(tmp_path, make_video):
     assert s2["volume"] == 1.5 and "volume" not in s3
     assert sorted(stream_types(paths.root / s2["file"])) == ["audio", "video"]
     assert stream_types(paths.root / s3["file"]) == ["video"]
+
+
+def test_continuous_hook_keeps_audio_and_volume(tmp_path, make_video):
+    """Hook top3 1 link yang di-unmute: jalur klip nyambung juga harus bawa audio + volume."""
+    from tests.factories import stream_types
+    paths = RunPaths(tmp_path / "run")
+    plan = make_plan(paths)
+    plan["shots"][2:] = [{**plan["shots"][2], "start_s": 0.6, "end_s": 1.0, "media": "video"},
+                         {**plan["shots"][3], "start_s": 1.0, "end_s": 1.4, "media": "video"}]
+    hook = {"url": "https://www.douyin.com/video/1", "volume": 0.8}
+    save_links(paths.links_json, {"shots": {"0": hook, "1": dict(hook),
+                                            "2": {"url": "https://a.b/video"}, "3": {"url": "https://a.b/video"}}})
+    data = run_fetch(paths, plan, obtain=lambda e, r: [make_video(320, 240, 3.0)], encoder=FakeEncoder(), **QUIET)
+    clip = data["shots"][0]
+    assert (clip["start_s"], clip["end_s"], clip["volume"]) == (0.0, 0.6, 0.8)
+    assert sorted(stream_types(paths.root / clip["file"])) == ["audio", "video"]
